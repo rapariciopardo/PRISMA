@@ -267,7 +267,11 @@ MyGymEnv::CountPktInQueueEvent(Ptr<MyGymEnv> entity, Ptr<PointToPointNetDevice> 
   MyGymEnv::CountRxPkts(uint32_t sinkId, Ptr<const Packet> packet, const Address & srcAddr)
   {
     //m_rxPkts[sinkId]++;
-    NS_LOG_UNCOND("EVENT == "<<sinkId<<"   "<<srcAddr<<"                      ");
+    //NS_LOG_UNCOND("EVENT == "<<sinkId<<"   "<<srcAddr<<"                      ");
+    Ptr<Packet> copy = packet->Copy ();
+    Ipv4Header iph;
+    copy->RemoveHeader (iph);
+    NS_LOG_UNCOND("HEADER    "<<iph);
     packet->PrintByteTags(std::cout);
   }
 
