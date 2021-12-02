@@ -241,7 +241,9 @@ int main (int argc, char *argv[])
   NS_LOG_INFO ("Setup Packet Sinks.");
 
   uint16_t port = 9;
-  PacketSinkHelper sink ("ns3::UdpSocketFactory", InetSocketAddress (Ipv4Address::GetAny (), port));   
+  Ipv4Address sinkAddr = Ipv4Address::GetAny();
+  NS_LOG_UNCOND(sinkAddr);
+  PacketSinkHelper sink ("ns3::UdpSocketFactory", InetSocketAddress (sinkAddr, port));   
   ApplicationContainer apps_sink;  
   for (int i = 0; i < n_nodes; i++)
     {
@@ -388,6 +390,7 @@ int main (int argc, char *argv[])
               Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();
               Ipv4InterfaceAddress ipv4_int_addr = ipv4->GetAddress (1, 0);
               Ipv4Address ip_addr = ipv4_int_addr.GetLocal ();
+              NS_LOG_UNCOND(ipv4_int_addr);
               OnOffHelper onoff ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]
               //PacketSinkHelper onoff ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]              
               onoff.SetConstantRate (DataRate (AppPacketRate));
