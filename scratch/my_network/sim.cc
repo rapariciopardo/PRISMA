@@ -45,6 +45,8 @@
 #include <vector>
 #include <cstdlib>
 
+#include "ns3/csma-net-device.h"
+#include "ns3/csma-module.h"
 #include "ns3/core-module.h"
 #include "ns3/network-module.h"
 #include "ns3/internet-module.h"
@@ -198,24 +200,34 @@ int main (int argc, char *argv[])
 
   NS_LOG_INFO ("Create Nodes.");
 
-  NodeContainer nodes;   // Declare nodes objects
-  nodes.Create (n_nodes);
+  NodeContainer nodes_traffic;   // Declare nodes objects
+  nodes_traffic.Create (n_nodes);
+
+  NodeContainer nodes_switch;
+  nodes_switch.Create(n_nodes);
 
   NS_LOG_INFO ("Create P2P Link Attributes.");
 
-  PointToPointHelper p2p;
-  p2p.SetDeviceAttribute ("DataRate", StringValue (LinkRate));
+  //PointToPointHelper p2p;
+  CsmaHelper p2p;
+  p2p.SetChannelAttribute ("DataRate", DataRateValue (LinkRate));
   p2p.SetChannelAttribute ("Delay", StringValue (LinkDelay));
+
+  //p2p.SetDeviceAttribute ("DataRate", StringValue (LinkRate));
+  //p2p.SetChannelAttribute ("Delay", StringValue (LinkDelay));
 
   NS_LOG_INFO ("Install Internet Stack to Nodes.");
 
   InternetStackHelper internet;
-  internet.Install (NodeContainer::GetGlobal ());
+  internet.Install (NodeContainer::GetGlobal());
 
   NS_LOG_INFO ("Assign Addresses to Nodes.");
 
   Ipv4AddressHelper ipv4_n;
   ipv4_n.SetBase ("10.0.0.0", "255.255.255.252");
+
+  uint16_t port = 9;
+
 
   // OpenGym Env
   NS_LOG_INFO ("Setting up OpemGym Envs for each node.");
@@ -224,7 +236,7 @@ int main (int argc, char *argv[])
   std::vector<Ptr<MyGymEnv> > myGymEnvs;
   for (int i = 0; i < n_nodes; i++)
   {
-    Ptr<Node> n = nodes.Get (i); // ref node
+    Ptr<Node> n = nodes_switch.Get (i); // ref node
     //nodeOpenGymPort = openGymPort + i;
     Ptr<OpenGymInterface> openGymInterface = CreateObject<OpenGymInterface> (openGymPort + i);
      Ptr<MyGymEnv> myGymEnv;
@@ -238,21 +250,29 @@ int main (int argc, char *argv[])
     myOpenGymInterfaces.push_back (openGymInterface);
     myGymEnvs.push_back (myGymEnv);
   }
-  NS_LOG_INFO ("Setup Packet Sinks.");
 
-  uint16_t port = 9;
-  Ipv4Address sinkAddr = Ipv4Address::GetAny();
-  NS_LOG_UNCOND(sinkAddr);
-  PacketSinkHelper sink ("ns3::UdpSocketFactory", InetSocketAddress (sinkAddr, port));   
-  ApplicationContainer apps_sink;  
-  for (int i = 0; i < n_nodes; i++)
-    {
-      //apps_sink = sink.Install (nodes.Get (i));   // sink is installed on all nodes
-      sink.SetAttribute ("Protocol", TypeIdValue (UdpSocketFactory::GetTypeId ()));
-      apps_sink.Add (sink.Install (nodes.Get(i)));
-    }
-  apps_sink.Start (Seconds (SinkStartTime));
-  apps_sink.Stop (Seconds (SinkStopTime));
+  NS_LOG_UNCOND("Creating link between switch nodes");
+  for(int i=0;i<n_nodes;i++)
+  {
+    NodeContainer n_links = NodeContainer (nodes_traffic.Get (i), nodes_switch.Get (i));
+    NetDeviceContainer n_devs = p2p.Install (n_links);
+
+    ipv4_n.Assign (n_devs);
+    ipv4_n.NewNetwork ();
+
+    NS_LOG_UNCOND( n_devs.GetN());
+    //Ptr<NetDevice> nd = n_devs.Get(1);
+    Ptr<CsmaNetDevice> nd =DynamicCast<CsmaNetDevice> (n_devs.Get(1)); //CreateObject<CsmaNetDevice> ();
+    NS_LOG_UNCOND(nd);
+    nd->SetAddress (Mac48Address::Allocate ());
+    NS_LOG_UNCOND(nd->GetAddress());
+    Ptr<Node> n = nodes_switch.Get(i); // ref node
+    n->AddDevice (nd);
+    nd->SetQueue (CreateObject<DropTailQueue<Packet> > ());
+    nd->TraceConnectWithoutContext("MacPromiscRx", MakeBoundCallback(&MyGymEnv::NotifyPktRcv, i));
+
+  }
+  
       
   NS_LOG_INFO ("Create Links Between Nodes & Connecting OpenGym entity to event sources.");
   //NetDeviceContainer list_p2pNetDevs = NetDeviceContainer();
@@ -266,33 +286,50 @@ int main (int argc, char *argv[])
 
           if (Adj_Matrix[i][j] == 1)
             {
-              NodeContainer n_links = NodeContainer (nodes.Get (i), nodes.Get (j));
-              NetDeviceContainer n_devs = p2p.Install (n_links);
-              ipv4_n.Assign (n_devs);
-              ipv4_n.NewNetwork ();
-              linkCount++;
+              //NodeContainer n_links = NodeContainer (nodes.Get (i), nodes.Get (j));
+              //NetDeviceContainer n_devs = p2p.Install (n_links);
+              //ipv4_n.Assign (n_devs);
+              //ipv4_n.NewNetwork ();
+              //linkCount++;
               
               //list_p2pNetDevs.Add(n_devs);
-              uint32_t nDevices = n_devs.GetN ();
-              NS_LOG_INFO("nDevivices: "<<nDevices);
-              for (uint32_t k = 0; k < nDevices; k++)
+              //uint32_t nDevices = n_devs.GetN ();
+
+              Ptr<CsmaNetDevice> dev1 = CreateObject<CsmaNetDevice> ();
+              dev1->SetAddress (Mac48Address::Allocate ());
+              Ptr<Node> n1 = nodes_switch.Get(i); // ref node
+              n1->AddDevice (dev1);
+              dev1->SetQueue (CreateObject<DropTailQueue<Packet> > ());
+              dev1->TraceConnectWithoutContext("MacPromiscRx", MakeBoundCallback(&MyGymEnv::NotifyPktRcv, i));
+
+
+              Ptr<CsmaNetDevice> dev2 = CreateObject<CsmaNetDevice> ();
+              dev2->SetAddress (Mac48Address::Allocate ());
+              Ptr<Node> n2 = nodes_switch.Get (j); // ref node
+              n2->AddDevice (dev2);
+              dev2->SetQueue (CreateObject<DropTailQueue<Packet> > ());
+              dev2->TraceConnectWithoutContext("MacPromiscRx", MakeBoundCallback(&MyGymEnv::NotifyPktRcv, j));
+
+
+              NS_LOG_INFO("nDevivices: "<<2);
+              for (uint32_t k = 0; k < 2; k++)
               {
 
-                  Ptr<NetDevice> nd = n_devs.Get (k);
-                  Ptr<PointToPointNetDevice> ptpnd = DynamicCast<PointToPointNetDevice> (nd);
-                  Ptr<Queue<Packet> > queue = ptpnd->GetQueue ();
-                  NS_LOG_INFO ("k: " << k << " ");
-                  NS_LOG_INFO ("i: " << i << " ");
-                  NS_LOG_INFO ("j: " << j << " ");
-                  size_t nodeDev_idx = (size_t)((ptpnd->GetNode())->GetId());
-                  NS_LOG_INFO ("starting node: " << nodeDev_idx << " ");
-                  if (eventBasedEnv){
-                    //pktSink->TraceConnectWithoutContext ("Rx", MakeBoundCallback (&MyGymEnv::NotifyPktInQueueEvent, myGymEnvs[i], ptpnd));
-                    //queue->TraceConnectWithoutContext ("PacketsInQueue", MakeBoundCallback (&MyGymEnv::NotifyPktInQueueEvent, myGymEnvs[nodeDev_idx], ptpnd)); // event-driven step
-                  }
-                  else{
-                    queue->TraceConnectWithoutContext ("PacketsInQueue", MakeBoundCallback (&MyGymEnv::CountPktInQueueEvent, myGymEnvs[nodeDev_idx], ptpnd)); // time-driven step
-                  }
+                  //Ptr<NetDevice> nd = n_devs.Get (k);
+                  //Ptr<PointToPointNetDevice> ptpnd = DynamicCast<PointToPointNetDevice> (nd);
+                  //Ptr<Queue<Packet> > queue = ptpnd->GetQueue ();
+                  //NS_LOG_INFO ("k: " << k << " ");
+                  //NS_LOG_INFO ("i: " << i << " ");
+                  //NS_LOG_INFO ("j: " << j << " ");
+                  //size_t nodeDev_idx = (size_t)((ptpnd->GetNode())->GetId());
+                  //NS_LOG_INFO ("starting node: " << nodeDev_idx << " ");
+                  //if (eventBasedEnv){
+                  //  //pktSink->TraceConnectWithoutContext ("Rx", MakeBoundCallback (&MyGymEnv::NotifyPktInQueueEvent, myGymEnvs[i], ptpnd));
+                  //  //queue->TraceConnectWithoutContext ("PacketsInQueue", MakeBoundCallback (&MyGymEnv::NotifyPktInQueueEvent, myGymEnvs[nodeDev_idx], ptpnd)); // event-driven step
+                  //}
+                  //else{
+                  //  queue->TraceConnectWithoutContext ("PacketsInQueue", MakeBoundCallback (&MyGymEnv::CountPktInQueueEvent, myGymEnvs[nodeDev_idx], ptpnd)); // time-driven step
+                  //}
 /*
                 if (k) { // j-->i
                   if (eventBasedEnv){
@@ -323,11 +360,15 @@ int main (int argc, char *argv[])
   for (int i = 0; i < n_nodes; ++i)
     {
       //MyGymEnv::m_rxPkts.push_back(0);
-      Ptr<PacketSink> pktSink = DynamicCast<PacketSink>(apps_sink.Get((uint32_t)i));
-      pktSink->TraceConnectWithoutContext ("Rx", MakeBoundCallback (&MyGymEnv::CountRxPkts, i));
+      //Ptr<PacketSink> pktSink = DynamicCast<PacketSink>(apps_sink.Get((uint32_t)i));
+      //Config::Connect("/NodeList/$ns3::Ipv4L3Protocol/Rx", MakeBoundCallback (&MyGymEnv::CountRxPkts, i));
+      //Ptr<CsmaNetDevice> deviceA = CreateObject<CsmaNetDevice> ();
+      //deviceA->SetAddress (Mac48Address::Allocate ());
+      //nA->AddDevice (deviceA);
+      //deviceA->SetQueue (CreateObject<DropTailQueue<Packet> > ());
     }
   NS_LOG_INFO ("Number of links in the adjacency matrix is: " << linkCount);
-  NS_LOG_INFO ("Number of all nodes is: " << nodes.GetN ());
+  NS_LOG_INFO ("Number of all nodes is: " << nodes_switch.GetN ());
 
   NS_LOG_INFO ("Initialize Global Routing.");
   Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
@@ -336,7 +377,7 @@ int main (int argc, char *argv[])
 
   // ---------- Allocate Node Positions --------------------------------------
 
-  NS_LOG_INFO ("Allocate Positions to Nodes.");
+  /*NS_LOG_INFO ("Allocate Positions to Nodes.");
 
   MobilityHelper mobility_n;
   Ptr<ListPositionAllocator> positionAlloc_n = CreateObject<ListPositionAllocator> ();
@@ -344,7 +385,7 @@ int main (int argc, char *argv[])
   for (size_t m = 0; m < coord_array.size (); m++)
     {
       positionAlloc_n->Add (Vector (coord_array[m][0], coord_array[m][1], 0));
-      Ptr<Node> n0 = nodes.Get (m);
+      Ptr<Node> n0 = nodes_switch.Get (m);
       Ptr<ConstantPositionMobilityModel> nLoc =  n0->GetObject<ConstantPositionMobilityModel> ();
       if (nLoc == 0)
         {
@@ -360,7 +401,7 @@ int main (int argc, char *argv[])
 
     }
   mobility_n.SetPositionAllocator (positionAlloc_n);
-  mobility_n.Install (nodes);
+  mobility_n.Install (nodes_switch);*/
 
   // ---------- End of Allocate Node Positions -------------------------------
 
@@ -386,7 +427,7 @@ int main (int argc, char *argv[])
               x->SetAttribute ("Min", DoubleValue (0));
               x->SetAttribute ("Max", DoubleValue (1));
               double rn = x->GetValue ();
-              Ptr<Node> n = nodes.Get (j);
+              Ptr<Node> n = nodes_traffic.Get (j);
               Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();
               Ipv4InterfaceAddress ipv4_int_addr = ipv4->GetAddress (1, 0);
               Ipv4Address ip_addr = ipv4_int_addr.GetLocal ();
@@ -394,12 +435,27 @@ int main (int argc, char *argv[])
               OnOffHelper onoff ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]
               //PacketSinkHelper onoff ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]              
               onoff.SetConstantRate (DataRate (AppPacketRate));
-              ApplicationContainer apps = onoff.Install (nodes.Get (i));  // traffic sources are installed on all nodes
+              ApplicationContainer apps = onoff.Install (nodes_traffic.Get (i));  // traffic sources are installed on all nodes
               apps.Start (Seconds (AppStartTime + rn));
               apps.Stop (Seconds (AppStopTime));
             }
         }
     }
+  NS_LOG_INFO ("Setup Packet Sinks.");
+
+  Ipv4Address sinkAddr = Ipv4Address::GetAny();
+  NS_LOG_UNCOND(sinkAddr);
+  PacketSinkHelper sink ("ns3::UdpSocketFactory", InetSocketAddress (sinkAddr, port));   
+  ApplicationContainer apps_sink;  
+  for (int i = 0; i < n_nodes; i++)
+    {
+      //apps_sink = sink.Install (nodes.Get (i));   // sink is installed on all nodes
+      sink.SetAttribute ("Protocol", TypeIdValue (UdpSocketFactory::GetTypeId ()));
+      apps_sink.Add (sink.Install (nodes_traffic.Get(i)));
+    }
+  apps_sink.Start (Seconds (SinkStartTime));
+  apps_sink.Stop (Seconds (SinkStopTime));
+  
   
   // ---------- End of Create n*(n-1) CBR Flows ------------------------------
 
@@ -436,7 +492,7 @@ int main (int argc, char *argv[])
   //flowmon = flowmonHelper.InstallAll ();
 
   // Configure animator with default settings
-  AnimationInterface anim (anim_name.c_str ());
+  //AnimationInterface anim (anim_name.c_str ());
 
 /*
   
