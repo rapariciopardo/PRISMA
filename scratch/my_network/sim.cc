@@ -212,28 +212,39 @@ int main (int argc, char *argv[])
   NodeContainer nodes_switch;
   nodes_switch.Create(n_nodes);
 
-  NS_LOG_INFO ("Create P2P Link Attributes.");
-
-  //PointToPointHelper p2p;
-  CsmaHelper p2p;
-  p2p.SetChannelAttribute ("DataRate", DataRateValue (LinkRate));
-  p2p.SetChannelAttribute ("Delay", StringValue (LinkDelay));
-
-
-
   Ptr<Node> n0 = CreateObject<Node> ();
   Ptr<Node> n1 = CreateObject<Node> ();
 
   Ptr<Node> bridge1 = CreateObject<Node> ();
 
+/////////////////////////////////////////////////////////////////////
+  NS_LOG_INFO ("Create P2P Link Attributes.");
 
-  
+  //PointToPointHelper p2p;
+  CsmaHelper p2p;
+  p2p.SetChannelAttribute ("DataRate", DataRateValue (5000000));
+  p2p.SetChannelAttribute ("Delay", TimeValue (MilliSeconds (2)));
+
   CsmaHelper csma;
   csma.SetChannelAttribute ("DataRate", DataRateValue (5000000));
   csma.SetChannelAttribute ("Delay", TimeValue (MilliSeconds (2)));
+///////////////////////////////////////////////////////////////////////
+  NetDeviceContainer traffic_nd;
+  NetDeviceContainer switch_nd;
 
   NetDeviceContainer topLanDevices;
   NetDeviceContainer topBridgeDevices;
+///////////////////////////////////////////////////////////////////////
+
+  NS_LOG_UNCOND("Creating link between switch nodes");
+  
+  for(int i=0;i<n_nodes;i++)
+  {
+    NetDeviceContainer n_devs = p2p.Install (NodeContainer (nodes_traffic.Get(i), nodes_switch.Get(i)));
+    traffic_nd.Add(n_devs.Get(0));
+    switch_nd.Add(n_devs.Get(1));
+  }
+  
 
   NetDeviceContainer link = csma.Install (NodeContainer (n0, bridge1));
   topLanDevices.Add (link.Get (0));
@@ -242,49 +253,56 @@ int main (int argc, char *argv[])
   NetDeviceContainer link2 = csma.Install (NodeContainer (n1, bridge1));
   topLanDevices.Add (link2.Get (0));
   topBridgeDevices.Add (link2.Get (1));
+/////////////////////////////////////////////////////////////////
+
+  for(uint32_t i=0;i<switch_nd.GetN();i++)
+  {
+    Ptr<CsmaNetDevice> dev_switch =DynamicCast<CsmaNetDevice> (switch_nd.Get(i)); //CreateObject<CsmaNetDevice> ();
+    dev_switch->TraceConnectWithoutContext("MacRx", MakeBoundCallback(NotifyPktRecv, i));
+  }
 
   for(uint32_t i=0;i<topBridgeDevices.GetN();i++){
     Ptr<CsmaNetDevice> nd_new = DynamicCast<CsmaNetDevice>(topBridgeDevices.Get(i)); 
     nd_new->TraceConnectWithoutContext("MacRx", MakeBoundCallback(NotifyPktRecv, i));
   }
+  ///////////////////////////////////////////////////////////
+  InternetStackHelper internet;
+  internet.Install(nodes_traffic);
 
   NodeContainer routerNodes (n0, n1);
   InternetStackHelper internet_new;
   internet_new.Install (routerNodes);
+  //////////////////////////////////////////////////////////
+  Ipv4AddressHelper ipv4_helper;
+  ipv4_helper.SetBase ("10.2.2.0", "255.255.255.0");
+  ipv4_helper.Assign (traffic_nd);
 
   Ipv4AddressHelper ipv4;
   ipv4.SetBase ("10.1.1.0", "255.255.255.0");
   ipv4.Assign (topLanDevices);
 
-  uint16_t port_new = 9;   // Discard port (RFC 863)
+  ////////////////////////////////////////////////////////
+
+  //uint16_t port_new = 9;   // Discard port (RFC 863)
+  //
+  //OnOffHelper onoff ("ns3::UdpSocketFactory", 
+  //                    Address (InetSocketAddress (Ipv4Address ("10.1.1.3"), port_new)));
+  //onoff.SetConstantRate (DataRate ("500kb/s"));
+  //
+  //ApplicationContainer app = onoff.Install (n0);
+  //// Start the application
+  //app.Start (Seconds (1.0));
+  //app.Stop (Seconds (10.0));
+  //  
+  //// Create an optional packet sink to receive these packets
+  //PacketSinkHelper sinknew ("ns3::UdpSocketFactory",
+  //                       Address (InetSocketAddress (Ipv4Address::GetAny (), port_new)));
+  //ApplicationContainer sink1 = sinknew.Install (n1);
+  //sink1.Start (Seconds (1.0));
+  ////p2p.SetDeviceAttribute ("DataRate", StringValue (LinkRate));
+  ////p2p.SetChannelAttribute ("Delay", StringValue (LinkDelay));
+
   
-  OnOffHelper onoff ("ns3::UdpSocketFactory", 
-                      Address (InetSocketAddress (Ipv4Address ("10.1.1.3"), port_new)));
-  onoff.SetConstantRate (DataRate ("500kb/s"));
-  
-  ApplicationContainer app = onoff.Install (n0);
-  // Start the application
-  app.Start (Seconds (1.0));
-  app.Stop (Seconds (10.0));
-    
-  // Create an optional packet sink to receive these packets
-  PacketSinkHelper sinknew ("ns3::UdpSocketFactory",
-                         Address (InetSocketAddress (Ipv4Address::GetAny (), port_new)));
-  ApplicationContainer sink1 = sinknew.Install (n1);
-  sink1.Start (Seconds (1.0));
-  //p2p.SetDeviceAttribute ("DataRate", StringValue (LinkRate));
-  //p2p.SetChannelAttribute ("Delay", StringValue (LinkDelay));
-
-  NS_LOG_INFO ("Install Internet Stack to Nodes.");
-
-  InternetStackHelper internet;
-  internet.Install (nodes_traffic);
-
-  NS_LOG_INFO ("Assign Addresses to Nodes.");
-
-  Ipv4AddressHelper ipv4_n;
-  ipv4_n.SetBase ("10.0.0.0", "255.255.255.252");
-
   uint16_t port = 9;
 
 
@@ -311,45 +329,8 @@ int main (int argc, char *argv[])
     
     myOpenGymInterfaces.push_back (openGymInterface);
     myGymEnvs.push_back (myGymEnv);
-  }
-
-  NS_LOG_UNCOND("Creating link between switch nodes");
-  NetDeviceContainer traffic_nd;
-  NetDeviceContainer switch_nd;
-  for(int i=0;i<n_nodes;i++)
-  {
-    NodeContainer n_links = NodeContainer (nodes_traffic.Get(i), nodes_switch.Get(i));
-    NetDeviceContainer n_devs = p2p.Install (n_links);
-
-    
-
-
-    //NetDeviceContainer traffic_nd;
-    //traffic_nd.Add(n_devs.Get(0));
-    //NetDeviceContainer switch_nd;
-    //switch_nd.Add(n_devs.Get(1));
-    Ptr<NetDevice> dev_traffic = n_devs.Get(0);
-    Ptr<CsmaNetDevice> dev_switch =DynamicCast<CsmaNetDevice> (n_devs.Get(1)); //CreateObject<CsmaNetDevice> ();
-    
-    ipv4_n.Assign (NetDeviceContainer(dev_traffic));
-    ipv4_n.NewNetwork ();
-
-    traffic_nd.Add(dev_traffic);
-    switch_nd.Add(dev_switch);
-    
-    //NS_LOG_UNCOND( n_devs.GetN());
-    //Ptr<NetDevice> nd = n_devs.Get(1);
-    //Ptr<CsmaNetDevice> nd =DynamicCast<CsmaNetDevice> (switch_nd.Get(0)); //CreateObject<CsmaNetDevice> ();
-    NS_LOG_UNCOND(dev_switch);
-    //nd->SetAddress (Mac48Address::Allocate ());
-    //NS_LOG_UNCOND(nd->GetAddress());
-    //Ptr<Node> n = nodes_switch.Get(i); // ref node
-    //n->AddDevice (nd);
-    //nd->SetQueue (CreateObject<DropTailQueue<Packet> > ());
-    dev_switch->TraceConnectWithoutContext("MacRx", MakeBoundCallback(&MyGymEnv::NotifyPktRcv, i));
-
-  }
-  NS_LOG_UNCOND("Number of traffic devices: "<<traffic_nd.GetN());
+  }  
+  //NS_LOG_UNCOND("Number of traffic devices: "<<traffic_nd.GetN());
   //ipv4_n.Assign (traffic_nd);
   //ipv4_n.NewNetwork ();
 
