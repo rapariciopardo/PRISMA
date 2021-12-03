@@ -212,11 +212,6 @@ int main (int argc, char *argv[])
   NodeContainer nodes_switch;
   nodes_switch.Create(n_nodes);
 
-  Ptr<Node> n0 = CreateObject<Node> ();
-  Ptr<Node> n1 = CreateObject<Node> ();
-
-  Ptr<Node> bridge1 = CreateObject<Node> ();
-
 /////////////////////////////////////////////////////////////////////
   // OpenGym Env
   NS_LOG_INFO ("Setting up OpemGym Envs for each node.");
@@ -248,15 +243,9 @@ int main (int argc, char *argv[])
   p2p.SetChannelAttribute ("DataRate", DataRateValue (LinkRate));
   p2p.SetChannelAttribute ("Delay", StringValue (LinkDelay));
 
-  CsmaHelper csma;
-  csma.SetChannelAttribute ("DataRate", DataRateValue (5000000));
-  csma.SetChannelAttribute ("Delay", TimeValue (MilliSeconds (2)));
 ///////////////////////////////////////////////////////////////////////
   NetDeviceContainer traffic_nd;
   NetDeviceContainer switch_nd;
-
-  NetDeviceContainer topLanDevices;
-  NetDeviceContainer topBridgeDevices;
 ///////////////////////////////////////////////////////////////////////
 
   NS_LOG_UNCOND("Creating link between switch nodes");
@@ -267,15 +256,6 @@ int main (int argc, char *argv[])
     traffic_nd.Add(n_devs.Get(0));
     switch_nd.Add(n_devs.Get(1));
   }
-  
-
-  NetDeviceContainer link = csma.Install (NodeContainer (n0, bridge1));
-  topLanDevices.Add (link.Get (0));
-  topBridgeDevices.Add (link.Get (1));
-
-  NetDeviceContainer link2 = csma.Install (NodeContainer (n1, bridge1));
-  topLanDevices.Add (link2.Get (0));
-  topBridgeDevices.Add (link2.Get (1));
 /////////////////////////////////////////////////////////////////
 
   for(uint32_t i=0;i<switch_nd.GetN();i++)
@@ -284,46 +264,19 @@ int main (int argc, char *argv[])
     dev_switch->TraceConnectWithoutContext("MacRx", MakeBoundCallback(&MyGymEnv::NotifyPktRcv, i));
   }
 
-  for(uint32_t i=0;i<topBridgeDevices.GetN();i++){
-    Ptr<CsmaNetDevice> nd_new = DynamicCast<CsmaNetDevice>(topBridgeDevices.Get(i)); 
-    nd_new->TraceConnectWithoutContext("MacRx", MakeBoundCallback(NotifyPktRecv, i));
-  }
+  
   ///////////////////////////////////////////////////////////
   InternetStackHelper internet;
   internet.Install(nodes_traffic);
-
-  NodeContainer routerNodes (n0, n1);
-  InternetStackHelper internet_new;
-  internet_new.Install (routerNodes);
   //////////////////////////////////////////////////////////
   Ipv4AddressHelper ipv4_helper;
   ipv4_helper.SetBase ("10.2.2.0", "255.255.255.0");
   ipv4_helper.Assign (traffic_nd);
 
-  Ipv4AddressHelper ipv4;
-  ipv4.SetBase ("10.1.1.0", "255.255.255.0");
-  ipv4.Assign (topLanDevices);
 
   ////////////////////////////////////////////////////////
 
-  //uint16_t port_new = 9;   // Discard port (RFC 863)
-  //
-  //OnOffHelper onoff ("ns3::UdpSocketFactory", 
-  //                    Address (InetSocketAddress (Ipv4Address ("10.1.1.3"), port_new)));
-  //onoff.SetConstantRate (DataRate ("500kb/s"));
-  //
-  //ApplicationContainer app = onoff.Install (n0);
-  //// Start the application
-  //app.Start (Seconds (1.0));
-  //app.Stop (Seconds (10.0));
-  //  
-  //// Create an optional packet sink to receive these packets
-  //PacketSinkHelper sinknew ("ns3::UdpSocketFactory",
-  //                       Address (InetSocketAddress (Ipv4Address::GetAny (), port_new)));
-  //ApplicationContainer sink1 = sinknew.Install (n1);
-  //sink1.Start (Seconds (1.0));
-  ////p2p.SetDeviceAttribute ("DataRate", StringValue (LinkRate));
-  ////p2p.SetChannelAttribute ("Delay", StringValue (LinkDelay));
+  
 
   
   uint16_t port = 9;
@@ -332,9 +285,7 @@ int main (int argc, char *argv[])
   
 
 
-  //NS_LOG_UNCOND("Number of traffic devices: "<<traffic_nd.GetN());
-  //ipv4_n.Assign (traffic_nd);
-  //ipv4_n.NewNetwork ();
+  
 
   
       
@@ -379,39 +330,7 @@ int main (int argc, char *argv[])
               for (uint32_t k = 0; k < 2; k++)
               {
 
-                  //Ptr<NetDevice> nd = n_devs.Get (k);
-                  //Ptr<PointToPointNetDevice> ptpnd = DynamicCast<PointToPointNetDevice> (nd);
-                  //Ptr<Queue<Packet> > queue = ptpnd->GetQueue ();
-                  //NS_LOG_INFO ("k: " << k << " ");
-                  //NS_LOG_INFO ("i: " << i << " ");
-                  //NS_LOG_INFO ("j: " << j << " ");
-                  //size_t nodeDev_idx = (size_t)((ptpnd->GetNode())->GetId());
-                  //NS_LOG_INFO ("starting node: " << nodeDev_idx << " ");
-                  //if (eventBasedEnv){
-                  //  //pktSink->TraceConnectWithoutContext ("Rx", MakeBoundCallback (&MyGymEnv::NotifyPktInQueueEvent, myGymEnvs[i], ptpnd));
-                  //  //queue->TraceConnectWithoutContext ("PacketsInQueue", MakeBoundCallback (&MyGymEnv::NotifyPktInQueueEvent, myGymEnvs[nodeDev_idx], ptpnd)); // event-driven step
-                  //}
-                  //else{
-                  //  queue->TraceConnectWithoutContext ("PacketsInQueue", MakeBoundCallback (&MyGymEnv::CountPktInQueueEvent, myGymEnvs[nodeDev_idx], ptpnd)); // time-driven step
-                  //}
-/*
-                if (k) { // j-->i
-                  if (eventBasedEnv){
-                    queue->TraceConnectWithoutContext ("PacketsInQueue", MakeBoundCallback (&MyGymEnv::NotifyPktInQueueEvent, myGymEnvs[j], ptpnd)); // event-driven step
-                  }
-                  else{
-                    queue->TraceConnectWithoutContext ("PacketsInQueue", MakeBoundCallback (&MyGymEnv::CountPktInQueueEvent, myGymEnvs[j], ptpnd)); // time-driven step
-                  }
-                }
-                else{ // i-->j
-                  if (eventBasedEnv){
-                    queue->TraceConnectWithoutContext ("PacketsInQueue", MakeBoundCallback (&MyGymEnv::NotifyPktInQueueEvent, myGymEnvs[i], ptpnd)); // event-driven step
-                  }
-                  else{
-                    queue->TraceConnectWithoutContext ("PacketsInQueue", MakeBoundCallback (&MyGymEnv::CountPktInQueueEvent, myGymEnvs[i], ptpnd)); // time-driven step
-                  }
-                }*/
-                  //queue->TraceConnectWithoutContext ("PacketsInQueue", MakeCallback (&DevicePacketsInQueueTrace));
+                  
               }
               NS_LOG_INFO ("matrix element [" << i << "][" << j << "] is 1");
             }
@@ -421,16 +340,7 @@ int main (int argc, char *argv[])
             }
         }
     }
-  for (int i = 0; i < n_nodes; ++i)
-    {
-      //MyGymEnv::m_rxPkts.push_back(0);
-      //Ptr<PacketSink> pktSink = DynamicCast<PacketSink>(apps_sink.Get((uint32_t)i));
-      //Config::Connect("/NodeList/$ns3::Ipv4L3Protocol/Rx", MakeBoundCallback (&MyGymEnv::CountRxPkts, i));
-      //Ptr<CsmaNetDevice> deviceA = CreateObject<CsmaNetDevice> ();
-      //deviceA->SetAddress (Mac48Address::Allocate ());
-      //nA->AddDevice (deviceA);
-      //deviceA->SetQueue (CreateObject<DropTailQueue<Packet> > ());
-    }
+  
   NS_LOG_INFO ("Number of links in the adjacency matrix is: " << linkCount);
   NS_LOG_INFO ("Number of all nodes is: " << nodes_switch.GetN ());
 
