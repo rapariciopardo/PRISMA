@@ -263,37 +263,6 @@ int main (int argc, char *argv[])
                 NetDeviceContainer n_devs = p2p.Install(NodeContainer(nodes_switch.Get(i), nodes_switch.Get(j)));
                 switch_nd.Add(n_devs.Get(0));
                 switch_nd.Add(n_devs.Get(1));
-                //NodeContainer n_links = NodeContainer (nodes.Get (i), nodes.Get (j));
-                //NetDeviceContainer n_devs = p2p.Install (n_links);
-                //ipv4_n.Assign (n_devs);
-                //ipv4_n.NewNetwork ();
-                //linkCount++;
-
-                //list_p2pNetDevs.Add(n_devs);
-                //uint32_t nDevices = n_devs.GetN ();
-
-                //Ptr<CsmaNetDevice> dev1 = CreateObject<CsmaNetDevice> ();
-                //dev1->SetAddress (Mac48Address::Allocate ());
-                //Ptr<Node> n1 = nodes_switch.Get(i); // ref node
-                //n1->AddDevice (dev1);
-                //dev1->SetQueue (CreateObject<DropTailQueue<Packet> > ());
-                //dev1->TraceConnectWithoutContext("MacPromiscRx", MakeBoundCallback(&MyGymEnv::NotifyPktRcv, i));
-                //
-                //
-                //Ptr<CsmaNetDevice> dev2 = CreateObject<CsmaNetDevice> ();
-                //dev2->SetAddress (Mac48Address::Allocate ());
-                //Ptr<Node> n2 = nodes_switch.Get (j); // ref node
-                //n2->AddDevice (dev2);
-                //dev2->SetQueue (CreateObject<DropTailQueue<Packet> > ());
-                //dev2->TraceConnectWithoutContext("MacPromiscRx", MakeBoundCallback(&MyGymEnv::NotifyPktRcv, j));
-
-
-                NS_LOG_INFO("nDevivices: "<<2);
-                for (uint32_t k = 0; k < 2; k++)
-                {
-
-
-                }
                 NS_LOG_INFO ("matrix element [" << i << "][" << j << "] is 1");
               }
             else
@@ -306,6 +275,7 @@ int main (int argc, char *argv[])
 
 
 ////////////////////////////////////////////////////////////////
+  NS_LOG_UNCOND("Size switch_nd :"<<switch_nd.GetN());
   for(uint32_t i=0;i<switch_nd.GetN();i++)
   {
     Ptr<CsmaNetDevice> dev_switch =DynamicCast<CsmaNetDevice> (switch_nd.Get(i)); //CreateObject<CsmaNetDevice> ();
