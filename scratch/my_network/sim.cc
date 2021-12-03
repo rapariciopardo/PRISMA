@@ -82,6 +82,12 @@ vector<vector<bool> > readNxNMatrix (std::string adj_mat_file_name);
 vector<vector<double> > readCordinatesFile (std::string node_coordinates_file_name);
 void printCoordinateArray (const char* description, vector<vector<double> > coord_array);
 void printMatrix (const char* description, vector<vector<bool> > array);
+void NotifyPktRecv(int i, Ptr<const Packet> packet)
+  {
+    NS_LOG_UNCOND("AQUI");
+
+  }
+
 
 /*void DevicePacketsInQueueTrace (uint32_t oldValue, uint32_t newValue){
     std::cout  << "Time stamp: " << Simulator::Now () << ", Context: " << this <<   ", DevicePacketsInQueue: " << oldValue << " to " << newValue << std::endl;
@@ -203,9 +209,6 @@ int main (int argc, char *argv[])
   NodeContainer nodes_traffic;   // Declare nodes objects
   nodes_traffic.Create (n_nodes);
 
-  Ptr<Node> n0 = CreateObject<Node> ();
-  Ptr<Node> bridge1 = CreateObject<Node> ();
-
   NodeContainer nodes_switch;
   nodes_switch.Create(n_nodes);
 
@@ -216,6 +219,59 @@ int main (int argc, char *argv[])
   p2p.SetChannelAttribute ("DataRate", DataRateValue (LinkRate));
   p2p.SetChannelAttribute ("Delay", StringValue (LinkDelay));
 
+
+
+  Ptr<Node> n0 = CreateObject<Node> ();
+  Ptr<Node> n1 = CreateObject<Node> ();
+
+  Ptr<Node> bridge1 = CreateObject<Node> ();
+
+
+  
+  CsmaHelper csma;
+  csma.SetChannelAttribute ("DataRate", DataRateValue (5000000));
+  csma.SetChannelAttribute ("Delay", TimeValue (MilliSeconds (2)));
+
+  NetDeviceContainer topLanDevices;
+  NetDeviceContainer topBridgeDevices;
+
+  NetDeviceContainer link = csma.Install (NodeContainer (n0, bridge1));
+  topLanDevices.Add (link.Get (0));
+  topBridgeDevices.Add (link.Get (1));
+
+  NetDeviceContainer link2 = csma.Install (NodeContainer (n1, bridge1));
+  topLanDevices.Add (link2.Get (0));
+  topBridgeDevices.Add (link2.Get (1));
+
+  for(uint32_t i=0;i<topBridgeDevices.GetN();i++){
+    Ptr<CsmaNetDevice> nd_new = DynamicCast<CsmaNetDevice>(topBridgeDevices.Get(i)); 
+    nd_new->TraceConnectWithoutContext("MacRx", MakeBoundCallback(NotifyPktRecv, i));
+  }
+
+  NodeContainer routerNodes (n0, n1);
+  InternetStackHelper internet_new;
+  internet_new.Install (routerNodes);
+
+  Ipv4AddressHelper ipv4;
+  ipv4.SetBase ("10.1.1.0", "255.255.255.0");
+  ipv4.Assign (topLanDevices);
+
+  uint16_t port_new = 9;   // Discard port (RFC 863)
+  
+  OnOffHelper onoff ("ns3::UdpSocketFactory", 
+                      Address (InetSocketAddress (Ipv4Address ("10.1.1.3"), port_new)));
+  onoff.SetConstantRate (DataRate ("500kb/s"));
+  
+  ApplicationContainer app = onoff.Install (n0);
+  // Start the application
+  app.Start (Seconds (1.0));
+  app.Stop (Seconds (10.0));
+    
+  // Create an optional packet sink to receive these packets
+  PacketSinkHelper sinknew ("ns3::UdpSocketFactory",
+                         Address (InetSocketAddress (Ipv4Address::GetAny (), port_new)));
+  ApplicationContainer sink1 = sinknew.Install (n1);
+  sink1.Start (Seconds (1.0));
   //p2p.SetDeviceAttribute ("DataRate", StringValue (LinkRate));
   //p2p.SetChannelAttribute ("Delay", StringValue (LinkDelay));
 
@@ -290,7 +346,7 @@ int main (int argc, char *argv[])
     //Ptr<Node> n = nodes_switch.Get(i); // ref node
     //n->AddDevice (nd);
     //nd->SetQueue (CreateObject<DropTailQueue<Packet> > ());
-    dev_switch->TraceConnectWithoutContext("MacPromiscRx", MakeBoundCallback(&MyGymEnv::NotifyPktRcv, i));
+    dev_switch->TraceConnectWithoutContext("MacRx", MakeBoundCallback(&MyGymEnv::NotifyPktRcv, i));
 
   }
   NS_LOG_UNCOND("Number of traffic devices: "<<traffic_nd.GetN());
@@ -700,5 +756,6 @@ void printCoordinateArray (const char* description, vector<vector<double> > coor
   cout << "**** End " << description << "********" << endl;
 
 }
+
 
 // ---------- End of Function Definitions ------------------------------------
