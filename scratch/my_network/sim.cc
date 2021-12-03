@@ -82,11 +82,7 @@ vector<vector<bool> > readNxNMatrix (std::string adj_mat_file_name);
 vector<vector<double> > readCordinatesFile (std::string node_coordinates_file_name);
 void printCoordinateArray (const char* description, vector<vector<double> > coord_array);
 void printMatrix (const char* description, vector<vector<bool> > array);
-void NotifyPktRecv(int i, Ptr<const Packet> packet)
-  {
-    NS_LOG_UNCOND("AQUI");
 
-  }
 
 
 /*void DevicePacketsInQueueTrace (uint32_t oldValue, uint32_t newValue){
@@ -257,7 +253,59 @@ int main (int argc, char *argv[])
     switch_nd.Add(n_devs.Get(1));
   }
 /////////////////////////////////////////////////////////////////
+  for (size_t i = 0; i < Adj_Matrix.size (); i++)
+      {
+        for (size_t j = 0; j < Adj_Matrix[i].size (); j++)
+          {
 
+            if (Adj_Matrix[i][j] == 1)
+              {
+                NetDeviceContainer n_devs = p2p.Install(NodeContainer(nodes_switch.Get(i), nodes_switch.Get(j)));
+                switch_nd.Add(n_devs.Get(0));
+                switch_nd.Add(n_devs.Get(1));
+                //NodeContainer n_links = NodeContainer (nodes.Get (i), nodes.Get (j));
+                //NetDeviceContainer n_devs = p2p.Install (n_links);
+                //ipv4_n.Assign (n_devs);
+                //ipv4_n.NewNetwork ();
+                //linkCount++;
+
+                //list_p2pNetDevs.Add(n_devs);
+                //uint32_t nDevices = n_devs.GetN ();
+
+                //Ptr<CsmaNetDevice> dev1 = CreateObject<CsmaNetDevice> ();
+                //dev1->SetAddress (Mac48Address::Allocate ());
+                //Ptr<Node> n1 = nodes_switch.Get(i); // ref node
+                //n1->AddDevice (dev1);
+                //dev1->SetQueue (CreateObject<DropTailQueue<Packet> > ());
+                //dev1->TraceConnectWithoutContext("MacPromiscRx", MakeBoundCallback(&MyGymEnv::NotifyPktRcv, i));
+                //
+                //
+                //Ptr<CsmaNetDevice> dev2 = CreateObject<CsmaNetDevice> ();
+                //dev2->SetAddress (Mac48Address::Allocate ());
+                //Ptr<Node> n2 = nodes_switch.Get (j); // ref node
+                //n2->AddDevice (dev2);
+                //dev2->SetQueue (CreateObject<DropTailQueue<Packet> > ());
+                //dev2->TraceConnectWithoutContext("MacPromiscRx", MakeBoundCallback(&MyGymEnv::NotifyPktRcv, j));
+
+
+                NS_LOG_INFO("nDevivices: "<<2);
+                for (uint32_t k = 0; k < 2; k++)
+                {
+
+
+                }
+                NS_LOG_INFO ("matrix element [" << i << "][" << j << "] is 1");
+              }
+            else
+              {
+                NS_LOG_INFO ("matrix element [" << i << "][" << j << "] is 0");
+              }
+          }
+      }
+
+
+
+////////////////////////////////////////////////////////////////
   for(uint32_t i=0;i<switch_nd.GetN();i++)
   {
     Ptr<CsmaNetDevice> dev_switch =DynamicCast<CsmaNetDevice> (switch_nd.Get(i)); //CreateObject<CsmaNetDevice> ();
@@ -294,52 +342,6 @@ int main (int argc, char *argv[])
   
   
   uint32_t linkCount = 0;
-  for (size_t i = 0; i < Adj_Matrix.size (); i++)
-    {
-      for (size_t j = 0; j < Adj_Matrix[i].size (); j++)
-        {
-
-          if (Adj_Matrix[i][j] == 1)
-            {
-              //NodeContainer n_links = NodeContainer (nodes.Get (i), nodes.Get (j));
-              //NetDeviceContainer n_devs = p2p.Install (n_links);
-              //ipv4_n.Assign (n_devs);
-              //ipv4_n.NewNetwork ();
-              //linkCount++;
-              
-              //list_p2pNetDevs.Add(n_devs);
-              //uint32_t nDevices = n_devs.GetN ();
-
-              //Ptr<CsmaNetDevice> dev1 = CreateObject<CsmaNetDevice> ();
-              //dev1->SetAddress (Mac48Address::Allocate ());
-              //Ptr<Node> n1 = nodes_switch.Get(i); // ref node
-              //n1->AddDevice (dev1);
-              //dev1->SetQueue (CreateObject<DropTailQueue<Packet> > ());
-              //dev1->TraceConnectWithoutContext("MacPromiscRx", MakeBoundCallback(&MyGymEnv::NotifyPktRcv, i));
-              //
-              //
-              //Ptr<CsmaNetDevice> dev2 = CreateObject<CsmaNetDevice> ();
-              //dev2->SetAddress (Mac48Address::Allocate ());
-              //Ptr<Node> n2 = nodes_switch.Get (j); // ref node
-              //n2->AddDevice (dev2);
-              //dev2->SetQueue (CreateObject<DropTailQueue<Packet> > ());
-              //dev2->TraceConnectWithoutContext("MacPromiscRx", MakeBoundCallback(&MyGymEnv::NotifyPktRcv, j));
-
-
-              NS_LOG_INFO("nDevivices: "<<2);
-              for (uint32_t k = 0; k < 2; k++)
-              {
-
-                  
-              }
-              NS_LOG_INFO ("matrix element [" << i << "][" << j << "] is 1");
-            }
-          else
-            {
-              NS_LOG_INFO ("matrix element [" << i << "][" << j << "] is 0");
-            }
-        }
-    }
   
   NS_LOG_INFO ("Number of links in the adjacency matrix is: " << linkCount);
   NS_LOG_INFO ("Number of all nodes is: " << nodes_switch.GetN ());
