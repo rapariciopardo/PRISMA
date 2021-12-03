@@ -203,6 +203,9 @@ int main (int argc, char *argv[])
   NodeContainer nodes_traffic;   // Declare nodes objects
   nodes_traffic.Create (n_nodes);
 
+  Ptr<Node> n0 = CreateObject<Node> ();
+  Ptr<Node> bridge1 = CreateObject<Node> ();
+
   NodeContainer nodes_switch;
   nodes_switch.Create(n_nodes);
 
@@ -219,7 +222,7 @@ int main (int argc, char *argv[])
   NS_LOG_INFO ("Install Internet Stack to Nodes.");
 
   InternetStackHelper internet;
-  internet.Install (NodeContainer::GetGlobal());
+  internet.Install (nodes_traffic);
 
   NS_LOG_INFO ("Assign Addresses to Nodes.");
 
@@ -234,6 +237,9 @@ int main (int argc, char *argv[])
   
   std::vector<Ptr<OpenGymInterface> > myOpenGymInterfaces;
   std::vector<Ptr<MyGymEnv> > myGymEnvs;
+
+
+
   for (int i = 0; i < n_nodes; i++)
   {
     Ptr<Node> n = nodes_switch.Get (i); // ref node
@@ -252,26 +258,45 @@ int main (int argc, char *argv[])
   }
 
   NS_LOG_UNCOND("Creating link between switch nodes");
+  NetDeviceContainer traffic_nd;
+  NetDeviceContainer switch_nd;
   for(int i=0;i<n_nodes;i++)
   {
-    NodeContainer n_links = NodeContainer (nodes_traffic.Get (i), nodes_switch.Get (i));
+    NodeContainer n_links = NodeContainer (nodes_traffic.Get(i), nodes_switch.Get(i));
     NetDeviceContainer n_devs = p2p.Install (n_links);
 
-    ipv4_n.Assign (n_devs);
+    
+
+
+    //NetDeviceContainer traffic_nd;
+    //traffic_nd.Add(n_devs.Get(0));
+    //NetDeviceContainer switch_nd;
+    //switch_nd.Add(n_devs.Get(1));
+    Ptr<NetDevice> dev_traffic = n_devs.Get(0);
+    Ptr<CsmaNetDevice> dev_switch =DynamicCast<CsmaNetDevice> (n_devs.Get(1)); //CreateObject<CsmaNetDevice> ();
+    
+    ipv4_n.Assign (NetDeviceContainer(dev_traffic));
     ipv4_n.NewNetwork ();
 
-    NS_LOG_UNCOND( n_devs.GetN());
+    traffic_nd.Add(dev_traffic);
+    switch_nd.Add(dev_switch);
+    
+    //NS_LOG_UNCOND( n_devs.GetN());
     //Ptr<NetDevice> nd = n_devs.Get(1);
-    Ptr<CsmaNetDevice> nd =DynamicCast<CsmaNetDevice> (n_devs.Get(1)); //CreateObject<CsmaNetDevice> ();
-    NS_LOG_UNCOND(nd);
-    nd->SetAddress (Mac48Address::Allocate ());
-    NS_LOG_UNCOND(nd->GetAddress());
-    Ptr<Node> n = nodes_switch.Get(i); // ref node
-    n->AddDevice (nd);
-    nd->SetQueue (CreateObject<DropTailQueue<Packet> > ());
-    nd->TraceConnectWithoutContext("MacPromiscRx", MakeBoundCallback(&MyGymEnv::NotifyPktRcv, i));
+    //Ptr<CsmaNetDevice> nd =DynamicCast<CsmaNetDevice> (switch_nd.Get(0)); //CreateObject<CsmaNetDevice> ();
+    NS_LOG_UNCOND(dev_switch);
+    //nd->SetAddress (Mac48Address::Allocate ());
+    //NS_LOG_UNCOND(nd->GetAddress());
+    //Ptr<Node> n = nodes_switch.Get(i); // ref node
+    //n->AddDevice (nd);
+    //nd->SetQueue (CreateObject<DropTailQueue<Packet> > ());
+    dev_switch->TraceConnectWithoutContext("MacPromiscRx", MakeBoundCallback(&MyGymEnv::NotifyPktRcv, i));
 
   }
+  NS_LOG_UNCOND("Number of traffic devices: "<<traffic_nd.GetN());
+  //ipv4_n.Assign (traffic_nd);
+  //ipv4_n.NewNetwork ();
+
   
       
   NS_LOG_INFO ("Create Links Between Nodes & Connecting OpenGym entity to event sources.");
@@ -295,20 +320,20 @@ int main (int argc, char *argv[])
               //list_p2pNetDevs.Add(n_devs);
               //uint32_t nDevices = n_devs.GetN ();
 
-              Ptr<CsmaNetDevice> dev1 = CreateObject<CsmaNetDevice> ();
-              dev1->SetAddress (Mac48Address::Allocate ());
-              Ptr<Node> n1 = nodes_switch.Get(i); // ref node
-              n1->AddDevice (dev1);
-              dev1->SetQueue (CreateObject<DropTailQueue<Packet> > ());
-              dev1->TraceConnectWithoutContext("MacPromiscRx", MakeBoundCallback(&MyGymEnv::NotifyPktRcv, i));
-
-
-              Ptr<CsmaNetDevice> dev2 = CreateObject<CsmaNetDevice> ();
-              dev2->SetAddress (Mac48Address::Allocate ());
-              Ptr<Node> n2 = nodes_switch.Get (j); // ref node
-              n2->AddDevice (dev2);
-              dev2->SetQueue (CreateObject<DropTailQueue<Packet> > ());
-              dev2->TraceConnectWithoutContext("MacPromiscRx", MakeBoundCallback(&MyGymEnv::NotifyPktRcv, j));
+              //Ptr<CsmaNetDevice> dev1 = CreateObject<CsmaNetDevice> ();
+              //dev1->SetAddress (Mac48Address::Allocate ());
+              //Ptr<Node> n1 = nodes_switch.Get(i); // ref node
+              //n1->AddDevice (dev1);
+              //dev1->SetQueue (CreateObject<DropTailQueue<Packet> > ());
+              //dev1->TraceConnectWithoutContext("MacPromiscRx", MakeBoundCallback(&MyGymEnv::NotifyPktRcv, i));
+              //
+              //
+              //Ptr<CsmaNetDevice> dev2 = CreateObject<CsmaNetDevice> ();
+              //dev2->SetAddress (Mac48Address::Allocate ());
+              //Ptr<Node> n2 = nodes_switch.Get (j); // ref node
+              //n2->AddDevice (dev2);
+              //dev2->SetQueue (CreateObject<DropTailQueue<Packet> > ());
+              //dev2->TraceConnectWithoutContext("MacPromiscRx", MakeBoundCallback(&MyGymEnv::NotifyPktRcv, j));
 
 
               NS_LOG_INFO("nDevivices: "<<2);
