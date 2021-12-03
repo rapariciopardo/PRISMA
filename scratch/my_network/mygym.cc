@@ -31,6 +31,8 @@
 #include <iostream>
 #include <vector>
 
+
+
 namespace ns3 {
 
 NS_LOG_COMPONENT_DEFINE ("MyGymEnv");
@@ -275,9 +277,14 @@ MyGymEnv::CountPktInQueueEvent(Ptr<MyGymEnv> entity, Ptr<PointToPointNetDevice> 
     packet->PrintByteTags(std::cout);
   }
   void
-  MyGymEnv::NotifyPktRcv(int i, Ptr<const Packet> packet)
+  MyGymEnv::NotifyPktRcv(int i, Ptr<Node> node, Ptr<const Packet> packet)
   {
-    NS_LOG_UNCOND("AQUI");
+    //packet
+    //packet->Print(std::cout);
+    EthernetHeader head;
+    packet->PeekHeader(head);
+    NS_LOG_UNCOND("AQUI "<<head.GetSource());
+    //head.Print(std::cout);
 
   }
 
