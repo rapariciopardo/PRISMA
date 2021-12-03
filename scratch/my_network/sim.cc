@@ -218,12 +218,35 @@ int main (int argc, char *argv[])
   Ptr<Node> bridge1 = CreateObject<Node> ();
 
 /////////////////////////////////////////////////////////////////////
+  // OpenGym Env
+  NS_LOG_INFO ("Setting up OpemGym Envs for each node.");
+  
+  std::vector<Ptr<OpenGymInterface> > myOpenGymInterfaces;
+  std::vector<Ptr<MyGymEnv> > myGymEnvs;
+
+  for (int i = 0; i < n_nodes; i++)
+    {
+      Ptr<Node> n = nodes_switch.Get (i); // ref node
+      //nodeOpenGymPort = openGymPort + i;
+      Ptr<OpenGymInterface> openGymInterface = CreateObject<OpenGymInterface> (openGymPort + i);
+       Ptr<MyGymEnv> myGymEnv;
+      if (eventBasedEnv){
+        myGymEnv = CreateObject<MyGymEnv> (n); // event-driven step
+      } else {
+        myGymEnv = CreateObject<MyGymEnv> (Seconds(envStepTime), n); // time-driven step
+      }
+      myGymEnv->SetOpenGymInterface(openGymInterface);
+
+      myOpenGymInterfaces.push_back (openGymInterface);
+      myGymEnvs.push_back (myGymEnv);
+    }  
+///////////////////////////////
   NS_LOG_INFO ("Create P2P Link Attributes.");
 
   //PointToPointHelper p2p;
   CsmaHelper p2p;
-  p2p.SetChannelAttribute ("DataRate", DataRateValue (5000000));
-  p2p.SetChannelAttribute ("Delay", TimeValue (MilliSeconds (2)));
+  p2p.SetChannelAttribute ("DataRate", DataRateValue (LinkRate));
+  p2p.SetChannelAttribute ("Delay", StringValue (LinkDelay));
 
   CsmaHelper csma;
   csma.SetChannelAttribute ("DataRate", DataRateValue (5000000));
@@ -258,7 +281,7 @@ int main (int argc, char *argv[])
   for(uint32_t i=0;i<switch_nd.GetN();i++)
   {
     Ptr<CsmaNetDevice> dev_switch =DynamicCast<CsmaNetDevice> (switch_nd.Get(i)); //CreateObject<CsmaNetDevice> ();
-    dev_switch->TraceConnectWithoutContext("MacRx", MakeBoundCallback(NotifyPktRecv, i));
+    dev_switch->TraceConnectWithoutContext("MacRx", MakeBoundCallback(&MyGymEnv::NotifyPktRcv, i));
   }
 
   for(uint32_t i=0;i<topBridgeDevices.GetN();i++){
@@ -306,30 +329,9 @@ int main (int argc, char *argv[])
   uint16_t port = 9;
 
 
-  // OpenGym Env
-  NS_LOG_INFO ("Setting up OpemGym Envs for each node.");
   
-  std::vector<Ptr<OpenGymInterface> > myOpenGymInterfaces;
-  std::vector<Ptr<MyGymEnv> > myGymEnvs;
 
 
-
-  for (int i = 0; i < n_nodes; i++)
-  {
-    Ptr<Node> n = nodes_switch.Get (i); // ref node
-    //nodeOpenGymPort = openGymPort + i;
-    Ptr<OpenGymInterface> openGymInterface = CreateObject<OpenGymInterface> (openGymPort + i);
-     Ptr<MyGymEnv> myGymEnv;
-    if (eventBasedEnv){
-      myGymEnv = CreateObject<MyGymEnv> (n); // event-driven step
-    } else {
-      myGymEnv = CreateObject<MyGymEnv> (Seconds(envStepTime), n); // time-driven step
-    }
-    myGymEnv->SetOpenGymInterface(openGymInterface);
-    
-    myOpenGymInterfaces.push_back (openGymInterface);
-    myGymEnvs.push_back (myGymEnv);
-  }  
   //NS_LOG_UNCOND("Number of traffic devices: "<<traffic_nd.GetN());
   //ipv4_n.Assign (traffic_nd);
   //ipv4_n.NewNetwork ();
