@@ -63,7 +63,8 @@ public:
   // that is why we pass pointer to MyGymEnv instance to be able to store the context (node, etc)
   static void CountPktInQueueEvent(Ptr<MyGymEnv> entity, Ptr<PointToPointNetDevice> ptpnd, uint32_t oldValue, uint32_t newValue); // time-driven step
   static void NotifyPktInQueueEvent(Ptr<MyGymEnv> entity, Ptr<PointToPointNetDevice> ptpnd, uint32_t oldValue, uint32_t newValue); // event-driven step
-  static void CountRxPkts(uint32_t sinkId, Ptr<const Packet> packet, const Address & srcAddr);
+  static void CountRxPkts(uint32_t sinkId, Ptr<const Packet> packet, Ptr<Ipv4> header, uint32_t something);
+  static void NotifyPktRcv(int i, Ptr<const Packet> packet);
 
 private:
   void ScheduleNextStateRead();

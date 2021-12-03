@@ -264,7 +264,7 @@ MyGymEnv::CountPktInQueueEvent(Ptr<MyGymEnv> entity, Ptr<PointToPointNetDevice> 
   }
   
   void
-  MyGymEnv::CountRxPkts(uint32_t sinkId, Ptr<const Packet> packet, const Address & srcAddr)
+  MyGymEnv::CountRxPkts(uint32_t sinkId, Ptr<const Packet> packet, Ptr<Ipv4> header, uint32_t something)
   {
     //m_rxPkts[sinkId]++;
     //NS_LOG_UNCOND("EVENT == "<<sinkId<<"   "<<srcAddr<<"                      ");
@@ -273,6 +273,12 @@ MyGymEnv::CountPktInQueueEvent(Ptr<MyGymEnv> entity, Ptr<PointToPointNetDevice> 
     copy->RemoveHeader (iph);
     NS_LOG_UNCOND("HEADER    "<<iph);
     packet->PrintByteTags(std::cout);
+  }
+  void
+  MyGymEnv::NotifyPktRcv(int i, Ptr<const Packet> packet)
+  {
+    NS_LOG_UNCOND("AQUI");
+
   }
 
   
