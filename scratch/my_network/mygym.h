@@ -74,6 +74,7 @@ private:
   Time m_interval = Seconds(0.1);
   //uint32_t m_num_nodes;
   Ptr<Node> m_node;
+  uint32_t m_dest;
   //NetDeviceContainer m_list_p2pNetDevs;
   uint32_t m_fwdDev_idx;  // Last net device selected to forward the packet (last action)
   uint32_t m_lastEvDev_idx;  // Last net device triggering an event 
