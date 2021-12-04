@@ -280,7 +280,7 @@ int main (int argc, char *argv[])
   {
     Ptr<CsmaNetDevice> dev_switch =DynamicCast<CsmaNetDevice> (switch_nd.Get(i)); //CreateObject<CsmaNetDevice> ();
     NS_LOG_UNCOND(dev_switch->GetNode()->GetId()<<"     "<< dev_switch->GetNode()->GetNDevices());
-    dev_switch->TraceConnectWithoutContext("MacRx", MakeBoundCallback(&MyGymEnv::NotifyPktRcv, i, dev_switch->GetNode()));
+    dev_switch->TraceConnectWithoutContext("MacRx", MakeBoundCallback(&MyGymEnv::NotifyPktRcv, i, dev_switch->GetNode(), &traffic_nd));
   }
 
   

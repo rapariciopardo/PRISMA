@@ -276,15 +276,34 @@ MyGymEnv::CountPktInQueueEvent(Ptr<MyGymEnv> entity, Ptr<PointToPointNetDevice> 
     NS_LOG_UNCOND("HEADER    "<<iph);
     packet->PrintByteTags(std::cout);
   }
+
   void
-  MyGymEnv::NotifyPktRcv(int i, Ptr<Node> node, Ptr<const Packet> packet)
+  MyGymEnv::NotifyPktRcv(int i, Ptr<Node> node, NetDeviceContainer* nd, Ptr<const Packet> packet)
   {
-    //packet
-    //packet->Print(std::cout);
+    Address add;
     EthernetHeader head;
-    packet->PeekHeader(head);
-    NS_LOG_UNCOND("AQUI "<<head.GetSource());
+    Ptr<Packet> p = packet->Copy();
+    p->RemoveHeader(head);
+    ArpHeader iph;
+    p->PeekHeader(iph);
+    //p->Print(std::cout);
+    NS_LOG_UNCOND("AQUI "<<iph.GetDestinationIpv4Address());
     //head.Print(std::cout);
+    for(uint32_t i = 0;i<nd->GetN();i++){
+      Ptr<NetDevice> dev = nd->Get(i);
+      Ptr<Node> n = dev->GetNode();
+      Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();
+      Ipv4InterfaceAddress ipv4_int_addr = ipv4->GetAddress (1, 0);
+      Ipv4Address ip_addr = ipv4_int_addr.GetLocal ();
+
+      NS_LOG_UNCOND(ip_addr);
+      if(ip_addr == iph.GetDestinationIpv4Address()){
+        add = dev->GetAddress();
+        NS_LOG_UNCOND("Match "<<add);
+        break;
+      }
+    }
+    
 
   }
 
