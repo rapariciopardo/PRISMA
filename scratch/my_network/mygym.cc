@@ -283,6 +283,8 @@ MyGymEnv::CountPktInQueueEvent(Ptr<MyGymEnv> entity, Ptr<PointToPointNetDevice> 
   void
   MyGymEnv::NotifyPktRcv(Ptr<MyGymEnv> entity, Ptr<Node> node, NetDeviceContainer* nd, Ptr<const Packet> packet)
   {
+    //uint8_t add_buf[8];
+    uint8_t buf_add[6];
     Address add;
     EthernetHeader head;
     Ptr<Packet> p = packet->Copy();
@@ -302,7 +304,12 @@ MyGymEnv::CountPktInQueueEvent(Ptr<MyGymEnv> entity, Ptr<PointToPointNetDevice> 
       NS_LOG_UNCOND(ip_addr);
       if(ip_addr == iph.GetDestinationIpv4Address()){
         add = dev->GetAddress();
-        NS_LOG_UNCOND("Match "<<add);
+        uint32_t n_bytes = add.CopyTo(buf_add);
+        //add.CopyAllTo(add_buf, 8);
+        NS_LOG_UNCOND("Match "<<add<<"    "<<n_bytes<<"    "<<(uint32_t)buf_add[5]);
+        for(int i=0;i<6;i++){
+          NS_LOG_UNCOND((uint32_t) buf_add[i]);
+        }
         break;
       }
     }
