@@ -24,6 +24,9 @@
 #include "ns3/network-module.h"
 #include "ns3/internet-module.h"
 #include "ns3/point-to-point-module.h"
+#include "ns3/csma-net-device.h"
+#include "ns3/csma-module.h"
+
 //#include "ns3/wifi-module.h"
 #include "ns3/node-list.h"
 #include "ns3/log.h"
@@ -158,9 +161,9 @@ MyGymEnv::GetQueueLength(Ptr<Node> node, uint32_t netDev_idx)
 {
   Ptr<NetDevice> netDev = node->GetDevice (netDev_idx);
   //NS_LOG_UNCOND ("IsPointToPoint? : " << netDev->IsPointToPoint () << "");
-  Ptr<PointToPointNetDevice> ptp_netDev = DynamicCast<PointToPointNetDevice> (netDev);
+  Ptr<CsmaNetDevice> csma_netDev = DynamicCast<CsmaNetDevice> (netDev);
   //Ptr<PointToPointNetDevice> ptp_netDev = netDev->GetObject<PointToPointNetDevice> ();
-  Ptr<Queue<Packet> > queue = ptp_netDev->GetQueue ();
+  Ptr<Queue<Packet> > queue = csma_netDev->GetQueue ();
   uint32_t backlog = (int) queue->GetNPackets();
   return backlog;
 }
@@ -171,15 +174,15 @@ MyGymEnv::GetObservation()
   NS_LOG_FUNCTION (this);
   printf("aqui obs\n");
   uint32_t num_devs = m_node->GetNDevices();
-  std::vector<uint32_t> shape = {2};//{(num_devs-1)*50,};
+  std::vector<uint32_t> shape = {num_devs};//{(num_devs-1)*50,};
   Ptr<OpenGymBoxContainer<uint32_t> > box = CreateObject<OpenGymBoxContainer<uint32_t> >(shape);
   for (uint32_t i=0 ; i<num_devs; i++){
     Ptr<NetDevice> netDev = m_node->GetDevice (i);
     //NS_LOG_UNCOND ("IsPointToPoint? : " << netDev->IsPointToPoint () << "");
-    if (netDev->IsPointToPoint ()){ // Only P2P devices are considered: the first one is not a P2P
-      uint32_t value = GetQueueLength (m_node, i);
-      box->AddValue(value);
-    }
+    //if (netDev->IsPointToPoint ()){ // Only P2P devices are considered: the first one is not a P2P
+    uint32_t value = GetQueueLength (m_node, i);
+    box->AddValue(value);
+    //}
   }
 
   NS_LOG_UNCOND ( "Node: " << m_node->GetId() << ", MyGetObservation: " << box);
@@ -278,7 +281,7 @@ MyGymEnv::CountPktInQueueEvent(Ptr<MyGymEnv> entity, Ptr<PointToPointNetDevice> 
   }
 
   void
-  MyGymEnv::NotifyPktRcv(int i, Ptr<Node> node, NetDeviceContainer* nd, Ptr<const Packet> packet)
+  MyGymEnv::NotifyPktRcv(Ptr<MyGymEnv> entity, Ptr<Node> node, NetDeviceContainer* nd, Ptr<const Packet> packet)
   {
     Address add;
     EthernetHeader head;
@@ -303,7 +306,7 @@ MyGymEnv::CountPktInQueueEvent(Ptr<MyGymEnv> entity, Ptr<PointToPointNetDevice> 
         break;
       }
     }
-    
+    entity->Notify();
 
   }
 

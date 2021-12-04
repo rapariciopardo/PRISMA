@@ -215,73 +215,73 @@ OpenGymInterface::NotifyCurrentState()
 {
   NS_LOG_FUNCTION (this);
 
-  if (!m_initSimMsgSent) {
-    Init();
-  }
-
-  if (m_stopEnvRequested) {
-    return;
-  }
+  //if (!m_initSimMsgSent) {
+  //  Init();
+  //}
+  //
+  //if (m_stopEnvRequested) {
+  //  return;
+  //}
 
   // collect current env state
   Ptr<OpenGymDataContainer> obsDataContainer = GetObservation();
-  float reward = GetReward();
-  bool isGameOver = IsGameOver();
-  std::string extraInfo = GetExtraInfo();
-
-  ns3opengym::EnvStateMsg envStateMsg;
-  // observation
-  ns3opengym::DataContainer obsDataContainerPbMsg;
-  if (obsDataContainer) {
-    obsDataContainerPbMsg = obsDataContainer->GetDataContainerPbMsg();
-    envStateMsg.mutable_obsdata()->CopyFrom(obsDataContainerPbMsg);
-  }
-  // reward
-  envStateMsg.set_reward(reward);
-  // game over
-  envStateMsg.set_isgameover(false);
-  if (isGameOver)
-  {
-    envStateMsg.set_isgameover(true);
-    if (m_simEnd) {
-      envStateMsg.set_reason(ns3opengym::EnvStateMsg::SimulationEnd);
-    } else {
-      envStateMsg.set_reason(ns3opengym::EnvStateMsg::GameOver);
-    }
-  }
-
-  // extra info
-  envStateMsg.set_info(extraInfo);
-
-  // send env state msg to python
-  zmq::message_t request(envStateMsg.ByteSize());;
-  envStateMsg.SerializeToArray(request.data(), envStateMsg.ByteSize());
-  m_zmq_socket.send (request, zmq::send_flags::none);
-
-  // receive act msg form python
-  ns3opengym::EnvActMsg envActMsg;
-  zmq::message_t reply;
-  (void) m_zmq_socket.recv (reply, zmq::recv_flags::none);
-  envActMsg.ParseFromArray(reply.data(), reply.size());
-
-  if (m_simEnd) {
-    // if sim end only rx ms and quit
-    return;
-  }
-
-  bool stopSim = envActMsg.stopsimreq();
-  if (stopSim) {
-    NS_LOG_DEBUG("---Stop requested: " << stopSim);
-    m_stopEnvRequested = true;
-    Simulator::Stop();
-    Simulator::Destroy ();
-    std::exit(0);
-  }
-
-  // first step after reset is called without actions, just to get current state
-  ns3opengym::DataContainer actDataContainerPbMsg = envActMsg.actdata();
-  Ptr<OpenGymDataContainer> actDataContainer = OpenGymDataContainer::CreateFromDataContainerPbMsg(actDataContainerPbMsg);
-  ExecuteActions(actDataContainer);
+  //float reward = GetReward();
+  //bool isGameOver = IsGameOver();
+  //std::string extraInfo = GetExtraInfo();
+  //
+  //ns3opengym::EnvStateMsg envStateMsg;
+  //// observation
+  //ns3opengym::DataContainer obsDataContainerPbMsg;
+  //if (obsDataContainer) {
+  //  obsDataContainerPbMsg = obsDataContainer->GetDataContainerPbMsg();
+  //  envStateMsg.mutable_obsdata()->CopyFrom(obsDataContainerPbMsg);
+  //}
+  //// reward
+  //envStateMsg.set_reward(reward);
+  //// game over
+  //envStateMsg.set_isgameover(false);
+  //if (isGameOver)
+  //{
+  //  envStateMsg.set_isgameover(true);
+  //  if (m_simEnd) {
+  //    envStateMsg.set_reason(ns3opengym::EnvStateMsg::SimulationEnd);
+  //  } else {
+  //    envStateMsg.set_reason(ns3opengym::EnvStateMsg::GameOver);
+  //  }
+  //}
+  //
+  //// extra info
+  //envStateMsg.set_info(extraInfo);
+  //
+  //// send env state msg to python
+  //zmq::message_t request(envStateMsg.ByteSize());;
+  //envStateMsg.SerializeToArray(request.data(), envStateMsg.ByteSize());
+  //m_zmq_socket.send (request, zmq::send_flags::none);
+  //
+  //// receive act msg form python
+  //ns3opengym::EnvActMsg envActMsg;
+  //zmq::message_t reply;
+  //(void) m_zmq_socket.recv (reply, zmq::recv_flags::none);
+  //envActMsg.ParseFromArray(reply.data(), reply.size());
+  //
+  //if (m_simEnd) {
+  //  // if sim end only rx ms and quit
+  //  return;
+  //}
+  //
+  //bool stopSim = envActMsg.stopsimreq();
+  //if (stopSim) {
+  //  NS_LOG_DEBUG("---Stop requested: " << stopSim);
+  //  m_stopEnvRequested = true;
+  //  Simulator::Stop();
+  //  Simulator::Destroy ();
+  //  std::exit(0);
+  //}
+  //
+  //// first step after reset is called without actions, just to get current state
+  //ns3opengym::DataContainer actDataContainerPbMsg = envActMsg.actdata();
+  //Ptr<OpenGymDataContainer> actDataContainer = OpenGymDataContainer::CreateFromDataContainerPbMsg(actDataContainerPbMsg);
+  //ExecuteActions(actDataContainer);
 
 }
 
