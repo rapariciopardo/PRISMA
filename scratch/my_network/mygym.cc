@@ -140,7 +140,7 @@ MyGymEnv::GetObservationSpace()
   uint32_t num_devs = m_node->GetNDevices();
   float low = 0.0;
   float high = 100.0; // max buffer size --> to change depending on actual value (access to defaul sim param)
-  std::vector<uint32_t> shape = {num_devs-1,}; // first dev is not p2p
+  std::vector<uint32_t> shape = {num_devs+1,}; // first dev is not p2p
   std::string dtype = TypeNameGet<uint32_t> ();
   Ptr<OpenGymBoxSpace> space = CreateObject<OpenGymBoxSpace> (low, high, shape, dtype);
   NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", GetObservationSpace: " << space);
@@ -174,8 +174,9 @@ MyGymEnv::GetObservation()
   NS_LOG_FUNCTION (this);
   printf("aqui obs\n");
   uint32_t num_devs = m_node->GetNDevices();
-  std::vector<uint32_t> shape = {num_devs};//{(num_devs-1)*50,};
+  std::vector<uint32_t> shape = {num_devs+1};//{(num_devs-1)*50,};
   Ptr<OpenGymBoxContainer<uint32_t> > box = CreateObject<OpenGymBoxContainer<uint32_t> >(shape);
+  box->AddValue(m_dest);
   for (uint32_t i=0 ; i<num_devs; i++){
     Ptr<NetDevice> netDev = m_node->GetDevice (i);
     //NS_LOG_UNCOND ("IsPointToPoint? : " << netDev->IsPointToPoint () << "");
@@ -307,9 +308,10 @@ MyGymEnv::CountPktInQueueEvent(Ptr<MyGymEnv> entity, Ptr<PointToPointNetDevice> 
         uint32_t n_bytes = add.CopyTo(buf_add);
         //add.CopyAllTo(add_buf, 8);
         NS_LOG_UNCOND("Match "<<add<<"    "<<n_bytes<<"    "<<(uint32_t)buf_add[5]);
-        for(int i=0;i<6;i++){
-          NS_LOG_UNCOND((uint32_t) buf_add[i]);
-        }
+        entity->m_dest = (uint32_t)buf_add[5];
+        //for(int i=0;i<6;i++){
+        //  NS_LOG_UNCOND((uint32_t) buf_add[i]);
+        //}
         break;
       }
     }
