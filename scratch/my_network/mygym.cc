@@ -229,10 +229,11 @@ MyGymEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
   NS_LOG_UNCOND ("MyExecuteActions: " << action);
   Ptr<OpenGymDiscreteContainer> discrete = DynamicCast<OpenGymDiscreteContainer>(action);
   NS_LOG_UNCOND ("MyExecuteActionsDiscrete: " << discrete);
-  uint32_t fwdDev = discrete->GetValue();
-  m_fwdDev_idx = fwdDev+1; // since Dev_idx = 0 is not a p2p net dev, we have to add one
-  
+  uint32_t m_fwdDev_idx = discrete->GetValue();
   NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", MyExecuteActions: " << m_fwdDev_idx);
+  Ptr<CsmaNetDevice> dev = DynamicCast<CsmaNetDevice>(m_node->GetDevice(m_fwdDev_idx));
+  NS_LOG_UNCOND(m_srcAddr<<"     "<<m_destAddr);
+  dev->SendFrom(m_pckt, m_srcAddr, m_destAddr, m_lengthType);
   return true;
 }
   
@@ -284,16 +285,28 @@ MyGymEnv::CountPktInQueueEvent(Ptr<MyGymEnv> entity, Ptr<PointToPointNetDevice> 
   void
   MyGymEnv::NotifyPktRcv(Ptr<MyGymEnv> entity, Ptr<Node> node, NetDeviceContainer* nd, Ptr<const Packet> packet)
   {
-    //uint8_t add_buf[8];
     uint8_t buf_add[6];
-    Address add;
+    
     EthernetHeader head;
-    Ptr<Packet> p = packet->Copy();
-    p->RemoveHeader(head);
     ArpHeader iph;
+
+    
+    Ptr<Packet> p = packet->Copy();
+
+    //Remove Mac Header
+    p->RemoveHeader(head);
+    entity->m_pckt = p->Copy();
+    entity->m_lengthType = head.GetLengthType();
+
+    //head.Print(std::cout);
+    
+    //Peeking IP Header
     p->PeekHeader(iph);
     //p->Print(std::cout);
     NS_LOG_UNCOND("AQUI "<<iph.GetDestinationIpv4Address());
+    
+    entity->m_srcAddr = iph.GetSourceHardwareAddress();
+
     //head.Print(std::cout);
     for(uint32_t i = 0;i<nd->GetN();i++){
       Ptr<NetDevice> dev = nd->Get(i);
@@ -302,13 +315,13 @@ MyGymEnv::CountPktInQueueEvent(Ptr<MyGymEnv> entity, Ptr<PointToPointNetDevice> 
       Ipv4InterfaceAddress ipv4_int_addr = ipv4->GetAddress (1, 0);
       Ipv4Address ip_addr = ipv4_int_addr.GetLocal ();
 
-      NS_LOG_UNCOND(ip_addr);
+      //NS_LOG_UNCOND(ip_addr);
       if(ip_addr == iph.GetDestinationIpv4Address()){
-        add = dev->GetAddress();
-        uint32_t n_bytes = add.CopyTo(buf_add);
-        //add.CopyAllTo(add_buf, 8);
-        NS_LOG_UNCOND("Match "<<add<<"    "<<n_bytes<<"    "<<(uint32_t)buf_add[5]);
+        entity->m_destAddr = dev->GetAddress();
+        entity->m_destAddr.CopyTo(buf_add);
         entity->m_dest = (uint32_t)buf_add[5];
+        NS_LOG_UNCOND("Match "<<entity->m_destAddr<<"    "<<entity->m_dest);
+        
         //for(int i=0;i<6;i++){
         //  NS_LOG_UNCOND((uint32_t) buf_add[i]);
         //}
@@ -316,9 +329,6 @@ MyGymEnv::CountPktInQueueEvent(Ptr<MyGymEnv> entity, Ptr<PointToPointNetDevice> 
       }
     }
     entity->Notify();
-
   }
-
-  
 
 } // ns3 namespace
