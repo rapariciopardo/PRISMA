@@ -194,10 +194,11 @@ float
 MyGymEnv::GetReward()
 {
   NS_LOG_FUNCTION (this);
-  //NS_LOG_UNCOND ("m_fwdDev_idx: " << m_fwdDev_idx);
+  NS_LOG_UNCOND ("m_fwdDev_idx: " << m_fwdDev_idx);
   uint32_t value = GetQueueLength (m_node, m_fwdDev_idx);
-  float reward = (float) value;
-  //NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", MyGetReward: " << reward);
+  float transmission_time = m_size/(m_packetRate*(1000/8));
+  float reward = transmission_time + transmission_time*(float) value;
+  NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", MyGetReward: " << reward);
   //NS_LOG_UNCOND ("Reward: Node with ID " << m_node->GetId() << ", net device with index " << m_fwdDev_idx << ", IF idx "<< (m_node->GetDevice(m_fwdDev_idx))->GetIfIndex() << ": New  queue size: " << reward << " packets");
   return reward;
 }
@@ -205,7 +206,7 @@ MyGymEnv::GetReward()
 std::string
 MyGymEnv::GetExtraInfo()
 {
-  NS_LOG_FUNCTION (this);
+  //NS_LOG_FUNCTION (this);
   std::string myInfo = "currentNodeId=";
   myInfo += std::to_string(m_node->GetId());
   myInfo += ", currentNetDevIdx";
@@ -218,7 +219,7 @@ MyGymEnv::GetExtraInfo()
   if (m_fwdDev_idx) {
     myInfo += std::to_string(m_fwdDev_idx);
   }
-  NS_LOG_UNCOND("Node: " << m_node->GetId() << ", MyGetExtraInfo: " << myInfo);
+  //NS_LOG_UNCOND("Node: " << m_node->GetId() << ", MyGetExtraInfo: " << myInfo);
   return myInfo;
 }
 
@@ -230,7 +231,7 @@ MyGymEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
   Ptr<OpenGymDiscreteContainer> discrete = DynamicCast<OpenGymDiscreteContainer>(action);
   NS_LOG_UNCOND ("MyExecuteActionsDiscrete: " << discrete);
   uint32_t m_fwdDev_idx = discrete->GetValue();
-  NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", MyExecuteActions: " << m_fwdDev_idx);
+  NS_LOG_UNCOND ("Node: " << m_node->GetId()-5 << ", MyExecuteActions: " << m_fwdDev_idx);
   Ptr<CsmaNetDevice> dev = DynamicCast<CsmaNetDevice>(m_node->GetDevice(m_fwdDev_idx));
   NS_LOG_UNCOND(m_srcAddr<<"     "<<m_destAddr);
   dev->SendFrom(m_pckt, m_srcAddr, m_destAddr, m_lengthType);
@@ -292,6 +293,8 @@ MyGymEnv::CountPktInQueueEvent(Ptr<MyGymEnv> entity, Ptr<PointToPointNetDevice> 
 
     
     Ptr<Packet> p = packet->Copy();
+    entity->m_size = p->GetSize();
+    NS_LOG_UNCOND(entity->m_size);
 
     //Remove Mac Header
     p->RemoveHeader(head);

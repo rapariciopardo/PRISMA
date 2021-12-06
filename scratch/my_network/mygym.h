@@ -79,6 +79,8 @@ private:
   Address m_destAddr;
   Ptr<Packet> m_pckt;
   uint16_t m_lengthType;
+  uint32_t m_size;
+  double m_packetRate = 500.0;
   //NetDeviceContainer m_list_p2pNetDevs;
   uint32_t m_fwdDev_idx;  // Last net device selected to forward the packet (last action)
   uint32_t m_lastEvDev_idx;  // Last net device triggering an event 
