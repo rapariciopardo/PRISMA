@@ -84,7 +84,6 @@ void printCoordinateArray (const char* description, vector<vector<double> > coor
 void printMatrix (const char* description, vector<vector<bool> > array);
 
 
-
 /*void DevicePacketsInQueueTrace (uint32_t oldValue, uint32_t newValue){
     std::cout  << "Time stamp: " << Simulator::Now () << ", Context: " << this <<   ", DevicePacketsInQueue: " << oldValue << " to " << newValue << std::endl;
 }*/
@@ -223,7 +222,7 @@ int main (int argc, char *argv[])
       Ptr<OpenGymInterface> openGymInterface = CreateObject<OpenGymInterface> (openGymPort + i);
        Ptr<MyGymEnv> myGymEnv;
       if (eventBasedEnv){
-        myGymEnv = CreateObject<MyGymEnv> (n); // event-driven step
+        myGymEnv = CreateObject<MyGymEnv> (n, n_nodes); // event-driven step
       } else {
         myGymEnv = CreateObject<MyGymEnv> (Seconds(envStepTime), n); // time-driven step
       }
