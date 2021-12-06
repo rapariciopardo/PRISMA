@@ -109,7 +109,7 @@ int main (int argc, char *argv[])
   uint32_t simSeed = 1;
   uint32_t openGymPort = 5555;
   uint32_t testArg = 0;
-  double simTime        = 3.00; //seconds
+  double simTime        = 10.00; //seconds
   double envStepTime = 0.1; //seconds, ns3gym env step time interval
   
   bool eventBasedEnv = true;
@@ -119,6 +119,7 @@ int main (int argc, char *argv[])
   double SinkStopTime   = 9.90001;
   double AppStartTime   = 2.0001;
   double AppStopTime    = 9.80001;
+
     
   CommandLine cmd;
   // required parameters for OpenGym interface
@@ -264,6 +265,7 @@ int main (int argc, char *argv[])
                 switch_nd.Add(n_devs.Get(0));
                 switch_nd.Add(n_devs.Get(1));
                 NS_LOG_INFO ("matrix element [" << i << "][" << j << "] is 1");
+                NS_LOG_UNCOND(n_devs.Get(0)->GetAddress()<<"     "<<n_devs.Get(1)->GetAddress());
               }
             else
               {
@@ -279,8 +281,9 @@ int main (int argc, char *argv[])
   for(uint32_t i=0;i<switch_nd.GetN();i++)
   {
     Ptr<CsmaNetDevice> dev_switch =DynamicCast<CsmaNetDevice> (switch_nd.Get(i)); //CreateObject<CsmaNetDevice> ();
-    NS_LOG_UNCOND(dev_switch->GetNode()->GetId()<<"     "<< dev_switch->GetNode()->GetNDevices());
+    NS_LOG_UNCOND(dev_switch->GetNode()->GetId()<<"     "<< dev_switch->GetNode()->GetNDevices()<<"    "<<dev_switch->GetAddress()<<"    "<<dev_switch->IsReceiveEnabled());
     dev_switch->TraceConnectWithoutContext("MacRx", MakeBoundCallback(&MyGymEnv::NotifyPktRcv, myGymEnvs[dev_switch->GetNode()->GetId()-n_nodes], dev_switch->GetNode(), &traffic_nd));
+    //dev_switch->SetPromiscReceiveCallback(MakeBoundCallback(&MyGymEnv::NotifyPktRcv, myGymEnvs[dev_switch->GetNode()->GetId()-n_nodes], dev_switch->GetNode(), &traffic_nd));
   }
 
   
@@ -370,24 +373,47 @@ int main (int argc, char *argv[])
               // same time. This rn is added to AppStartTime to have the sources
               // start at different time, however they will still send at the same rate.
               
-              Ptr<UniformRandomVariable> x = CreateObject<UniformRandomVariable> ();
-              x->SetAttribute ("Min", DoubleValue (0));
-              x->SetAttribute ("Max", DoubleValue (1));
-              double rn = x->GetValue ();
-              Ptr<Node> n = nodes_traffic.Get (j);
-              Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();
-              Ipv4InterfaceAddress ipv4_int_addr = ipv4->GetAddress (1, 0);
-              Ipv4Address ip_addr = ipv4_int_addr.GetLocal ();
-              NS_LOG_UNCOND(ipv4_int_addr);
-              OnOffHelper onoff ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]
-              //PacketSinkHelper onoff ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]              
-              onoff.SetConstantRate (DataRate (AppPacketRate));
-              ApplicationContainer apps = onoff.Install (nodes_traffic.Get (i));  // traffic sources are installed on all nodes
-              apps.Start (Seconds (AppStartTime + rn));
-              apps.Stop (Seconds (AppStopTime));
+              //Ptr<UniformRandomVariable> x = CreateObject<UniformRandomVariable> ();
+              //x->SetAttribute ("Min", DoubleValue (0));
+              //x->SetAttribute ("Max", DoubleValue (1));
+              //double rn = x->GetValue ();
+              //Ptr<Node> n = nodes_traffic.Get (j);
+              //Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();
+              //Ipv4InterfaceAddress ipv4_int_addr = ipv4->GetAddress (1, 0);
+              //Ipv4Address ip_addr = ipv4_int_addr.GetLocal ();
+              //NS_LOG_UNCOND(ipv4_int_addr);
+              //OnOffHelper onoff ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]
+              ////PacketSinkHelper onoff ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]              
+              //onoff.SetConstantRate (DataRate (AppPacketRate));
+              //ApplicationContainer apps = onoff.Install (nodes_traffic.Get (i));  // traffic sources are installed on all nodes
+              //apps.Start (Seconds (AppStartTime + rn));
+              //apps.Stop (Seconds (AppStopTime));
             }
         }
     }
+  
+  Ptr<UniformRandomVariable> x = CreateObject<UniformRandomVariable> ();
+  x->SetAttribute ("Min", DoubleValue (0));
+  x->SetAttribute ("Max", DoubleValue (1));
+  double rn = x->GetValue ();
+  Ptr<Node> n = nodes_traffic.Get (4);
+  Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();
+  Ipv4InterfaceAddress ipv4_int_addr = ipv4->GetAddress (1, 0);
+  Ipv4Address ip_addr = ipv4_int_addr.GetLocal ();
+  NS_LOG_UNCOND(ipv4_int_addr);
+  OnOffHelper onoff ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]
+  //PacketSinkHelper onoff ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]              
+  onoff.SetConstantRate (DataRate (AppPacketRate));
+  ApplicationContainer apps = onoff.Install (nodes_traffic.Get (2));  // traffic sources are installed on all nodes
+  apps.Start (Seconds (AppStartTime + rn));
+  apps.Stop (Seconds (AppStopTime));
+
+  //Ptr<Node> n_send = nodes_traffic.Get (4);
+  //Ptr<Node> n_recv = nodes_traffic.Get (1);
+  //
+  //n_send->GetDevice()
+
+
   NS_LOG_INFO ("Setup Packet Sinks.");
 
   Ipv4Address sinkAddr = Ipv4Address::GetAny();
