@@ -687,7 +687,7 @@ void
 CsmaNetDevice::Receive (Ptr<Packet> packet, Ptr<CsmaNetDevice> senderDevice)
 {
   NS_LOG_FUNCTION (packet << senderDevice);
-  NS_LOG_LOGIC ("UID is " << packet->GetUid ());
+  NS_LOG_LOGIC("UID is " << packet->GetUid ());
 
   //
   // We never forward up packets that we sent.  Real devices don't do this since
@@ -781,18 +781,23 @@ CsmaNetDevice::Receive (Ptr<Packet> packet, Ptr<CsmaNetDevice> senderDevice)
   if (header.GetDestination ().IsBroadcast ())
     {
       packetType = PACKET_BROADCAST;
+      //NS_LOG_UNCOND("Packet Broadcast");
+
     }
   else if (header.GetDestination ().IsGroup ())
     {
       packetType = PACKET_MULTICAST;
+      //NS_LOG_UNCOND("Packet Multicast");
     }
   else if (header.GetDestination () == m_address)
     {
-      packetType = PACKET_HOST;
+      NS_LOG_UNCOND("Packet Host");
+      //packetType = PACKET_HOST;
     }
   else
     {
-      packetType = PACKET_OTHERHOST;
+      NS_LOG_UNCOND("OTHER HOST");
+      //packetType = PACKET_OTHERHOST;
     }
 
   // 
