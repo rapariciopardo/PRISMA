@@ -152,6 +152,8 @@ MyGymEnv::GetGameOver()
 {
   NS_LOG_FUNCTION (this);
   bool isGameOver = false;
+  NS_LOG_UNCOND(m_node->GetId()<<"     "<<m_dest);
+  isGameOver = (m_node->GetId() == m_dest);
   //NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", MyGetGameOver: " << isGameOver);
   return isGameOver;
 }
@@ -198,7 +200,7 @@ MyGymEnv::GetReward()
   uint32_t value = GetQueueLength (m_node, m_fwdDev_idx);
   float transmission_time = m_size/(m_packetRate*(1000/8));
   float reward = transmission_time + transmission_time*(float) value;
-  NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", MyGetReward: " << reward);
+  NS_LOG_UNCOND ("Node: " << m_node->GetId()-4 << ", MyGetReward: " << reward);
   //NS_LOG_UNCOND ("Reward: Node with ID " << m_node->GetId() << ", net device with index " << m_fwdDev_idx << ", IF idx "<< (m_node->GetDevice(m_fwdDev_idx))->GetIfIndex() << ": New  queue size: " << reward << " packets");
   return reward;
 }
@@ -294,7 +296,7 @@ MyGymEnv::CountPktInQueueEvent(Ptr<MyGymEnv> entity, Ptr<PointToPointNetDevice> 
   void
   MyGymEnv::NotifyPktRcv(Ptr<MyGymEnv> entity, Ptr<Node> node, NetDeviceContainer* nd, Ptr<const Packet> packet)
   {
-    uint8_t buf_add[6];
+    //uint8_t buf_add[6];
     
     EthernetHeader head;
     ArpHeader iph;
@@ -335,9 +337,10 @@ MyGymEnv::CountPktInQueueEvent(Ptr<MyGymEnv> entity, Ptr<PointToPointNetDevice> 
 
       //NS_LOG_UNCOND(ip_addr);
       if(ip_addr == iph.GetDestinationIpv4Address()){
-        Address mac48_dest_addr = dev->GetAddress();
-        mac48_dest_addr.CopyTo(buf_add);
-        entity->m_dest = (uint32_t)buf_add[5];
+        //Address mac48_dest_addr = dev->GetAddress();
+        
+        //mac48_dest_addr.CopyTo(buf_add);
+        entity->m_dest = dev->GetNode()->GetId()+5;//(uint32_t)buf_add[5];
         NS_LOG_UNCOND("Match dest"<<entity->m_dest);
         
         //for(int i=0;i<6;i++){
