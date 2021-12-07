@@ -80,6 +80,7 @@ using namespace ns3;
 
 vector<vector<bool> > readNxNMatrix (std::string adj_mat_file_name);
 vector<vector<double> > readCordinatesFile (std::string node_coordinates_file_name);
+vector<string> readIntensityFile(std::string intensity_file_name);
 void printCoordinateArray (const char* description, vector<vector<double> > coord_array);
 void printMatrix (const char* description, vector<vector<bool> > array);
 
@@ -161,6 +162,7 @@ int main (int argc, char *argv[])
 
   std::string adj_mat_file_name ("scratch/my_network/adjacency_matrix.txt");
   std::string node_coordinates_file_name ("scratch/my_network/node_coordinates.txt");
+  std::string node_intensity_file_name("scratch/my_network/node_intensity.txt");
   //std::string adj_mat_file_name ("input/adjacency_matrix.txt");
   //std::string node_coordinates_file_name ("input/node_coordinates.txt");
 
@@ -184,6 +186,9 @@ int main (int argc, char *argv[])
 
   vector<vector<double> > coord_array;
   coord_array = readCordinatesFile (node_coordinates_file_name);
+
+  vector<std::string> intensity_array;
+  intensity_array = readIntensityFile (node_intensity_file_name);
 
   // Optionally display node co-ordinates file
   // printCoordinateArray (node_coordinates_file_name.c_str (),coord_array);
@@ -281,8 +286,8 @@ int main (int argc, char *argv[])
   {
     Ptr<CsmaNetDevice> dev_switch =DynamicCast<CsmaNetDevice> (switch_nd.Get(i)); //CreateObject<CsmaNetDevice> ();
     NS_LOG_UNCOND(dev_switch->GetNode()->GetId()<<"     "<< dev_switch->GetNode()->GetNDevices()<<"    "<<dev_switch->GetAddress()<<"    "<<dev_switch->IsReceiveEnabled());
-    Ptr<CsmaChannel> dev_channel = DynamicCast<CsmaChannel>(dev_switch->GetChannel());
-    NS_LOG_UNCOND("Data Rate: "<<dev_channel->GetDataRate());
+    //Ptr<CsmaChannel> dev_channel = DynamicCast<CsmaChannel>(dev_switch->GetChannel());
+    //NS_LOG_UNCOND("Data Rate: "<<dev_channel->GetDataRate());
     dev_switch->TraceConnectWithoutContext("MacRx", MakeBoundCallback(&MyGymEnv::NotifyPktRcv, myGymEnvs[dev_switch->GetNode()->GetId()-n_nodes], dev_switch->GetNode(), &traffic_nd));
     //dev_switch->SetPromiscReceiveCallback(MakeBoundCallback(&MyGymEnv::NotifyPktRcv, myGymEnvs[dev_switch->GetNode()->GetId()-n_nodes], dev_switch->GetNode(), &traffic_nd));
   }
@@ -374,43 +379,44 @@ int main (int argc, char *argv[])
               // same time. This rn is added to AppStartTime to have the sources
               // start at different time, however they will still send at the same rate.
               
-              //Ptr<UniformRandomVariable> x = CreateObject<UniformRandomVariable> ();
-              //x->SetAttribute ("Min", DoubleValue (0));
-              //x->SetAttribute ("Max", DoubleValue (1));
-              //double rn = x->GetValue ();
-              //Ptr<Node> n = nodes_traffic.Get (j);
-              //Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();
-              //Ipv4InterfaceAddress ipv4_int_addr = ipv4->GetAddress (1, 0);
-              //Ipv4Address ip_addr = ipv4_int_addr.GetLocal ();
-              //NS_LOG_UNCOND(ipv4_int_addr);
-              //OnOffHelper onoff ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]
-              ////PacketSinkHelper onoff ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]              
-              //onoff.SetConstantRate (DataRate (AppPacketRate));
-              //ApplicationContainer apps = onoff.Install (nodes_traffic.Get (i));  // traffic sources are installed on all nodes
-              //apps.Start (Seconds (AppStartTime + rn));
-              //apps.Stop (Seconds (AppStopTime));
+              Ptr<UniformRandomVariable> x = CreateObject<UniformRandomVariable> ();
+              x->SetAttribute ("Min", DoubleValue (0));
+              x->SetAttribute ("Max", DoubleValue (1));
+              double rn = x->GetValue ();
+              Ptr<Node> n = nodes_traffic.Get (j);
+              Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();
+              Ipv4InterfaceAddress ipv4_int_addr = ipv4->GetAddress (1, 0);
+              Ipv4Address ip_addr = ipv4_int_addr.GetLocal ();
+              NS_LOG_UNCOND(ipv4_int_addr);
+              NS_LOG_UNCOND(intensity_array[i]);
+              OnOffHelper onoff ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]
+              //PacketSinkHelper onoff ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]              
+              onoff.SetConstantRate (DataRate (intensity_array[i]));
+              ApplicationContainer apps = onoff.Install (nodes_traffic.Get (i));  // traffic sources are installed on all nodes
+              apps.Start (Seconds (AppStartTime + rn));
+              apps.Stop (Seconds (AppStopTime));
             }
         }
     }
   
-  Ptr<UniformRandomVariable> x = CreateObject<UniformRandomVariable> ();
-  x->SetAttribute ("Min", DoubleValue (0));
-  x->SetAttribute ("Max", DoubleValue (1));
-  double rn = x->GetValue ();
-  Ptr<Node> n = nodes_traffic.Get (4);
-  Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();
-  Ipv4InterfaceAddress ipv4_int_addr = ipv4->GetAddress (1, 0);
-  Ipv4Address ip_addr = ipv4_int_addr.GetLocal ();
-  NS_LOG_UNCOND(ipv4_int_addr);
-  OnOffHelper onoff ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]
-  //PacketSinkHelper onoff ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]              
-  onoff.SetConstantRate (DataRate (AppPacketRate));
-  onoff.SetAttribute("OffTime", StringValue("ns3::ExponentialRandomVariable[Mean=1.0|Bound=1.0]"));
-  NS_LOG_UNCOND("Aqui");
-  onoff.SetAttribute("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1.0]"));
-  ApplicationContainer apps = onoff.Install (nodes_traffic.Get (2));  // traffic sources are installed on all nodes
-  apps.Start (Seconds (AppStartTime + rn));
-  apps.Stop (Seconds (AppStopTime));
+  //Ptr<UniformRandomVariable> x = CreateObject<UniformRandomVariable> ();
+  //x->SetAttribute ("Min", DoubleValue (0));
+  //x->SetAttribute ("Max", DoubleValue (1));
+  //double rn = x->GetValue ();
+  //Ptr<Node> n = nodes_traffic.Get (4);
+  //Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();
+  //Ipv4InterfaceAddress ipv4_int_addr = ipv4->GetAddress (1, 0);
+  //Ipv4Address ip_addr = ipv4_int_addr.GetLocal ();
+  //NS_LOG_UNCOND(ipv4_int_addr);
+  //OnOffHelper onoff ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]
+  ////PacketSinkHelper onoff ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]              
+  //onoff.SetConstantRate (DataRate (AppPacketRate));
+  //onoff.SetAttribute("OffTime", StringValue("ns3::ExponentialRandomVariable[Mean=8.0|Bound=8.0]"));
+  //NS_LOG_UNCOND("Aqui");
+  //onoff.SetAttribute("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1.0]"));
+  //ApplicationContainer apps = onoff.Install (nodes_traffic.Get (2));  // traffic sources are installed on all nodes
+  //apps.Start (Seconds (AppStartTime + rn));
+  //apps.Stop (Seconds (AppStopTime));
 
   //Ptr<Node> n_send = nodes_traffic.Get (4);
   //Ptr<Node> n_recv = nodes_traffic.Get (1);
@@ -620,6 +626,56 @@ vector<vector<double> > readCordinatesFile (std::string node_coordinates_file_na
     }
   node_coordinates_file.close ();
   return coord_array;
+
+}
+
+
+vector<std::string> readIntensityFile (std::string intensity_file_name)
+{
+  ifstream node_intensity_file;
+  node_intensity_file.open (intensity_file_name.c_str (), ios::in);
+  if (node_intensity_file.fail ())
+    {
+      NS_FATAL_ERROR ("File " << intensity_file_name.c_str () << " not found");
+    }
+  vector<std::string> intensity_array;
+  int m = 0;
+
+  while (!node_intensity_file.eof ())
+    {
+      string line;
+      getline (node_intensity_file, line);
+
+      if (line == "")
+        {
+          NS_LOG_WARN ("WARNING: Ignoring blank row: " << m);
+          break;
+        }
+
+      istringstream iss (line);
+      std::string intensity;
+      //vector<double> row;
+      int n = 0;
+      while (iss >> intensity)
+        {
+          //row.push_back (coordinate);
+          n++;
+        }
+
+      if (n != 1)
+        {
+          NS_LOG_ERROR ("ERROR: Number of elements at line#" << m << " is "  << n << " which is not equal to 2 for node coordinates file");
+          exit (1);
+        }
+
+      else
+        {
+          intensity_array.push_back (intensity);
+        }
+      m++;
+    }
+  node_intensity_file.close ();
+  return intensity_array;
 
 }
 
