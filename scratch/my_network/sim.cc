@@ -281,6 +281,8 @@ int main (int argc, char *argv[])
   {
     Ptr<CsmaNetDevice> dev_switch =DynamicCast<CsmaNetDevice> (switch_nd.Get(i)); //CreateObject<CsmaNetDevice> ();
     NS_LOG_UNCOND(dev_switch->GetNode()->GetId()<<"     "<< dev_switch->GetNode()->GetNDevices()<<"    "<<dev_switch->GetAddress()<<"    "<<dev_switch->IsReceiveEnabled());
+    Ptr<CsmaChannel> dev_channel = DynamicCast<CsmaChannel>(dev_switch->GetChannel());
+    NS_LOG_UNCOND("Data Rate: "<<dev_channel->GetDataRate());
     dev_switch->TraceConnectWithoutContext("MacRx", MakeBoundCallback(&MyGymEnv::NotifyPktRcv, myGymEnvs[dev_switch->GetNode()->GetId()-n_nodes], dev_switch->GetNode(), &traffic_nd));
     //dev_switch->SetPromiscReceiveCallback(MakeBoundCallback(&MyGymEnv::NotifyPktRcv, myGymEnvs[dev_switch->GetNode()->GetId()-n_nodes], dev_switch->GetNode(), &traffic_nd));
   }
@@ -403,6 +405,8 @@ int main (int argc, char *argv[])
   OnOffHelper onoff ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]
   //PacketSinkHelper onoff ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]              
   onoff.SetConstantRate (DataRate (AppPacketRate));
+  onoff.SetAttribute("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1.0]"));
+  onoff.SetAttribute("OffTime", StringValue("ns3::ConstantRandomVariable[Constant=0.0]"));
   ApplicationContainer apps = onoff.Install (nodes_traffic.Get (2));  // traffic sources are installed on all nodes
   apps.Start (Seconds (AppStartTime + rn));
   apps.Stop (Seconds (AppStopTime));
