@@ -38,7 +38,6 @@
 
 namespace ns3 {
 uint32_t MyGymEnv::m_n_nodes;
-uint32_t MyGymEnv::m_counter;
 
 
 NS_LOG_COMPONENT_DEFINE ("MyGymEnv");
@@ -68,7 +67,6 @@ MyGymEnv::MyGymEnv (Ptr<Node> node, uint32_t numberOfNodes, uint64_t packetRate)
   m_packetRate = packetRate;
   m_n_nodes = numberOfNodes;
   m_node = node;
-  m_counter = 0;
   m_lastEvNumPktsInQueue = 0;
   m_lastEvNode = 0;
   m_lastEvDev_idx = 1;
@@ -158,9 +156,9 @@ MyGymEnv::GetGameOver()
   NS_LOG_FUNCTION (this);
   bool isGameOver = false;
   NS_LOG_UNCOND(m_node->GetId()<<"     "<<m_dest);
-  if (m_node->GetId() == m_dest) m_counter++;
+  
 
-  isGameOver = (m_counter==m_n_nodes);
+  isGameOver = (m_dest==m_node->GetId());
   //NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", MyGetGameOver: " << isGameOver);
   return isGameOver;
 }
