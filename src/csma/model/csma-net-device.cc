@@ -791,13 +791,13 @@ CsmaNetDevice::Receive (Ptr<Packet> packet, Ptr<CsmaNetDevice> senderDevice)
     }
   else if (header.GetDestination () == m_address)
     {
-      NS_LOG_UNCOND("Packet Host");
-      //packetType = PACKET_HOST;
+      //NS_LOG_UNCOND("Packet Host");
+      packetType = PACKET_HOST;
     }
   else
     {
-      NS_LOG_UNCOND("OTHER HOST");
-      //packetType = PACKET_OTHERHOST;
+      //NS_LOG_UNCOND("OTHER HOST");
+      packetType = PACKET_OTHERHOST;
     }
 
   // 
