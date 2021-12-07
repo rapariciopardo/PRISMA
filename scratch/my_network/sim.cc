@@ -405,8 +405,9 @@ int main (int argc, char *argv[])
   OnOffHelper onoff ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]
   //PacketSinkHelper onoff ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]              
   onoff.SetConstantRate (DataRate (AppPacketRate));
+  onoff.SetAttribute("OffTime", StringValue("ns3::ExponentialRandomVariable[Mean=1.0|Bound=1.0]"));
+  NS_LOG_UNCOND("Aqui");
   onoff.SetAttribute("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1.0]"));
-  onoff.SetAttribute("OffTime", StringValue("ns3::ConstantRandomVariable[Constant=0.0]"));
   ApplicationContainer apps = onoff.Install (nodes_traffic.Get (2));  // traffic sources are installed on all nodes
   apps.Start (Seconds (AppStartTime + rn));
   apps.Stop (Seconds (AppStopTime));
