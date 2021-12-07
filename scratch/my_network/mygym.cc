@@ -316,7 +316,7 @@ MyGymEnv::CountPktInQueueEvent(Ptr<MyGymEnv> entity, Ptr<PointToPointNetDevice> 
     entity->m_destAddr = head.GetDestination();
     //entity->m_destAddr.CopyTo(buf_add);
     //entity->m_dest = (uint32_t)buf_add[5];
-    NS_LOG_UNCOND("Destination: "<<entity->m_destAddr);
+    //NS_LOG_UNCOND("Destination: "<<entity->m_destAddr);
         
     //head.Print(std::cout);
     
@@ -325,7 +325,7 @@ MyGymEnv::CountPktInQueueEvent(Ptr<MyGymEnv> entity, Ptr<PointToPointNetDevice> 
     //Peeking IP Header
     p->PeekHeader(iph);
     //p->Print(std::cout);
-    NS_LOG_UNCOND("Dest/Src Ip Addr "<<iph.GetDestinationIpv4Address()<<"    "<<iph.GetSourceIpv4Address());
+    NS_LOG_UNCOND("Src/dest Ip Addr "<<iph.GetSourceIpv4Address()<<"    "<<iph.GetDestinationIpv4Address());
     
     //entity->m_srcAddr = iph.GetSourceHardwareAddress();
 

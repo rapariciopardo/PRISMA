@@ -1,0 +1,5 @@
+500Kbps
+400Kbps
+350Kbps
+450Kbps
+520Kbps
