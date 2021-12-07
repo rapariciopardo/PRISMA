@@ -44,7 +44,7 @@ class MyGymEnv : public OpenGymEnv
 {
 public:
   MyGymEnv ();
-  MyGymEnv (Ptr<Node> node, uint32_t numberOfNodes);
+  MyGymEnv (Ptr<Node> node, uint32_t numberOfNodes, uint64_t packetRate);
   MyGymEnv (Time stepTime, Ptr<Node> node);
   virtual ~MyGymEnv ();
   static TypeId GetTypeId (void);
@@ -76,6 +76,7 @@ private:
   Ptr<Node> m_node;
   uint32_t m_dest;
   static uint32_t m_n_nodes;
+  static uint32_t m_counter;
   Address m_srcAddr;
   Address m_destAddr;
   Ptr<Packet> m_pckt;

@@ -38,6 +38,7 @@
 
 namespace ns3 {
 uint32_t MyGymEnv::m_n_nodes;
+uint32_t MyGymEnv::m_counter;
 
 
 NS_LOG_COMPONENT_DEFINE ("MyGymEnv");
@@ -60,12 +61,14 @@ MyGymEnv::MyGymEnv ()
     //m_rxPktNum = 0;
 }
   
-MyGymEnv::MyGymEnv (Ptr<Node> node, uint32_t numberOfNodes)
+MyGymEnv::MyGymEnv (Ptr<Node> node, uint32_t numberOfNodes, uint64_t packetRate)
 {
   NS_LOG_FUNCTION (this);
   //NetDeviceContainer m_list_p2pNetDevs = list_p2pNetDevs;
+  m_packetRate = packetRate;
   m_n_nodes = numberOfNodes;
   m_node = node;
+  m_counter = 0;
   m_lastEvNumPktsInQueue = 0;
   m_lastEvNode = 0;
   m_lastEvDev_idx = 1;
@@ -155,7 +158,9 @@ MyGymEnv::GetGameOver()
   NS_LOG_FUNCTION (this);
   bool isGameOver = false;
   NS_LOG_UNCOND(m_node->GetId()<<"     "<<m_dest);
-  isGameOver = (m_node->GetId() == m_dest);
+  if (m_node->GetId() == m_dest) m_counter++;
+
+  isGameOver = (m_counter==m_n_nodes);
   //NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", MyGetGameOver: " << isGameOver);
   return isGameOver;
 }
@@ -200,7 +205,7 @@ MyGymEnv::GetReward()
   NS_LOG_FUNCTION (this);
   NS_LOG_UNCOND ("m_fwdDev_idx: " << m_fwdDev_idx);
   uint32_t value = GetQueueLength (m_node, m_fwdDev_idx);
-  float transmission_time = m_size/(m_packetRate*(1000/8));
+  float transmission_time = m_size/(m_packetRate*(1/8));
   float reward = transmission_time + transmission_time*(float) value;
   NS_LOG_UNCOND ("Node: " << m_node->GetId()-(m_n_nodes-1) << ", MyGetReward: " << reward);
   //NS_LOG_UNCOND ("Reward: Node with ID " << m_node->GetId() << ", net device with index " << m_fwdDev_idx << ", IF idx "<< (m_node->GetDevice(m_fwdDev_idx))->GetIfIndex() << ": New  queue size: " << reward << " packets");
