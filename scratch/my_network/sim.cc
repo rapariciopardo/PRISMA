@@ -222,12 +222,15 @@ int main (int argc, char *argv[])
 
   for (int i = 0; i < n_nodes; i++)
     {
+      std::string packetRate = intensity_array[i];
+      uint64_t packetRateFloat= DataRate(packetRate).GetBitRate();
+      NS_LOG_UNCOND(packetRateFloat);
       Ptr<Node> n = nodes_switch.Get (i); // ref node
       //nodeOpenGymPort = openGymPort + i;
       Ptr<OpenGymInterface> openGymInterface = CreateObject<OpenGymInterface> (openGymPort + i);
        Ptr<MyGymEnv> myGymEnv;
       if (eventBasedEnv){
-        myGymEnv = CreateObject<MyGymEnv> (n, n_nodes); // event-driven step
+        myGymEnv = CreateObject<MyGymEnv> (n, n_nodes, packetRateFloat); // event-driven step
       } else {
         myGymEnv = CreateObject<MyGymEnv> (Seconds(envStepTime), n); // time-driven step
       }
