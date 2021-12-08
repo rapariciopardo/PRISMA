@@ -296,7 +296,7 @@ void RandomGenerator::SendPacket ()
   m_totBytes += m_pktSize;
   Address localAddress;
   m_socket->GetSockName (localAddress);
-  NS_LOG_UNCOND("BIT RATE-------------------------------"<<m_cbrRate);
+  NS_LOG_UNCOND("BIT RATE-------------------------------"<<m_cbrRate<<"    "<<InetSocketAddress::ConvertFrom(m_peer).GetIpv4 ());
   if (InetSocketAddress::IsMatchingType (m_peer))
     {
       NS_LOG_INFO ("At time " << Simulator::Now ().GetSeconds ()
