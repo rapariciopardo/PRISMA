@@ -62,7 +62,7 @@ RandomGenerator::GetTypeId (void)
                    MakeDataRateChecker ())
     .AddAttribute ("PacketSize", "The size of packets sent in on state",
                    UintegerValue (512),
-                   MakeUintegerAccessor (&RandomGenerator::m_pktSize),
+                   MakeUintegerAccessor (&RandomGenerator::m_pktSizeMean),
                    MakeUintegerChecker<uint32_t> (1))
     .AddAttribute ("Remote", "The address of the destination",
                    AddressValue (),
@@ -246,14 +246,17 @@ void RandomGenerator::ScheduleNextTx ()
 
   if (m_maxBytes == 0 || m_totBytes < m_maxBytes)
     {
-           
+      Ptr<ExponentialRandomVariable> ev_size = CreateObject<ExponentialRandomVariable> ();
+      ev_size->SetAttribute ("Mean", DoubleValue (m_pktSizeMean));
+      m_pktSize = (uint32_t) ev_size->GetValue();
+      NS_LOG_UNCOND("Packet Size: "<<m_pktSize);
       uint32_t bits = m_pktSize * 8 - m_residualBits;
-      NS_LOG_LOGIC ("bits = " << bits);
-      Ptr<ExponentialRandomVariable> ev = CreateObject<ExponentialRandomVariable> ();
-      ev->SetAttribute ("Mean", DoubleValue (bits /
+      //NS_LOG_UNCOND ("bits = " << bits);
+      Ptr<ExponentialRandomVariable> ev_rate = CreateObject<ExponentialRandomVariable> ();
+      ev_rate->SetAttribute ("Mean", DoubleValue (bits /
                               static_cast<double>(m_cbrRate.GetBitRate ())));
       //ev->SetAttribute ("Bound", DoubleValue (totalTime)); 
-      double delay = ev->GetValue();
+      double delay = ev_rate->GetValue();
       NS_LOG_UNCOND("DELAY:     "<<delay);
       Time nextTime (Seconds (delay)); // Time till next packet
       NS_LOG_LOGIC ("nextTime = " << nextTime);
@@ -296,7 +299,7 @@ void RandomGenerator::SendPacket ()
   m_totBytes += m_pktSize;
   Address localAddress;
   m_socket->GetSockName (localAddress);
-  NS_LOG_UNCOND("BIT RATE-------------------------------"<<m_cbrRate<<"    "<<InetSocketAddress::ConvertFrom(m_peer).GetIpv4 ());
+  //NS_LOG_UNCOND("BIT RATE-------------------------------"<<m_cbrRate<<"    "<<InetSocketAddress::ConvertFrom(m_peer).GetIpv4 ());
   if (InetSocketAddress::IsMatchingType (m_peer))
     {
       NS_LOG_INFO ("At time " << Simulator::Now ().GetSeconds ()
