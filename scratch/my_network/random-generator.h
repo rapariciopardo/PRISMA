@@ -156,6 +156,7 @@ private:
   DataRate        m_cbrRate;      //!< Rate that data is generated
   DataRate        m_cbrRateFailSafe;      //!< Rate that data is generated (check copy)
   uint32_t        m_pktSize;      //!< Size of packets
+  uint32_t        m_pktSizeMean;
   uint32_t        m_residualBits; //!< Number of generated, but not sent, bits
   Time            m_lastStartTime; //!< Time last packet sent
   uint64_t        m_maxBytes;     //!< Limit total number of bytes sent
