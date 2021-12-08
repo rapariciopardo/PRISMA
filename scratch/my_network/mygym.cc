@@ -309,7 +309,7 @@ MyGymEnv::CountPktInQueueEvent(Ptr<MyGymEnv> entity, Ptr<PointToPointNetDevice> 
     
     Ptr<Packet> p = packet->Copy();
     entity->m_size = p->GetSize();
-    NS_LOG_UNCOND("Node "<<node->GetId()-(m_n_nodes-1));
+    NS_LOG_UNCOND("Node "<<entity->m_node->GetId()-(m_n_nodes-1));
 
     //Remove Mac Header
     p->RemoveHeader(head);
