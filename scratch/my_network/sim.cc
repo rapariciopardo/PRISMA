@@ -222,14 +222,17 @@ int main (int argc, char *argv[])
   std::vector<Ptr<OpenGymInterface> > myOpenGymInterfaces;
   std::vector<Ptr<MyGymEnv> > myGymEnvs;
 
+  uint64_t linkRateValue= DataRate(LinkRate).GetBitRate();
+
   for (int i = 0; i < n_nodes; i++)
     {
+
       Ptr<Node> n = nodes_switch.Get (i); // ref node
       //nodeOpenGymPort = openGymPort + i;
       Ptr<OpenGymInterface> openGymInterface = CreateObject<OpenGymInterface> (openGymPort + i);
        Ptr<MyGymEnv> myGymEnv;
       if (eventBasedEnv){
-        myGymEnv = CreateObject<MyGymEnv> (n, n_nodes); // event-driven step
+        myGymEnv = CreateObject<MyGymEnv> (n, n_nodes, linkRateValue); // event-driven step
       } else {
         myGymEnv = CreateObject<MyGymEnv> (Seconds(envStepTime), n); // time-driven step
       }
@@ -366,7 +369,6 @@ int main (int argc, char *argv[])
   // ---------- Create n*(n-1) CBR Flows -------------------------------------
 
   
-
   NS_LOG_INFO ("Setup CBR Traffic Sources.");
   
   for (int i = 0; i < n_nodes; i++)

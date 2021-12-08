@@ -44,7 +44,7 @@ class MyGymEnv : public OpenGymEnv
 {
 public:
   MyGymEnv ();
-  MyGymEnv (Ptr<Node> node, uint32_t numberOfNodes);
+  MyGymEnv (Ptr<Node> node, uint32_t numberOfNodes, uint64_t linkRateValue);
   MyGymEnv (Time stepTime, Ptr<Node> node);
   virtual ~MyGymEnv ();
   static TypeId GetTypeId (void);
@@ -81,7 +81,7 @@ private:
   Ptr<Packet> m_pckt;
   uint16_t m_lengthType;
   uint32_t m_size;
-  double m_packetRate = 500.0;
+  float m_packetRate = 500.0;
   //NetDeviceContainer m_list_p2pNetDevs;
   uint32_t m_fwdDev_idx;  // Last net device selected to forward the packet (last action)
   uint32_t m_lastEvDev_idx;  // Last net device triggering an event 
