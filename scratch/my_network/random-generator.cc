@@ -36,6 +36,7 @@
 #include "ns3/socket-factory.h"
 #include "ns3/packet.h"
 #include "ns3/uinteger.h"
+#include "ns3/double.h"
 #include "ns3/trace-source-accessor.h"
 #include "random-generator.h"
 #include "ns3/udp-socket-factory.h"
@@ -186,7 +187,8 @@ void RandomGenerator::StartApplication () // Called at time specified by Start
   // If we are not yet connected, there is nothing to do here
   // The ConnectionComplete upcall will start timers at that time
   //if (!m_connected) return;
-  ScheduleStartEvent ();
+  //ScheduleStartEvent ();
+  StartSending();
 }
 
 void RandomGenerator::StopApplication () // Called at time specified by Stop
@@ -229,13 +231,13 @@ void RandomGenerator::StartSending ()
   //ScheduleStopEvent ();
 }
 
-void RandomGenerator::StopSending ()
-{
-  NS_LOG_FUNCTION (this);
-  CancelEvents ();
-
-  ScheduleStartEvent ();
-}
+//void RandomGenerator::StopSending ()
+//{
+//  NS_LOG_FUNCTION (this);
+//  CancelEvents ();
+//
+//  ScheduleStartEvent ();
+//}
 
 // Private helpers
 void RandomGenerator::ScheduleNextTx ()
@@ -244,10 +246,16 @@ void RandomGenerator::ScheduleNextTx ()
 
   if (m_maxBytes == 0 || m_totBytes < m_maxBytes)
     {
+           
       uint32_t bits = m_pktSize * 8 - m_residualBits;
       NS_LOG_LOGIC ("bits = " << bits);
-      Time nextTime (Seconds (bits /
-                              static_cast<double>(m_cbrRate.GetBitRate ()))); // Time till next packet
+      Ptr<ExponentialRandomVariable> ev = CreateObject<ExponentialRandomVariable> ();
+      ev->SetAttribute ("Mean", DoubleValue (bits /
+                              static_cast<double>(m_cbrRate.GetBitRate ())));
+      //ev->SetAttribute ("Bound", DoubleValue (totalTime)); 
+      double delay = ev->GetValue();
+      NS_LOG_UNCOND("DELAY:     "<<delay);
+      Time nextTime (Seconds (delay)); // Time till next packet
       NS_LOG_LOGIC ("nextTime = " << nextTime);
       m_sendEvent = Simulator::Schedule (nextTime,
                                          &RandomGenerator::SendPacket, this);
@@ -258,23 +266,23 @@ void RandomGenerator::ScheduleNextTx ()
     }
 }
 
-void RandomGenerator::ScheduleStartEvent ()
-{  // Schedules the event to start sending data (switch to the "On" state)
-  NS_LOG_FUNCTION (this);
+//void RandomGenerator::ScheduleStartEvent ()
+//{  // Schedules the event to start sending data (switch to the "On" state)
+//  NS_LOG_FUNCTION (this);
+//
+//  Time offInterval = Seconds (m_offTime->GetValue ());
+//  NS_LOG_LOGIC ("start at " << offInterval);
+//  m_startStopEvent = Simulator::Schedule (offInterval, &RandomGenerator::StartSending, this);
+//}
 
-  Time offInterval = Seconds (m_offTime->GetValue ());
-  NS_LOG_LOGIC ("start at " << offInterval);
-  m_startStopEvent = Simulator::Schedule (offInterval, &RandomGenerator::StartSending, this);
-}
-
-void RandomGenerator::ScheduleStopEvent ()
-{  // Schedules the event to stop sending data (switch to "Off" state)
-  NS_LOG_FUNCTION (this);
-
-  Time onInterval = Seconds (m_onTime->GetValue ());
-  NS_LOG_LOGIC ("stop at " << onInterval);
-  m_startStopEvent = Simulator::Schedule (onInterval, &RandomGenerator::StopSending, this);
-}
+//void RandomGenerator::ScheduleStopEvent ()
+//{  // Schedules the event to stop sending data (switch to "Off" state)
+//  NS_LOG_FUNCTION (this);
+//
+//  Time onInterval = Seconds (m_onTime->GetValue ());
+//  NS_LOG_LOGIC ("stop at " << onInterval);
+//  m_startStopEvent = Simulator::Schedule (onInterval, &RandomGenerator::StopSending, this);
+//}
 
 
 void RandomGenerator::SendPacket ()
