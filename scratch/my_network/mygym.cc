@@ -60,11 +60,10 @@ MyGymEnv::MyGymEnv ()
     //m_rxPktNum = 0;
 }
   
-MyGymEnv::MyGymEnv (Ptr<Node> node, uint32_t numberOfNodes, uint64_t packetRate)
+MyGymEnv::MyGymEnv (Ptr<Node> node, uint32_t numberOfNodes)
 {
   NS_LOG_FUNCTION (this);
   //NetDeviceContainer m_list_p2pNetDevs = list_p2pNetDevs;
-  m_packetRate = packetRate;
   m_n_nodes = numberOfNodes;
   m_node = node;
   m_lastEvNumPktsInQueue = 0;
@@ -203,8 +202,8 @@ MyGymEnv::GetReward()
   NS_LOG_FUNCTION (this);
   NS_LOG_UNCOND ("m_fwdDev_idx: " << m_fwdDev_idx);
   uint32_t value = GetQueueLength (m_node, m_fwdDev_idx);
-  float transmission_time = m_size/(m_packetRate*(1/8));
-  float reward = transmission_time + transmission_time*(float) value;
+  //float transmission_time = m_size/(m_packetRate*(1/8));
+  float reward = (float) value; //transmission_time + transmission_time*(float) value;
   NS_LOG_UNCOND ("Node: " << m_node->GetId()-(m_n_nodes-1) << ", MyGetReward: " << reward);
   //NS_LOG_UNCOND ("Reward: Node with ID " << m_node->GetId() << ", net device with index " << m_fwdDev_idx << ", IF idx "<< (m_node->GetDevice(m_fwdDev_idx))->GetIfIndex() << ": New  queue size: " << reward << " packets");
   return reward;
