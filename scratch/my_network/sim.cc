@@ -52,6 +52,8 @@
 #include "ns3/internet-module.h"
 #include "ns3/point-to-point-module.h"
 #include "ns3/applications-module.h"
+#include "scratch/my_network/random-generator.h"
+#include "scratch/my_network/random-helper.h"
 #include "ns3/global-route-manager.h"
 #include "ns3/mobility-module.h"
 #include "ns3/netanim-module.h"
@@ -382,44 +384,44 @@ int main (int argc, char *argv[])
               // same time. This rn is added to AppStartTime to have the sources
               // start at different time, however they will still send at the same rate.
               
-              Ptr<UniformRandomVariable> x = CreateObject<UniformRandomVariable> ();
-              x->SetAttribute ("Min", DoubleValue (0));
-              x->SetAttribute ("Max", DoubleValue (1));
-              double rn = x->GetValue ();
-              Ptr<Node> n = nodes_traffic.Get (j);
-              Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();
-              Ipv4InterfaceAddress ipv4_int_addr = ipv4->GetAddress (1, 0);
-              Ipv4Address ip_addr = ipv4_int_addr.GetLocal ();
-              NS_LOG_UNCOND(ipv4_int_addr);
-              NS_LOG_UNCOND(intensity_array[i]);
-              OnOffHelper onoff ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]
-              //PacketSinkHelper onoff ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]              
-              onoff.SetConstantRate (DataRate (intensity_array[i]));
-              ApplicationContainer apps = onoff.Install (nodes_traffic.Get (i));  // traffic sources are installed on all nodes
-              apps.Start (Seconds (AppStartTime + rn));
-              apps.Stop (Seconds (AppStopTime));
+              //Ptr<UniformRandomVariable> x = CreateObject<UniformRandomVariable> ();
+              //x->SetAttribute ("Min", DoubleValue (0));
+              //x->SetAttribute ("Max", DoubleValue (1));
+              //double rn = x->GetValue ();
+              //Ptr<Node> n = nodes_traffic.Get (j);
+              //Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();
+              //Ipv4InterfaceAddress ipv4_int_addr = ipv4->GetAddress (1, 0);
+              //Ipv4Address ip_addr = ipv4_int_addr.GetLocal ();
+              //NS_LOG_UNCOND(ipv4_int_addr);
+              //NS_LOG_UNCOND(intensity_array[i]);
+              //OnOffHelper onoff ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]
+              ////PacketSinkHelper onoff ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]              
+              //onoff.SetConstantRate (DataRate (intensity_array[i]));
+              //ApplicationContainer apps = onoff.Install (nodes_traffic.Get (i));  // traffic sources are installed on all nodes
+              //apps.Start (Seconds (AppStartTime + rn));
+              //apps.Stop (Seconds (AppStopTime));
             }
         }
     }
   
-  //Ptr<UniformRandomVariable> x = CreateObject<UniformRandomVariable> ();
-  //x->SetAttribute ("Min", DoubleValue (0));
-  //x->SetAttribute ("Max", DoubleValue (1));
-  //double rn = x->GetValue ();
-  //Ptr<Node> n = nodes_traffic.Get (4);
-  //Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();
-  //Ipv4InterfaceAddress ipv4_int_addr = ipv4->GetAddress (1, 0);
-  //Ipv4Address ip_addr = ipv4_int_addr.GetLocal ();
-  //NS_LOG_UNCOND(ipv4_int_addr);
-  //OnOffHelper onoff ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]
-  ////PacketSinkHelper onoff ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]              
-  //onoff.SetConstantRate (DataRate (AppPacketRate));
+  Ptr<UniformRandomVariable> x = CreateObject<UniformRandomVariable> ();
+  x->SetAttribute ("Min", DoubleValue (0));
+  x->SetAttribute ("Max", DoubleValue (1));
+  double rn = x->GetValue ();
+  Ptr<Node> n = nodes_traffic.Get (4);
+  Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();
+  Ipv4InterfaceAddress ipv4_int_addr = ipv4->GetAddress (1, 0);
+  Ipv4Address ip_addr = ipv4_int_addr.GetLocal ();
+  NS_LOG_UNCOND(ipv4_int_addr);
+  RandomAppHelper onoff ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]
+  //PacketSinkHelper onoff ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]              
+  onoff.SetConstantRate (DataRate (AppPacketRate));
   //onoff.SetAttribute("OffTime", StringValue("ns3::ExponentialRandomVariable[Mean=8.0|Bound=8.0]"));
-  //NS_LOG_UNCOND("Aqui");
+  NS_LOG_UNCOND("Aqui");
   //onoff.SetAttribute("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1.0]"));
-  //ApplicationContainer apps = onoff.Install (nodes_traffic.Get (2));  // traffic sources are installed on all nodes
-  //apps.Start (Seconds (AppStartTime + rn));
-  //apps.Stop (Seconds (AppStopTime));
+  ApplicationContainer apps = onoff.Install (nodes_traffic.Get (2));  // traffic sources are installed on all nodes
+  apps.Start (Seconds (AppStartTime + rn));
+  apps.Stop (Seconds (AppStopTime));
 
   //Ptr<Node> n_send = nodes_traffic.Get (4);
   //Ptr<Node> n_recv = nodes_traffic.Get (1);
