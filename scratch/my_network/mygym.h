@@ -44,7 +44,7 @@ class MyGymEnv : public OpenGymEnv
 {
 public:
   MyGymEnv ();
-  MyGymEnv (Ptr<Node> node, uint32_t numberOfNodes, uint64_t packetRate);
+  MyGymEnv (Ptr<Node> node, uint32_t numberOfNodes);
   MyGymEnv (Time stepTime, Ptr<Node> node);
   virtual ~MyGymEnv ();
   static TypeId GetTypeId (void);

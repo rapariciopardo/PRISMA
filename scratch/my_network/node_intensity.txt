@@ -1,5 +1,5 @@
-500Kbps
-400Kbps
-350Kbps
-450Kbps
-520Kbps
+0Kbps 500Kbps 500Kbps 500Kbps 500Kbps
+400Kbps 0Kbps 400Kbps 400Kbps 400Kbps
+350Kbps 300Kbps 0Kbps 400Kbps 10Kbps
+450Kbps 100Kbps 400Kbps 0Kbps 300Kbps
+520Kbps 350Kbps 400Kbps 520Kbps 0Kbps

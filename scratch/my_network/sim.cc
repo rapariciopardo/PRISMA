@@ -82,7 +82,7 @@ using namespace ns3;
 
 vector<vector<bool> > readNxNMatrix (std::string adj_mat_file_name);
 vector<vector<double> > readCordinatesFile (std::string node_coordinates_file_name);
-vector<string> readIntensityFile(std::string intensity_file_name);
+vector<vector<std::string>> readIntensityFile(std::string intensity_file_name);
 void printCoordinateArray (const char* description, vector<vector<double> > coord_array);
 void printMatrix (const char* description, vector<vector<bool> > array);
 
@@ -189,7 +189,7 @@ int main (int argc, char *argv[])
   vector<vector<double> > coord_array;
   coord_array = readCordinatesFile (node_coordinates_file_name);
 
-  vector<std::string> intensity_array;
+  vector<vector<std::string>> intensity_array;
   intensity_array = readIntensityFile (node_intensity_file_name);
 
   // Optionally display node co-ordinates file
@@ -224,15 +224,12 @@ int main (int argc, char *argv[])
 
   for (int i = 0; i < n_nodes; i++)
     {
-      std::string packetRate = intensity_array[i];
-      uint64_t packetRateFloat= DataRate(packetRate).GetBitRate();
-      NS_LOG_UNCOND(packetRateFloat);
       Ptr<Node> n = nodes_switch.Get (i); // ref node
       //nodeOpenGymPort = openGymPort + i;
       Ptr<OpenGymInterface> openGymInterface = CreateObject<OpenGymInterface> (openGymPort + i);
        Ptr<MyGymEnv> myGymEnv;
       if (eventBasedEnv){
-        myGymEnv = CreateObject<MyGymEnv> (n, n_nodes, packetRateFloat); // event-driven step
+        myGymEnv = CreateObject<MyGymEnv> (n, n_nodes); // event-driven step
       } else {
         myGymEnv = CreateObject<MyGymEnv> (Seconds(envStepTime), n); // time-driven step
       }
@@ -415,7 +412,7 @@ int main (int argc, char *argv[])
   NS_LOG_UNCOND(ipv4_int_addr);
   RandomAppHelper onoff ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]
   //PacketSinkHelper onoff ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]              
-  onoff.SetConstantRate (DataRate (AppPacketRate));
+  onoff.SetConstantRate (DataRate (intensity_array[2][4]));
   //onoff.SetAttribute("OffTime", StringValue("ns3::ExponentialRandomVariable[Mean=8.0|Bound=8.0]"));
   NS_LOG_UNCOND("Aqui");
   //onoff.SetAttribute("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1.0]"));
@@ -635,7 +632,7 @@ vector<vector<double> > readCordinatesFile (std::string node_coordinates_file_na
 }
 
 
-vector<std::string> readIntensityFile (std::string intensity_file_name)
+vector<vector<std::string>> readIntensityFile (std::string intensity_file_name)
 {
   ifstream node_intensity_file;
   node_intensity_file.open (intensity_file_name.c_str (), ios::in);
@@ -643,45 +640,58 @@ vector<std::string> readIntensityFile (std::string intensity_file_name)
     {
       NS_FATAL_ERROR ("File " << intensity_file_name.c_str () << " not found");
     }
-  vector<std::string> intensity_array;
-  int m = 0;
+  vector<vector<std::string>> intensity_array;
+  int i = 0;
+  int n_nodes = 0;
 
   while (!node_intensity_file.eof ())
     {
       string line;
       getline (node_intensity_file, line);
-
       if (line == "")
         {
-          NS_LOG_WARN ("WARNING: Ignoring blank row: " << m);
+          NS_LOG_WARN ("WARNING: Ignoring blank row in the array: " << i);
           break;
         }
 
       istringstream iss (line);
-      std::string intensity;
-      //vector<double> row;
-      int n = 0;
-      while (iss >> intensity)
+      std::string element;
+      vector<std::string> row;
+      int j = 0;
+
+      while (iss >> element)
         {
-          //row.push_back (coordinate);
-          n++;
+          row.push_back (element);
+          j++;
         }
 
-      if (n != 1)
+      if (i == 0)
         {
-          NS_LOG_ERROR ("ERROR: Number of elements at line#" << m << " is "  << n << " which is not equal to 2 for node coordinates file");
-          exit (1);
+          n_nodes = j;
         }
 
+      if (j != n_nodes )
+        {
+          NS_LOG_ERROR ("ERROR: Number of elements in line " << i << ": " << j << " not equal to number of elements in line 0: " << n_nodes);
+          NS_FATAL_ERROR ("ERROR: The number of rows is not equal to the number of columns! in the adjacency matrix");
+        }
       else
         {
-          intensity_array.push_back (intensity);
+          intensity_array.push_back (row);
         }
-      m++;
+      i++;
     }
+
+  if (i != n_nodes)
+    {
+      NS_LOG_ERROR ("There are " << i << " rows and " << n_nodes << " columns.");
+      NS_FATAL_ERROR ("ERROR: The number of rows is not equal to the number of columns! in the adjacency matrix");
+    }
+
   node_intensity_file.close ();
   return intensity_array;
 
+  
 }
 
 void printMatrix (const char* description, vector<vector<bool> > array)
