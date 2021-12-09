@@ -65,6 +65,8 @@ public:
   static void NotifyPktInQueueEvent(Ptr<MyGymEnv> entity, Ptr<PointToPointNetDevice> ptpnd, uint32_t oldValue, uint32_t newValue); // event-driven step
   static void CountRxPkts(uint32_t sinkId, Ptr<const Packet> packet, Ptr<Ipv4> header, uint32_t something);
   static void NotifyPktRcv(Ptr<MyGymEnv> entity, Ptr<Node> node, NetDeviceContainer* nd, Ptr<const Packet> packet);
+  static void NotifyPktRcvCSMA(Ptr<MyGymEnv> entity, Ptr<Node> node, NetDeviceContainer* nd, Ptr<const Packet> packet);
+
 
 private:
   void ScheduleNextStateRead();
@@ -79,7 +81,7 @@ private:
   Address m_srcAddr;
   Address m_destAddr;
   Ptr<Packet> m_pckt;
-  uint16_t m_lengthType;
+  uint16_t m_lengthType = 2054;
   uint32_t m_size;
   float m_packetRate = 500.0;
   //NetDeviceContainer m_list_p2pNetDevs;
