@@ -168,7 +168,7 @@ MyGymEnv::GetQueueLength(Ptr<Node> node, uint32_t netDev_idx)
 {
   Ptr<NetDevice> netDev = node->GetDevice (netDev_idx);
   //NS_LOG_UNCOND ("IsPointToPoint? : " << netDev->IsPointToPoint () << "");
-  Ptr<CsmaNetDevice> csma_netDev = DynamicCast<CsmaNetDevice> (netDev);
+  Ptr<PointToPointNetDevice> csma_netDev = DynamicCast<PointToPointNetDevice> (netDev);
   //Ptr<PointToPointNetDevice> ptp_netDev = netDev->GetObject<PointToPointNetDevice> ();
   Ptr<Queue<Packet> > queue = csma_netDev->GetQueue ();
   uint32_t backlog = (int) queue->GetNPackets();
@@ -185,7 +185,7 @@ MyGymEnv::GetObservation()
   Ptr<OpenGymBoxContainer<uint32_t> > box = CreateObject<OpenGymBoxContainer<uint32_t> >(shape);
   box->AddValue(m_dest);
   NS_LOG_UNCOND("Aqui"<<num_devs);
-  for (uint32_t i=1 ; i<num_devs; i++){
+  for (uint32_t i=0 ; i<num_devs; i++){
     Ptr<NetDevice> netDev = m_node->GetDevice (i);
     NS_LOG_UNCOND("Aqui"<<num_devs);
     //NS_LOG_UNCOND ("IsPointToPoint? : " << netDev->IsPointToPoint () << "");
@@ -244,11 +244,11 @@ MyGymEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
   std::cout<<"New Path: ";
   std::cin>>m_fwdDev_idx;
   NS_LOG_UNCOND ("Node: " << m_node->GetId()-(m_n_nodes-1) << ", MyExecuteActions: " << m_fwdDev_idx);
-  Ptr<CsmaNetDevice> dev = DynamicCast<CsmaNetDevice>(m_node->GetDevice(m_fwdDev_idx));
+  Ptr<PointToPointNetDevice> dev = DynamicCast<PointToPointNetDevice>(m_node->GetDevice(m_fwdDev_idx));
   NS_LOG_UNCOND(dev->GetAddress());
   NS_LOG_UNCOND(m_srcAddr<<"     "<<m_destAddr<< "    "<<m_lengthType);
   NS_LOG_UNCOND(m_pckt->ToString());
-  bool sent = dev->SendFrom(m_pckt, m_srcAddr, m_destAddr, m_lengthType);
+  bool sent = dev->Send(m_pckt, m_destAddr, dev->PppToEther( m_lengthType));
   //Simulator::Stop (Seconds (10.0));
   //Simulator::Run ();
 
@@ -319,9 +319,10 @@ MyGymEnv::CountPktInQueueEvent(Ptr<MyGymEnv> entity, Ptr<PointToPointNetDevice> 
 
     //Remove Mac Header
     p->RemoveHeader(ppp_head);
+    entity->m_pckt = p->Copy();
     p->RemoveHeader(ip_head);
     p->RemoveHeader(udp_head);
-    entity->m_pckt = p->Copy();
+
     //entity->m_lengthType = head.GetLengthType();
     //entity->m_srcAddr = head.GetSource();
     //entity->m_destAddr = head.GetDestination();
@@ -371,6 +372,7 @@ MyGymEnv::CountPktInQueueEvent(Ptr<MyGymEnv> entity, Ptr<PointToPointNetDevice> 
       }
       
     }
+    entity->m_lengthType = ppp_head.GetProtocol();
     NS_LOG_UNCOND("Dest: "<<entity->m_dest);
     NS_LOG_UNCOND("Src Addr: "<<entity->m_srcAddr);
     NS_LOG_UNCOND("Dest Addr: "<<entity->m_destAddr);
