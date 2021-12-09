@@ -304,20 +304,24 @@ MyGymEnv::CountPktInQueueEvent(Ptr<MyGymEnv> entity, Ptr<PointToPointNetDevice> 
   {
     //uint8_t buf_add[6];
     
-    EthernetHeader head;
-    ArpHeader iph;
+    PppHeader ppp_head;
+    Ipv4Header ip_head;
+    UdpHeader udp_head;
     //NS_LOG_UNCOND(nd_sw->Get(idx)->GetAddress());
     
     Ptr<Packet> p = packet->Copy();
-    entity->m_size = p->GetSize();
+    //entity->m_size = p->GetSize();
+    NS_LOG_UNCOND(p->ToString());
     NS_LOG_UNCOND("Node "<<entity->m_node->GetId()-(m_n_nodes-1));
 
     //Remove Mac Header
-    p->RemoveHeader(head);
+    p->RemoveHeader(ppp_head);
+    p->RemoveHeader(ip_head);
+    p->RemoveHeader(udp_head);
     entity->m_pckt = p->Copy();
-    entity->m_lengthType = head.GetLengthType();
-    entity->m_srcAddr = head.GetSource();
-    entity->m_destAddr = head.GetDestination();
+    //entity->m_lengthType = head.GetLengthType();
+    //entity->m_srcAddr = head.GetSource();
+    //entity->m_destAddr = head.GetDestination();
     //entity->m_destAddr.CopyTo(buf_add);
     //entity->m_dest = (uint32_t)buf_add[5];
     //NS_LOG_UNCOND("Destination: "<<entity->m_destAddr);
@@ -327,26 +331,34 @@ MyGymEnv::CountPktInQueueEvent(Ptr<MyGymEnv> entity, Ptr<PointToPointNetDevice> 
     
     
     //Peeking IP Header
-    p->PeekHeader(iph);
+    //p->RemoveHeader(iph);
     //p->Print(std::cout);
-    NS_LOG_UNCOND("Src/dest Ip Addr "<<iph.GetSourceIpv4Address()<<"    "<<iph.GetDestinationIpv4Address());
-    
+    //NS_LOG_UNCOND("Src/dest Ip Addr "<<iph.GetSourceIpv4Address()<<"    "<<iph.GetDestinationIpv4Address()<<"    "<<packet->GetSize());
+    NS_LOG_UNCOND(p->ToString());
+    NS_LOG_UNCOND(ip_head.GetDestination());
     //entity->m_srcAddr = iph.GetSourceHardwareAddress();
 
     //head.Print(std::cout);
+    
+    //Destination
     for(uint32_t i = 0;i<nd->GetN();i++){
       Ptr<NetDevice> dev = nd->Get(i);
       Ptr<Node> n = dev->GetNode();
       Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();
       Ipv4InterfaceAddress ipv4_int_addr = ipv4->GetAddress (1, 0);
       Ipv4Address ip_addr = ipv4_int_addr.GetLocal ();
+      entity->m_destAddr = dev->GetBroadcast();
 
-      //NS_LOG_UNCOND(ip_addr);
-      if(ip_addr == iph.GetDestinationIpv4Address()){
+      //NS_LOG_UNCOND(ip_addr<<"  "<<(ip_addr == ip_head.GetDestination()));
+      if(ip_addr==ip_head.GetSource()){
+        entity->m_srcAddr = dev->GetAddress();
+      }
+      if(ip_addr == ip_head.GetDestination()){
         //Address mac48_dest_addr = dev->GetAddress();
         
         //mac48_dest_addr.CopyTo(buf_add);
         entity->m_dest = dev->GetNode()->GetId()+5;//(uint32_t)buf_add[5];
+
         NS_LOG_UNCOND("Match dest"<<entity->m_dest);
         
         //for(int i=0;i<6;i++){
@@ -354,8 +366,12 @@ MyGymEnv::CountPktInQueueEvent(Ptr<MyGymEnv> entity, Ptr<PointToPointNetDevice> 
         //}
         break;
       }
+      
     }
+    NS_LOG_UNCOND("Dest: "<<entity->m_dest);
+    NS_LOG_UNCOND("Src Addr: "<<entity->m_srcAddr);
+    NS_LOG_UNCOND("Dest Addr: "<<entity->m_destAddr);
     entity->Notify();
-  }
 
+  }
 } // ns3 namespace

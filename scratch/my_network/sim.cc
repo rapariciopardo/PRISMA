@@ -249,6 +249,11 @@ int main (int argc, char *argv[])
   p2p.SetChannelAttribute ("DataRate", DataRateValue (LinkRate));
   p2p.SetChannelAttribute ("Delay", StringValue (LinkDelay));
 
+  PointToPointHelper p2p_traffic;
+  p2p.SetChannelAttribute ("DataRate", StringValue (LinkRate));
+  p2p.SetChannelAttribute ("Delay", StringValue (LinkDelay));
+
+
 ///////////////////////////////////////////////////////////////////////
   NetDeviceContainer traffic_nd;
   NetDeviceContainer switch_nd;
@@ -258,7 +263,7 @@ int main (int argc, char *argv[])
   
   for(int i=0;i<n_nodes;i++)
   {
-    NetDeviceContainer n_devs = p2p.Install (NodeContainer (nodes_traffic.Get(i), nodes_switch.Get(i)));
+    NetDeviceContainer n_devs = p2p_traffic.Install (NodeContainer (nodes_traffic.Get(i), nodes_switch.Get(i)));
     traffic_nd.Add(n_devs.Get(0));
     switch_nd.Add(n_devs.Get(1));
   }
@@ -289,12 +294,21 @@ int main (int argc, char *argv[])
   NS_LOG_UNCOND("Size switch_nd :"<<switch_nd.GetN());
   for(uint32_t i=0;i<switch_nd.GetN();i++)
   {
-    Ptr<CsmaNetDevice> dev_switch =DynamicCast<CsmaNetDevice> (switch_nd.Get(i)); //CreateObject<CsmaNetDevice> ();
-    NS_LOG_UNCOND(dev_switch->GetNode()->GetId()<<"     "<< dev_switch->GetNode()->GetNDevices()<<"    "<<dev_switch->GetAddress()<<"    "<<dev_switch->IsReceiveEnabled());
-    //Ptr<CsmaChannel> dev_channel = DynamicCast<CsmaChannel>(dev_switch->GetChannel());
-    //NS_LOG_UNCOND("Data Rate: "<<dev_channel->GetDataRate());
-    dev_switch->TraceConnectWithoutContext("MacRx", MakeBoundCallback(&MyGymEnv::NotifyPktRcv, myGymEnvs[dev_switch->GetNode()->GetId()-n_nodes], dev_switch->GetNode(), &traffic_nd));
-    //dev_switch->SetPromiscReceiveCallback(MakeBoundCallback(&MyGymEnv::NotifyPktRcv, myGymEnvs[dev_switch->GetNode()->GetId()-n_nodes], dev_switch->GetNode(), &traffic_nd));
+    if((int) i <n_nodes){
+       Ptr<NetDevice> dev_switch =DynamicCast<NetDevice> (switch_nd.Get(i)); //CreateObject<CsmaNetDevice> ();
+      NS_LOG_UNCOND(dev_switch->GetNode()->GetId()<<"     "<< dev_switch->GetNode()->GetNDevices()<<"    "<<dev_switch->GetAddress()<<"    ");
+      //Ptr<CsmaChannel> dev_channel = DynamicCast<CsmaChannel>(dev_switch->GetChannel());
+      //NS_LOG_UNCOND("Data Rate: "<<dev_channel->GetDataRate());
+      dev_switch->TraceConnectWithoutContext("MacRx", MakeBoundCallback(&MyGymEnv::NotifyPktRcv, myGymEnvs[dev_switch->GetNode()->GetId()-n_nodes], dev_switch->GetNode(), &traffic_nd));
+    }
+    else{
+      Ptr<CsmaNetDevice> dev_switch =DynamicCast<CsmaNetDevice> (switch_nd.Get(i)); //CreateObject<CsmaNetDevice> ();
+      NS_LOG_UNCOND(dev_switch->GetNode()->GetId()<<"     "<< dev_switch->GetNode()->GetNDevices()<<"    "<<dev_switch->GetAddress()<<"    "<<dev_switch->IsReceiveEnabled());
+      //Ptr<CsmaChannel> dev_channel = DynamicCast<CsmaChannel>(dev_switch->GetChannel());
+      //NS_LOG_UNCOND("Data Rate: "<<dev_channel->GetDataRate());
+      dev_switch->TraceConnectWithoutContext("MacRx", MakeBoundCallback(&MyGymEnv::NotifyPktRcv, myGymEnvs[dev_switch->GetNode()->GetId()-n_nodes], dev_switch->GetNode(), &traffic_nd));
+      //dev_switch->SetPromiscReceiveCallback(MakeBoundCallback(&MyGymEnv::NotifyPktRcv, myGymEnvs[dev_switch->GetNode()->GetId()-n_nodes], dev_switch->GetNode(), &traffic_nd));
+    }
   }
 
   
@@ -332,7 +346,7 @@ int main (int argc, char *argv[])
   NS_LOG_INFO ("Number of all nodes is: " << nodes_switch.GetN ());
 
   NS_LOG_INFO ("Initialize Global Routing.");
-  Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
+  //Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 
   // ---------- End of Network Set-up ----------------------------------------
 
