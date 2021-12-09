@@ -248,7 +248,7 @@ void RandomGenerator::ScheduleNextTx ()
     {
       Ptr<ExponentialRandomVariable> ev_size = CreateObject<ExponentialRandomVariable> ();
       ev_size->SetAttribute ("Mean", DoubleValue (m_pktSizeMean));
-      m_pktSize = 512;//(uint32_t) ev_size->GetValue();
+      m_pktSize = (uint32_t) ev_size->GetValue();
       NS_LOG_UNCOND("Packet Size: "<<m_pktSize);
       uint32_t bits = m_pktSize * 8 - m_residualBits;
       //NS_LOG_UNCOND ("bits = " << bits);
