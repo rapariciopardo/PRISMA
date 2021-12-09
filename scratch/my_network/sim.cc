@@ -306,7 +306,7 @@ int main (int argc, char *argv[])
       NS_LOG_UNCOND(dev_switch->GetNode()->GetId()<<"     "<< dev_switch->GetNode()->GetNDevices()<<"    "<<dev_switch->GetAddress()<<"    "<<dev_switch->IsReceiveEnabled());
       //Ptr<CsmaChannel> dev_channel = DynamicCast<CsmaChannel>(dev_switch->GetChannel());
       //NS_LOG_UNCOND("Data Rate: "<<dev_channel->GetDataRate());
-      dev_switch->TraceConnectWithoutContext("MacRx", MakeBoundCallback(&MyGymEnv::NotifyPktRcv, myGymEnvs[dev_switch->GetNode()->GetId()-n_nodes], dev_switch->GetNode(), &traffic_nd));
+      dev_switch->TraceConnectWithoutContext("MacRx", MakeBoundCallback(&MyGymEnv::NotifyPktRcvCSMA, myGymEnvs[dev_switch->GetNode()->GetId()-n_nodes], dev_switch->GetNode(), &traffic_nd));
       //dev_switch->SetPromiscReceiveCallback(MakeBoundCallback(&MyGymEnv::NotifyPktRcv, myGymEnvs[dev_switch->GetNode()->GetId()-n_nodes], dev_switch->GetNode(), &traffic_nd));
     }
   }
