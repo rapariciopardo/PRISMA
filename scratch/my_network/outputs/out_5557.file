@@ -1,118 +1,72 @@
 Waiting for simulation script to connect on port: tcp://localhost:5557
 Please start proper ns-3 simulation script using ./waf --run "..."
 ICIIIIIIAAAAAAAAAAAAAAAAAAAAAAAAAAA
-Recebido
-False
 Observation space:  Box([0 0 0], [100 100 100], (3,), uint64) uint64
 Action space:  Discrete(1) int64
 Start iteration:  0
-False
 Step:  0
 ---obs:  [7, 0, 0]
 ---action:  0
 Step:  1
-step
-Recebido
----obs, reward, done, info:  [7, 0, 0] 0.0002023999986704439 True currentNodeId=7, currentNetDevIdx=1, currentFwdDevIdx=
-aqui Done
-Start iteration:  1
-False
-Step:  0
----obs:  [7, 0, 0]
----action:  0
-Step:  1
-step
-Recebido
----obs, reward, done, info:  [9, 0, 0] 5.439999949885532e-05 False currentNodeId=7, currentNetDevIdx=1, currentFwdDevIdx=
----action:  0
-Step:  2
-step
-Recebido
----obs, reward, done, info:  [7, 0, 0] 0.00017359999765176326 True currentNodeId=7, currentNetDevIdx=1, currentFwdDevIdx=1
-aqui Done
-Start iteration:  2
-False
-Step:  0
----obs:  [7, 0, 0]
----action:  0
-Step:  1
-step
-Recebido
----obs, reward, done, info:  [9, 0, 0] 8.479999814881012e-05 False currentNodeId=7, currentNetDevIdx=1, currentFwdDevIdx=
----action:  0
-Step:  2
-step
-Recebido
----obs, reward, done, info:  [7, 0, 0] 0.00016320000577252358 True currentNodeId=7, currentNetDevIdx=1, currentFwdDevIdx=1
-aqui Done
-Start iteration:  3
-False
-Step:  0
----obs:  [7, 0, 0]
----action:  0
-Step:  1
-step
-Recebido
----obs, reward, done, info:  [7, 0, 0] 0.0006551999831572175 True currentNodeId=7, currentNetDevIdx=1, currentFwdDevIdx=
-aqui Done
-Start iteration:  4
-False
-Step:  0
----obs:  [7, 0, 0]
----action:  0
-Step:  1
-step
-Recebido
----obs, reward, done, info:  [7, 0, 0] 0.0001016000023810193 True currentNodeId=7, currentNetDevIdx=1, currentFwdDevIdx=
-aqui Done
-Start iteration:  5
-False
-Step:  0
----obs:  [7, 0, 0]
----action:  0
-Step:  1
-step
-Recebido
----obs, reward, done, info:  [7, 0, 0] 0.00023119999968912452 True currentNodeId=7, currentNetDevIdx=1, currentFwdDevIdx=
-aqui Done
-Start iteration:  6
-False
-Step:  0
----obs:  [7, 0, 0]
----action:  0
-Step:  1
-step
-Recebido
----obs, reward, done, info:  [7, 0, 0] 0.00023119999968912452 True currentNodeId=7, currentNetDevIdx=1, currentFwdDevIdx=
-aqui Done
-Start iteration:  7
-False
-Step:  0
----obs:  [7, 0, 0]
----action:  0
-Step:  1
-step
-Recebido
----obs, reward, done, info:  [7, 0, 0] 0.0008143999730236828 True currentNodeId=7, currentNetDevIdx=1, currentFwdDevIdx=
-aqui Done
-Start iteration:  8
-False
-Step:  0
----obs:  [7, 0, 0]
----action:  0
-Step:  1
-step
-Recebido
 ---obs, reward, done, info:  [7, 0, 0] 0.00040320001426152885 True currentNodeId=7, currentNetDevIdx=1, currentFwdDevIdx=
-aqui Done
-Start iteration:  9
-False
+Start iteration:  1
 Step:  0
 ---obs:  [7, 0, 0]
 ---action:  0
 Step:  1
-step
-Recebido
----obs, reward, done, info:  [7, 0, 0] 0.00043360001291148365 True currentNodeId=7, currentNetDevIdx=1, currentFwdDevIdx=
-aqui Done
+---obs, reward, done, info:  [7, 0, 0] 0.0002023999986704439 True currentNodeId=7, currentNetDevIdx=1, currentFwdDevIdx=
+Start iteration:  2
+Step:  0
+---obs:  [7, 0, 0]
+---action:  0
+Step:  1
+---obs, reward, done, info:  [9, 0, 0] 0.0006383999716490507 False currentNodeId=7, currentNetDevIdx=1, currentFwdDevIdx=
+---action:  0
+Step:  2
+---obs, reward, done, info:  [7, 0, 0] 5.919999966863543e-05 True currentNodeId=7, currentNetDevIdx=1, currentFwdDevIdx=1
+Start iteration:  3
+Step:  0
+---obs:  [7, 0, 0]
+---action:  0
+Step:  1
+---obs, reward, done, info:  [7, 0, 0] 0.00014800000644754618 True currentNodeId=7, currentNetDevIdx=1, currentFwdDevIdx=
+Start iteration:  4
+Step:  0
+---obs:  [7, 0, 0]
+---action:  0
+Step:  1
+---obs, reward, done, info:  [7, 0, 0] 0.00023119999968912452 True currentNodeId=7, currentNetDevIdx=1, currentFwdDevIdx=
+Start iteration:  5
+Step:  0
+---obs:  [7, 0, 0]
+---action:  0
+Step:  1
+---obs, reward, done, info:  [7, 0, 0] 0.00020559999393299222 True currentNodeId=7, currentNetDevIdx=1, currentFwdDevIdx=
+Start iteration:  6
+Step:  0
+---obs:  [7, 0, 0]
+---action:  0
+Step:  1
+---obs, reward, done, info:  [7, 0, 0] 0.0006551999831572175 True currentNodeId=7, currentNetDevIdx=1, currentFwdDevIdx=
+Start iteration:  7
+Step:  0
+---obs:  [7, 0, 0]
+---action:  0
+Step:  1
+---obs, reward, done, info:  [9, 0, 0] 0.0007911999709904194 False currentNodeId=7, currentNetDevIdx=1, currentFwdDevIdx=
+---action:  0
+Step:  2
+---obs, reward, done, info:  [7, 0, 0] 0.00043360001291148365 True currentNodeId=7, currentNetDevIdx=1, currentFwdDevIdx=1
+Start iteration:  8
+Step:  0
+---obs:  [7, 0, 0]
+---action:  0
+Step:  1
+---obs, reward, done, info:  [7, 0, 0] 0.0008143999730236828 True currentNodeId=7, currentNetDevIdx=1, currentFwdDevIdx=
+Start iteration:  9
+Step:  0
+---obs:  [7, 0, 0]
+---action:  0
+Step:  1
+---obs, reward, done, info:  [7, 0, 0] 0.00023119999968912452 True currentNodeId=7, currentNetDevIdx=1, currentFwdDevIdx=
 Done

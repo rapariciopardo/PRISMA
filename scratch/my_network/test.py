@@ -66,10 +66,9 @@ try:
             print("---obs, reward, done, info: ", obs, reward, done, info)
 
             if done:
-                print("aqui Done")
                 stepIdx = 0
                 if currIt + 1 < iterationNum:
-                    #env.reset()
+                    env.reset()
                     pass
                 break
 
