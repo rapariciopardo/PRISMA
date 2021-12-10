@@ -17,7 +17,7 @@ parser.add_argument('--start',
                     help='Start ns-3 simulation script 0/1, Default: 1')
 parser.add_argument('--iterations',
                     type=int,
-                    default=1,
+                    default=10,
                     help='Number of iterations, Default: 1')
 parser.add_argument('--port',
                     type=int,
@@ -66,9 +66,11 @@ try:
             print("---obs, reward, done, info: ", obs, reward, done, info)
 
             if done:
+                print("aqui Done")
                 stepIdx = 0
                 if currIt + 1 < iterationNum:
-                    env.reset()
+                    #env.reset()
+                    pass
                 break
 
         currIt += 1
