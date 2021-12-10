@@ -199,7 +199,6 @@ class Ns3ZmqBridge(object):
         self.extraInfo = envStateMsg.info
         if not self.extraInfo:
             self.extraInfo = {}
-        print("Recebido")
 
         self.newStateRx = True
 
@@ -220,7 +219,6 @@ class Ns3ZmqBridge(object):
 
         reply.stopSimReq = False
         if self.forceEnvStop:
-            print("here")
             reply.stopSimReq = True
 
         replyMsg = reply.SerializeToString()
@@ -402,14 +400,12 @@ class Ns3Env(gym.Env):
         return (obs, reward, done, extraInfo)
 
     def step(self, action):
-        print("step")
         response = self.ns3ZmqBridge.step(action)
         self.envDirty = True
         return self.get_state()
 
     def reset(self):
         self.envDirty = False
-        print(self.envDirty)
         if not self.envDirty:
             obs = self.ns3ZmqBridge.get_obs()
             return obs
