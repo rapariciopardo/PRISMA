@@ -125,7 +125,7 @@ MyGymEnv::GetActionSpace()
 {
   NS_LOG_FUNCTION (this);
   uint32_t num_devs = m_node->GetNDevices();
-  Ptr<OpenGymDiscreteSpace> space = CreateObject<OpenGymDiscreteSpace> (num_devs); // first dev is not p2p
+  Ptr<OpenGymDiscreteSpace> space = CreateObject<OpenGymDiscreteSpace> (num_devs-2); // first dev is not p2p
   NS_LOG_UNCOND ("Node: " << m_node->GetId()-(m_n_nodes-1) << ", GetActionSpace: " << space);
   return space;
   //uint32_t nodeNum = NodeList::GetNNodes ();
@@ -240,14 +240,14 @@ MyGymEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
   NS_LOG_UNCOND ("MyExecuteActions: " << action);
   Ptr<OpenGymDiscreteContainer> discrete = DynamicCast<OpenGymDiscreteContainer>(action);
   NS_LOG_UNCOND ("MyExecuteActionsDiscrete: " << discrete);
-  uint32_t m_fwdDev_idx = discrete->GetValue();
+  m_fwdDev_idx = discrete->GetValue()+1;
   if(m_isGameOver){
     NS_LOG_UNCOND("GAME OVER");
     m_fwdDev_idx = 0;
   }
   else{
-    std::cout<<"New Path: ";
-    std::cin>>m_fwdDev_idx;
+    //std::cout<<"New Path: ";
+    //std::cin>>m_fwdDev_idx;
   }
   
   NS_LOG_UNCOND ("Node: " << m_node->GetId()-(m_n_nodes-1) << ", MyExecuteActions: " << m_fwdDev_idx);
