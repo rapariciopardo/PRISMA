@@ -208,6 +208,7 @@ MyGymEnv::GetReward()
 
   float transmission_time = (m_size*8)/m_packetRate;
   float reward = transmission_time + transmission_time*(float) value;
+  NS_LOG_UNCOND("Size: "<<m_size<<"   Link Rate: "<<m_packetRate<<"    Queue Length: "<<value);
   NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", MyGetReward: " << reward);
   //NS_LOG_UNCOND ("Reward: Node with ID " << m_node->GetId() << ", net device with index " << m_fwdDev_idx << ", IF idx "<< (m_node->GetDevice(m_fwdDev_idx))->GetIfIndex() << ": New  queue size: " << reward << " packets");
   return reward;
