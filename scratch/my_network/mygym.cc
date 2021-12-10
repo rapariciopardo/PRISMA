@@ -126,7 +126,7 @@ MyGymEnv::GetActionSpace()
   NS_LOG_FUNCTION (this);
   uint32_t num_devs = m_node->GetNDevices();
   Ptr<OpenGymDiscreteSpace> space = CreateObject<OpenGymDiscreteSpace> (num_devs-1); // first dev is not p2p
-  NS_LOG_UNCOND ("Node: " << m_node->GetId()-(m_n_nodes-1) << ", GetActionSpace: " << space);
+  NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", GetActionSpace: " << space);
   return space;
   //uint32_t nodeNum = NodeList::GetNNodes ();
   //float low = 0.0;
@@ -146,7 +146,7 @@ MyGymEnv::GetObservationSpace()
   std::vector<uint32_t> shape = {num_devs+1,}; // first dev is not p2p
   std::string dtype = TypeNameGet<uint32_t> ();
   Ptr<OpenGymBoxSpace> space = CreateObject<OpenGymBoxSpace> (low, high, shape, dtype);
-  NS_LOG_UNCOND ("Node: " << m_node->GetId()-(m_n_nodes-1) << ", GetObservationSpace: " << space);
+  NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", GetObservationSpace: " << space);
   return space;
   }
 
@@ -159,7 +159,7 @@ MyGymEnv::GetGameOver()
   
 
   m_isGameOver = (m_dest==m_node->GetId());
-  NS_LOG_UNCOND ("Node: " << m_node->GetId()-(m_n_nodes-1) << ", MyGetGameOver: " << m_isGameOver);
+  NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", MyGetGameOver: " << m_isGameOver);
   return m_isGameOver;
 }
 
@@ -195,7 +195,7 @@ MyGymEnv::GetObservation()
     //}
   }
 
-  NS_LOG_UNCOND ( "Node: " << m_node->GetId()-(m_n_nodes-1) << ", MyGetObservation: " << box);
+  NS_LOG_UNCOND ( "Node: " << m_node->GetId() << ", MyGetObservation: " << box);
   return box;
 }
 
@@ -208,7 +208,7 @@ MyGymEnv::GetReward()
 
   float transmission_time = (m_size*8)/m_packetRate;
   float reward = transmission_time + transmission_time*(float) value;
-  NS_LOG_UNCOND ("Node: " << m_node->GetId()-(m_n_nodes-1) << ", MyGetReward: " << reward);
+  NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", MyGetReward: " << reward);
   //NS_LOG_UNCOND ("Reward: Node with ID " << m_node->GetId() << ", net device with index " << m_fwdDev_idx << ", IF idx "<< (m_node->GetDevice(m_fwdDev_idx))->GetIfIndex() << ": New  queue size: " << reward << " packets");
   return reward;
 }
@@ -250,7 +250,7 @@ MyGymEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
     //std::cin>>m_fwdDev_idx;
   }
   
-  NS_LOG_UNCOND ("Node: " << m_node->GetId()-(m_n_nodes-1) << ", MyExecuteActions: " << m_fwdDev_idx);
+  NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", MyExecuteActions: " << m_fwdDev_idx);
   Ptr<PointToPointNetDevice> dev = DynamicCast<PointToPointNetDevice>(m_node->GetDevice(m_fwdDev_idx));
   //NS_LOG_UNCOND(dev->GetAddress());
   //NS_LOG_UNCOND(m_srcAddr<<"     "<<m_destAddr<< "    "<<m_lengthType);
@@ -322,7 +322,7 @@ MyGymEnv::CountPktInQueueEvent(Ptr<MyGymEnv> entity, Ptr<PointToPointNetDevice> 
     Ptr<Packet> p = packet->Copy();
     //NS_LOG_UNCOND(p->ToString());
     NS_LOG_UNCOND("-------------------------------------------------------------");
-    NS_LOG_UNCOND("Node "<<entity->m_node->GetId()-(m_n_nodes-1));
+    NS_LOG_UNCOND("Node "<<entity->m_node->GetId());
 
     //Remove Mac Header
     p->RemoveHeader(ppp_head);
@@ -370,7 +370,7 @@ MyGymEnv::CountPktInQueueEvent(Ptr<MyGymEnv> entity, Ptr<PointToPointNetDevice> 
         //Address mac48_dest_addr = dev->GetAddress();
         
         //mac48_dest_addr.CopyTo(buf_add);
-        entity->m_dest = dev->GetNode()->GetId()+5;//(uint32_t)buf_add[5];
+        entity->m_dest = dev->GetNode()->GetId()-m_n_nodes;//(uint32_t)buf_add[5];
 
         //NS_LOG_UNCOND("Match dest"<<entity->m_dest);
         
@@ -384,7 +384,7 @@ MyGymEnv::CountPktInQueueEvent(Ptr<MyGymEnv> entity, Ptr<PointToPointNetDevice> 
     entity->m_lengthType = ppp_head.GetProtocol();
 
     NS_LOG_UNCOND("Packet Size: "<<entity->m_size);
-    NS_LOG_UNCOND("Dest: "<<entity->m_dest-(m_n_nodes-1));
+    NS_LOG_UNCOND("Dest: "<<entity->m_dest);
     NS_LOG_UNCOND("Dest IP Addr: "<<ip_head.GetDestination());
     //NS_LOG_UNCOND("Src Addr: "<<entity->m_srcAddr);
     NS_LOG_UNCOND("Dest MAC Addr: "<<entity->m_destAddr);
