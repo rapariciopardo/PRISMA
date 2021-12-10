@@ -268,10 +268,10 @@ OpenGymInterface::NotifyCurrentState()
     // if sim end only rx ms and quit
     return;
   }
-  
+  NS_LOG_UNCOND(envActMsg.DebugString());
   bool stopSim = envActMsg.stopsimreq();
   if (stopSim) {
-    NS_LOG_DEBUG("---Stop requested: " << stopSim);
+    NS_LOG_UNCOND("---Stop requested: " << stopSim);
     m_stopEnvRequested = true;
     Simulator::Stop();
     Simulator::Destroy ();

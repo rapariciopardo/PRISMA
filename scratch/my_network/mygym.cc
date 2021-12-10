@@ -125,7 +125,7 @@ MyGymEnv::GetActionSpace()
 {
   NS_LOG_FUNCTION (this);
   uint32_t num_devs = m_node->GetNDevices();
-  Ptr<OpenGymDiscreteSpace> space = CreateObject<OpenGymDiscreteSpace> (num_devs-2); // first dev is not p2p
+  Ptr<OpenGymDiscreteSpace> space = CreateObject<OpenGymDiscreteSpace> (num_devs-1); // first dev is not p2p
   NS_LOG_UNCOND ("Node: " << m_node->GetId()-(m_n_nodes-1) << ", GetActionSpace: " << space);
   return space;
   //uint32_t nodeNum = NodeList::GetNNodes ();
