@@ -154,13 +154,13 @@ bool
 MyGymEnv::GetGameOver()
 {
   NS_LOG_FUNCTION (this);
-  bool isGameOver = false;
-  NS_LOG_UNCOND(m_node->GetId()<<"     "<<m_dest);
+  m_isGameOver = false;
+  //NS_LOG_UNCOND(m_node->GetId()<<"     "<<m_dest);
   
 
-  isGameOver = (m_dest==m_node->GetId());
-  //NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", MyGetGameOver: " << isGameOver);
-  return isGameOver;
+  m_isGameOver = (m_dest==m_node->GetId());
+  NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", MyGetGameOver: " << m_isGameOver);
+  return m_isGameOver;
 }
 
 uint32_t
@@ -241,8 +241,15 @@ MyGymEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
   Ptr<OpenGymDiscreteContainer> discrete = DynamicCast<OpenGymDiscreteContainer>(action);
   NS_LOG_UNCOND ("MyExecuteActionsDiscrete: " << discrete);
   uint32_t m_fwdDev_idx = discrete->GetValue();
-  std::cout<<"New Path: ";
-  std::cin>>m_fwdDev_idx;
+  if(m_isGameOver){
+    NS_LOG_UNCOND("GAME OVER");
+    m_fwdDev_idx = 0;
+  }
+  else{
+    std::cout<<"New Path: ";
+    std::cin>>m_fwdDev_idx;
+  }
+  
   NS_LOG_UNCOND ("Node: " << m_node->GetId()-(m_n_nodes-1) << ", MyExecuteActions: " << m_fwdDev_idx);
   Ptr<PointToPointNetDevice> dev = DynamicCast<PointToPointNetDevice>(m_node->GetDevice(m_fwdDev_idx));
   NS_LOG_UNCOND(dev->GetAddress());
