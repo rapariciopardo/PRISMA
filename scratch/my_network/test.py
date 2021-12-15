@@ -3,6 +3,9 @@
 
 import argparse
 from ns3gym import ns3env
+from ns3gym.graph import *
+
+#from scratch.my_network.ns3gym.graph import Graph
 
 __author__ = "Piotr Gawlowicz"
 __copyright__ = "Copyright (c) 2018, Technische Universität Berlin"
@@ -17,16 +20,21 @@ parser.add_argument('--start',
                     help='Start ns-3 simulation script 0/1, Default: 1')
 parser.add_argument('--iterations',
                     type=int,
-                    default=10,
+                    default=100,
                     help='Number of iterations, Default: 1')
 parser.add_argument('--port',
                     type=int,
                     default=1,
                     help='Port, Default: 1')
+parser.add_argument('--index',
+                    type=int,
+                    default=0,
+                    help='Index, Default: 0')
 args = parser.parse_args()
 startSim = bool(args.start)
 iterationNum = int(args.iterations)
 port = int(args.port)
+index = int(args.index)
 
 #port = 5555
 simTime = 20 # seconds
@@ -37,6 +45,11 @@ simArgs = {"--simTime": simTime,
 debug = False
 
 env = ns3env.Ns3Env(port=port, stepTime=stepTime, startSim=startSim, simSeed=seed, simArgs=simArgs, debug=debug)
+g = Graph(5, index)
+g.openFile()
+g.dijkstra()
+g.getRoutingTable()
+print("Rounting Table: ", g.RoutingTable)
 # simpler:
 #env = ns3env.Ns3Env()
 env.reset()
@@ -58,7 +71,7 @@ try:
 
         while True:
             stepIdx += 1
-            action = env.action_space.sample()
+            action = g.RoutingTable[obs[0]] #env.action_space.sample()
             print("---action: ", action)
 
             print("Step: ", stepIdx)
