@@ -12,7 +12,7 @@ class Graph:
         self.start_vertex = start_vertex
     
     def openFile(self):
-        f = open('../'+self.adjacency_matrix_file_name, 'r')
+        f = open(self.adjacency_matrix_file_name, 'r')
         for (i,line) in enumerate(f):
             adj_vec = line.split()
             for (j,value) in enumerate(adj_vec):
@@ -62,4 +62,7 @@ class Graph:
                     continue
                 if(self.edges[self.start_vertex][j]==1):
                     count += 1
-            self.RoutingTable[i] = count
+            if(self.start_vertex==self.Parent[i]):
+                self.RoutingTable[i] = -1
+            else:
+                self.RoutingTable[i] = count

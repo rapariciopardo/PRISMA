@@ -1,11 +1,11 @@
 #!/bin/bash
-numNodes=5
+numNodes=4
 basePort=5555
 for (( i=0; i<=numNodes; i++ ))
 do
 	agentPort=$((basePort+i))
 	output=outputs/out_"$agentPort".file
-	nohup python3 test.py --start=0 --port=$((basePort+i)) > "$output" &
+	nohup python3 test.py --start=0 --index=$((i)) --port=$((basePort+i))  > "$output" &
 	#echo $agentPort
 done
-echo All done
+#echo All done
