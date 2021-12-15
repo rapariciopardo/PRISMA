@@ -1,7 +1,9 @@
 from graph import *
 
-g = Graph(5)
+g = Graph(5, 0)
 g.openFile()
-g.dijkstra(3)
+g.dijkstra()
+g.getRoutingTable()
 print(g.D)
-print(type(g.D))
+print(g.Parent)
+print(g.RoutingTable)
