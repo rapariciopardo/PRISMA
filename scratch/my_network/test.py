@@ -48,8 +48,8 @@ env = ns3env.Ns3Env(port=port, stepTime=stepTime, startSim=startSim, simSeed=see
 g = Graph(5, index)
 g.openFile()
 g.dijkstra()
-g.getRoutingTable()
-print("Rounting Table: ", g.RoutingTable)
+#g.getRoutingTable()
+#print("Rounting Table: ", g.RoutingTable)
 # simpler:
 #env = ns3env.Ns3Env()
 env.reset()
@@ -71,7 +71,7 @@ try:
 
         while True:
             stepIdx += 1
-            action = g.RoutingTable[obs[0]] #env.action_space.sample()
+            action = g.getInterface(obs[0]) #env.action_space.sample()
             print("---action: ", action)
 
             print("Step: ", stepIdx)

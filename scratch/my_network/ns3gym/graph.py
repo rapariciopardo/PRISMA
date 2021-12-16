@@ -6,10 +6,11 @@ class Graph:
         self.edges = [[-1 for i in range(num_of_vertices)] for j in range(num_of_vertices)]
         self.visited = []
         self.D = None
-        self.Parent = None
+        self.next_hop = None
         self.RoutingTable = None
         self.adjacency_matrix_file_name = 'adjacency_matrix.txt'
         self.start_vertex = start_vertex
+        self.list_neighbors = []
     
     def openFile(self):
         f = open(self.adjacency_matrix_file_name, 'r')
@@ -19,14 +20,19 @@ class Graph:
                 if(value=='1'):
                     #print(i, j)
                     self.add_edge(i,j,1)
-
+                    if(j==self.start_vertex):
+                        self.list_neighbors.append(i)
+                    elif (i==self.start_vertex):
+                        self.list_neighbors.append(j)
+                    
+        print(self.list_neighbors)
     def add_edge(self, u, v, weight):
         self.edges[u][v] = weight
         self.edges[v][u] = weight
 
     def dijkstra(self):
         self.D = {v:float('inf') for v in range(self.v)}
-        self.Parent = {v:float(self.start_vertex) for v in range(self.v)}
+        self.next_hop = {v:float(self.start_vertex) for v in range(self.v)}
         self.RoutingTable = {v:float(-1) for v in range(self.v)}
         self.D[self.start_vertex] = 0
 
@@ -47,22 +53,26 @@ class Graph:
                             pq.put((new_cost, neighbor))
                             self.D[neighbor] = new_cost
                             if(current_vertex==self.start_vertex):
-                                self.Parent[neighbor] = neighbor
+                                self.next_hop[neighbor] = neighbor
                             else:
-                                self.Parent[neighbor] = self.Parent[current_vertex]
+                                self.next_hop[neighbor] = self.next_hop[current_vertex]
         return self.D
     
-    def getRoutingTable(self):
-        for i in range(self.v):
-            count=0
-            for j in range(self.v):
-                if(j==self.Parent[i]):
-                    break
-                if(i==j):
-                    continue
-                if(self.edges[self.start_vertex][j]==1):
-                    count += 1
-            if(self.start_vertex==self.Parent[i]):
-                self.RoutingTable[i] = -1
-            else:
-                self.RoutingTable[i] = count
+    def getInterface(self, dest):
+        if(dest!=self.start_vertex):
+            return self.list_neighbors.index(self.next_hop[dest])
+        else:
+            return -1
+        #for i in range(self.v):
+        #    count=0
+        #    for j in range(self.v):
+        #        if(j==self.next_hop[i]):
+        #            break
+        #        if(i==j):
+        #            continue
+        #        if(self.edges[self.start_vertex][j]==1):
+        #            count += 1
+        #    if(self.start_vertex==self.next_hop[i]):
+        #        self.RoutingTable[i] = -1
+        #    else:
+        #        self.RoutingTable[i] = count
