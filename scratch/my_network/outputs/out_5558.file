@@ -1,7 +1,7 @@
 Waiting for simulation script to connect on port: tcp://localhost:5558
 Please start proper ns-3 simulation script using ./waf --run "..."
 ICIIIIIIAAAAAAAAAAAAAAAAAAAAAAAAAAA
-Rounting Table:  {0: 0, 1: 1, 2: 2, 3: 3, 4: 3}
+[0, 1, 2, 4]
 Observation space:  Box([0 0 0 0 0 0], [100 100 100 100 100 100], (6,), uint64) uint64
 Action space:  Discrete(4) int64
 Start iteration:  0
@@ -22,7 +22,7 @@ Step:  4
 Start iteration:  1
 Step:  0
 ---obs:  [3, 0, 0, 0, 2, 0]
----action:  3
+---action:  -1
 Step:  1
 ---obs, reward, done, info:  [2, 0, 0, 0, 0, 0] 0.3343999981880188 False currentNodeId=3, currentNetDevIdx=1, currentFwdDevIdx=
 ---action:  2
@@ -31,19 +31,19 @@ Step:  2
 Start iteration:  2
 Step:  0
 ---obs:  [3, 0, 0, 0, 0, 0]
----action:  3
+---action:  -1
 Step:  1
 ---obs, reward, done, info:  [3, 0, 0, 0, 0, 0] 0.1151999980211258 True currentNodeId=3, currentNetDevIdx=1, currentFwdDevIdx=
 Start iteration:  3
 Step:  0
 ---obs:  [3, 0, 0, 0, 0, 0]
----action:  3
+---action:  -1
 Step:  1
 ---obs, reward, done, info:  [3, 1, 0, 0, 0, 0] 0.06880000233650208 True currentNodeId=3, currentNetDevIdx=1, currentFwdDevIdx=
 Start iteration:  4
 Step:  0
 ---obs:  [3, 1, 0, 0, 0, 0]
----action:  3
+---action:  -1
 Step:  1
 ---obs, reward, done, info:  [2, 2, 0, 0, 0, 0] 1.2095999717712402 False currentNodeId=3, currentNetDevIdx=1, currentFwdDevIdx=
 ---action:  2
@@ -106,7 +106,7 @@ Step:  20
 Start iteration:  5
 Step:  0
 ---obs:  [3, 0, 0, 1, 5, 0]
----action:  3
+---action:  -1
 Step:  1
 ---obs, reward, done, info:  [1, 0, 0, 1, 5, 0] 0.29280000925064087 False currentNodeId=3, currentNetDevIdx=1, currentFwdDevIdx=
 ---action:  1
@@ -115,7 +115,7 @@ Step:  2
 Start iteration:  6
 Step:  0
 ---obs:  [3, 0, 0, 1, 5, 0]
----action:  3
+---action:  -1
 Step:  1
 ---obs, reward, done, info:  [1, 1, 0, 1, 5, 0] 0.23999999463558197 False currentNodeId=3, currentNetDevIdx=1, currentFwdDevIdx=
 ---action:  1
@@ -124,7 +124,7 @@ Step:  2
 Start iteration:  7
 Step:  0
 ---obs:  [3, 1, 0, 2, 5, 0]
----action:  3
+---action:  -1
 Step:  1
 ---obs, reward, done, info:  [2, 2, 0, 2, 4, 0] 1.9656000137329102 False currentNodeId=3, currentNetDevIdx=1, currentFwdDevIdx=
 ---action:  2
@@ -148,25 +148,25 @@ Step:  7
 Start iteration:  8
 Step:  0
 ---obs:  [3, 2, 0, 2, 6, 0]
----action:  3
+---action:  -1
 Step:  1
 ---obs, reward, done, info:  [3, 3, 0, 1, 6, 0] 0.2176000028848648 True currentNodeId=3, currentNetDevIdx=1, currentFwdDevIdx=
 Start iteration:  9
 Step:  0
 ---obs:  [3, 3, 0, 1, 6, 0]
----action:  3
+---action:  -1
 Step:  1
 ---obs, reward, done, info:  [3, 4, 0, 1, 6, 0] 0.0 True currentNodeId=3, currentNetDevIdx=1, currentFwdDevIdx=
 Start iteration:  10
 Step:  0
 ---obs:  [3, 4, 0, 1, 6, 0]
----action:  3
+---action:  -1
 Step:  1
 ---obs, reward, done, info:  [3, 5, 0, 1, 5, 0] 0.11999998986721039 True currentNodeId=3, currentNetDevIdx=1, currentFwdDevIdx=
 Start iteration:  11
 Step:  0
 ---obs:  [3, 5, 0, 1, 5, 0]
----action:  3
+---action:  -1
 Step:  1
 ---obs, reward, done, info:  [2, 6, 0, 1, 5, 0] 1.618399977684021 False currentNodeId=3, currentNetDevIdx=1, currentFwdDevIdx=
 ---action:  2
@@ -183,3 +183,4 @@ Step:  5
 ---obs, reward, done, info:  [2, 4, 0, 1, 7, 0] 0.41119998693466187 False currentNodeId=3, currentNetDevIdx=1, currentFwdDevIdx=2
 ---action:  2
 Step:  6
+---obs, reward, done, info:  

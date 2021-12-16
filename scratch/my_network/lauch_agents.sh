@@ -1,5 +1,5 @@
 #!/bin/bash
-numNodes=4
+numNodes=5
 basePort=5555
 for (( i=0; i<=numNodes; i++ ))
 do
