@@ -35,9 +35,11 @@ class Ns3ZmqBridge(object):
         self.simPid = None
         self.wafPid = None
         self.ns3Process = None
+        self.notReceived = False
 
         context = zmq.Context()
         self.socket = context.socket(zmq.REP)
+        self.socket.setsockopt(zmq.RCVTIMEO, 1000)
         try:
             if port == 0 and self.startSim:
                 port = self.socket.bind_to_random_port('tcp://*', min_port=5001, max_port=10000, max_tries=100)
@@ -176,31 +178,37 @@ class Ns3ZmqBridge(object):
     def rx_env_state(self):
         if self.newStateRx:
             return
+        try:
+            request = self.socket.recv()
+        
+            envStateMsg = pb.EnvStateMsg()
+            envStateMsg.ParseFromString(request)
 
-        request = self.socket.recv()
-        envStateMsg = pb.EnvStateMsg()
-        envStateMsg.ParseFromString(request)
+            self.obsData = self._create_data(envStateMsg.obsData)
+            self.reward = envStateMsg.reward
+            self.gameOver = envStateMsg.isGameOver
+            self.gameOverReason = envStateMsg.reason
 
-        self.obsData = self._create_data(envStateMsg.obsData)
-        self.reward = envStateMsg.reward
-        self.gameOver = envStateMsg.isGameOver
-        self.gameOverReason = envStateMsg.reason
+            if self.gameOver:
+                if self.gameOverReason == pb.EnvStateMsg.SimulationEnd:
+                    #self.envStopped = True
+                    #self.send_close_command()
+                    pass
+                else:
+                    pass
+                    #self.forceEnvStop = False
+                    #self.send_close_command()
 
-        if self.gameOver:
-            if self.gameOverReason == pb.EnvStateMsg.SimulationEnd:
-                #self.envStopped = True
-                #self.send_close_command()
-                pass
-            else:
-                pass
-                #self.forceEnvStop = False
-                #self.send_close_command()
+            self.extraInfo = envStateMsg.info
+            if not self.extraInfo:
+                self.extraInfo = {}
 
-        self.extraInfo = envStateMsg.info
-        if not self.extraInfo:
-            self.extraInfo = {}
-
-        self.newStateRx = True
+            self.newStateRx = True
+        except:
+            self.notReceived = True
+            file2 = open("erro.txt","w")
+            file2.write("erro")
+            file2.close()
 
     def send_close_command(self):
         reply = pb.EnvActMsg()

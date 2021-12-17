@@ -1,0 +1,62 @@
+Waiting for simulation script to connect on port: tcp://localhost:5559
+Please start proper ns-3 simulation script using ./waf --run "..."
+ICIIIIIIAAAAAAAAAAAAAAAAAAAAAAAAAAA
+[1, 3]
+Observation space:  Box([0 0 0 0], [100 100 100 100], (4,), uint64) uint64
+Action space:  Discrete(2) int64
+Start iteration:  0
+Step:  0
+---obs:  [3, 0, 0, 0]
+---action:  1
+Step:  1
+---obs, reward, done, info:  [3, 0, 0, 0] 0.20880000293254852 False currentNodeId=4, currentNetDevIdx=1, currentFwdDevIdx=2
+---action:  1
+Step:  2
+---obs, reward, done, info:  [4, 0, 0, 0] 0.23280000686645508 True currentNodeId=4, currentNetDevIdx=1, currentFwdDevIdx=2
+Start iteration:  1
+Step:  0
+---obs:  [4, 0, 0, 0]
+---action:  -1
+Step:  1
+---obs, reward, done, info:  [3, 0, 0, 0] 0.1151999980211258 False currentNodeId=4, currentNetDevIdx=1, currentFwdDevIdx=
+---action:  1
+Step:  2
+---obs, reward, done, info:  [4, 0, 0, 1] 0.1088000014424324 True currentNodeId=4, currentNetDevIdx=1, currentFwdDevIdx=2
+Start iteration:  2
+Step:  0
+---obs:  [4, 0, 0, 1]
+---action:  -1
+Step:  1
+---obs, reward, done, info:  [3, 1, 0, 1] 0.06880000233650208 False currentNodeId=4, currentNetDevIdx=1, currentFwdDevIdx=
+---action:  1
+Step:  2
+---obs, reward, done, info:  [3, 0, 0, 0] 1.1720000505447388 False currentNodeId=4, currentNetDevIdx=1, currentFwdDevIdx=2
+---action:  1
+Step:  3
+---obs, reward, done, info:  [3, 0, 0, 0] 0.14800000190734863 False currentNodeId=4, currentNetDevIdx=1, currentFwdDevIdx=2
+---action:  1
+Step:  4
+---obs, reward, done, info:  [4, 0, 0, 1] 1.2768000364303589 True currentNodeId=4, currentNetDevIdx=1, currentFwdDevIdx=2
+Start iteration:  3
+Step:  0
+---obs:  [4, 0, 0, 1]
+---action:  -1
+Step:  1
+---obs, reward, done, info:  [3, 0, 0, 1] 0.08720000088214874 False currentNodeId=4, currentNetDevIdx=1, currentFwdDevIdx=
+---action:  1
+Step:  2
+---obs, reward, done, info:  [4, 0, 0, 2] 1.051200032234192 True currentNodeId=4, currentNetDevIdx=1, currentFwdDevIdx=2
+Start iteration:  4
+Step:  0
+---obs:  [4, 0, 0, 2]
+---action:  -1
+Step:  1
+---obs, reward, done, info:  [4, 1, 0, 2] 0.1695999950170517 True currentNodeId=4, currentNetDevIdx=1, currentFwdDevIdx=
+Start iteration:  5
+Step:  0
+---obs:  [4, 1, 0, 2]
+---action:  -1
+Step:  1
+---obs, reward, done, info:  [4, 1, 0, 2] 0.1695999950170517 True currentNodeId=4, currentNetDevIdx=1, currentFwdDevIdx=
+aqui... Break
+Done
