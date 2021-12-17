@@ -220,6 +220,7 @@ OpenGymInterface::NotifyCurrentState()
   }
   
   if (m_stopEnvRequested) {
+    NS_LOG_UNCOND("stop env....");
     return;
   }
 
@@ -272,6 +273,7 @@ OpenGymInterface::NotifyCurrentState()
   if (stopSim) {
     NS_LOG_UNCOND("---Stop requested: " << stopSim);
     m_stopEnvRequested = true;
+    NotifySimulationEnd();
     Simulator::Stop();
     Simulator::Destroy ();
     std::exit(0);

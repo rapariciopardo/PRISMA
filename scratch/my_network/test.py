@@ -20,7 +20,7 @@ parser.add_argument('--start',
                     help='Start ns-3 simulation script 0/1, Default: 1')
 parser.add_argument('--iterations',
                     type=int,
-                    default=100,
+                    default=10,
                     help='Number of iterations, Default: 1')
 parser.add_argument('--port',
                     type=int,
@@ -30,6 +30,11 @@ parser.add_argument('--index',
                     type=int,
                     default=0,
                     help='Index, Default: 0')
+
+file = open("DoneAll.txt","w")
+file.write("False")
+file.close()
+
 args = parser.parse_args()
 startSim = bool(args.start)
 iterationNum = int(args.iterations)
@@ -38,11 +43,13 @@ index = int(args.index)
 
 #port = 5555
 simTime = 20 # seconds
-stepTime = 0.5  # seconds
+stepTime = 0.01  # seconds
 seed = 0
 simArgs = {"--simTime": simTime,
            "--testArg": 123}
 debug = False
+
+
 
 env = ns3env.Ns3Env(port=port, stepTime=stepTime, startSim=startSim, simSeed=seed, simArgs=simArgs, debug=debug)
 g = Graph(5, index)
@@ -62,6 +69,8 @@ print("Action space: ", ac_space, ac_space.dtype)
 stepIdx = 0
 currIt = 0
 
+
+
 try:
     while True:
         print("Start iteration: ", currIt)
@@ -70,6 +79,10 @@ try:
         print("---obs: ", obs)
 
         while True:
+            file = open("DoneAll.txt","r")
+            if(file.read()=='True'):
+                break
+            file.close()
             stepIdx += 1
             action = g.getInterface(obs[0]) #env.action_space.sample()
             print("---action: ", action)
@@ -78,13 +91,28 @@ try:
             obs, reward, done, info = env.step(action)
             print("---obs, reward, done, info: ", obs, reward, done, info)
 
+            #if(stepIdx==2):
+            #    import global_
+            #    global_.doneAll = True
+
+            
+            #print("Done All: ", doneAll)
+
+
             if done:
                 stepIdx = 0
                 if currIt + 1 < iterationNum:
                     env.reset()
                     pass
                 break
-
+        file = open("DoneAll.txt","r")
+        if(file.read()=='True'):
+            print("aqui... Break")
+            file2 = open(str(index)+".txt","w")
+            file2.write(str(index))
+            file2.close()
+            break
+        file.close()
         currIt += 1
         if currIt == iterationNum:
             break
@@ -92,5 +120,8 @@ try:
 except KeyboardInterrupt:
     print("Ctrl-C -> Exit")
 finally:
+    file = open("DoneAll.txt","w")
+    file.write("True")
+    file.close()
     env.close()
     print("Done")
