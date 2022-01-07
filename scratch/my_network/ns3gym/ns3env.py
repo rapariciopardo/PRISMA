@@ -206,9 +206,6 @@ class Ns3ZmqBridge(object):
             self.newStateRx = True
         except:
             self.notReceived = True
-            file2 = open("erro.txt","w")
-            file2.write("erro")
-            file2.close()
 
     def send_close_command(self):
         reply = pb.EnvActMsg()
