@@ -21,7 +21,7 @@ parser.add_argument('--start',
 parser.add_argument('--iterations',
                     type=int,
                     default=10,
-                    help='Number of iterations, Default: 1')
+                    help='Number of iterations, Default: 10')
 parser.add_argument('--port',
                     type=int,
                     default=1,
@@ -108,9 +108,6 @@ try:
         file = open("DoneAll.txt","r")
         if(file.read()=='True'):
             print("aqui... Break")
-            file2 = open(str(index)+".txt","w")
-            file2.write(str(index))
-            file2.close()
             break
         file.close()
         currIt += 1
