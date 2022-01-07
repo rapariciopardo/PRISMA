@@ -3,7 +3,9 @@
 
 import argparse
 from ns3gym import ns3env
+from numpy.lib.function_base import append
 from ns3gym.graph import *
+import numpy as np
 
 #from scratch.my_network.ns3gym.graph import Graph
 
@@ -66,6 +68,8 @@ ac_space = env.action_space
 print("Observation space: ", ob_space,  ob_space.dtype)
 print("Action space: ", ac_space, ac_space.dtype)
 
+avg_queue_size = []
+avg_rew_time = []
 stepIdx = 0
 currIt = 0
 
@@ -90,6 +94,8 @@ try:
             print("Step: ", stepIdx)
             obs, reward, done, info = env.step(action)
             print("---obs, reward, done, info: ", obs, reward, done, info)
+            avg_rew_time.append(reward)
+            avg_queue_size.append(obs[1:])
 
             #if(stepIdx==2):
             #    import global_
@@ -120,5 +126,13 @@ finally:
     file = open("DoneAll.txt","w")
     file.write("True")
     file.close()
+    avg_queue_size = np.array(avg_queue_size)
+    avg_rew_time = np.array(avg_rew_time)
+    print(avg_queue_size)
+    print("Average queue size: ", avg_queue_size.mean(axis=0), avg_queue_size.std(axis=0), avg_queue_size.mean(), avg_queue_size.std())
+
+    print(avg_rew_time)
+    print("Average Time to be transmitted: ", avg_rew_time.mean(), avg_rew_time.std())
+
     env.close()
     print("Done")
