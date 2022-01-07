@@ -32,4 +32,16 @@ Step:  7
 Step:  8
 ---obs, reward, done, info:  [4, 0, 1, 0] 0.2272000014781952 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
 aqui... Break
+[[0 0 0]
+ [0 0 0]
+ [0 0 0]
+ [0 1 0]
+ [0 0 0]
+ [0 0 0]
+ [0 1 0]
+ [0 1 0]]
+Average queue size:  [0.    0.375 0.   ] [0.         0.48412292 0.        ] 0.125 0.33071891388307384
+[0.0544     0.63840002 0.3504     0.1696     0.79119998 0.3416
+ 0.2272     0.2272    ]
+Average Time to be transmitted:  0.35000000009313226 0.23129686427880267
 Done
