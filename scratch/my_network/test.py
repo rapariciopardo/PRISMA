@@ -23,7 +23,7 @@ parser.add_argument('--start',
 parser.add_argument('--iterations',
                     type=int,
                     default=100,
-                    help='Number of iterations, Default: 100')
+                    help='Number of iterations, Default: ---')
 parser.add_argument('--port',
                     type=int,
                     default=1,
@@ -33,9 +33,6 @@ parser.add_argument('--index',
                     default=0,
                     help='Index, Default: 0')
 
-file = open("DoneAll.txt","w")
-file.write("False")
-file.close()
 
 args = parser.parse_args()
 startSim = bool(args.start)
@@ -83,13 +80,11 @@ try:
         print("---obs: ", obs)
 
         while True:
-            file = open("DoneAll.txt","r")
-            if(file.read()=='True'):
+            if(not env.connected):
                 break
-            file.close()
             stepIdx += 1
-            #action = g.getInterface(obs[0]) #env.action_space.sample()
-            action = env.action_space.sample()
+            action = g.getInterface(obs[0]) #env.action_space.sample()
+            #action = env.action_space.sample()
             print("---action: ", action)
 
             print("Step: ", stepIdx)
@@ -112,21 +107,16 @@ try:
                     env.reset()
                     pass
                 break
-        file = open("DoneAll.txt","r")
-        if(file.read()=='True'):
-            print("aqui... Break")
+        if(not env.connected):
             break
-        file.close()
         currIt += 1
         if currIt == iterationNum:
+            print("Done mesmo...")
             break
 
 except KeyboardInterrupt:
     print("Ctrl-C -> Exit")
 finally:
-    file = open("DoneAll.txt","w")
-    file.write("True")
-    file.close()
     avg_queue_size = np.array(avg_queue_size)
     avg_rew_time = np.array(avg_rew_time)
     print(avg_queue_size)

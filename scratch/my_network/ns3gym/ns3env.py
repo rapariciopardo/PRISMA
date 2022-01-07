@@ -204,8 +204,10 @@ class Ns3ZmqBridge(object):
                 self.extraInfo = {}
 
             self.newStateRx = True
+            return True
         except:
             self.notReceived = True
+            return False
 
     def send_close_command(self):
         reply = pb.EnvActMsg()
@@ -217,25 +219,29 @@ class Ns3ZmqBridge(object):
         return True
 
     def send_actions(self, actions):
-        reply = pb.EnvActMsg()
+        try:
+            reply = pb.EnvActMsg()
 
-        actionMsg = self._pack_data(actions, self._action_space)
-        reply.actData.CopyFrom(actionMsg)
+            actionMsg = self._pack_data(actions, self._action_space)
+            reply.actData.CopyFrom(actionMsg)
 
-        reply.stopSimReq = False
-        if self.forceEnvStop:
-            reply.stopSimReq = True
+            reply.stopSimReq = False
+            if self.forceEnvStop:
+                reply.stopSimReq = True
 
-        replyMsg = reply.SerializeToString()
-        self.socket.send(replyMsg)
-        self.newStateRx = False
-        return True
+            replyMsg = reply.SerializeToString()
+            self.socket.send(replyMsg)
+            self.newStateRx = False
+            return True
+        except:
+            return False
 
     def step(self, actions):
         # exec actions for current state
         self.send_actions(actions)
         # get result of above actions
-        self.rx_env_state()
+        res = self.rx_env_state()
+        return res
 
     def is_game_over(self):
         return self.gameOver
@@ -383,6 +389,7 @@ class Ns3Env(gym.Env):
         self.viewer = None
         self.state = None
         self.steps_beyond_done = None
+        self.connected = True
 
         self.ns3ZmqBridge = Ns3ZmqBridge(self.port, self.startSim, self.simSeed, self.simArgs, self.debug)
         self.ns3ZmqBridge.initialize_env(self.stepTime)
@@ -405,7 +412,7 @@ class Ns3Env(gym.Env):
         return (obs, reward, done, extraInfo)
 
     def step(self, action):
-        response = self.ns3ZmqBridge.step(action)
+        self.connected = self.ns3ZmqBridge.step(action)
         self.envDirty = True
         return self.get_state()
 
