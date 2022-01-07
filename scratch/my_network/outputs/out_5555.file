@@ -30,8 +30,81 @@ Step:  7
 ---obs, reward, done, info:  [4, 0, 1, 0] 0.2272000014781952 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
 ---action:  0
 Step:  8
----obs, reward, done, info:  [4, 0, 1, 0] 0.2272000014781952 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
-aqui... Break
+---obs, reward, done, info:  [4, 0, 2, 0] 0.667199969291687 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
+Step:  9
+---obs, reward, done, info:  [4, 0, 0, 0] 0.6535999774932861 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
+Step:  10
+---obs, reward, done, info:  [4, 0, 0, 0] 0.3424000144004822 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
+Step:  11
+---obs, reward, done, info:  [4, 0, 1, 0] 0.7567999958992004 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
+Step:  12
+---obs, reward, done, info:  [4, 0, 1, 0] 0.0544000007212162 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
+Step:  13
+---obs, reward, done, info:  [4, 0, 2, 0] 0.10799999535083771 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
+Step:  14
+---obs, reward, done, info:  [4, 0, 3, 0] 0.06080000102519989 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
+Step:  15
+---obs, reward, done, info:  [4, 0, 4, 0] 0.5720000267028809 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
+Step:  16
+---obs, reward, done, info:  [4, 0, 4, 0] 1.0640000104904175 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
+Step:  17
+---obs, reward, done, info:  [4, 0, 5, 0] 0.21119999885559082 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
+Step:  18
+---obs, reward, done, info:  [4, 0, 3, 0] 1.3184000253677368 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
+Step:  19
+---obs, reward, done, info:  [4, 0, 3, 0] 0.42559999227523804 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
+Step:  20
+---obs, reward, done, info:  [4, 0, 4, 0] 0.04399999976158142 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
+Step:  21
+---obs, reward, done, info:  [4, 0, 4, 0] 0.15599998831748962 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
+Step:  22
+---obs, reward, done, info:  [4, 0, 3, 0] 1.5232000350952148 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
+Step:  23
+---obs, reward, done, info:  [4, 0, 0, 0] 0.6416000127792358 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
+Step:  24
+---obs, reward, done, info:  [4, 0, 0, 0] 0.5776000022888184 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
+Step:  25
+---obs, reward, done, info:  [0, 0, 0, 0] 1.0823999643325806 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+Start iteration:  1
+Step:  0
+---obs:  [0, 0, 0, 0]
+---action:  -1
+Step:  1
+---obs, reward, done, info:  [0, 0, 0, 0] 0.23119999468326569 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+Start iteration:  2
+Step:  0
+---obs:  [0, 0, 0, 0]
+---action:  -1
+Step:  1
+---obs, reward, done, info:  [0, 1, 0, 0] 0.46239998936653137 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+Start iteration:  3
+Step:  0
+---obs:  [0, 1, 0, 0]
+---action:  -1
+Step:  1
+---obs, reward, done, info:  [0, 1, 0, 0] 0.46239998936653137 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+Start iteration:  4
+Step:  0
+---obs:  [0, 1, 0, 0]
+---action:  -1
+Step:  1
 [[0 0 0]
  [0 0 0]
  [0 0 0]
@@ -39,9 +112,49 @@ aqui... Break
  [0 0 0]
  [0 0 0]
  [0 1 0]
- [0 1 0]]
-Average queue size:  [0.    0.375 0.   ] [0.         0.48412292 0.        ] 0.125 0.33071891388307384
+ [0 2 0]
+ [0 0 0]
+ [0 0 0]
+ [0 1 0]
+ [0 1 0]
+ [0 2 0]
+ [0 3 0]
+ [0 4 0]
+ [0 4 0]
+ [0 5 0]
+ [0 3 0]
+ [0 3 0]
+ [0 4 0]
+ [0 4 0]
+ [0 3 0]
+ [0 0 0]
+ [0 0 0]
+ [0 0 0]
+ [0 0 0]
+ [1 0 0]
+ [1 0 0]]
+Average queue size:  [0.07142857 1.46428571 0.        ] [0.25753938 1.65792777 0.        ] 0.5119047619047619 1.1801336447628012
 [0.0544     0.63840002 0.3504     0.1696     0.79119998 0.3416
- 0.2272     0.2272    ]
-Average Time to be transmitted:  0.35000000009313226 0.23129686427880267
+ 0.2272     0.66719997 0.65359998 0.34240001 0.7568     0.0544
+ 0.108      0.0608     0.57200003 1.06400001 0.2112     1.31840003
+ 0.42559999 0.044      0.15599999 1.52320004 0.64160001 0.5776
+ 1.08239996 0.23119999 0.46239999 0.46239999]
+Average Time to be transmitted:  0.4995714279689959 0.3834321721242442
 Done
+Traceback (most recent call last):
+  File "test.py", line 95, in <module>
+    obs, reward, done, info = env.step(action)
+  File "/home/tiago/Documents/NetSim/scratch/my_network/ns3gym/ns3env.py", line 408, in step
+    response = self.ns3ZmqBridge.step(action)
+  File "/home/tiago/Documents/NetSim/scratch/my_network/ns3gym/ns3env.py", line 236, in step
+    self.send_actions(actions)
+  File "/home/tiago/Documents/NetSim/scratch/my_network/ns3gym/ns3env.py", line 230, in send_actions
+    self.socket.send(replyMsg)
+  File "/home/tiago/.local/lib/python3.8/site-packages/zmq/sugar/socket.py", line 547, in send
+    return super(Socket, self).send(data, flags=flags, copy=copy, track=track)
+  File "zmq/backend/cython/socket.pyx", line 718, in zmq.backend.cython.socket.Socket.send
+  File "zmq/backend/cython/socket.pyx", line 765, in zmq.backend.cython.socket.Socket.send
+  File "zmq/backend/cython/socket.pyx", line 247, in zmq.backend.cython.socket._send_copy
+  File "zmq/backend/cython/socket.pyx", line 242, in zmq.backend.cython.socket._send_copy
+  File "zmq/backend/cython/checkrc.pxd", line 28, in zmq.backend.cython.checkrc._check_rc
+zmq.error.ZMQError: Operation cannot be accomplished in current state

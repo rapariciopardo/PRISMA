@@ -22,8 +22,8 @@ parser.add_argument('--start',
                     help='Start ns-3 simulation script 0/1, Default: 1')
 parser.add_argument('--iterations',
                     type=int,
-                    default=10,
-                    help='Number of iterations, Default: 10')
+                    default=100,
+                    help='Number of iterations, Default: 100')
 parser.add_argument('--port',
                     type=int,
                     default=1,
