@@ -88,7 +88,8 @@ try:
                 break
             file.close()
             stepIdx += 1
-            action = g.getInterface(obs[0]) #env.action_space.sample()
+            #action = g.getInterface(obs[0]) #env.action_space.sample()
+            action = env.action_space.sample()
             print("---action: ", action)
 
             print("Step: ", stepIdx)
