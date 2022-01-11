@@ -171,7 +171,7 @@ MyGymEnv::GetQueueLength(Ptr<Node> node, uint32_t netDev_idx)
   Ptr<PointToPointNetDevice> csma_netDev = DynamicCast<PointToPointNetDevice> (netDev);
   //Ptr<PointToPointNetDevice> ptp_netDev = netDev->GetObject<PointToPointNetDevice> ();
   Ptr<Queue<Packet> > queue = csma_netDev->GetQueue ();
-  uint32_t backlog = (int) queue->GetNPackets();
+  uint32_t backlog = (int) queue->GetNBytes();
   return backlog;
 }
 
@@ -207,7 +207,8 @@ MyGymEnv::GetReward()
   uint32_t value = GetQueueLength (m_node, m_fwdDev_idx);
 
   float transmission_time = (m_size*8)/m_packetRate;
-  float reward = transmission_time + transmission_time*(float) value;
+  float waiting_time = (float)(value*8)/m_packetRate;
+  float reward = transmission_time + waiting_time;
   NS_LOG_UNCOND("Size: "<<m_size<<"   Link Rate: "<<m_packetRate<<"    Queue Length: "<<value);
   NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", MyGetReward: " << reward);
   //NS_LOG_UNCOND ("Reward: Node with ID " << m_node->GetId() << ", net device with index " << m_fwdDev_idx << ", IF idx "<< (m_node->GetDevice(m_fwdDev_idx))->GetIfIndex() << ": New  queue size: " << reward << " packets");
