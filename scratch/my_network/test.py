@@ -120,10 +120,15 @@ finally:
     avg_queue_size = np.array(avg_queue_size)
     avg_rew_time = np.array(avg_rew_time)
     print(avg_queue_size)
-    print("Average queue size: ", avg_queue_size.mean(axis=0), avg_queue_size.std(axis=0), avg_queue_size.mean(), avg_queue_size.std())
+    print("Average Queue")
+    print("Max: ",avg_queue_size.max(axis=0), "Min: ",avg_queue_size.min(axis=0), "Mean: ", avg_queue_size.mean(axis=0), "Std: ", avg_queue_size.std(axis=0))
+    print("Max: ",avg_queue_size.max(), "Min: ",avg_queue_size.min(), "Mean: ", avg_queue_size.mean(), "Std: ", avg_queue_size.std())
 
+    print("-------------------------------------------------")
     print(avg_rew_time)
-    print("Average Time to be transmitted: ", avg_rew_time.mean(), avg_rew_time.std())
+    print("Average Reward Time")
+    print("Max: ",avg_rew_time.max(), "Min: ",avg_rew_time.min(), "Mean: ", avg_rew_time.mean(), "Std: ", avg_rew_time.std())
+
 
     env.close()
     print("Done")
