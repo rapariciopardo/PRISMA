@@ -69,6 +69,7 @@ avg_queue_size = []
 avg_rew_time = []
 stepIdx = 0
 currIt = 0
+counter = 0
 
 
 
@@ -83,6 +84,7 @@ try:
             if(not env.connected):
                 break
             stepIdx += 1
+            
             action = g.getInterface(obs[0]) #env.action_space.sample()
             #action = env.action_space.sample()
             print("---action: ", action)
@@ -91,7 +93,7 @@ try:
             obs, reward, done, info = env.step(action)
             print("---obs, reward, done, info: ", obs, reward, done, info)
             avg_rew_time.append(reward)
-            avg_queue_size.append(obs[1:])
+            avg_queue_size.append(obs[2:])
 
             #if(stepIdx==2):
             #    import global_
@@ -107,6 +109,8 @@ try:
                     env.reset()
                     pass
                 break
+            else:
+                counter += 1
         if(not env.connected):
             break
         currIt += 1
@@ -128,7 +132,8 @@ finally:
     print(avg_rew_time)
     print("Average Reward Time")
     print("Max: ",avg_rew_time.max(), "Min: ",avg_rew_time.min(), "Mean: ", avg_rew_time.mean(), "Std: ", avg_rew_time.std())
-
+    print("-------------------------------------------------")
+    print("Counter: ", counter)
 
     env.close()
     print("Done")
