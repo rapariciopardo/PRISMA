@@ -245,9 +245,9 @@ int main (int argc, char *argv[])
   NS_LOG_INFO ("Create P2P Link Attributes.");
 
   //PointToPointHelper p2p;
-  PointToPointHelper p2p;
-  p2p.SetDeviceAttribute ("DataRate", DataRateValue (LinkRate));
-  p2p.SetChannelAttribute ("Delay", StringValue (LinkDelay));
+  //PointToPointHelper p2p;
+  //p2p.SetDeviceAttribute ("DataRate", DataRateValue (LinkRate));
+  //p2p.SetChannelAttribute ("Delay", StringValue (LinkDelay));
 
   
 
@@ -255,16 +255,38 @@ int main (int argc, char *argv[])
 ///////////////////////////////////////////////////////////////////////
   NetDeviceContainer traffic_nd;
   NetDeviceContainer switch_nd;
-///////////////////////////////////////////////////////////////////////
+
+  ///////////////////////////////////////////////////////////////////////
+
+  int nodes_degree[n_nodes] ={0};
+  for (size_t i = 0; i < Adj_Matrix.size (); i++)
+      {
+        for (size_t j = 0; j < Adj_Matrix[i].size (); j++)
+          {
+            if (Adj_Matrix[i][j] == 1)
+              {
+                
+                nodes_degree[i] += 1;
+                nodes_degree[j] += 1;
+              } 
+          }
+      }
+
+
 
   NS_LOG_UNCOND("Creating link between switch nodes");
   
   for(int i=0;i<n_nodes;i++)
   {
+    PointToPointHelper p2p;
+    DataRate data_rate(LinkRate);
+    p2p.SetDeviceAttribute ("DataRate", DataRateValue (data_rate.GetBitRate()*nodes_degree[i]));
+    p2p.SetChannelAttribute ("Delay", StringValue (LinkDelay));
     NetDeviceContainer n_devs = p2p.Install (NodeContainer (nodes_traffic.Get(i), nodes_switch.Get(i)));
     traffic_nd.Add(n_devs.Get(0));
     switch_nd.Add(n_devs.Get(1));
   }
+
 /////////////////////////////////////////////////////////////////
   for (size_t i = 0; i < Adj_Matrix.size (); i++)
       {
@@ -273,11 +295,15 @@ int main (int argc, char *argv[])
 
             if (Adj_Matrix[i][j] == 1)
               {
+                PointToPointHelper p2p;
+                p2p.SetDeviceAttribute ("DataRate", DataRateValue (LinkRate));
+                p2p.SetChannelAttribute ("Delay", StringValue (LinkDelay));
                 NetDeviceContainer n_devs = p2p.Install(NodeContainer(nodes_switch.Get(i), nodes_switch.Get(j)));
                 switch_nd.Add(n_devs.Get(0));
                 switch_nd.Add(n_devs.Get(1));
                 NS_LOG_INFO ("matrix element [" << i << "][" << j << "] is 1");
                 NS_LOG_UNCOND(n_devs.Get(0)->GetAddress()<<"     "<<n_devs.Get(1)->GetAddress());
+                
               }
             else
               {
@@ -289,6 +315,7 @@ int main (int argc, char *argv[])
 
 
 ////////////////////////////////////////////////////////////////
+
   NS_LOG_UNCOND("Size switch_nd :"<<switch_nd.GetN());
   for(uint32_t i=0;i<switch_nd.GetN();i++)
   {
@@ -481,8 +508,8 @@ int main (int argc, char *argv[])
 //  fileHelper.WriteProbe (probeType, tracePath, "Output");
 
 
-  AsciiTraceHelper ascii;
-  p2p.EnableAsciiAll (ascii.CreateFileStream (tr_name.c_str ()));
+  //AsciiTraceHelper ascii;
+  //p2p.EnableAsciiAll (ascii.CreateFileStream (tr_name.c_str ()));
   // p2p.EnablePcapAll (pcap_name.c_str());
 
   //Ptr<FlowMonitor> flowmon;
