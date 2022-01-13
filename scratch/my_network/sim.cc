@@ -113,16 +113,16 @@ int main (int argc, char *argv[])
   uint32_t simSeed = 1;
   uint32_t openGymPort = 5555;
   uint32_t testArg = 0;
-  double simTime        = 10.00; //seconds
+  double simTime        = 2.00; //seconds
   double envStepTime = 0.1; //seconds, ns3gym env step time interval
   
   bool eventBasedEnv = true;
   
   //Parameters of the scenario
   double SinkStartTime  = 1.0001;
-  double SinkStopTime   = 9.90001;
-  double AppStartTime   = 2.0001;
-  double AppStopTime    = 9.80001;
+  double SinkStopTime   = 1.90001;
+  double AppStartTime   = 1.0001;
+  double AppStopTime    = 1.80001;
 
     
   CommandLine cmd;
