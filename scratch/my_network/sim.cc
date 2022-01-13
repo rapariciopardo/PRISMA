@@ -54,6 +54,8 @@
 #include "ns3/applications-module.h"
 #include "scratch/my_network/random-generator.h"
 #include "scratch/my_network/random-helper.h"
+#include "scratch/my_network/poisson-app-helper.h"
+#include "scratch/my_network/poisson-application.h"
 #include "ns3/global-route-manager.h"
 #include "ns3/mobility-module.h"
 #include "ns3/netanim-module.h"
@@ -186,11 +188,20 @@ int main (int argc, char *argv[])
 
   // ---------- Read Node Coordinates File -----------------------------------
 
+
+
   vector<vector<double> > coord_array;
   coord_array = readCordinatesFile (node_coordinates_file_name);
 
-  vector<vector<std::string>> intensity_array;
-  intensity_array = readIntensityFile (node_intensity_file_name);
+  vector<vector<std::string>> Traff_Matrix;
+  Traff_Matrix = readIntensityFile (node_intensity_file_name);
+
+  
+  // Optionally display 2-dimensional intensity traffic matrix (Traff_Matrix) array
+  // printMatrix (node_intensity_file_name (),Traff_Matrix);
+
+  //vector<vector<std::string>> intensity_array;
+  //intensity_array = readIntensityFile (node_intensity_file_name);
 
   // Optionally display node co-ordinates file
   // printCoordinateArray (node_coordinates_file_name.c_str (),coord_array);
@@ -409,6 +420,8 @@ int main (int argc, char *argv[])
 
   
   NS_LOG_INFO ("Setup CBR Traffic Sources.");
+
+  //uint32_t AvgPacketSize = 1500; //—> If you want to change the by-default 512 packet size
   
   for (int i = 0; i < n_nodes; i++)
     {
@@ -431,10 +444,17 @@ int main (int argc, char *argv[])
               Ipv4InterfaceAddress ipv4_int_addr = ipv4->GetAddress (1, 0);
               Ipv4Address ip_addr = ipv4_int_addr.GetLocal ();
               NS_LOG_UNCOND(ipv4_int_addr);
-              RandomAppHelper onoff ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]
+              PoissonAppHelper poisson ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]
+              poisson.SetAverageRate (DataRate(Traff_Matrix[i][j]));
+              //poisson.SetAverageRate (DataRate(Traff_Matrix[i][j]), AvgPacketSize);
+              ApplicationContainer apps = poisson.Install (nodes_traffic.Get (i));  // traffic sources are installed on all nodes
+              
+              
+              //RandomAppHelper onoff ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]
               //PacketSinkHelper onoff ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]              
-              onoff.SetConstantRate (intensity_array[i][j]);
-              ApplicationContainer apps = onoff.Install (nodes_traffic.Get (i));  // traffic sources are installed on all nodes
+              //onoff.SetConstantRate (intensity_array[i][j]);
+              //ApplicationContainer apps = onoff.Install (nodes_traffic.Get (i));  // traffic sources are installed on all nodes
+              
               apps.Start (Seconds (AppStartTime + rn));
               apps.Stop (Seconds (AppStopTime));
             }
