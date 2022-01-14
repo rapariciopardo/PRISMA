@@ -22,7 +22,7 @@ parser.add_argument('--start',
                     help='Start ns-3 simulation script 0/1, Default: 1')
 parser.add_argument('--iterations',
                     type=int,
-                    default=1000,
+                    default=100000,
                     help='Number of iterations, Default: ---')
 parser.add_argument('--port',
                     type=int,
@@ -77,8 +77,8 @@ try:
     while True:
         print("Start iteration: ", currIt)
         obs = env.reset()
-        print("Step: ", stepIdx)
-        print("---obs: ", obs)
+        #print("Step: ", stepIdx)
+        #print("---obs: ", obs)
 
         while True:
             if(not env.connected):
@@ -87,11 +87,11 @@ try:
             
             action = g.getInterface(obs[0]) #env.action_space.sample()
             #action = env.action_space.sample()
-            print("---action: ", action)
+            #print("---action: ", action)
 
-            print("Step: ", stepIdx)
+            #print("Step: ", stepIdx)
             obs, reward, done, info = env.step(action)
-            print("---obs, reward, done, info: ", obs, reward, done, info)
+            #print("---obs, reward, done, info: ", obs, reward, done, info)
             avg_rew_time.append(reward)
             avg_queue_size.append(obs[2:])
 
