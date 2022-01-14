@@ -6,1008 +6,849 @@ Observation space:  Box([0 0 0 0], [100 100 100 100], (4,), uint64) uint64
 Action space:  Discrete(2) int64
 Start iteration:  0
 Step:  0
----obs:  [0, 0, 0, 0]
----action:  -1
+---obs:  [4, 0, 0, 0]
+---action:  0
 Step:  1
----obs, reward, done, info:  [0, 0, 0, 0] 0.004224000032991171 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---obs, reward, done, info:  [4, 0, 0, 0] 0.016287999227643013 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
+Step:  2
+---obs, reward, done, info:  [4, 0, 0, 0] 0.004656000062823296 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
+Step:  3
+---obs, reward, done, info:  [4, 0, 321, 0] 0.00622399989515543 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
+Step:  4
+---obs, reward, done, info:  [4, 0, 98, 0] 0.014336000196635723 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
+Step:  5
+---obs, reward, done, info:  [4, 0, 828, 0] 0.020255999639630318 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
+Step:  6
+---obs, reward, done, info:  [4, 0, 468, 0] 0.009184000082314014 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
+Step:  7
+---obs, reward, done, info:  [4, 0, 136, 0] 0.010847999714314938 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
+Step:  8
+---obs, reward, done, info:  [4, 0, 572, 0] 0.013775999657809734 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
+Step:  9
+---obs, reward, done, info:  [4, 0, 319, 0] 0.008063999935984612 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
+Step:  10
+---obs, reward, done, info:  [4, 0, 534, 0] 0.012655999511480331 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
+Step:  11
+---obs, reward, done, info:  [4, 0, 821, 0] 0.017760001122951508 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
+Step:  12
+---obs, reward, done, info:  [4, 0, 0, 0] 0.008031999692320824 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
+Step:  13
+---obs, reward, done, info:  [4, 0, 0, 0] 0.023552000522613525 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
+Step:  14
+---obs, reward, done, info:  [4, 0, 0, 0] 0.013279999606311321 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
+Step:  15
+---obs, reward, done, info:  [0, 0, 0, 0] 0.006144000217318535 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
 Start iteration:  1
 Step:  0
 ---obs:  [0, 0, 0, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [0, 0, 0, 0] 0.00025599999935366213 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---obs, reward, done, info:  [3, 0, 0, 0] 0.005679999943822622 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---action:  1
+Step:  2
+---obs, reward, done, info:  [3, 0, 0, 0] 0.0033599999733269215 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+---action:  1
+Step:  3
+---obs, reward, done, info:  [3, 0, 0, 0] 0.0006399999838322401 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+---action:  1
+Step:  4
+---obs, reward, done, info:  [3, 0, 0, 0] 0.006144000217318535 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+---action:  1
+Step:  5
+---obs, reward, done, info:  [0, 0, 0, 0] 0.010255999863147736 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
 Start iteration:  2
 Step:  0
 ---obs:  [0, 0, 0, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [0, 0, 0, 0] 0.004575999919325113 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---obs, reward, done, info:  [0, 0, 0, 0] 0.0044479998759925365 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
 Start iteration:  3
 Step:  0
 ---obs:  [0, 0, 0, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [0, 0, 0, 0] 0.0104160001501441 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---obs, reward, done, info:  [0, 0, 0, 0] 0.004207999911159277 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
 Start iteration:  4
 Step:  0
 ---obs:  [0, 0, 0, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [2, 0, 0, 0] 0.004240000154823065 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
----action:  1
-Step:  2
----obs, reward, done, info:  [2, 0, 0, 0] 0.00019200000679120421 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
----action:  1
-Step:  3
----obs, reward, done, info:  [2, 0, 0, 0] 0.0033279999624937773 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
----action:  1
-Step:  4
----obs, reward, done, info:  [2, 0, 0, 0] 0.00033599999733269215 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
----action:  1
-Step:  5
----obs, reward, done, info:  [2, 0, 0, 0] 0.0029120000544935465 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
----action:  1
-Step:  6
----obs, reward, done, info:  [2, 0, 0, 0] 0.002032000105828047 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
----action:  1
-Step:  7
----obs, reward, done, info:  [2, 0, 0, 0] 0.008063999935984612 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
----action:  1
-Step:  8
----obs, reward, done, info:  [2, 0, 0, 0] 0.001088000019080937 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
----action:  1
-Step:  9
----obs, reward, done, info:  [2, 0, 0, 0] 0.012768000364303589 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
----action:  1
-Step:  10
----obs, reward, done, info:  [2, 0, 0, 0] 0.004623999819159508 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
----action:  1
-Step:  11
----obs, reward, done, info:  [2, 0, 0, 319] 0.008063999935984612 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
----action:  1
-Step:  12
----obs, reward, done, info:  [0, 0, 0, 534] 0.030192000791430473 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+---obs, reward, done, info:  [0, 0, 0, 0] 0.003344000084325671 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
 Start iteration:  5
 Step:  0
----obs:  [0, 0, 0, 534]
+---obs:  [0, 0, 0, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [2, 0, 0, 534] 0.004112000111490488 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
----action:  1
-Step:  2
----obs, reward, done, info:  [2, 0, 0, 821] 0.017760001122951508 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
----action:  1
-Step:  3
----obs, reward, done, info:  [0, 0, 0, 606] 0.022544000297784805 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+---obs, reward, done, info:  [0, 0, 0, 0] 0.004176000133156776 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
 Start iteration:  6
 Step:  0
----obs:  [0, 0, 0, 606]
+---obs:  [0, 0, 0, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [0, 0, 0, 0] 0.018160000443458557 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---obs, reward, done, info:  [0, 0, 0, 0] 0.010672000236809254 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
 Start iteration:  7
 Step:  0
 ---obs:  [0, 0, 0, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [0, 0, 0, 0] 0.012032000347971916 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---obs, reward, done, info:  [0, 0, 0, 0] 7.999999797903001e-05 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
 Start iteration:  8
 Step:  0
 ---obs:  [0, 0, 0, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [0, 0, 0, 0] 0.003263999940827489 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---obs, reward, done, info:  [3, 0, 0, 0] 0.006351999938488007 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---action:  1
+Step:  2
+---obs, reward, done, info:  [4, 0, 0, 0] 0.023552000522613525 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+---action:  0
+Step:  3
+---obs, reward, done, info:  [4, 0, 0, 0] 0.018592000007629395 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
+Step:  4
+---obs, reward, done, info:  [0, 0, 1192, 0] 0.04262400045990944 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
 Start iteration:  9
 Step:  0
----obs:  [0, 0, 0, 0]
+---obs:  [0, 0, 1192, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [0, 0, 0, 0] 0.004656000062823296 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---obs, reward, done, info:  [3, 0, 1192, 0] 0.004623999819159508 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---action:  1
+Step:  2
+---obs, reward, done, info:  [3, 0, 1192, 0] 0.002704000100493431 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+---action:  1
+Step:  3
+---obs, reward, done, info:  [0, 0, 1192, 0] 0.007903999648988247 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
 Start iteration:  10
 Step:  0
----obs:  [0, 0, 0, 0]
+---obs:  [0, 0, 1192, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [0, 0, 0, 0] 0.0016959999920800328 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---obs, reward, done, info:  [0, 524, 1192, 0] 0.009855999611318111 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
 Start iteration:  11
 Step:  0
----obs:  [0, 0, 0, 0]
+---obs:  [0, 524, 1192, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [2, 0, 0, 0] 0.008031999692320824 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
----action:  1
-Step:  2
----obs, reward, done, info:  [0, 0, 0, 0] 0.008671999908983707 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+---obs, reward, done, info:  [0, 646, 1192, 0] 0.010607999749481678 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
 Start iteration:  12
 Step:  0
----obs:  [0, 0, 0, 0]
+---obs:  [0, 646, 1192, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [2, 0, 0, 0] 0.012175999581813812 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---obs, reward, done, info:  [3, 169, 0, 0] 0.02147199958562851 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
 ---action:  1
 Step:  2
----obs, reward, done, info:  [2, 0, 0, 791] 0.015664000064134598 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+---obs, reward, done, info:  [3, 0, 0, 0] 0.0057760002091526985 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
 ---action:  1
 Step:  3
----obs, reward, done, info:  [0, 0, 0, 1009] 0.01841600053012371 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+---obs, reward, done, info:  [0, 0, 0, 391] 0.01756799966096878 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
 Start iteration:  13
 Step:  0
----obs:  [0, 0, 0, 1009]
+---obs:  [0, 0, 0, 391]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [0, 0, 0, 218] 0.007567999884486198 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---obs, reward, done, info:  [3, 0, 0, 391] 0.008799999952316284 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---action:  1
+Step:  2
+---obs, reward, done, info:  [3, 0, 0, 971] 0.016767999157309532 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+---action:  1
+Step:  3
+---obs, reward, done, info:  [0, 0, 0, 1078] 0.022367998957633972 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
 Start iteration:  14
 Step:  0
----obs:  [0, 0, 0, 218]
+---obs:  [0, 0, 0, 1078]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [2, 0, 0, 218] 0.016543999314308167 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
----action:  1
-Step:  2
----obs, reward, done, info:  [2, 0, 0, 1282] 0.027664000168442726 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
----action:  1
-Step:  3
----obs, reward, done, info:  [4, 0, 0, 1541] 0.031488001346588135 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
----action:  0
-Step:  4
----obs, reward, done, info:  [4, 0, 0, 477] 0.002400000113993883 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
----action:  0
-Step:  5
----obs, reward, done, info:  [4, 0, 0, 477] 0.004495999775826931 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
----action:  0
-Step:  6
----obs, reward, done, info:  [4, 0, 0, 477] 0.0044479998759925365 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
----action:  0
-Step:  7
----obs, reward, done, info:  [0, 0, 308, 0] 0.011215999722480774 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---obs, reward, done, info:  [0, 0, 0, 1078] 0.002240000059828162 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
 Start iteration:  15
 Step:  0
----obs:  [0, 0, 308, 0]
+---obs:  [0, 0, 0, 1078]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [4, 0, 308, 0] 0.004207999911159277 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
----action:  0
-Step:  2
----obs, reward, done, info:  [0, 0, 293, 0] 0.008031999692320824 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---obs, reward, done, info:  [0, 0, 0, 687] 0.007360000163316727 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
 Start iteration:  16
 Step:  0
----obs:  [0, 0, 293, 0]
+---obs:  [0, 0, 0, 687]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [0, 0, 293, 0] 0.001728000002913177 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---obs, reward, done, info:  [0, 0, 0, 107] 0.010400000028312206 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
 Start iteration:  17
 Step:  0
----obs:  [0, 0, 293, 0]
+---obs:  [0, 0, 0, 107]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [4, 0, 0, 0] 0.006144000217318535 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---obs, reward, done, info:  [4, 0, 0, 0] 0.013903999701142311 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
 ---action:  0
 Step:  2
----obs, reward, done, info:  [0, 0, 414, 0] 0.008352000266313553 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---obs, reward, done, info:  [0, 0, 0, 0] 0.013935999944806099 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
 Start iteration:  18
 Step:  0
----obs:  [0, 0, 414, 0]
+---obs:  [0, 0, 0, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [0, 0, 0, 0] 0.005872000008821487 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---obs, reward, done, info:  [3, 0, 0, 0] 0.010095999576151371 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---action:  1
+Step:  2
+---obs, reward, done, info:  [3, 0, 0, 0] 0.010015999898314476 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+---action:  1
+Step:  3
+---obs, reward, done, info:  [0, 0, 0, 656] 0.01844799891114235 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
 Start iteration:  19
 Step:  0
----obs:  [0, 0, 0, 0]
+---obs:  [0, 0, 0, 656]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [0, 0, 0, 0] 0.006144000217318535 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
-Start iteration:  20
-Step:  0
----obs:  [0, 0, 0, 0]
----action:  -1
-Step:  1
----obs, reward, done, info:  [2, 0, 0, 0] 0.014736000448465347 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
----action:  1
+---obs, reward, done, info:  [4, 0, 0, 656] 0.005840000230818987 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---action:  0
 Step:  2
----obs, reward, done, info:  [0, 0, 0, 0] 0.010672000236809254 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
-Start iteration:  21
-Step:  0
----obs:  [0, 0, 0, 0]
----action:  -1
-Step:  1
----obs, reward, done, info:  [2, 0, 0, 0] 0.017216000705957413 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
----action:  1
-Step:  2
----obs, reward, done, info:  [2, 0, 0, 1106] 0.021056000143289566 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
----action:  1
+---obs, reward, done, info:  [4, 0, 0, 0] 0.004176000133156776 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
 Step:  3
----obs, reward, done, info:  [2, 0, 0, 1346] 0.024464000016450882 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
----action:  1
+---obs, reward, done, info:  [4, 0, 291, 0] 0.0069599999114871025 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
 Step:  4
----obs, reward, done, info:  [4, 0, 0, 453] 0.013599999248981476 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+---obs, reward, done, info:  [4, 0, 465, 0] 0.008127999491989613 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
 ---action:  0
 Step:  5
----obs, reward, done, info:  [4, 0, 0, 453] 0.0011360000353306532 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---obs, reward, done, info:  [4, 0, 538, 0] 0.009984000585973263 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
 ---action:  0
 Step:  6
----obs, reward, done, info:  [4, 0, 101, 453] 0.002704000100493431 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
----action:  0
-Step:  7
----obs, reward, done, info:  [2, 0, 0, 453] 0.004623999819159508 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---obs, reward, done, info:  [0, 0, 654, 0] 0.011887999251484871 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+Start iteration:  20
+Step:  0
+---obs:  [0, 0, 654, 0]
+---action:  -1
+Step:  1
+---obs, reward, done, info:  [0, 0, 654, 0] 0.00031999999191612005 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+Start iteration:  21
+Step:  0
+---obs:  [0, 0, 654, 0]
+---action:  -1
+Step:  1
+---obs, reward, done, info:  [3, 0, 363, 0] 0.00535999983549118 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
 ---action:  1
-Step:  8
----obs, reward, done, info:  [4, 0, 0, 0] 0.010320000350475311 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
----action:  0
-Step:  9
----obs, reward, done, info:  [4, 0, 0, 0] 0.00872000027447939 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
----action:  0
-Step:  10
----obs, reward, done, info:  [4, 0, 575, 0] 0.014976000413298607 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
----action:  0
-Step:  11
----obs, reward, done, info:  [0, 0, 391, 0] 0.022303998470306396 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
-Start iteration:  22
-Step:  0
----obs:  [0, 0, 391, 0]
----action:  -1
-Step:  1
----obs, reward, done, info:  [4, 0, 391, 0] 0.021808000281453133 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
----action:  0
 Step:  2
----obs, reward, done, info:  [0, 0, 1393, 0] 0.024528000503778458 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
-Start iteration:  23
-Step:  0
----obs:  [0, 0, 1393, 0]
----action:  -1
-Step:  1
----obs, reward, done, info:  [4, 170, 1393, 0] 0.01152000017464161 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
----action:  0
-Step:  2
----obs, reward, done, info:  [4, 170, 1973, 0] 0.03279999643564224 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---obs, reward, done, info:  [4, 0, 189, 0] 0.007679999805986881 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
 ---action:  0
 Step:  3
----obs, reward, done, info:  [0, 0, 687, 0] 0.018352000042796135 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
-Start iteration:  24
-Step:  0
----obs:  [0, 0, 687, 0]
----action:  -1
-Step:  1
----obs, reward, done, info:  [2, 0, 687, 0] 0.011855999939143658 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
----action:  1
-Step:  2
----obs, reward, done, info:  [2, 0, 687, 0] 0.0028639999218285084 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
----action:  1
-Step:  3
----obs, reward, done, info:  [4, 0, 687, 209] 0.010607999749481678 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+---obs, reward, done, info:  [4, 0, 626, 0] 0.010912000201642513 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
 ---action:  0
 Step:  4
----obs, reward, done, info:  [0, 0, 1171, 209] 0.029135998338460922 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---obs, reward, done, info:  [0, 0, 712, 0] 0.01841600053012371 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+Start iteration:  22
+Step:  0
+---obs:  [0, 0, 712, 0]
+---action:  -1
+Step:  1
+---obs, reward, done, info:  [4, 0, 0, 0] 0.01196799986064434 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---action:  0
+Step:  2
+---obs, reward, done, info:  [4, 0, 0, 0] 0.00595200015231967 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
+Step:  3
+---obs, reward, done, info:  [4, 0, 402, 0] 0.01430400088429451 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
+Step:  4
+---obs, reward, done, info:  [4, 0, 924, 0] 0.014816000126302242 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
+Step:  5
+---obs, reward, done, info:  [0, 0, 956, 0] 0.021648000925779343 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+Start iteration:  23
+Step:  0
+---obs:  [0, 0, 956, 0]
+---action:  -1
+Step:  1
+---obs, reward, done, info:  [4, 0, 956, 0] 0.00431999983265996 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---action:  0
+Step:  2
+---obs, reward, done, info:  [4, 0, 1256, 0] 0.023439999669790268 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
+Step:  3
+---obs, reward, done, info:  [4, 0, 1495, 0] 0.02425600029528141 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
+Step:  4
+---obs, reward, done, info:  [4, 0, 1144, 0] 0.020431999117136 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
+Step:  5
+---obs, reward, done, info:  [0, 0, 1307, 0] 0.029920000582933426 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+Start iteration:  24
+Step:  0
+---obs:  [0, 0, 1307, 0]
+---action:  -1
+Step:  1
+---obs, reward, done, info:  [3, 0, 785, 0] 0.007807999849319458 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---action:  1
+Step:  2
+---obs, reward, done, info:  [0, 0, 453, 0] 0.023552000522613525 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
 Start iteration:  25
 Step:  0
----obs:  [0, 0, 1171, 209]
+---obs:  [0, 0, 453, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [4, 0, 1171, 0] 0.012880000285804272 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---obs, reward, done, info:  [4, 0, 453, 0] 0.01775999926030636 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
 ---action:  0
 Step:  2
----obs, reward, done, info:  [4, 0, 1426, 0] 0.028863999992609024 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
----action:  0
+---obs, reward, done, info:  [3, 0, 1354, 0] 0.02675199881196022 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  1
 Step:  3
----obs, reward, done, info:  [0, 0, 1834, 0] 0.04049599915742874 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---obs, reward, done, info:  [4, 0, 0, 0] 0.011152000166475773 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+---action:  0
+Step:  4
+---obs, reward, done, info:  [0, 0, 727, 0] 0.022144000977277756 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
 Start iteration:  26
 Step:  0
----obs:  [0, 0, 1834, 0]
+---obs:  [0, 0, 727, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [4, 0, 1243, 0] 0.005840000230818987 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
----action:  0
-Step:  2
----obs, reward, done, info:  [4, 0, 1638, 0] 0.027184000238776207 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
----action:  0
-Step:  3
----obs, reward, done, info:  [0, 0, 894, 0] 0.03262399882078171 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---obs, reward, done, info:  [0, 0, 727, 0] 0.0011360000353306532 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
 Start iteration:  27
 Step:  0
----obs:  [0, 0, 894, 0]
+---obs:  [0, 0, 727, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [0, 0, 894, 0] 0.00595200015231967 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---obs, reward, done, info:  [0, 101, 727, 0] 0.018352000042796135 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
 Start iteration:  28
 Step:  0
----obs:  [0, 0, 894, 0]
+---obs:  [0, 101, 727, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [0, 402, 486, 0] 0.008592000231146812 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---obs, reward, done, info:  [0, 1177, 727, 0] 0.018831999972462654 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
 Start iteration:  29
 Step:  0
----obs:  [0, 402, 486, 0]
+---obs:  [0, 1177, 727, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [0, 0, 0, 0] 0.013887999579310417 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---obs, reward, done, info:  [0, 1207, 727, 0] 0.01945599913597107 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
 Start iteration:  30
 Step:  0
----obs:  [0, 0, 0, 0]
+---obs:  [0, 1207, 727, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [0, 0, 0, 0] 0.002704000100493431 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---obs, reward, done, info:  [0, 69, 727, 0] 0.006304000038653612 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
 Start iteration:  31
 Step:  0
----obs:  [0, 0, 0, 0]
+---obs:  [0, 69, 727, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [0, 0, 0, 0] 0.008224000222980976 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---obs, reward, done, info:  [3, 424, 0, 0] 0.028271999210119247 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---action:  1
+Step:  2
+---obs, reward, done, info:  [0, 0, 0, 0] 0.014832000248134136 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
 Start iteration:  32
 Step:  0
 ---obs:  [0, 0, 0, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [2, 0, 0, 0] 0.023552000522613525 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
----action:  1
-Step:  2
----obs, reward, done, info:  [2, 0, 0, 0] 0.016736000776290894 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
----action:  1
-Step:  3
----obs, reward, done, info:  [2, 0, 0, 1076] 0.025088001042604446 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
----action:  1
-Step:  4
----obs, reward, done, info:  [2, 0, 0, 1598] 0.025567999109625816 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
----action:  1
-Step:  5
----obs, reward, done, info:  [2, 0, 0, 1628] 0.02619200013577938 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
----action:  1
-Step:  6
----obs, reward, done, info:  [2, 0, 0, 1667] 0.03187200054526329 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
----action:  1
-Step:  7
----obs, reward, done, info:  [2, 0, 0, 2022] 0.03268799930810928 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
----action:  1
-Step:  8
----obs, reward, done, info:  [2, 0, 0, 2073] 0.0352960005402565 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
----action:  1
-Step:  9
----obs, reward, done, info:  [0, 0, 0, 1160] 0.041999999433755875 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+---obs, reward, done, info:  [0, 0, 0, 0] 0.003936000168323517 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
 Start iteration:  33
-Step:  0
----obs:  [0, 0, 0, 1160]
----action:  -1
-Step:  1
----obs, reward, done, info:  [2, 0, 0, 1160] 0.01775999926030636 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
----action:  1
-Step:  2
----obs, reward, done, info:  [2, 0, 0, 2300] 0.04540800303220749 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
----action:  1
-Step:  3
----obs, reward, done, info:  [2, 0, 0, 2346] 0.04412800073623657 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
----action:  1
-Step:  4
----obs, reward, done, info:  [0, 0, 0, 2788] 0.06337600201368332 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
-Start iteration:  34
-Step:  0
----obs:  [0, 0, 0, 2788]
----action:  -1
-Step:  1
----obs, reward, done, info:  [2, 0, 0, 2364] 0.004480000119656324 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
----action:  1
-Step:  2
----obs, reward, done, info:  [0, 0, 0, 2623] 0.05247999727725983 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
-Start iteration:  35
-Step:  0
----obs:  [0, 0, 0, 2623]
----action:  -1
-Step:  1
----obs, reward, done, info:  [2, 0, 0, 1320] 0.009743999689817429 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
----action:  1
-Step:  2
----obs, reward, done, info:  [2, 0, 0, 1959] 0.03275199979543686 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
----action:  1
-Step:  3
----obs, reward, done, info:  [2, 0, 0, 2077] 0.03521599993109703 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
----action:  1
-Step:  4
----obs, reward, done, info:  [2, 0, 0, 1663] 0.030687998980283737 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
----action:  1
-Step:  5
----obs, reward, done, info:  [0, 0, 0, 1948] 0.05471999943256378 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
-Start iteration:  36
-Step:  0
----obs:  [0, 0, 0, 1948]
----action:  -1
-Step:  1
----obs, reward, done, info:  [0, 0, 0, 1506] 0.012175999581813812 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
-Start iteration:  37
-Step:  0
----obs:  [0, 0, 0, 1506]
----action:  -1
-Step:  1
----obs, reward, done, info:  [4, 0, 0, 557] 0.023552000522613525 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
----action:  0
-Step:  2
----obs, reward, done, info:  [0, 0, 0, 0] 0.020719999447464943 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
-Start iteration:  38
 Step:  0
 ---obs:  [0, 0, 0, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [4, 0, 0, 0] 0.023504000157117844 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---obs, reward, done, info:  [1, 276, 0, 0] 0.02356800064444542 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
 ---action:  0
 Step:  2
----obs, reward, done, info:  [4, 0, 1499, 0] 0.024032000452280045 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---obs, reward, done, info:  [1, 0, 0, 0] 0.005520000122487545 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
 ---action:  0
 Step:  3
----obs, reward, done, info:  [0, 0, 1532, 0] 0.025120001286268234 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---obs, reward, done, info:  [0, 0, 375, 0] 0.022704001516103745 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+Start iteration:  34
+Step:  0
+---obs:  [0, 0, 375, 0]
+---action:  -1
+Step:  1
+---obs, reward, done, info:  [3, 0, 375, 0] 0.004575999919325113 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---action:  1
+Step:  2
+---obs, reward, done, info:  [0, 0, 375, 316] 0.009615999646484852 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+Start iteration:  35
+Step:  0
+---obs:  [0, 0, 375, 316]
+---action:  -1
+Step:  1
+---obs, reward, done, info:  [0, 0, 375, 0] 0.004480000119656324 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+Start iteration:  36
+Step:  0
+---obs:  [0, 0, 375, 0]
+---action:  -1
+Step:  1
+---obs, reward, done, info:  [0, 310, 375, 0] 0.01655999943614006 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+Start iteration:  37
+Step:  0
+---obs:  [0, 310, 375, 0]
+---action:  -1
+Step:  1
+---obs, reward, done, info:  [4, 755, 375, 0] 0.03440000116825104 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---action:  0
+Step:  2
+---obs, reward, done, info:  [0, 0, 1800, 0] 0.03137600049376488 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+Start iteration:  38
+Step:  0
+---obs:  [0, 0, 1800, 0]
+---action:  -1
+Step:  1
+---obs, reward, done, info:  [4, 191, 1800, 0] 0.005071999970823526 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---action:  0
+Step:  2
+---obs, reward, done, info:  [0, 191, 1956, 0] 0.03283200040459633 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
 Start iteration:  39
 Step:  0
----obs:  [0, 0, 1532, 0]
+---obs:  [0, 191, 1956, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [0, 68, 1532, 0] 0.0056479997001588345 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---obs, reward, done, info:  [0, 317, 1956, 0] 0.010879999957978725 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
 Start iteration:  40
 Step:  0
----obs:  [0, 68, 1532, 0]
+---obs:  [0, 317, 1956, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [0, 383, 1532, 0] 0.0074720000848174095 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---obs, reward, done, info:  [0, 710, 1581, 0] 0.011744000017642975 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
 Start iteration:  41
 Step:  0
----obs:  [0, 383, 1532, 0]
+---obs:  [0, 710, 1581, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [4, 497, 1532, 0] 0.02340799942612648 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---obs, reward, done, info:  [4, 764, 1581, 0] 0.018672000616788864 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
 ---action:  0
 Step:  2
----obs, reward, done, info:  [4, 114, 2528, 0] 0.04519999772310257 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---obs, reward, done, info:  [4, 573, 2014, 0] 0.03697599843144417 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
 ---action:  0
 Step:  3
----obs, reward, done, info:  [0, 0, 1356, 0] 0.029231999069452286 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---obs, reward, done, info:  [4, 54, 916, 0] 0.018063999712467194 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
+Step:  4
+---obs, reward, done, info:  [1, 0, 1159, 0] 0.027215998619794846 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
+Step:  5
+---obs, reward, done, info:  [0, 0, 1731, 0] 0.04064000025391579 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
 Start iteration:  42
 Step:  0
----obs:  [0, 0, 1356, 0]
+---obs:  [0, 0, 1731, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [0, 0, 1356, 0] 0.0012159999459981918 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---obs, reward, done, info:  [3, 0, 1731, 0] 0.007807999849319458 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---action:  1
+Step:  2
+---obs, reward, done, info:  [0, 0, 1731, 0] 0.014399999752640724 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
 Start iteration:  43
 Step:  0
----obs:  [0, 0, 1356, 0]
+---obs:  [0, 0, 1731, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [2, 106, 1356, 0] 0.016256000846624374 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---obs, reward, done, info:  [3, 930, 1731, 0] 0.019439999014139175 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
 ---action:  1
 Step:  2
----obs, reward, done, info:  [2, 106, 1356, 0] 0.001408000010997057 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
----action:  1
-Step:  3
----obs, reward, done, info:  [4, 0, 1356, 118] 0.005615999922156334 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
----action:  0
-Step:  4
----obs, reward, done, info:  [0, 0, 1619, 118] 0.03782400116324425 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---obs, reward, done, info:  [0, 0, 1731, 315] 0.01297600008547306 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
 Start iteration:  44
 Step:  0
----obs:  [0, 0, 1619, 118]
+---obs:  [0, 0, 1731, 315]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [4, 0, 590, 0] 0.00791999977082014 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
----action:  0
-Step:  2
----obs, reward, done, info:  [1, 0, 1115, 0] 0.018640000373125076 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
----action:  0
-Step:  3
----obs, reward, done, info:  [1, 0, 1195, 0] 0.01934400014579296 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
----action:  0
-Step:  4
----obs, reward, done, info:  [0, 0, 1239, 0] 0.03310399875044823 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---obs, reward, done, info:  [0, 0, 1731, 0] 0.006639999803155661 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
 Start iteration:  45
 Step:  0
----obs:  [0, 0, 1239, 0]
+---obs:  [0, 0, 1731, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [1, 0, 1239, 0] 0.0018560000462457538 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
----action:  0
-Step:  2
----obs, reward, done, info:  [1, 0, 1385, 0] 0.025119999423623085 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
----action:  0
-Step:  3
----obs, reward, done, info:  [4, 0, 1600, 0] 0.02703999914228916 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
----action:  0
-Step:  4
----obs, reward, done, info:  [0, 0, 1720, 0] 0.03232000023126602 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---obs, reward, done, info:  [0, 445, 1575, 0] 0.008527999743819237 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
 Start iteration:  46
 Step:  0
----obs:  [0, 0, 1720, 0]
+---obs:  [0, 445, 1575, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [0, 0, 1393, 0] 0.003344000084325671 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---obs, reward, done, info:  [4, 0, 1142, 0] 0.005183999892324209 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---action:  0
+Step:  2
+---obs, reward, done, info:  [0, 0, 1496, 0] 0.02534399926662445 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
 Start iteration:  47
 Step:  0
----obs:  [0, 0, 1393, 0]
+---obs:  [0, 0, 1496, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [4, 0, 1130, 0] 0.008623999543488026 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
----action:  0
-Step:  2
----obs, reward, done, info:  [4, 0, 1699, 0] 0.03182400017976761 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
----action:  0
-Step:  3
----obs, reward, done, info:  [0, 0, 1494, 0] 0.03332800045609474 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---obs, reward, done, info:  [0, 0, 1496, 0] 0.005648000165820122 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
 Start iteration:  48
 Step:  0
----obs:  [0, 0, 1494, 0]
+---obs:  [0, 0, 1496, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [4, 0, 1494, 0] 0.004575999919325113 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
----action:  0
-Step:  2
----obs, reward, done, info:  [0, 0, 1810, 0] 0.03123200125992298 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---obs, reward, done, info:  [0, 0, 1169, 0] 0.0019839999731630087 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
 Start iteration:  49
 Step:  0
----obs:  [0, 0, 1810, 0]
+---obs:  [0, 0, 1169, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [0, 0, 1686, 0] 0.0060800001956522465 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---obs, reward, done, info:  [0, 0, 1169, 0] 0.0036639999598264694 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
 Start iteration:  50
 Step:  0
----obs:  [0, 0, 1686, 0]
+---obs:  [0, 0, 1169, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [0, 0, 1325, 0] 0.002959999954327941 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
-Start iteration:  51
-Step:  0
----obs:  [0, 0, 1325, 0]
----action:  -1
-Step:  1
----obs, reward, done, info:  [0, 0, 1325, 0] 0.001744000008329749 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
-Start iteration:  52
-Step:  0
----obs:  [0, 0, 1325, 0]
----action:  -1
-Step:  1
----obs, reward, done, info:  [0, 0, 636, 0] 0.0025919999461621046 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
-Start iteration:  53
-Step:  0
----obs:  [0, 0, 636, 0]
----action:  -1
-Step:  1
----obs, reward, done, info:  [1, 0, 636, 0] 0.007888000458478928 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---obs, reward, done, info:  [4, 0, 1169, 0] 0.0020000000949949026 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
 ---action:  0
 Step:  2
----obs, reward, done, info:  [0, 0, 1159, 0] 0.022143999114632607 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---obs, reward, done, info:  [0, 0, 1081, 0] 0.021375998854637146 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+Start iteration:  51
+Step:  0
+---obs:  [0, 0, 1081, 0]
+---action:  -1
+Step:  1
+---obs, reward, done, info:  [3, 0, 155, 0] 0.009184000082314014 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---action:  1
+Step:  2
+---obs, reward, done, info:  [0, 0, 0, 0] 0.014560000039637089 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+Start iteration:  52
+Step:  0
+---obs:  [0, 0, 0, 0]
+---action:  -1
+Step:  1
+---obs, reward, done, info:  [3, 0, 0, 0] 0.019231999292969704 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---action:  1
+Step:  2
+---obs, reward, done, info:  [0, 0, 0, 0] 0.005520000122487545 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+Start iteration:  53
+Step:  0
+---obs:  [0, 0, 0, 0]
+---action:  -1
+Step:  1
+---obs, reward, done, info:  [4, 0, 0, 0] 0.013504000380635262 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---action:  0
+Step:  2
+---obs, reward, done, info:  [0, 0, 0, 0] 0.005167999770492315 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
 Start iteration:  54
 Step:  0
----obs:  [0, 0, 1159, 0]
+---obs:  [0, 0, 0, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [0, 0, 523, 0] 0.010111999697983265 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---obs, reward, done, info:  [3, 0, 0, 0] 0.005504000000655651 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---action:  1
+Step:  2
+---obs, reward, done, info:  [3, 0, 0, 374] 0.009119999594986439 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+---action:  1
+Step:  3
+---obs, reward, done, info:  [3, 0, 0, 600] 0.010352000594139099 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+---action:  1
+Step:  4
+---obs, reward, done, info:  [3, 0, 0, 677] 0.01244799979031086 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+---action:  1
+Step:  5
+---obs, reward, done, info:  [0, 0, 0, 808] 0.019152000546455383 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
 Start iteration:  55
 Step:  0
----obs:  [0, 0, 523, 0]
+---obs:  [0, 0, 0, 808]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [0, 0, 523, 0] 0.001088000019080937 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---obs, reward, done, info:  [4, 0, 0, 808] 0.00684799998998642 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---action:  0
+Step:  2
+---obs, reward, done, info:  [3, 0, 458, 808] 0.012032000347971916 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  1
+Step:  3
+---obs, reward, done, info:  [3, 0, 458, 758] 0.012176000513136387 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+---action:  1
+Step:  4
+---obs, reward, done, info:  [4, 0, 458, 791] 0.013792000710964203 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+---action:  0
+Step:  5
+---obs, reward, done, info:  [0, 0, 101, 791] 0.025167999789118767 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
 Start iteration:  56
 Step:  0
----obs:  [0, 0, 523, 0]
+---obs:  [0, 0, 101, 791]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [0, 98, 523, 0] 0.002047999994829297 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---obs, reward, done, info:  [0, 0, 101, 791] 0.008848000317811966 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
 Start iteration:  57
 Step:  0
----obs:  [0, 98, 523, 0]
+---obs:  [0, 0, 101, 791]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [0, 158, 523, 0] 0.0025279999244958162 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---obs, reward, done, info:  [0, 583, 101, 565] 0.01414399966597557 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
 Start iteration:  58
 Step:  0
----obs:  [0, 158, 523, 0]
+---obs:  [0, 583, 101, 565]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [0, 188, 523, 0] 0.0034080001059919596 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---obs, reward, done, info:  [3, 914, 101, 565] 0.02167999930679798 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---action:  1
+Step:  2
+---obs, reward, done, info:  [0, 914, 0, 828] 0.019951999187469482 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
 Start iteration:  59
 Step:  0
----obs:  [0, 188, 523, 0]
+---obs:  [0, 914, 0, 828]
+---action:  -1
+Step:  1
+---obs, reward, done, info:  [0, 780, 0, 504] 0.016656000167131424 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+Start iteration:  60
+Step:  0
+---obs:  [0, 780, 0, 504]
+---action:  -1
+Step:  1
+---obs, reward, done, info:  [0, 740, 0, 0] 0.01571200042963028 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+Start iteration:  61
+Step:  0
+---obs:  [0, 740, 0, 0]
+---action:  -1
+Step:  1
+---obs, reward, done, info:  [0, 563, 0, 0] 0.024480000138282776 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+Start iteration:  62
+Step:  0
+---obs:  [0, 563, 0, 0]
+---action:  -1
+Step:  1
+---obs, reward, done, info:  [0, 1560, 0, 0] 0.028720000758767128 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+Start iteration:  63
+Step:  0
+---obs:  [0, 1560, 0, 0]
+---action:  -1
+Step:  1
+---obs, reward, done, info:  [3, 265, 0, 0] 0.01820800080895424 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---action:  1
+Step:  2
+---obs, reward, done, info:  [0, 265, 0, 0] 0.004639999940991402 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+Start iteration:  64
+Step:  0
+---obs:  [0, 265, 0, 0]
+---action:  -1
+Step:  1
+---obs, reward, done, info:  [4, 585, 0, 0] 0.012240000069141388 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---action:  0
+Step:  2
+---obs, reward, done, info:  [0, 585, 0, 0] 0.004064000211656094 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+Start iteration:  65
+Step:  0
+---obs:  [0, 585, 0, 0]
+---action:  -1
+Step:  1
+---obs, reward, done, info:  [3, 869, 0, 0] 0.021807998418807983 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---action:  1
+Step:  2
+---obs, reward, done, info:  [3, 869, 0, 524] 0.011391999199986458 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+---action:  1
+Step:  3
+---obs, reward, done, info:  [0, 604, 0, 742] 0.01603199914097786 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+Start iteration:  66
+Step:  0
+---obs:  [0, 604, 0, 742]
+---action:  -1
+Step:  1
+---obs, reward, done, info:  [4, 894, 0, 742] 0.017152000218629837 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---action:  0
+Step:  2
+---obs, reward, done, info:  [3, 574, 0, 742] 0.001888000057078898 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  1
+Step:  3
+---obs, reward, done, info:  [0, 574, 0, 890] 0.03102399967610836 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+Start iteration:  67
+Step:  0
+---obs:  [0, 574, 0, 890]
+---action:  -1
+Step:  1
+---obs, reward, done, info:  [0, 1653, 0, 890] 0.026607999578118324 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+Start iteration:  68
+Step:  0
+---obs:  [0, 1653, 0, 890]
+---action:  -1
+Step:  1
+---obs, reward, done, info:  [3, 1693, 0, 890] 0.029743999242782593 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---action:  1
+Step:  2
+---obs, reward, done, info:  [3, 1409, 0, 1086] 0.018015999346971512 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+---action:  1
+Step:  3
+---obs, reward, done, info:  [0, 1409, 0, 1156] 0.019231999292969704 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+Start iteration:  69
+Step:  0
+---obs:  [0, 1409, 0, 1156]
+---action:  -1
+Step:  1
+---obs, reward, done, info:  [3, 116, 0, 632] 0.01180800050497055 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---action:  1
+Step:  2
+---obs, reward, done, info:  [3, 116, 0, 1284] 0.020848000422120094 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+---action:  1
+Step:  3
+---obs, reward, done, info:  [0, 0, 0, 967] 0.0306560005992651 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+Start iteration:  70
+Step:  0
+---obs:  [0, 0, 0, 967]
+---action:  -1
+Step:  1
+---obs, reward, done, info:  [1, 0, 0, 771] 0.023552000522613525 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---action:  0
+Step:  2
+---obs, reward, done, info:  [1, 0, 0, 771] 0.0005600000149570405 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  0
+Step:  3
+---obs, reward, done, info:  [3, 0, 65, 771] 0.001568000065162778 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---action:  1
+Step:  4
+---obs, reward, done, info:  [0, 0, 65, 764] 0.01624000072479248 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+Start iteration:  71
+Step:  0
+---obs:  [0, 0, 65, 764]
+---action:  -1
+Step:  1
+---obs, reward, done, info:  [0, 281, 65, 764] 0.007872000336647034 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+Start iteration:  72
+Step:  0
+---obs:  [0, 281, 65, 764]
+---action:  -1
+Step:  1
+---obs, reward, done, info:  [0, 522, 65, 764] 0.008464000187814236 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+Start iteration:  73
+Step:  0
+---obs:  [0, 522, 65, 764]
+---action:  -1
+Step:  1
+---obs, reward, done, info:  [3, 559, 65, 112] 0.012671999633312225 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---action:  1
+Step:  2
+---obs, reward, done, info:  [4, 37, 65, 375] 0.015887999907135963 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+---action:  0
+Step:  3
+---obs, reward, done, info:  [0, 0, 713, 375] 0.019760001450777054 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+Start iteration:  74
+Step:  0
+---obs:  [0, 0, 713, 375]
+---action:  -1
+Step:  1
+---obs, reward, done, info:  [4, 0, 713, 375] 0.007391999941319227 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---action:  0
+Step:  2
+---obs, reward, done, info:  [0, 0, 1205, 0] 0.028464000672101974 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+Start iteration:  75
+Step:  0
+---obs:  [0, 0, 1205, 0]
+---action:  -1
+Step:  1
+---obs, reward, done, info:  [0, 0, 1205, 0] 0.0030239999759942293 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+Start iteration:  76
+Step:  0
+---obs:  [0, 0, 1205, 0]
 ---action:  -1
 Step:  1
 ---obs, reward, done, info:  [0, 0, 0, 0] 0.023552000522613525 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
-Start iteration:  60
-Step:  0
----obs:  [0, 0, 0, 0]
----action:  -1
-Step:  1
----obs, reward, done, info:  [0, 0, 0, 0] 0.004815999884158373 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
-Start iteration:  61
-Step:  0
----obs:  [0, 0, 0, 0]
----action:  -1
-Step:  1
----obs, reward, done, info:  [4, 331, 0, 0] 0.026863999664783478 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
----action:  0
-Step:  2
----obs, reward, done, info:  [0, 331, 0, 0] 0.0037120000924915075 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
-Start iteration:  62
-Step:  0
----obs:  [0, 331, 0, 0]
----action:  -1
-Step:  1
----obs, reward, done, info:  [4, 262, 0, 0] 0.012431999668478966 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
----action:  0
-Step:  2
----obs, reward, done, info:  [1, 0, 545, 0] 0.024272000417113304 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
----action:  0
-Step:  3
----obs, reward, done, info:  [1, 0, 1547, 0] 0.03400000184774399 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
----action:  0
-Step:  4
----obs, reward, done, info:  [0, 0, 1610, 0] 0.04931200295686722 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
-Start iteration:  63
-Step:  0
----obs:  [0, 0, 1610, 0]
----action:  -1
-Step:  1
----obs, reward, done, info:  [4, 0, 1610, 0] 0.013968000188469887 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
----action:  0
-Step:  2
----obs, reward, done, info:  [0, 0, 2513, 0] 0.04436799883842468 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
-Start iteration:  64
-Step:  0
----obs:  [0, 0, 2513, 0]
----action:  -1
-Step:  1
----obs, reward, done, info:  [1, 290, 1511, 0] 0.01780799962580204 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
----action:  0
-Step:  2
----obs, reward, done, info:  [0, 0, 2364, 0] 0.046879999339580536 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
-Start iteration:  65
-Step:  0
----obs:  [0, 0, 2364, 0]
----action:  -1
-Step:  1
----obs, reward, done, info:  [0, 0, 2364, 0] 0.0028959999326616526 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
-Start iteration:  66
-Step:  0
----obs:  [0, 0, 2364, 0]
----action:  -1
-Step:  1
----obs, reward, done, info:  [0, 0, 2364, 0] 0.0022559999488294125 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
-Start iteration:  67
-Step:  0
----obs:  [0, 0, 2364, 0]
----action:  -1
-Step:  1
----obs, reward, done, info:  [2, 0, 1756, 0] 0.023552000522613525 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
----action:  1
-Step:  2
----obs, reward, done, info:  [0, 0, 1756, 0] 0.006207999773323536 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
-Start iteration:  68
-Step:  0
----obs:  [0, 0, 1756, 0]
----action:  -1
-Step:  1
----obs, reward, done, info:  [0, 0, 1756, 0] 0.014832000248134136 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
-Start iteration:  69
-Step:  0
----obs:  [0, 0, 1756, 0]
----action:  -1
-Step:  1
----obs, reward, done, info:  [2, 957, 1756, 0] 0.029215998947620392 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
----action:  1
-Step:  2
----obs, reward, done, info:  [2, 957, 1756, 899] 0.015936000272631645 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
----action:  1
-Step:  3
----obs, reward, done, info:  [2, 0, 853, 1026] 0.01921600103378296 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
----action:  1
-Step:  4
----obs, reward, done, info:  [0, 0, 853, 1231] 0.02566399797797203 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
-Start iteration:  70
-Step:  0
----obs:  [0, 0, 853, 1231]
----action:  -1
-Step:  1
----obs, reward, done, info:  [4, 403, 853, 1231] 0.020400000736117363 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
----action:  0
-Step:  2
----obs, reward, done, info:  [0, 0, 1755, 1231] 0.039135999977588654 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
-Start iteration:  71
-Step:  0
----obs:  [0, 0, 1755, 1231]
----action:  -1
-Step:  1
----obs, reward, done, info:  [0, 721, 1755, 1231] 0.0126720005646348 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
-Start iteration:  72
-Step:  0
----obs:  [0, 721, 1755, 1231]
----action:  -1
-Step:  1
----obs, reward, done, info:  [0, 822, 1755, 1231] 0.013199999928474426 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
-Start iteration:  73
-Step:  0
----obs:  [0, 822, 1755, 1231]
----action:  -1
-Step:  1
----obs, reward, done, info:  [0, 0, 902, 332] 0.007056000176817179 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
-Start iteration:  74
-Step:  0
----obs:  [0, 0, 902, 332]
----action:  -1
-Step:  1
----obs, reward, done, info:  [4, 0, 902, 332] 0.023552000522613525 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
----action:  0
-Step:  2
----obs, reward, done, info:  [4, 0, 2404, 332] 0.040383998304605484 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
----action:  0
-Step:  3
----obs, reward, done, info:  [1, 0, 1652, 332] 0.0411360003054142 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
----action:  0
-Step:  4
----obs, reward, done, info:  [1, 0, 2601, 205] 0.043216001242399216 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
----action:  0
-Step:  5
----obs, reward, done, info:  [1, 0, 2731, 205] 0.04396799951791763 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
----action:  0
-Step:  6
----obs, reward, done, info:  [0, 0, 2778, 0] 0.06019200012087822 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
-Start iteration:  75
-Step:  0
----obs:  [0, 0, 2778, 0]
----action:  -1
-Step:  1
----obs, reward, done, info:  [0, 0, 2778, 0] 0.00017600000137463212 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
-Start iteration:  76
-Step:  0
----obs:  [0, 0, 2778, 0]
----action:  -1
-Step:  1
----obs, reward, done, info:  [0, 41, 2778, 0] 0.0010239999974146485 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
 Start iteration:  77
 Step:  0
----obs:  [0, 41, 2778, 0]
+---obs:  [0, 0, 0, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [0, 94, 2778, 0] 0.0038240000139921904 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---obs, reward, done, info:  [0, 0, 0, 0] 0.008527999743819237 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
 Start iteration:  78
 Step:  0
----obs:  [0, 94, 2778, 0]
+---obs:  [0, 0, 0, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [4, 269, 2778, 0] 0.022144000977277756 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
----action:  0
-Step:  2
----obs, reward, done, info:  [0, 269, 3923, 0] 0.06503999978303909 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---obs, reward, done, info:  [0, 563, 0, 0] 0.010288000106811523 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
 Start iteration:  79
 Step:  0
----obs:  [0, 269, 3923, 0]
+---obs:  [0, 563, 0, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [4, 441, 3923, 0] 0.012719999998807907 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
----action:  0
-Step:  2
----obs, reward, done, info:  [2, 0, 2805, 0] 0.05100800096988678 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
----action:  1
-Step:  3
----obs, reward, done, info:  [4, 0, 2805, 0] 0.00279999990016222 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
----action:  0
-Step:  4
----obs, reward, done, info:  [0, 0, 3010, 0] 0.0615679994225502 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---obs, reward, done, info:  [0, 110, 0, 0] 0.0036959999706596136 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
 Start iteration:  80
 Step:  0
----obs:  [0, 0, 3010, 0]
+---obs:  [0, 110, 0, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [1, 0, 3010, 0] 0.023552000522613525 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
----action:  0
-Step:  2
----obs, reward, done, info:  [1, 0, 4512, 0] 0.07398399710655212 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
----action:  0
-Step:  3
----obs, reward, done, info:  [2, 0, 4654, 0] 0.07574400305747986 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
----action:  1
-Step:  4
----obs, reward, done, info:  [0, 0, 4654, 0] 0.0061599998734891415 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+---obs, reward, done, info:  [0, 261, 0, 0] 0.006496000103652477 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
 Start iteration:  81
 Step:  0
----obs:  [0, 0, 4654, 0]
+---obs:  [0, 261, 0, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [4, 0, 4654, 0] 0.0029440000653266907 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
----action:  0
-Step:  2
----obs, reward, done, info:  [4, 0, 4868, 0] 0.07951999455690384 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
----action:  0
-Step:  3
----obs, reward, done, info:  [2, 0, 5000, 0] 0.08390399813652039 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
----action:  1
-Step:  4
----obs, reward, done, info:  [0, 0, 4850, 0] 0.004575999919325113 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+---obs, reward, done, info:  [0, 0, 0, 0] 0.0071680000983178616 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
 Start iteration:  82
 Step:  0
----obs:  [0, 0, 4850, 0]
----action:  -1
-Step:  1
----obs, reward, done, info:  [0, 0, 3901, 0] 0.023552000522613525 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
-Start iteration:  83
-Step:  0
----obs:  [0, 0, 3901, 0]
----action:  -1
-Step:  1
----obs, reward, done, info:  [0, 0, 3901, 0] 0.005520000122487545 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
-Start iteration:  84
-Step:  0
----obs:  [0, 0, 3901, 0]
----action:  -1
-Step:  1
----obs, reward, done, info:  [1, 375, 3901, 0] 0.020255999639630318 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
----action:  0
-Step:  2
----obs, reward, done, info:  [0, 375, 4822, 0] 0.07902400195598602 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
-Start iteration:  85
-Step:  0
----obs:  [0, 375, 4822, 0]
----action:  -1
-Step:  1
----obs, reward, done, info:  [0, 0, 3500, 0] 0.017263999208807945 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
-Start iteration:  86
-Step:  0
----obs:  [0, 0, 3500, 0]
----action:  -1
-Step:  1
----obs, reward, done, info:  [0, 0, 3500, 0] 0.008671999908983707 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
-Start iteration:  87
-Step:  0
----obs:  [0, 0, 3500, 0]
----action:  -1
-Step:  1
----obs, reward, done, info:  [0, 0, 3116, 0] 0.006639999803155661 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
-Start iteration:  88
-Step:  0
----obs:  [0, 0, 3116, 0]
----action:  -1
-Step:  1
----obs, reward, done, info:  [0, 0, 1409, 0] 0.009184000082314014 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
-Start iteration:  89
-Step:  0
----obs:  [0, 0, 1409, 0]
----action:  -1
-Step:  1
----obs, reward, done, info:  [0, 0, 1409, 0] 0.01966400071978569 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
-Start iteration:  90
-Step:  0
----obs:  [0, 0, 1409, 0]
----action:  -1
-Step:  1
----obs, reward, done, info:  [1, 0, 0, 0] 0.00044800000614486635 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
----action:  0
-Step:  2
----obs, reward, done, info:  [0, 0, 0, 0] 0.023552000522613525 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
-Start iteration:  91
-Step:  0
 ---obs:  [0, 0, 0, 0]
----action:  -1
-Step:  1
----obs, reward, done, info:  [0, 0, 0, 0] 0.005615999922156334 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
-Start iteration:  92
-Step:  0
----obs:  [0, 0, 0, 0]
----action:  -1
-Step:  1
----obs, reward, done, info:  [0, 381, 0, 0] 0.007007999811321497 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
-Start iteration:  93
-Step:  0
----obs:  [0, 381, 0, 0]
----action:  -1
-Step:  1
----obs, reward, done, info:  [1, 0, 0, 0] 0.00044800000614486635 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
----action:  0
-Step:  2
----obs, reward, done, info:  [1, 0, 0, 0] 0.00044800000614486635 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
----action:  0
-Step:  3
----obs, reward, done, info:  [0, 0, 0, 0] 0.023552000522613525 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
-Start iteration:  94
-Step:  0
----obs:  [0, 0, 0, 0]
----action:  -1
-Step:  1
----obs, reward, done, info:  [0, 0, 0, 0] 0.0005600000149570405 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
-Start iteration:  95
-Step:  0
----obs:  [0, 0, 0, 0]
----action:  -1
-Step:  1
----obs, reward, done, info:  [0, 65, 0, 0] 0.0013439999893307686 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
-Start iteration:  96
-Step:  0
----obs:  [0, 65, 0, 0]
----action:  -1
-Step:  1
----obs, reward, done, info:  [0, 114, 0, 0] 0.0033919999841600657 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
-Start iteration:  97
-Step:  0
----obs:  [0, 114, 0, 0]
----action:  -1
-Step:  1
----obs, reward, done, info:  [0, 242, 0, 0] 0.007519999984651804 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
-Start iteration:  98
-Step:  0
----obs:  [0, 242, 0, 0]
----action:  -1
-Step:  1
----obs, reward, done, info:  [0, 435, 0, 0] 0.010816000401973724 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
-Start iteration:  99
-Step:  0
----obs:  [0, 435, 0, 0]
 ---action:  -1
 Step:  1
 ---obs, reward, done, info:  [4, 0, 0, 0] 0.00044800000614486635 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
 ---action:  0
 Step:  2
----obs, reward, done, info:  [4, 0, 0, 0] 0.00044800000614486635 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
----action:  0
-Step:  3
----obs, reward, done, info:  [4, 0, 0, 0] 0.00044800000614486635 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
----action:  0
-Step:  4
----obs, reward, done, info:  [4, 0, 0, 0] 0.00044800000614486635 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
----action:  0
-Step:  5
----obs, reward, done, info:  [0, 0, 0, 0] 0.007903999648988247 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
-Start iteration:  100
+---obs, reward, done, info:  [0, 0, 0, 0] 0.00044800000614486635 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+Start iteration:  83
 Step:  0
 ---obs:  [0, 0, 0, 0]
 ---action:  -1
 Step:  1
 ---obs, reward, done, info:  [0, 0, 0, 0] 0.00044800000614486635 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
-Start iteration:  101
+Start iteration:  84
 Step:  0
 ---obs:  [0, 0, 0, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [0, 58, 0, 0] 0.0013760000001639128 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
-Start iteration:  102
+---obs, reward, done, info:  [0, 0, 0, 0] 0.00044800000614486635 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+Start iteration:  85
 Step:  0
----obs:  [0, 58, 0, 0]
+---obs:  [0, 0, 0, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [4, 116, 0, 0] 0.0023040000814944506 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
----action:  0
+---obs, reward, done, info:  [2, 0, 0, 0] 0.00854399986565113 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---action:  1
 Step:  2
----obs, reward, done, info:  [0, 116, 0, 0] 0.00044800000614486635 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
-Start iteration:  103
+---obs, reward, done, info:  [0, 0, 0, 0] 0.00044800000614486635 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+Start iteration:  86
 Step:  0
----obs:  [0, 116, 0, 0]
+---obs:  [0, 0, 0, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [0, 174, 0, 0] 0.0032319999299943447 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
-Start iteration:  104
+---obs, reward, done, info:  [0, 0, 0, 0] 0.017823999747633934 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+Start iteration:  87
 Step:  0
----obs:  [0, 174, 0, 0]
+---obs:  [0, 0, 0, 0]
 ---action:  -1
 Step:  1
----obs, reward, done, info:  [0, 174, 0, 0] 0.0032319999299943447 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
-Start iteration:  105
-Step:  0
----obs:  [0, 174, 0, 0]
----action:  -1
-Step:  1
----obs, reward, done, info:  [0, 116, 0, 0] 0.0023040000814944506 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
-Start iteration:  106
-Step:  0
----obs:  [0, 116, 0, 0]
----action:  -1
-Step:  1
----obs, reward, done, info:  [0, 58, 0, 0] 0.0013760000001639128 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
-Start iteration:  107
-Step:  0
----obs:  [0, 58, 0, 0]
----action:  -1
-Step:  1
----obs, reward, done, info:  [4, 0, 0, 0] 0.00044800000614486635 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
----action:  0
+---obs, reward, done, info:  [2, 0, 0, 0] 0.017839999869465828 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=
+---action:  1
 Step:  2
----obs, reward, done, info:  [3, 0, 0, 0] 0.0008960000122897327 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=1
+---obs, reward, done, info:  [2, 0, 0, 0] 0.005967999808490276 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
 ---action:  1
 Step:  3
----obs, reward, done, info:  [3, 0, 0, 0] 0.0008960000122897327 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
-Start iteration:  108
+---obs, reward, done, info:  [2, 0, 0, 403] 0.006560000125318766 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+---action:  1
+Step:  4
+---obs, reward, done, info:  [2, 0, 0, 440] 0.008287999778985977 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+---action:  1
+Step:  5
+---obs, reward, done, info:  [2, 0, 0, 548] 0.012655999511480331 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+---action:  1
+Step:  6
+---obs, reward, done, info:  [2, 0, 0, 821] 0.013584000058472157 False currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+---action:  1
+Step:  7
+---obs, reward, done, info:  [2, 0, 0, 58] 0.0013760000001639128 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+Start iteration:  88
 Step:  0
----obs:  [3, 0, 0, 0]
+---obs:  [2, 0, 0, 58]
 ---action:  1
 Step:  1
----obs, reward, done, info:  [3, 0, 0, 0] 0.0008960000122897327 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
+---obs, reward, done, info:  [2, 0, 0, 58] 0.0013760000001639128 True currentNodeId=0, currentNetDevIdx=1, currentFwdDevIdx=2
 [[   0    0]
  [   0    0]
+ [ 321    0]
+ [  98    0]
+ [ 828    0]
+ [ 468    0]
+ [ 136    0]
+ [ 572    0]
+ [ 319    0]
+ [ 534    0]
+ [ 821    0]
  [   0    0]
  [   0    0]
  [   0    0]
@@ -1020,188 +861,119 @@ Step:  1
  [   0    0]
  [   0    0]
  [   0    0]
- [   0  319]
- [   0  534]
- [   0  534]
- [   0  821]
- [   0  606]
  [   0    0]
  [   0    0]
  [   0    0]
  [   0    0]
  [   0    0]
  [   0    0]
+ [1192    0]
+ [1192    0]
+ [1192    0]
+ [1192    0]
+ [1192    0]
+ [1192    0]
  [   0    0]
  [   0    0]
- [   0  791]
- [   0 1009]
- [   0  218]
- [   0  218]
- [   0 1282]
- [   0 1541]
- [   0  477]
- [   0  477]
- [   0  477]
- [ 308    0]
- [ 308    0]
- [ 293    0]
- [ 293    0]
- [   0    0]
- [ 414    0]
- [   0    0]
+ [   0  391]
+ [   0  391]
+ [   0  971]
+ [   0 1078]
+ [   0 1078]
+ [   0  687]
+ [   0  107]
  [   0    0]
  [   0    0]
  [   0    0]
  [   0    0]
- [   0 1106]
- [   0 1346]
- [   0  453]
- [   0  453]
- [ 101  453]
- [   0  453]
+ [   0  656]
+ [   0  656]
+ [   0    0]
+ [ 291    0]
+ [ 465    0]
+ [ 538    0]
+ [ 654    0]
+ [ 654    0]
+ [ 363    0]
+ [ 189    0]
+ [ 626    0]
+ [ 712    0]
  [   0    0]
  [   0    0]
- [ 575    0]
- [ 391    0]
- [ 391    0]
- [1393    0]
- [1393    0]
- [1973    0]
- [ 687    0]
- [ 687    0]
- [ 687    0]
- [ 687  209]
- [1171  209]
- [1171    0]
- [1426    0]
- [1834    0]
- [1243    0]
- [1638    0]
- [ 894    0]
- [ 894    0]
- [ 486    0]
+ [ 402    0]
+ [ 924    0]
+ [ 956    0]
+ [ 956    0]
+ [1256    0]
+ [1495    0]
+ [1144    0]
+ [1307    0]
+ [ 785    0]
+ [ 453    0]
+ [ 453    0]
+ [1354    0]
+ [   0    0]
+ [ 727    0]
+ [ 727    0]
+ [ 727    0]
+ [ 727    0]
+ [ 727    0]
+ [ 727    0]
  [   0    0]
  [   0    0]
  [   0    0]
  [   0    0]
  [   0    0]
- [   0 1076]
- [   0 1598]
- [   0 1628]
- [   0 1667]
- [   0 2022]
- [   0 2073]
- [   0 1160]
- [   0 1160]
- [   0 2300]
- [   0 2346]
- [   0 2788]
- [   0 2364]
- [   0 2623]
- [   0 1320]
- [   0 1959]
- [   0 2077]
- [   0 1663]
- [   0 1948]
- [   0 1506]
- [   0  557]
- [   0    0]
- [   0    0]
- [1499    0]
- [1532    0]
- [1532    0]
- [1532    0]
- [1532    0]
- [2528    0]
- [1356    0]
- [1356    0]
- [1356    0]
- [1356    0]
- [1356  118]
- [1619  118]
- [ 590    0]
- [1115    0]
- [1195    0]
- [1239    0]
- [1239    0]
- [1385    0]
- [1600    0]
- [1720    0]
- [1393    0]
- [1130    0]
- [1699    0]
- [1494    0]
- [1494    0]
- [1810    0]
- [1686    0]
- [1325    0]
- [1325    0]
- [ 636    0]
- [ 636    0]
+ [ 375    0]
+ [ 375    0]
+ [ 375  316]
+ [ 375    0]
+ [ 375    0]
+ [ 375    0]
+ [1800    0]
+ [1800    0]
+ [1956    0]
+ [1956    0]
+ [1581    0]
+ [1581    0]
+ [2014    0]
+ [ 916    0]
  [1159    0]
- [ 523    0]
- [ 523    0]
- [ 523    0]
- [ 523    0]
- [ 523    0]
+ [1731    0]
+ [1731    0]
+ [1731    0]
+ [1731    0]
+ [1731  315]
+ [1731    0]
+ [1575    0]
+ [1142    0]
+ [1496    0]
+ [1496    0]
+ [1169    0]
+ [1169    0]
+ [1169    0]
+ [1081    0]
+ [ 155    0]
  [   0    0]
  [   0    0]
  [   0    0]
  [   0    0]
  [   0    0]
- [ 545    0]
- [1547    0]
- [1610    0]
- [1610    0]
- [2513    0]
- [1511    0]
- [2364    0]
- [2364    0]
- [2364    0]
- [1756    0]
- [1756    0]
- [1756    0]
- [1756    0]
- [1756  899]
- [ 853 1026]
- [ 853 1231]
- [ 853 1231]
- [1755 1231]
- [1755 1231]
- [1755 1231]
- [ 902  332]
- [ 902  332]
- [2404  332]
- [1652  332]
- [2601  205]
- [2731  205]
- [2778    0]
- [2778    0]
- [2778    0]
- [2778    0]
- [2778    0]
- [3923    0]
- [3923    0]
- [2805    0]
- [2805    0]
- [3010    0]
- [3010    0]
- [4512    0]
- [4654    0]
- [4654    0]
- [4654    0]
- [4868    0]
- [5000    0]
- [4850    0]
- [3901    0]
- [3901    0]
- [3901    0]
- [4822    0]
- [3500    0]
- [3500    0]
- [3116    0]
- [1409    0]
- [1409    0]
+ [   0    0]
+ [   0  374]
+ [   0  600]
+ [   0  677]
+ [   0  808]
+ [   0  808]
+ [ 458  808]
+ [ 458  758]
+ [ 458  791]
+ [ 101  791]
+ [ 101  791]
+ [ 101  565]
+ [ 101  565]
+ [   0  828]
+ [   0  504]
  [   0    0]
  [   0    0]
  [   0    0]
@@ -1210,8 +982,30 @@ Step:  1
  [   0    0]
  [   0    0]
  [   0    0]
- [   0    0]
- [   0    0]
+ [   0  524]
+ [   0  742]
+ [   0  742]
+ [   0  742]
+ [   0  890]
+ [   0  890]
+ [   0  890]
+ [   0 1086]
+ [   0 1156]
+ [   0  632]
+ [   0 1284]
+ [   0  967]
+ [   0  771]
+ [   0  771]
+ [  65  771]
+ [  65  764]
+ [  65  764]
+ [  65  764]
+ [  65  112]
+ [  65  375]
+ [ 713  375]
+ [ 713  375]
+ [1205    0]
+ [1205    0]
  [   0    0]
  [   0    0]
  [   0    0]
@@ -1227,54 +1021,66 @@ Step:  1
  [   0    0]
  [   0    0]
  [   0    0]
- [   0    0]
- [   0    0]
- [   0    0]
- [   0    0]]
+ [   0  403]
+ [   0  440]
+ [   0  548]
+ [   0  821]
+ [   0   58]
+ [   0   58]]
 Average Queue
-Max:  [5000 2788] Min:  [0 0] Mean:  [927.19111111 266.11111111] Std:  [1249.00314168  582.86150145]
-Max:  5000 Min:  0 Mean:  596.6511111111112 Std:  1029.137930745323
+Max:  [2014 1284] Min:  [0 0] Mean:  [399.16931217 185.33862434] Std:  [570.0242944  330.76430912]
+Max:  2014 Min:  0 Mean:  292.25396825396825 Std:  478.118450763452
 -------------------------------------------------
-[0.004224   0.000256   0.004576   0.010416   0.00424    0.000192
- 0.003328   0.000336   0.002912   0.002032   0.008064   0.001088
- 0.012768   0.004624   0.008064   0.030192   0.004112   0.01776
- 0.022544   0.01816    0.012032   0.003264   0.004656   0.001696
- 0.008032   0.008672   0.012176   0.015664   0.018416   0.007568
- 0.016544   0.027664   0.031488   0.0024     0.004496   0.004448
- 0.011216   0.004208   0.008032   0.001728   0.006144   0.008352
- 0.005872   0.006144   0.014736   0.010672   0.017216   0.021056
- 0.024464   0.0136     0.001136   0.002704   0.004624   0.01032
- 0.00872    0.014976   0.022304   0.021808   0.024528   0.01152
- 0.0328     0.018352   0.011856   0.002864   0.010608   0.029136
- 0.01288    0.028864   0.040496   0.00584    0.027184   0.032624
- 0.005952   0.008592   0.013888   0.002704   0.008224   0.023552
- 0.016736   0.025088   0.025568   0.026192   0.031872   0.032688
- 0.035296   0.042      0.01776    0.045408   0.044128   0.063376
- 0.00448    0.05248    0.009744   0.032752   0.035216   0.030688
- 0.05472    0.012176   0.023552   0.02072    0.023504   0.024032
- 0.02512    0.005648   0.007472   0.023408   0.0452     0.029232
- 0.001216   0.016256   0.001408   0.005616   0.037824   0.00792
- 0.01864    0.019344   0.033104   0.001856   0.02512    0.02704
- 0.03232    0.003344   0.008624   0.031824   0.033328   0.004576
- 0.031232   0.00608    0.00296    0.001744   0.002592   0.007888
- 0.022144   0.010112   0.001088   0.002048   0.002528   0.003408
- 0.023552   0.004816   0.026864   0.003712   0.012432   0.024272
- 0.034      0.049312   0.013968   0.044368   0.017808   0.04688
- 0.002896   0.002256   0.023552   0.006208   0.014832   0.029216
- 0.015936   0.019216   0.025664   0.0204     0.039136   0.012672
- 0.0132     0.007056   0.023552   0.040384   0.041136   0.043216
- 0.043968   0.060192   0.000176   0.001024   0.003824   0.022144
- 0.06504    0.01272    0.051008   0.0028     0.061568   0.023552
- 0.073984   0.075744   0.00616    0.002944   0.07951999 0.083904
- 0.004576   0.023552   0.00552    0.020256   0.079024   0.017264
- 0.008672   0.00664    0.009184   0.019664   0.000448   0.023552
- 0.005616   0.007008   0.000448   0.000448   0.023552   0.00056
- 0.001344   0.003392   0.00752    0.010816   0.000448   0.000448
- 0.000448   0.000448   0.007904   0.000448   0.001376   0.002304
- 0.000448   0.003232   0.003232   0.002304   0.001376   0.000448
- 0.000896   0.000896   0.000896  ]
+[1.62879992e-02 4.65600006e-03 6.22399990e-03 1.43360002e-02
+ 2.02559996e-02 9.18400008e-03 1.08479997e-02 1.37759997e-02
+ 8.06399994e-03 1.26559995e-02 1.77600011e-02 8.03199969e-03
+ 2.35520005e-02 1.32799996e-02 6.14400022e-03 5.67999994e-03
+ 3.35999997e-03 6.39999984e-04 6.14400022e-03 1.02559999e-02
+ 4.44799988e-03 4.20799991e-03 3.34400008e-03 4.17600013e-03
+ 1.06720002e-02 7.99999980e-05 6.35199994e-03 2.35520005e-02
+ 1.85920000e-02 4.26240005e-02 4.62399982e-03 2.70400010e-03
+ 7.90399965e-03 9.85599961e-03 1.06079997e-02 2.14719996e-02
+ 5.77600021e-03 1.75679997e-02 8.79999995e-03 1.67679992e-02
+ 2.23679990e-02 2.24000006e-03 7.36000016e-03 1.04000000e-02
+ 1.39039997e-02 1.39359999e-02 1.00959996e-02 1.00159999e-02
+ 1.84479989e-02 5.84000023e-03 4.17600013e-03 6.95999991e-03
+ 8.12799949e-03 9.98400059e-03 1.18879993e-02 3.19999992e-04
+ 5.35999984e-03 7.67999981e-03 1.09120002e-02 1.84160005e-02
+ 1.19679999e-02 5.95200015e-03 1.43040009e-02 1.48160001e-02
+ 2.16480009e-02 4.31999983e-03 2.34399997e-02 2.42560003e-02
+ 2.04319991e-02 2.99200006e-02 7.80799985e-03 2.35520005e-02
+ 1.77599993e-02 2.67519988e-02 1.11520002e-02 2.21440010e-02
+ 1.13600004e-03 1.83520000e-02 1.88320000e-02 1.94559991e-02
+ 6.30400004e-03 2.82719992e-02 1.48320002e-02 3.93600017e-03
+ 2.35680006e-02 5.52000012e-03 2.27040015e-02 4.57599992e-03
+ 9.61599965e-03 4.48000012e-03 1.65599994e-02 3.44000012e-02
+ 3.13760005e-02 5.07199997e-03 3.28320004e-02 1.08800000e-02
+ 1.17440000e-02 1.86720006e-02 3.69759984e-02 1.80639997e-02
+ 2.72159986e-02 4.06400003e-02 7.80799985e-03 1.43999998e-02
+ 1.94399990e-02 1.29760001e-02 6.63999980e-03 8.52799974e-03
+ 5.18399989e-03 2.53439993e-02 5.64800017e-03 1.98399997e-03
+ 3.66399996e-03 2.00000009e-03 2.13759989e-02 9.18400008e-03
+ 1.45600000e-02 1.92319993e-02 5.52000012e-03 1.35040004e-02
+ 5.16799977e-03 5.50400000e-03 9.11999959e-03 1.03520006e-02
+ 1.24479998e-02 1.91520005e-02 6.84799999e-03 1.20320003e-02
+ 1.21760005e-02 1.37920007e-02 2.51679998e-02 8.84800032e-03
+ 1.41439997e-02 2.16799993e-02 1.99519992e-02 1.66560002e-02
+ 1.57120004e-02 2.44800001e-02 2.87200008e-02 1.82080008e-02
+ 4.63999994e-03 1.22400001e-02 4.06400021e-03 2.18079984e-02
+ 1.13919992e-02 1.60319991e-02 1.71520002e-02 1.88800006e-03
+ 3.10239997e-02 2.66079996e-02 2.97439992e-02 1.80159993e-02
+ 1.92319993e-02 1.18080005e-02 2.08480004e-02 3.06560006e-02
+ 2.35520005e-02 5.60000015e-04 1.56800007e-03 1.62400007e-02
+ 7.87200034e-03 8.46400019e-03 1.26719996e-02 1.58879999e-02
+ 1.97600015e-02 7.39199994e-03 2.84640007e-02 3.02399998e-03
+ 2.35520005e-02 8.52799974e-03 1.02880001e-02 3.69599997e-03
+ 6.49600010e-03 7.16800010e-03 4.48000006e-04 4.48000006e-04
+ 4.48000006e-04 4.48000006e-04 8.54399987e-03 4.48000006e-04
+ 1.78239997e-02 1.78399999e-02 5.96799981e-03 6.56000013e-03
+ 8.28799978e-03 1.26559995e-02 1.35840001e-02 1.37600000e-03
+ 1.37600000e-03]
 Average Reward Time
-Max:  0.08390399813652039 Min:  0.00017600000137463212 Mean:  0.017157475549287888 Std:  0.017135809477737903
+Max:  0.04262400045990944 Min:  7.999999797903001e-05 Mean:  0.012993015837978827 Std:  0.008757913259575305
 -------------------------------------------------
-Counter:  116
+Counter:  100
 Done

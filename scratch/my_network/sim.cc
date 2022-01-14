@@ -444,8 +444,8 @@ int main (int argc, char *argv[])
               Ipv4InterfaceAddress ipv4_int_addr = ipv4->GetAddress (1, 0);
               Ipv4Address ip_addr = ipv4_int_addr.GetLocal ();
               NS_LOG_UNCOND(ipv4_int_addr);
-              PoissonAppHelper poisson ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]
-              poisson.SetAverageRate (DataRate(Traff_Matrix[i][j]));
+              RandomAppHelper poisson ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]
+              poisson.SetConstantRate (DataRate(Traff_Matrix[i][j]));
               //poisson.SetAverageRate (DataRate(Traff_Matrix[i][j]), AvgPacketSize);
               ApplicationContainer apps = poisson.Install (nodes_traffic.Get (i));  // traffic sources are installed on all nodes
               
