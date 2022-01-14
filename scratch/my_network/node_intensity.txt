@@ -1,5 +1,5 @@
-0Kbps 250Kbps 250Kbps 250Kbps 250Kbps
-250Kbps 0Kbps 250Kbps 250Kbps 250Kbps
-250Kbps 250Kbps 0Kbps 250Kbps 250Kbps
-250Kbps 250Kbps 250Kbps 0Kbps 250Kbps
-250Kbps 250Kbps 250Kbps 250Kbps 0Kbps
+0Kbps 50Kbps 50Kbps 50Kbps 50Kbps
+50Kbps 0Kbps 50Kbps 50Kbps 50Kbps
+50Kbps 50Kbps 0Kbps 50Kbps 50Kbps
+50Kbps 50Kbps 50Kbps 0Kbps 50Kbps
+50Kbps 50Kbps 50Kbps 50Kbps 0Kbps
