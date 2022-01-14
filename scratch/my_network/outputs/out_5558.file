@@ -13883,63 +13883,20 @@ Start iteration:  13875
 Start iteration:  13876
 Start iteration:  13877
 Start iteration:  13878
-Start iteration:  13879
-Start iteration:  13880
-Start iteration:  13881
-Start iteration:  13882
-Start iteration:  13883
-Start iteration:  13884
-Start iteration:  13885
-Start iteration:  13886
-Start iteration:  13887
-Start iteration:  13888
-Start iteration:  13889
-Start iteration:  13890
-Start iteration:  13891
-Start iteration:  13892
-Start iteration:  13893
-Start iteration:  13894
-Start iteration:  13895
-Start iteration:  13896
-Start iteration:  13897
-Start iteration:  13898
-Start iteration:  13899
-Start iteration:  13900
-Start iteration:  13901
-Start iteration:  13902
-Start iteration:  13903
-Start iteration:  13904
-Start iteration:  13905
-Start iteration:  13906
-Start iteration:  13907
-Start iteration:  13908
-Start iteration:  13909
-Start iteration:  13910
-Start iteration:  13911
-Start iteration:  13912
-Start iteration:  13913
-Start iteration:  13914
-Start iteration:  13915
-Start iteration:  13916
-Start iteration:  13917
-Start iteration:  13918
-Start iteration:  13919
-Start iteration:  13920
-Start iteration:  13921
 [[    0     0     0     0]
  [    0     0     0     0]
- [    0     0     0     0]
+ [    0     0     0   153]
  ...
- [    0     0 53443   620]
- [    0     0 53443   620]
- [    0     0 53443   620]]
+ [    0     0 51204     0]
+ [    0     0 50471     0]
+ [    0     0 50471     0]]
 Average Queue
-Max:  [ 9171  7508 64076 10846] Min:  [0 0 0 0] Mean:  [  901.2226595    957.10362106 51614.48161071  1114.26694391] Std:  [1290.80594858 1222.60471578 6561.02673977 1449.22199138]
-Max:  64076 Min:  0 Mean:  13646.768708793996 Std:  22194.56930293425
+Max:  [ 7347 11423 63634  7284] Min:  [0 0 0 0] Mean:  [  947.44469108  1061.7976622  52188.39738525   982.45025048] Std:  [1193.39628585 1490.57791763 6971.91722797 1264.1698722 ]
+Max:  63634 Min:  0 Mean:  13795.022497250846 Std:  22468.090070017977
 -------------------------------------------------
-[0.002032 0.008064 0.004048 ... 0.010368 0.000448 0.000448]
+[0.002464 0.001968 0.005024 ... 0.000448 0.000448 0.000448]
 Average Reward Time
-Max:  1.0365599393844604 Min:  0.0 Mean:  0.2958472735904281 Std:  0.3904108834112743
+Max:  1.0392000675201416 Min:  0.0 Mean:  0.29827989804872757 Std:  0.3950832846828646
 -------------------------------------------------
-Counter:  35373
+Counter:  35227
 Done

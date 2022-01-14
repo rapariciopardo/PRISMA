@@ -14243,20 +14243,177 @@ Start iteration:  14235
 Start iteration:  14236
 Start iteration:  14237
 Start iteration:  14238
+Start iteration:  14239
+Start iteration:  14240
+Start iteration:  14241
+Start iteration:  14242
+Start iteration:  14243
+Start iteration:  14244
+Start iteration:  14245
+Start iteration:  14246
+Start iteration:  14247
+Start iteration:  14248
+Start iteration:  14249
+Start iteration:  14250
+Start iteration:  14251
+Start iteration:  14252
+Start iteration:  14253
+Start iteration:  14254
+Start iteration:  14255
+Start iteration:  14256
+Start iteration:  14257
+Start iteration:  14258
+Start iteration:  14259
+Start iteration:  14260
+Start iteration:  14261
+Start iteration:  14262
+Start iteration:  14263
+Start iteration:  14264
+Start iteration:  14265
+Start iteration:  14266
+Start iteration:  14267
+Start iteration:  14268
+Start iteration:  14269
+Start iteration:  14270
+Start iteration:  14271
+Start iteration:  14272
+Start iteration:  14273
+Start iteration:  14274
+Start iteration:  14275
+Start iteration:  14276
+Start iteration:  14277
+Start iteration:  14278
+Start iteration:  14279
+Start iteration:  14280
+Start iteration:  14281
+Start iteration:  14282
+Start iteration:  14283
+Start iteration:  14284
+Start iteration:  14285
+Start iteration:  14286
+Start iteration:  14287
+Start iteration:  14288
+Start iteration:  14289
+Start iteration:  14290
+Start iteration:  14291
+Start iteration:  14292
+Start iteration:  14293
+Start iteration:  14294
+Start iteration:  14295
+Start iteration:  14296
+Start iteration:  14297
+Start iteration:  14298
+Start iteration:  14299
+Start iteration:  14300
+Start iteration:  14301
+Start iteration:  14302
+Start iteration:  14303
+Start iteration:  14304
+Start iteration:  14305
+Start iteration:  14306
+Start iteration:  14307
+Start iteration:  14308
+Start iteration:  14309
+Start iteration:  14310
+Start iteration:  14311
+Start iteration:  14312
+Start iteration:  14313
+Start iteration:  14314
+Start iteration:  14315
+Start iteration:  14316
+Start iteration:  14317
+Start iteration:  14318
+Start iteration:  14319
+Start iteration:  14320
+Start iteration:  14321
+Start iteration:  14322
+Start iteration:  14323
+Start iteration:  14324
+Start iteration:  14325
+Start iteration:  14326
+Start iteration:  14327
+Start iteration:  14328
+Start iteration:  14329
+Start iteration:  14330
+Start iteration:  14331
+Start iteration:  14332
+Start iteration:  14333
+Start iteration:  14334
+Start iteration:  14335
+Start iteration:  14336
+Start iteration:  14337
+Start iteration:  14338
+Start iteration:  14339
+Start iteration:  14340
+Start iteration:  14341
+Start iteration:  14342
+Start iteration:  14343
+Start iteration:  14344
+Start iteration:  14345
+Start iteration:  14346
+Start iteration:  14347
+Start iteration:  14348
+Start iteration:  14349
+Start iteration:  14350
+Start iteration:  14351
+Start iteration:  14352
+Start iteration:  14353
+Start iteration:  14354
+Start iteration:  14355
+Start iteration:  14356
+Start iteration:  14357
+Start iteration:  14358
+Start iteration:  14359
+Start iteration:  14360
+Start iteration:  14361
+Start iteration:  14362
+Start iteration:  14363
+Start iteration:  14364
+Start iteration:  14365
+Start iteration:  14366
+Start iteration:  14367
+Start iteration:  14368
+Start iteration:  14369
+Start iteration:  14370
+Start iteration:  14371
+Start iteration:  14372
+Start iteration:  14373
+Start iteration:  14374
+Start iteration:  14375
+Start iteration:  14376
+Start iteration:  14377
+Start iteration:  14378
+Start iteration:  14379
+Start iteration:  14380
+Start iteration:  14381
+Start iteration:  14382
+Start iteration:  14383
+Start iteration:  14384
+Start iteration:  14385
+Start iteration:  14386
+Start iteration:  14387
+Start iteration:  14388
+Start iteration:  14389
+Start iteration:  14390
+Start iteration:  14391
+Start iteration:  14392
+Start iteration:  14393
+Start iteration:  14394
+Start iteration:  14395
 [[    0     0]
  [    0     0]
- [  321     0]
+ [    0     0]
  ...
- [11013 34369]
- [11013 35011]
- [11013 35011]]
+ [33230  6494]
+ [33028  6494]
+ [33028  6494]]
 Average Queue
-Max:  [36266 48772] Min:  [0 0] Mean:  [11199.47125203 18546.77434146] Std:  [ 9729.62949244 14118.38355913]
-Max:  48772 Min:  0 Mean:  14873.122796747968 Std:  12668.580735955587
+Max:  [34524 43449] Min:  [0 0] Mean:  [11399.87386748 15793.56743511] Std:  [ 7855.982048   11084.96554127]
+Max:  43449 Min:  0 Mean:  13596.72065129776 Std:  9855.079567734023
 -------------------------------------------------
-[0.016288   0.004656   0.006224   ... 0.009792   0.56996799 0.56996799]
+[0.004224 0.000256 0.004576 ... 0.020864 0.012576 0.012576]
 Average Reward Time
-Max:  0.7943360209465027 Min:  0.0 Mean:  0.14190237712184384 Std:  0.1870338370744767
+Max:  0.7055680155754089 Min:  0.0 Mean:  0.13163008507850568 Std:  0.15531461896968898
 -------------------------------------------------
-Counter:  16511
+Counter:  16619
 Done

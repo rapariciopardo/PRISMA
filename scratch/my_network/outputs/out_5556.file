@@ -14418,124 +14418,21 @@ Start iteration:  14410
 Start iteration:  14411
 Start iteration:  14412
 Start iteration:  14413
-Start iteration:  14414
-Start iteration:  14415
-Start iteration:  14416
-Start iteration:  14417
-Start iteration:  14418
-Start iteration:  14419
-Start iteration:  14420
-Start iteration:  14421
-Start iteration:  14422
-Start iteration:  14423
-Start iteration:  14424
-Start iteration:  14425
-Start iteration:  14426
-Start iteration:  14427
-Start iteration:  14428
-Start iteration:  14429
-Start iteration:  14430
-Start iteration:  14431
-Start iteration:  14432
-Start iteration:  14433
-Start iteration:  14434
-Start iteration:  14435
-Start iteration:  14436
-Start iteration:  14437
-Start iteration:  14438
-Start iteration:  14439
-Start iteration:  14440
-Start iteration:  14441
-Start iteration:  14442
-Start iteration:  14443
-Start iteration:  14444
-Start iteration:  14445
-Start iteration:  14446
-Start iteration:  14447
-Start iteration:  14448
-Start iteration:  14449
-Start iteration:  14450
-Start iteration:  14451
-Start iteration:  14452
-Start iteration:  14453
-Start iteration:  14454
-Start iteration:  14455
-Start iteration:  14456
-Start iteration:  14457
-Start iteration:  14458
-Start iteration:  14459
-Start iteration:  14460
-Start iteration:  14461
-Start iteration:  14462
-Start iteration:  14463
-Start iteration:  14464
-Start iteration:  14465
-Start iteration:  14466
-Start iteration:  14467
-Start iteration:  14468
-Start iteration:  14469
-Start iteration:  14470
-Start iteration:  14471
-Start iteration:  14472
-Start iteration:  14473
-Start iteration:  14474
-Start iteration:  14475
-Start iteration:  14476
-Start iteration:  14477
-Start iteration:  14478
-Start iteration:  14479
-Start iteration:  14480
-Start iteration:  14481
-Start iteration:  14482
-Start iteration:  14483
-Start iteration:  14484
-Start iteration:  14485
-Start iteration:  14486
-Start iteration:  14487
-Start iteration:  14488
-Start iteration:  14489
-Start iteration:  14490
-Start iteration:  14491
-Start iteration:  14492
-Start iteration:  14493
-Start iteration:  14494
-Start iteration:  14495
-Start iteration:  14496
-Start iteration:  14497
-Start iteration:  14498
-Start iteration:  14499
-Start iteration:  14500
-Start iteration:  14501
-Start iteration:  14502
-Start iteration:  14503
-Start iteration:  14504
-Start iteration:  14505
-Start iteration:  14506
-Start iteration:  14507
-Start iteration:  14508
-Start iteration:  14509
-Start iteration:  14510
-Start iteration:  14511
-Start iteration:  14512
-Start iteration:  14513
-Start iteration:  14514
-Start iteration:  14515
-Start iteration:  14516
-Start iteration:  14517
 [[    0     0     0]
  [    0     0     0]
  [    0     0     0]
  ...
- [34836 38302 33622]
- [34955 38302 33622]
- [34955 38302 33622]]
+ [33439 37592 34649]
+ [33439 37592 34707]
+ [33439 37592 34707]]
 Average Queue
-Max:  [50044 54388 58280] Min:  [0 0 0] Mean:  [29187.59425755 38511.36719655 37065.74220579] Std:  [13968.25843652 11747.1051338   9532.55836684]
-Max:  58280 Min:  0 Mean:  34921.567886629695 Std:  12574.299025744118
+Max:  [53246 57347 50734] Min:  [0 0 0] Mean:  [33383.69966282 41948.33528587 36348.58383993] Std:  [12587.12848197  9339.87751112  8941.18257007]
+Max:  57347 Min:  0 Mean:  37226.87292953656 Std:  11006.777311591959
 -------------------------------------------------
-[0.002032   0.008064   0.004048   ... 0.53937602 0.56070399 0.56070399]
+[5.24799991e-03 4.22400003e-03 2.55999999e-04 ... 5.54831982e-01
+ 5.55759966e-01 5.55759966e-01]
 Average Reward Time
-Max:  0.9406879544258118 Min:  0.0 Mean:  0.37406205666708514 Std:  0.31391598200570753
+Max:  0.9226720333099365 Min:  0.0 Mean:  0.39855429078083415 Std:  0.3189160267454387
 -------------------------------------------------
-Counter:  26057
+Counter:  26217
 Done
