@@ -1,5 +1,5 @@
-0Kbps 800Kbps 800Kbps 800Kbps 800Kbps
-800Kbps 0Kbps 800Kbps 800Kbps 800Kbps
-800Kbps 800Kbps 0Kbps 800Kbps 800Kbps
-800Kbps 800Kbps 800Kbps 0Kbps 800Kbps
-800Kbps 800Kbps 800Kbps 800Kbps 0Kbps
+0Kbps 900Kbps 900Kbps 900Kbps 900Kbps
+900Kbps 0Kbps 900Kbps 900Kbps 900Kbps
+900Kbps 900Kbps 0Kbps 900Kbps 900Kbps
+900Kbps 900Kbps 900Kbps 0Kbps 900Kbps
+900Kbps 900Kbps 900Kbps 900Kbps 0Kbps
