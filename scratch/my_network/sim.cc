@@ -291,8 +291,9 @@ int main (int argc, char *argv[])
   {
     PointToPointHelper p2p;
     DataRate data_rate(LinkRate);
-    p2p.SetDeviceAttribute ("DataRate", DataRateValue (data_rate.GetBitRate()*nodes_degree[i]));
+    p2p.SetDeviceAttribute ("DataRate", DataRateValue (100*data_rate.GetBitRate()*nodes_degree[i]));
     p2p.SetChannelAttribute ("Delay", StringValue (LinkDelay));
+    p2p.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("50p"));    
     NetDeviceContainer n_devs = p2p.Install (NodeContainer (nodes_traffic.Get(i), nodes_switch.Get(i)));
     traffic_nd.Add(n_devs.Get(0));
     switch_nd.Add(n_devs.Get(1));
@@ -309,6 +310,7 @@ int main (int argc, char *argv[])
                 PointToPointHelper p2p;
                 p2p.SetDeviceAttribute ("DataRate", DataRateValue (LinkRate));
                 p2p.SetChannelAttribute ("Delay", StringValue (LinkDelay));
+                p2p.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("50p"));    
                 NetDeviceContainer n_devs = p2p.Install(NodeContainer(nodes_switch.Get(i), nodes_switch.Get(j)));
                 switch_nd.Add(n_devs.Get(0));
                 switch_nd.Add(n_devs.Get(1));
