@@ -1,5 +1,5 @@
-0Kbps 600Kbps 600Kbps 600Kbps 600Kbps
-600Kbps 0Kbps 600Kbps 600Kbps 600Kbps
-600Kbps 600Kbps 0Kbps 600Kbps 600Kbps
-600Kbps 600Kbps 600Kbps 0Kbps 600Kbps
-600Kbps 600Kbps 600Kbps 600Kbps 0Kbps
+0Kbps 700Kbps 700Kbps 700Kbps 700Kbps
+700Kbps 0Kbps 700Kbps 700Kbps 700Kbps
+700Kbps 700Kbps 0Kbps 700Kbps 700Kbps
+700Kbps 700Kbps 700Kbps 0Kbps 700Kbps
+700Kbps 700Kbps 700Kbps 700Kbps 0Kbps
