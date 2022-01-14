@@ -216,7 +216,7 @@ void PoissonGeneratorApplication::ScheduleNextTx ()
       Ptr<ExponentialRandomVariable> ev_size = CreateObject<ExponentialRandomVariable> ();
       ev_size->SetAttribute ("Mean", DoubleValue (m_pktSizeMean));
       ev_size->SetAttribute("Bound", DoubleValue(1450.0));
-      m_pktSize = m_pktSizeMean; //(uint32_t) ev_size->GetValue();
+      m_pktSize = (uint32_t) ev_size->GetValue();
       NS_LOG_UNCOND("Packet Size: "<<m_pktSize);
       uint32_t bits = m_pktSize * 8;
       //NS_LOG_UNCOND ("bits = " << bits);
@@ -224,7 +224,7 @@ void PoissonGeneratorApplication::ScheduleNextTx ()
       ev_delay->SetAttribute ("Mean", DoubleValue (bits /
                               static_cast<double>(m_avgRate.GetBitRate ())));
       //ev->SetAttribute ("Bound", DoubleValue (totalTime)); 
-      double delay = bits / static_cast<double>(m_avgRate.GetBitRate ());
+      double delay = ev_delay->GetValue(); // bits/ static_cast<double>(m_avgRate.GetBitRate ());
       NS_LOG_UNCOND("DELAY:     "<<delay);
       Time nextTime (Seconds (delay)); // Time till next packet
       NS_LOG_LOGIC ("nextTime = " << nextTime);
