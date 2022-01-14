@@ -71,6 +71,8 @@ public:
 private:
   void ScheduleNextStateRead();
   uint32_t GetQueueLength(Ptr<Node> node, uint32_t netDev_idx);
+  uint32_t GetQueueLengthInBytes(Ptr<Node> node, uint32_t netDev_idx);
+
   //bool SetCw(Ptr<Node> node, uint32_t cwMinValue=0, uint32_t cwMaxValue=0);
 
   Time m_interval = Seconds(0.1);
