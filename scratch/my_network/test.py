@@ -75,7 +75,7 @@ counter = 0
 
 try:
     while True:
-        print("Start iteration: ", currIt)
+        #print("Start iteration: ", currIt)
         obs = env.reset()
         #print("Step: ", stepIdx)
         #print("---obs: ", obs)
@@ -121,6 +121,7 @@ try:
 except KeyboardInterrupt:
     print("Ctrl-C -> Exit")
 finally:
+    print("Curr Iter: ", currIt)
     avg_queue_size = np.array(avg_queue_size)
     avg_rew_time = np.array(avg_rew_time)
     print(avg_queue_size)
