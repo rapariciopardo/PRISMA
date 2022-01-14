@@ -6875,6 +6875,27 @@ Start iteration:  6867
 Start iteration:  6868
 Start iteration:  6869
 Start iteration:  6870
+Start iteration:  6871
+Start iteration:  6872
+Start iteration:  6873
+Start iteration:  6874
+Start iteration:  6875
+Start iteration:  6876
+Start iteration:  6877
+Start iteration:  6878
+Start iteration:  6879
+Start iteration:  6880
+Start iteration:  6881
+Start iteration:  6882
+Start iteration:  6883
+Start iteration:  6884
+Start iteration:  6885
+Start iteration:  6886
+Start iteration:  6887
+Start iteration:  6888
+Start iteration:  6889
+Start iteration:  6890
+Start iteration:  6891
 [[0]
  [0]
  [0]
@@ -6890,5 +6911,5 @@ Max:  0 Min:  0 Mean:  0.0 Std:  0.0
 Average Reward Time
 Max:  0.008191999979317188 Min:  0.008191999979317188 Mean:  0.008191999979317188 Std:  0.0
 -------------------------------------------------
-Counter:  6868
+Counter:  6882
 Done
