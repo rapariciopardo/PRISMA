@@ -215,6 +215,7 @@ void PoissonGeneratorApplication::ScheduleNextTx ()
       
       Ptr<ExponentialRandomVariable> ev_size = CreateObject<ExponentialRandomVariable> ();
       ev_size->SetAttribute ("Mean", DoubleValue (m_pktSizeMean));
+      ev_size->SetAttribute("Bound", DoubleValue(1450.0));
       m_pktSize = (uint32_t) ev_size->GetValue();
       NS_LOG_UNCOND("Packet Size: "<<m_pktSize);
       uint32_t bits = m_pktSize * 8;
