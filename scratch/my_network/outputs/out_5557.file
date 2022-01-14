@@ -7035,127 +7035,20 @@ Start iteration:  7027
 Start iteration:  7028
 Start iteration:  7029
 Start iteration:  7030
-Start iteration:  7031
-Start iteration:  7032
-Start iteration:  7033
-Start iteration:  7034
-Start iteration:  7035
-Start iteration:  7036
-Start iteration:  7037
-Start iteration:  7038
-Start iteration:  7039
-Start iteration:  7040
-Start iteration:  7041
-Start iteration:  7042
-Start iteration:  7043
-Start iteration:  7044
-Start iteration:  7045
-Start iteration:  7046
-Start iteration:  7047
-Start iteration:  7048
-Start iteration:  7049
-Start iteration:  7050
-Start iteration:  7051
-Start iteration:  7052
-Start iteration:  7053
-Start iteration:  7054
-Start iteration:  7055
-Start iteration:  7056
-Start iteration:  7057
-Start iteration:  7058
-Start iteration:  7059
-Start iteration:  7060
-Start iteration:  7061
-Start iteration:  7062
-Start iteration:  7063
-Start iteration:  7064
-Start iteration:  7065
-Start iteration:  7066
-Start iteration:  7067
-Start iteration:  7068
-Start iteration:  7069
-Start iteration:  7070
-Start iteration:  7071
-Start iteration:  7072
-Start iteration:  7073
-Start iteration:  7074
-Start iteration:  7075
-Start iteration:  7076
-Start iteration:  7077
-Start iteration:  7078
-Start iteration:  7079
-Start iteration:  7080
-Start iteration:  7081
-Start iteration:  7082
-Start iteration:  7083
-Start iteration:  7084
-Start iteration:  7085
-Start iteration:  7086
-Start iteration:  7087
-Start iteration:  7088
-Start iteration:  7089
-Start iteration:  7090
-Start iteration:  7091
-Start iteration:  7092
-Start iteration:  7093
-Start iteration:  7094
-Start iteration:  7095
-Start iteration:  7096
-Start iteration:  7097
-Start iteration:  7098
-Start iteration:  7099
-Start iteration:  7100
-Start iteration:  7101
-Start iteration:  7102
-Start iteration:  7103
-Start iteration:  7104
-Start iteration:  7105
-Start iteration:  7106
-Start iteration:  7107
-Start iteration:  7108
-Start iteration:  7109
-Start iteration:  7110
-Start iteration:  7111
-Start iteration:  7112
-Start iteration:  7113
-Start iteration:  7114
-Start iteration:  7115
-Start iteration:  7116
-Start iteration:  7117
-Start iteration:  7118
-Start iteration:  7119
-Start iteration:  7120
-Start iteration:  7121
-Start iteration:  7122
-Start iteration:  7123
-Start iteration:  7124
-Start iteration:  7125
-Start iteration:  7126
-Start iteration:  7127
-Start iteration:  7128
-Start iteration:  7129
-Start iteration:  7130
-Start iteration:  7131
-Start iteration:  7132
-Start iteration:  7133
-Start iteration:  7134
-Start iteration:  7135
-Start iteration:  7136
-Start iteration:  7137
 [[ 0]
  [ 0]
  [ 0]
  ...
- [39]
- [39]
- [39]]
+ [42]
+ [41]
+ [41]]
 Average Queue
-Max:  [50] Min:  [0] Mean:  [48.39344724] Std:  [4.52037843]
-Max:  50 Min:  0 Mean:  48.39344723995494 Std:  4.5203784271256024
+Max:  [50] Min:  [0] Mean:  [48.75617435] Std:  [4.82897337]
+Max:  50 Min:  0 Mean:  48.75617435394177 Std:  4.828973368560383
 -------------------------------------------------
-[0.004576 0.002464 0.001968 ... 0.001728 0.001728 0.001728]
+[0.012272 0.004432 0.00072  ... 0.243424 0.230544 0.230544]
 Average Reward Time
-Max:  0.5333759784698486 Min:  0.0 Mean:  0.2696506460364109 Std:  0.19109130070802938
+Max:  0.545520007610321 Min:  0.0 Mean:  0.3015082936525797 Std:  0.19181283873850188
 -------------------------------------------------
-Counter:  14166
+Counter:  17425
 Done
