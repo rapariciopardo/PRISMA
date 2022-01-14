@@ -7052,20 +7052,77 @@ Start iteration:  7044
 Start iteration:  7045
 Start iteration:  7046
 Start iteration:  7047
-[[   0]
- [   0]
- [ 307]
+Start iteration:  7048
+Start iteration:  7049
+Start iteration:  7050
+Start iteration:  7051
+Start iteration:  7052
+Start iteration:  7053
+Start iteration:  7054
+Start iteration:  7055
+Start iteration:  7056
+Start iteration:  7057
+Start iteration:  7058
+Start iteration:  7059
+Start iteration:  7060
+Start iteration:  7061
+Start iteration:  7062
+Start iteration:  7063
+Start iteration:  7064
+Start iteration:  7065
+Start iteration:  7066
+Start iteration:  7067
+Start iteration:  7068
+Start iteration:  7069
+Start iteration:  7070
+Start iteration:  7071
+Start iteration:  7072
+Start iteration:  7073
+Start iteration:  7074
+Start iteration:  7075
+Start iteration:  7076
+Start iteration:  7077
+Start iteration:  7078
+Start iteration:  7079
+Start iteration:  7080
+Start iteration:  7081
+Start iteration:  7082
+Start iteration:  7083
+Start iteration:  7084
+Start iteration:  7085
+Start iteration:  7086
+Start iteration:  7087
+Start iteration:  7088
+Start iteration:  7089
+Start iteration:  7090
+Start iteration:  7091
+Start iteration:  7092
+Start iteration:  7093
+Start iteration:  7094
+Start iteration:  7095
+Start iteration:  7096
+Start iteration:  7097
+Start iteration:  7098
+Start iteration:  7099
+Start iteration:  7100
+Start iteration:  7101
+Start iteration:  7102
+Start iteration:  7103
+Start iteration:  7104
+[[0]
+ [0]
+ [0]
  ...
- [ 805]
- [1000]
- [1000]]
+ [0]
+ [0]
+ [0]]
 Average Queue
-Max:  [1474] Min:  [0] Mean:  [655.51589665] Std:  [423.34272531]
-Max:  1474 Min:  0 Mean:  655.5158966544296 Std:  423.3427253114961
+Max:  [1460] Min:  [0] Mean:  [408.13915766] Std:  [408.43688786]
+Max:  1460 Min:  0 Mean:  408.1391576550939 Std:  408.4368878586526
 -------------------------------------------------
-[0.012272 0.004432 0.005632 ... 0.01552  0.01864  0.01864 ]
+[0.002368 0.012112 0.004704 ... 0.010768 0.002976 0.002976]
 Average Reward Time
-Max:  0.04646399989724159 Min:  6.399999983841553e-05 Mean:  0.020934424594273932 Std:  0.007370862678094687
+Max:  0.04452800005674362 Min:  0.0 Mean:  0.01547715197337308 Std:  0.007737220152297393
 -------------------------------------------------
-Counter:  7389
+Counter:  6951
 Done
