@@ -210,23 +210,26 @@ void PoissonGeneratorApplication::ScheduleNextTx ()
 
   if (m_maxBytes == 0 || m_totBytes < m_maxBytes)
     {
-      NS_LOG_UNCOND("Avg Packet Size: "<< (uint64_t) m_pktSizeMean);
-      NS_LOG_UNCOND("Avg Data Rate:     "<< (uint64_t) m_avgRate.GetBitRate ());
+      //NS_LOG_UNCOND("Avg Packet Size: "<< (uint64_t) m_pktSizeMean);
+      //NS_LOG_UNCOND("Avg Data Rate:     "<< (uint64_t) m_avgRate.GetBitRate ());
       
       Ptr<ExponentialRandomVariable> ev_size = CreateObject<ExponentialRandomVariable> ();
       ev_size->SetAttribute ("Mean", DoubleValue (m_pktSizeMean));
       ev_size->SetAttribute("Bound", DoubleValue(1450.0));
       m_pktSize = (uint32_t) ev_size->GetValue();
+      if(m_pktSize<200) m_pktSize=200;
       NS_LOG_UNCOND("Packet Size: "<<m_pktSize);
       uint32_t bits = m_pktSize * 8;
       //NS_LOG_UNCOND ("bits = " << bits);
       Ptr<ExponentialRandomVariable> ev_rate = CreateObject<ExponentialRandomVariable> ();
       ev_rate->SetAttribute ("Mean", DoubleValue (static_cast<double>(m_avgRate.GetBitRate ())));
       ev_rate->SetAttribute ("Bound", DoubleValue (static_cast<double>(m_avgRate.GetBitRate ())*5)); 
+      double rate_value = ev_rate->GetValue();
+      if(rate_value<static_cast<double>(m_avgRate.GetBitRate ())*0.2) rate_value = rate_value<static_cast<double>(m_avgRate.GetBitRate ())*0.2;
       double delay = bits/ev_rate->GetValue(); // bits/ static_cast<double>(m_avgRate.GetBitRate ());
-      NS_LOG_UNCOND("DELAY:     "<<delay);
+      //NS_LOG_UNCOND("DELAY:     "<<delay);
       Time nextTime (Seconds (delay)); // Time till next packet
-      NS_LOG_LOGIC ("nextTime = " << nextTime);
+      //NS_LOG_LOGIC ("nextTime = " << nextTime);
       m_sendEvent = Simulator::Schedule (nextTime,
                                          &PoissonGeneratorApplication::SendPacket, this);
     }
@@ -243,7 +246,10 @@ void PoissonGeneratorApplication::SendPacket ()
   NS_ASSERT (m_sendEvent.IsExpired ());
   Ptr<Packet> packet = Create<Packet> (m_pktSize);
   m_txTrace (packet);
-  m_socket->Send (packet);
+  std::string start_time = std::to_string(Simulator::Now().GetMilliSeconds());
+  NS_LOG_UNCOND("START: "<<start_time<<"   SIZE: "<<m_pktSize);
+  const uint8_t* start_int = reinterpret_cast<const uint8_t*>(&start_time[0]);
+  m_socket->Send(start_int, m_pktSize, 0);
   m_totBytes += m_pktSize;
   Address localAddress;
   m_socket->GetSockName (localAddress);
