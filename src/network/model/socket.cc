@@ -150,7 +150,7 @@ Socket::Send (const uint8_t* buf, uint32_t size, uint32_t flags)
   else
     {
       p = Create<Packet> (size);
-    }
+    }  
   return Send (p, flags);
 }
 
