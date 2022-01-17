@@ -67,6 +67,7 @@ print("Action space: ", ac_space, ac_space.dtype)
 
 avg_queue_size = []
 avg_rew_time = []
+avg_delay_time = []
 stepIdx = 0
 currIt = 0
 counter = 0
@@ -85,15 +86,15 @@ try:
                 break
             stepIdx += 1
             
-            #action = g.getInterface(obs[0]) #env.action_space.sample()
-            action = env.action_space.sample()
+            action = g.getInterface(obs[0]) #env.action_space.sample()
+            #action = env.action_space.sample()
             #print("---action: ", action)
 
             #print("Step: ", stepIdx)
             obs, reward, done, info = env.step(action)
             #print("---obs, reward, done, info: ", obs, reward, done, info)
             avg_rew_time.append(reward)
-            avg_queue_size.append(obs[2:])
+            avg_queue_size.append(obs[4:])
 
             #if(stepIdx==2):
             #    import global_
@@ -104,6 +105,9 @@ try:
 
 
             if done:
+                #if(obs[1]>1000):
+                #    print("Size: ", obs[2])
+                avg_delay_time.append(obs[1])
                 stepIdx = 0
                 if currIt + 1 < iterationNum:
                     env.reset()
@@ -124,6 +128,7 @@ finally:
     print("Curr Iter: ", currIt)
     avg_queue_size = np.array(avg_queue_size)
     avg_rew_time = np.array(avg_rew_time)
+   
     print(avg_queue_size)
     print("Average Queue")
     print("Max: ",avg_queue_size.max(axis=0), "Min: ",avg_queue_size.min(axis=0), "Mean: ", avg_queue_size.mean(axis=0), "Std: ", avg_queue_size.std(axis=0))
@@ -133,6 +138,12 @@ finally:
     print(avg_rew_time)
     print("Average Reward Time")
     print("Max: ",avg_rew_time.max(), "Min: ",avg_rew_time.min(), "Mean: ", avg_rew_time.mean(), "Std: ", avg_rew_time.std())
+    print("-------------------------------------------------")
+    print(avg_delay_time)
+    avg_delay_time = np.array(avg_delay_time)
+    print("Average Delay Time")
+    print("QTD: ",avg_delay_time.shape)
+    print("Max: ",avg_delay_time.max(), "Min: ",avg_delay_time.min(), "Mean: ", avg_delay_time.mean(), "Std: ", avg_delay_time.std())
     print("-------------------------------------------------")
     print("Counter: ", counter)
 
