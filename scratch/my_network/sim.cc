@@ -565,6 +565,7 @@ int main (int argc, char *argv[])
   
   NS_LOG_INFO ("Run Simulation.");
   NS_LOG_UNCOND ("Simulation start");
+  ns3::PacketMetadata::Enable();
   Simulator::Stop (Seconds (simTime));
   Simulator::Run ();
   // flowmon->SerializeToXmlFile (flow_name.c_str(), true, true);
