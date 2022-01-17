@@ -86,6 +86,7 @@ private:
   uint16_t m_lengthType = 2054;
   uint32_t m_size;
   float m_packetRate = 500.0;
+  uint32_t m_packetStart;
   bool m_isGameOver;
   //NetDeviceContainer m_list_p2pNetDevs;
   uint32_t m_fwdDev_idx;  // Last net device selected to forward the packet (last action)
