@@ -143,7 +143,7 @@ MyGymEnv::GetObservationSpace()
   uint32_t num_devs = m_node->GetNDevices();
   float low = 0.0;
   float high = 100.0; // max buffer size --> to change depending on actual value (access to defaul sim param)
-  std::vector<uint32_t> shape = {num_devs+1,}; // first dev is not p2p
+  std::vector<uint32_t> shape = {num_devs+3,}; // first dev is not p2p
   std::string dtype = TypeNameGet<uint32_t> ();
   Ptr<OpenGymBoxSpace> space = CreateObject<OpenGymBoxSpace> (low, high, shape, dtype);
   NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", GetObservationSpace: " << space);
@@ -192,9 +192,11 @@ MyGymEnv::GetObservation()
   NS_LOG_FUNCTION (this);
   uint32_t num_devs = m_node->GetNDevices();
   //NS_LOG_UNCOND("N devices: "<<num_devs);
-  std::vector<uint32_t> shape = {num_devs+1};//{(num_devs-1)*50,};
+  std::vector<uint32_t> shape = {num_devs+3};//{(num_devs-1)*50,};
   Ptr<OpenGymBoxContainer<uint32_t> > box = CreateObject<OpenGymBoxContainer<uint32_t> >(shape);
   box->AddValue(m_dest);
+  box->AddValue(Simulator::Now().GetMilliSeconds()-m_packetStart);
+  box->AddValue(m_size);
   //NS_LOG_UNCOND("Aqui"<<num_devs);
   for (uint32_t i=0 ; i<num_devs; i++){
     Ptr<NetDevice> netDev = m_node->GetDevice (i);
@@ -336,6 +338,7 @@ MyGymEnv::CountPktInQueueEvent(Ptr<MyGymEnv> entity, Ptr<PointToPointNetDevice> 
     //NS_LOG_UNCOND(p->ToString());
     NS_LOG_UNCOND("-------------------------------------------------------------");
     NS_LOG_UNCOND("Node "<<entity->m_node->GetId());
+    //NS_LOG_UNCOND(Simulator::Now());
 
     //Remove Mac Header
     p->RemoveHeader(ppp_head);
@@ -343,6 +346,24 @@ MyGymEnv::CountPktInQueueEvent(Ptr<MyGymEnv> entity, Ptr<PointToPointNetDevice> 
     p->RemoveHeader(ip_head);
     p->RemoveHeader(udp_head);
     entity->m_size = p->GetSize();
+
+    
+    uint8_t *buffer = new uint8_t [p->GetSize ()];
+    p->CopyData(buffer, p->GetSize ());
+    char* start_time_string = reinterpret_cast<char*>(&buffer[0]);
+    std::string s = std::string(start_time_string);
+    uint32_t start_time_int = (uint32_t) std::atoi(start_time_string);
+    NS_LOG_UNCOND("START TIME: "<<start_time_int<<"    NOW: "<<Simulator::Now().GetMilliSeconds());
+    entity->m_packetStart = start_time_int;
+    //entity->m_packetStart =  static_cast<uint32_t>(std::stoul(start_time_string*));
+    //NS_LOG_UNCOND("PACKET DATA"<<(uint32_t)*buffer);
+
+    //NS_LOG_UNCOND("PPP--------------------------");
+    //NS_LOG_UNCOND(ppp_head);
+    //NS_LOG_UNCOND("IP--------------------------");
+    //NS_LOG_UNCOND(ip_head);
+    //NS_LOG_UNCOND("UDP--------------------------");
+    //NS_LOG_UNCOND(udp_head);
 
 
     //entity->m_lengthType = head.GetLengthType();
