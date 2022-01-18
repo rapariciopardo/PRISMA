@@ -105,9 +105,9 @@ try:
 
 
             if done:
-                #if(obs[1]>1000):
-                #    print("Size: ", obs[2])
-                avg_delay_time.append(obs[1])
+                if(obs[1]<50000):
+                    #print("Size: ", obs[2])
+                    avg_delay_time.append(obs[1])
                 stepIdx = 0
                 if currIt + 1 < iterationNum:
                     env.reset()
