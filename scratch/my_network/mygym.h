@@ -79,6 +79,7 @@ private:
   //uint32_t m_num_nodes;
   Ptr<Node> m_node;
   uint32_t m_dest;
+  uint32_t m_src;
   static uint32_t m_n_nodes;
   Address m_srcAddr;
   Address m_destAddr;

@@ -143,7 +143,7 @@ MyGymEnv::GetObservationSpace()
   uint32_t num_devs = m_node->GetNDevices();
   float low = 0.0;
   float high = 100.0; // max buffer size --> to change depending on actual value (access to defaul sim param)
-  std::vector<uint32_t> shape = {num_devs+3,}; // first dev is not p2p
+  std::vector<uint32_t> shape = {num_devs+4,}; // first dev is not p2p
   std::string dtype = TypeNameGet<uint32_t> ();
   Ptr<OpenGymBoxSpace> space = CreateObject<OpenGymBoxSpace> (low, high, shape, dtype);
   NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", GetObservationSpace: " << space);
@@ -192,11 +192,12 @@ MyGymEnv::GetObservation()
   NS_LOG_FUNCTION (this);
   uint32_t num_devs = m_node->GetNDevices();
   //NS_LOG_UNCOND("N devices: "<<num_devs);
-  std::vector<uint32_t> shape = {num_devs+3};//{(num_devs-1)*50,};
+  std::vector<uint32_t> shape = {num_devs+4};//{(num_devs-1)*50,};
   Ptr<OpenGymBoxContainer<uint32_t> > box = CreateObject<OpenGymBoxContainer<uint32_t> >(shape);
   box->AddValue(m_dest);
   box->AddValue(Simulator::Now().GetMilliSeconds()-m_packetStart);
   box->AddValue(m_size);
+  box->AddValue(m_src);
   //NS_LOG_UNCOND("Aqui"<<num_devs);
   for (uint32_t i=0 ; i<num_devs; i++){
     Ptr<NetDevice> netDev = m_node->GetDevice (i);
@@ -360,8 +361,8 @@ MyGymEnv::CountPktInQueueEvent(Ptr<MyGymEnv> entity, Ptr<PointToPointNetDevice> 
 
     //NS_LOG_UNCOND("PPP--------------------------");
     //NS_LOG_UNCOND(ppp_head);
-    //NS_LOG_UNCOND("IP--------------------------");
-    //NS_LOG_UNCOND(ip_head);
+    NS_LOG_UNCOND("IP--------------------------");
+    NS_LOG_UNCOND(ip_head);
     //NS_LOG_UNCOND("UDP--------------------------");
     //NS_LOG_UNCOND(udp_head);
 
@@ -399,6 +400,8 @@ MyGymEnv::CountPktInQueueEvent(Ptr<MyGymEnv> entity, Ptr<PointToPointNetDevice> 
       //NS_LOG_UNCOND(ip_addr<<"  "<<(ip_addr == ip_head.GetDestination()));
       if(ip_addr==ip_head.GetSource()){
         entity->m_srcAddr = dev->GetAddress();
+        entity->m_src = dev->GetNode()->GetId()-m_n_nodes;
+        NS_LOG_UNCOND("Src: "<<entity->m_src);
       }
       if(ip_addr == ip_head.GetDestination()){
         //Address mac48_dest_addr = dev->GetAddress();
@@ -411,17 +414,23 @@ MyGymEnv::CountPktInQueueEvent(Ptr<MyGymEnv> entity, Ptr<PointToPointNetDevice> 
         //for(int i=0;i<6;i++){
         //  NS_LOG_UNCOND((uint32_t) buf_add[i]);
         //}
-        break;
+        //break;
       }
       
     }
     entity->m_lengthType = ppp_head.GetProtocol();
-
-    NS_LOG_UNCOND("Packet Size: "<<entity->m_size);
-    NS_LOG_UNCOND("Dest: "<<entity->m_dest);
-    NS_LOG_UNCOND("Dest IP Addr: "<<ip_head.GetDestination());
-    //NS_LOG_UNCOND("Src Addr: "<<entity->m_srcAddr);
-    NS_LOG_UNCOND("Dest MAC Addr: "<<entity->m_destAddr);
+    if(entity->m_src==entity->m_dest){
+      NS_LOG_UNCOND("Packet Size: "<<entity->m_size);
+      NS_LOG_UNCOND("Dest: "<<entity->m_dest);
+      NS_LOG_UNCOND("Dest IP Addr: "<<ip_head.GetDestination());
+      //NS_LOG_UNCOND("Src Addr: "<<entity->m_srcAddr);
+      NS_LOG_UNCOND("Dest MAC Addr: "<<entity->m_destAddr);
+    }
+    //NS_LOG_UNCOND("Packet Size: "<<entity->m_size);
+    //NS_LOG_UNCOND("Dest: "<<entity->m_dest);
+    //NS_LOG_UNCOND("Dest IP Addr: "<<ip_head.GetDestination());
+    ////NS_LOG_UNCOND("Src Addr: "<<entity->m_srcAddr);
+    //NS_LOG_UNCOND("Dest MAC Addr: "<<entity->m_destAddr);
     entity->Notify();
 
   }
