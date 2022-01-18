@@ -68,6 +68,8 @@ print("Action space: ", ac_space, ac_space.dtype)
 avg_queue_size = []
 avg_rew_time = []
 avg_delay_time = []
+avg_packet_size = []
+count_recv_nodes = [0,0,0,0,0]
 stepIdx = 0
 currIt = 0
 counter = 0
@@ -94,7 +96,7 @@ try:
             obs, reward, done, info = env.step(action)
             #print("---obs, reward, done, info: ", obs, reward, done, info)
             avg_rew_time.append(reward)
-            avg_queue_size.append(obs[4:])
+            avg_queue_size.append(obs[5:])
 
             #if(stepIdx==2):
             #    import global_
@@ -108,6 +110,8 @@ try:
                 if(obs[1]<50000):
                     #print("Size: ", obs[2])
                     avg_delay_time.append(obs[1])
+                    avg_packet_size.append(obs[2])
+                    count_recv_nodes[obs[3]] += 1
                 stepIdx = 0
                 if currIt + 1 < iterationNum:
                     env.reset()
@@ -145,7 +149,14 @@ finally:
     print("QTD: ",avg_delay_time.shape)
     print("Max: ",avg_delay_time.max(), "Min: ",avg_delay_time.min(), "Mean: ", avg_delay_time.mean(), "Std: ", avg_delay_time.std())
     print("-------------------------------------------------")
+    print(avg_packet_size)
+    avg_packet_size = np.array(avg_packet_size)
+    print("Average Packet Size")
+    print("QTD: ",avg_packet_size.shape)
+    print("Max: ",avg_packet_size.max(), "Min: ",avg_packet_size.min(), "Mean: ", avg_packet_size.mean(), "Std: ", avg_packet_size.std())
+    print("-------------------------------------------------")
     print("Counter: ", counter)
+    print("Src Nodes: ", count_recv_nodes)
 
     env.close()
     print("Done")
