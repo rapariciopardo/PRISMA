@@ -107,7 +107,7 @@ try:
 
 
             if done:
-                if(obs[1]<60000):
+                if(obs[1]<50000):
                     #print("Size: ", obs[2])
                     avg_delay_time.append(obs[1])
                     avg_packet_size.append(obs[2])

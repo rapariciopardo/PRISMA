@@ -4,7 +4,7 @@ ICIIIIIIAAAAAAAAAAAAAAAAAAAAAAAAAAA
 Traceback (most recent call last):
   File "test.py", line 53, in <module>
     env = ns3env.Ns3Env(port=port, stepTime=stepTime, startSim=startSim, simSeed=seed, simArgs=simArgs, debug=debug)
-  File "/home/tiago/Documents/NetSim/scratch/my_network/ns3gym/ns3env.py", line 395, in __init__
+  File "/home/tiago/Documents/NetSim/scratch/my_network/ns3gym/ns3env.py", line 397, in __init__
     self.ns3ZmqBridge.initialize_env(self.stepTime)
   File "/home/tiago/Documents/NetSim/scratch/my_network/ns3gym/ns3env.py", line 153, in initialize_env
     request = self.socket.recv()
