@@ -88,8 +88,8 @@ try:
                 break
             stepIdx += 1
             
-            #action = g.getInterface(obs[0]) #env.action_space.sample()
-            action = env.action_space.sample()
+            action = g.getInterface(obs[0]) #env.action_space.sample()
+            #action = env.action_space.sample()
             #print("---action: ", action)
 
             #print("Step: ", stepIdx)
@@ -143,14 +143,16 @@ finally:
     print("Average Reward Time")
     print("Max: ",avg_rew_time.max(), "Min: ",avg_rew_time.min(), "Mean: ", avg_rew_time.mean(), "Std: ", avg_rew_time.std())
     print("-------------------------------------------------")
-    print(avg_delay_time)
+    
     avg_delay_time = np.array(avg_delay_time)
+    print(avg_delay_time)
     print("Average Delay Time")
     print("QTD: ",avg_delay_time.shape)
     print("Max: ",avg_delay_time.max(), "Min: ",avg_delay_time.min(), "Mean: ", avg_delay_time.mean(), "Std: ", avg_delay_time.std())
     print("-------------------------------------------------")
-    print(avg_packet_size)
+    
     avg_packet_size = np.array(avg_packet_size)
+    print(avg_packet_size)
     print("Average Packet Size")
     print("QTD: ",avg_packet_size.shape)
     print("Max: ",avg_packet_size.max(), "Min: ",avg_packet_size.min(), "Mean: ", avg_packet_size.mean(), "Std: ", avg_packet_size.std())
