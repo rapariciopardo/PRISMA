@@ -191,9 +191,11 @@ class Ns3ZmqBridge(object):
 
             if self.gameOver:
                 if self.gameOverReason == pb.EnvStateMsg.SimulationEnd:
-                    #self.envStopped = True
+                    self.envStopped = True
+                    self.notReceived = True
+                    return False
                     #self.send_close_command()
-                    pass
+                    #pass
                 else:
                     pass
                     #self.forceEnvStop = False

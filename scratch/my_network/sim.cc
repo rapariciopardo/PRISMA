@@ -87,7 +87,10 @@ vector<vector<double> > readCordinatesFile (std::string node_coordinates_file_na
 vector<vector<std::string>> readIntensityFile(std::string intensity_file_name);
 void printCoordinateArray (const char* description, vector<vector<double> > coord_array);
 void printMatrix (const char* description, vector<vector<bool> > array);
-
+int counter_send = 0;
+void countPackets(std::string path, Ptr<const Packet> packet){
+  counter_send+=1;
+}
 
 /*void DevicePacketsInQueueTrace (uint32_t oldValue, uint32_t newValue){
     std::cout  << "Time stamp: " << Simulator::Now () << ", Context: " << this <<   ", DevicePacketsInQueue: " << oldValue << " to " << newValue << std::endl;
@@ -101,6 +104,7 @@ static void DevPacketsInQueue (std::string context, uint32_t oldValue, uint32_t 
     std::cout << "Time stamp: " << Simulator::Now () << ", Context: " << node_dev_pair_str << ", DevicePacketsInQueue: " << newValue << std::endl;
 }
 */
+
 NS_LOG_COMPONENT_DEFINE ("GenericTopologyCreation");
 
 int main (int argc, char *argv[])
@@ -123,6 +127,7 @@ int main (int argc, char *argv[])
   double SinkStopTime   = 59.90001;
   double AppStartTime   = 0.0001;
   double AppStopTime    = 59.80001;
+
 
     
   CommandLine cmd;
@@ -291,7 +296,7 @@ int main (int argc, char *argv[])
   {
     PointToPointHelper p2p;
     DataRate data_rate(LinkRate);
-    p2p.SetDeviceAttribute ("DataRate", DataRateValue (100*data_rate.GetBitRate()*nodes_degree[i]));
+    p2p.SetDeviceAttribute ("DataRate", DataRateValue (10000*data_rate.GetBitRate()*nodes_degree[i]));
     p2p.SetChannelAttribute ("Delay", StringValue (LinkDelay));
     p2p.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("500p"));    
     NetDeviceContainer n_devs = p2p.Install (NodeContainer (nodes_traffic.Get(i), nodes_switch.Get(i)));
@@ -462,6 +467,8 @@ int main (int argc, char *argv[])
             }
         }
     }
+    Config::Connect ("/NodeList/*/ApplicationList/*/$ns3::PoissonGeneratorApplication/Tx",MakeCallback (&countPackets));
+
   
   //Ptr<UniformRandomVariable> x = CreateObject<UniformRandomVariable> ();
   //x->SetAttribute ("Min", DoubleValue (0));
@@ -570,6 +577,7 @@ int main (int argc, char *argv[])
   Simulator::Run ();
   // flowmon->SerializeToXmlFile (flow_name.c_str(), true, true);
   NS_LOG_UNCOND ("Simulation stop");
+  NS_LOG_UNCOND("Sent Packets: "<< counter_send);
   for (int i = 0; i < n_nodes; i++)
   {
     myOpenGymInterfaces[i]->NotifySimulationEnd();
