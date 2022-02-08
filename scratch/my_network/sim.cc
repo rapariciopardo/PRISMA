@@ -159,8 +159,7 @@ int main (int argc, char *argv[])
   Config::SetDefault ("ns3::OnOffApplication::DataRate",  StringValue (AppPacketRate));
   std::string LinkRate ("500Kbps");
   std::string LinkDelay ("2ms");
-  //  DropTailQueue::MaxPackets affects the # of dropped packets, default value:101
-  //  Config::SetDefault ("ns3::DropTailQueue::MaxPackets", UintegerValue (1000));
+  
 
   srand ( (unsigned)time ( NULL ) );   // generate different seed each time
 
@@ -172,9 +171,7 @@ int main (int argc, char *argv[])
   std::string adj_mat_file_name ("scratch/my_network/adjacency_matrix.txt");
   std::string node_coordinates_file_name ("scratch/my_network/node_coordinates.txt");
   std::string node_intensity_file_name("scratch/my_network/node_intensity.txt");
-  //std::string adj_mat_file_name ("input/adjacency_matrix.txt");
-  //std::string node_coordinates_file_name ("input/node_coordinates.txt");
-
+  
   //CommandLine cmd;
   //cmd.Parse (argc, argv);
   
@@ -260,19 +257,14 @@ int main (int argc, char *argv[])
 ///////////////////////////////
   NS_LOG_INFO ("Create P2P Link Attributes.");
 
-  //PointToPointHelper p2p;
-  //PointToPointHelper p2p;
-  //p2p.SetDeviceAttribute ("DataRate", DataRateValue (LinkRate));
-  //p2p.SetChannelAttribute ("Delay", StringValue (LinkDelay));
-
+  
   
 
 
-///////////////////////////////////////////////////////////////////////
+
   NetDeviceContainer traffic_nd;
   NetDeviceContainer switch_nd;
 
-  ///////////////////////////////////////////////////////////////////////
 
   int nodes_degree[n_nodes] ={0};
   for (size_t i = 0; i < Adj_Matrix.size (); i++)
@@ -337,21 +329,11 @@ int main (int argc, char *argv[])
   NS_LOG_UNCOND("Size switch_nd :"<<switch_nd.GetN());
   for(uint32_t i=0;i<switch_nd.GetN();i++)
   {
-    if(true){
-       Ptr<NetDevice> dev_switch =DynamicCast<NetDevice> (switch_nd.Get(i)); //CreateObject<CsmaNetDevice> ();
-      NS_LOG_UNCOND(dev_switch->GetNode()->GetId()<<"     "<< dev_switch->GetNode()->GetNDevices()<<"    "<<dev_switch->GetAddress()<<"    ");
-      //Ptr<CsmaChannel> dev_channel = DynamicCast<CsmaChannel>(dev_switch->GetChannel());
-      //NS_LOG_UNCOND("Data Rate: "<<dev_channel->GetDataRate());
-      dev_switch->TraceConnectWithoutContext("MacRx", MakeBoundCallback(&MyGymEnv::NotifyPktRcv, myGymEnvs[dev_switch->GetNode()->GetId()], dev_switch->GetNode(), &traffic_nd));
-    }
-    else{
-      Ptr<CsmaNetDevice> dev_switch =DynamicCast<CsmaNetDevice> (switch_nd.Get(i)); //CreateObject<CsmaNetDevice> ();
-      NS_LOG_UNCOND(dev_switch->GetNode()->GetId()<<"     "<< dev_switch->GetNode()->GetNDevices()<<"    "<<dev_switch->GetAddress()<<"    "<<dev_switch->IsReceiveEnabled());
-      //Ptr<CsmaChannel> dev_channel = DynamicCast<CsmaChannel>(dev_switch->GetChannel());
-      //NS_LOG_UNCOND("Data Rate: "<<dev_channel->GetDataRate());
-      dev_switch->TraceConnectWithoutContext("MacRx", MakeBoundCallback(&MyGymEnv::NotifyPktRcvCSMA, myGymEnvs[dev_switch->GetNode()->GetId()], dev_switch->GetNode(), &traffic_nd));
-      //dev_switch->SetPromiscReceiveCallback(MakeBoundCallback(&MyGymEnv::NotifyPktRcv, myGymEnvs[dev_switch->GetNode()->GetId()-n_nodes], dev_switch->GetNode(), &traffic_nd));
-    }
+   
+    Ptr<NetDevice> dev_switch =DynamicCast<NetDevice> (switch_nd.Get(i)); //CreateObject<CsmaNetDevice> ();
+    NS_LOG_UNCOND(dev_switch->GetNode()->GetId()<<"     "<< dev_switch->GetNode()->GetNDevices()<<"    "<<dev_switch->GetAddress()<<"    ");
+    dev_switch->TraceConnectWithoutContext("MacRx", MakeBoundCallback(&MyGymEnv::NotifyPktRcv, myGymEnvs[dev_switch->GetNode()->GetId()], dev_switch->GetNode(), &traffic_nd));
+    
   }
 
   
@@ -455,13 +437,7 @@ int main (int argc, char *argv[])
               poisson.SetAverageRate (DataRate(Traff_Matrix[i][j]));
               //poisson.SetAverageRate (DataRate(Traff_Matrix[i][j]), AvgPacketSize);
               ApplicationContainer apps = poisson.Install (nodes_traffic.Get (i));  // traffic sources are installed on all nodes
-              
-              
-              //RandomAppHelper onoff ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]
-              //PacketSinkHelper onoff ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]              
-              //onoff.SetConstantRate (intensity_array[i][j]);
-              //ApplicationContainer apps = onoff.Install (nodes_traffic.Get (i));  // traffic sources are installed on all nodes
-              
+            
               apps.Start (Seconds (AppStartTime + rn));
               apps.Stop (Seconds (AppStopTime));
             }
@@ -470,29 +446,7 @@ int main (int argc, char *argv[])
     Config::Connect ("/NodeList/*/ApplicationList/*/$ns3::PoissonGeneratorApplication/Tx",MakeCallback (&countPackets));
 
   
-  //Ptr<UniformRandomVariable> x = CreateObject<UniformRandomVariable> ();
-  //x->SetAttribute ("Min", DoubleValue (0));
-  //x->SetAttribute ("Max", DoubleValue (1));
-  //double rn = x->GetValue ();
-  //Ptr<Node> n = nodes_traffic.Get (4);
-  //Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();
-  //Ipv4InterfaceAddress ipv4_int_addr = ipv4->GetAddress (1, 0);
-  //Ipv4Address ip_addr = ipv4_int_addr.GetLocal ();
-  //NS_LOG_UNCOND(ipv4_int_addr);
-  //RandomAppHelper onoff ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]
-  ////PacketSinkHelper onoff ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]              
-  //onoff.SetConstantRate (DataRate (intensity_array[2][4]));
-  ////onoff.SetAttribute("OffTime", StringValue("ns3::ExponentialRandomVariable[Mean=8.0|Bound=8.0]"));
-  //NS_LOG_UNCOND("Aqui");
-  ////onoff.SetAttribute("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1.0]"));
-  //ApplicationContainer apps = onoff.Install (nodes_traffic.Get (2));  // traffic sources are installed on all nodes
-  //apps.Start (Seconds (AppStartTime + rn));
-  //apps.Stop (Seconds (AppStopTime));
-
-  //Ptr<Node> n_send = nodes_traffic.Get (4);
-  //Ptr<Node> n_recv = nodes_traffic.Get (1);
-  //
-  //n_send->GetDevice()
+  
 
 
   NS_LOG_INFO ("Setup Packet Sinks.");

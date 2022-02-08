@@ -248,7 +248,7 @@ void PoissonGeneratorApplication::SendPacket ()
   Ptr<Packet> packet = Create<Packet> (m_pktSize);
   m_txTrace (packet);
   std::string start_time = std::to_string(Simulator::Now().GetMilliSeconds());
-  NS_LOG_UNCOND("START: "<<start_time<<"   SIZE: "<<m_pktSize);
+  //NS_LOG_UNCOND("START: "<<start_time<<"   SIZE: "<<m_pktSize);
   const uint8_t* start_int = reinterpret_cast<const uint8_t*>(&start_time[0]);
   m_socket->Send(start_int, m_pktSize, 0);
   m_totBytes += m_pktSize;
