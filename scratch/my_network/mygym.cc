@@ -128,12 +128,6 @@ MyGymEnv::GetActionSpace()
   Ptr<OpenGymDiscreteSpace> space = CreateObject<OpenGymDiscreteSpace> (num_devs-1); // first dev is not p2p
   NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", GetActionSpace: " << space);
   return space;
-  //uint32_t nodeNum = NodeList::GetNNodes ();
-  //float low = 0.0;
-  //float high = 100.0;
-  //std::vector<uint32_t> shape = {nodeNum,};
-  //std::string dtype = TypeNameGet<uint32_t> ();
-  //Ptr<OpenGymBoxSpace> space = CreateObject<OpenGymBoxSpace> (low, high, shape, dtype);
 }
 
 Ptr<OpenGymSpace>
@@ -142,13 +136,13 @@ MyGymEnv::GetObservationSpace()
   NS_LOG_FUNCTION (this);
   uint32_t num_devs = m_node->GetNDevices();
   float low = 0.0;
-  float high = 100.0; // max buffer size --> to change depending on actual value (access to defaul sim param)
-  std::vector<uint32_t> shape = {num_devs+4,}; // first dev is not p2p
+  float high = 50.0; // max buffer size --> to change depending on actual value (access to defaul sim param)
+  std::vector<uint32_t> shape = {num_devs+1,}; // first value is the destination node
   std::string dtype = TypeNameGet<uint32_t> ();
   Ptr<OpenGymBoxSpace> space = CreateObject<OpenGymBoxSpace> (low, high, shape, dtype);
   NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", GetObservationSpace: " << space);
   return space;
-  }
+}
 
 bool
 MyGymEnv::GetGameOver()
@@ -156,10 +150,8 @@ MyGymEnv::GetGameOver()
   NS_LOG_FUNCTION (this);
   m_isGameOver = false;
   //NS_LOG_UNCOND(m_node->GetId()<<"     "<<m_dest);
-  
-
   m_isGameOver = (m_dest==m_node->GetId());
-  NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", MyGetGameOver: " << m_isGameOver);
+  //NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", MyGetGameOver: " << m_isGameOver);
   return m_isGameOver;
 }
 
@@ -167,10 +159,8 @@ uint32_t
 MyGymEnv::GetQueueLength(Ptr<Node> node, uint32_t netDev_idx)
 {
   Ptr<NetDevice> netDev = node->GetDevice (netDev_idx);
-  //NS_LOG_UNCOND ("IsPointToPoint? : " << netDev->IsPointToPoint () << "");
-  Ptr<PointToPointNetDevice> csma_netDev = DynamicCast<PointToPointNetDevice> (netDev);
-  //Ptr<PointToPointNetDevice> ptp_netDev = netDev->GetObject<PointToPointNetDevice> ();
-  Ptr<Queue<Packet> > queue = csma_netDev->GetQueue ();
+  Ptr<PointToPointNetDevice> p2p_netDev = DynamicCast<PointToPointNetDevice> (netDev);
+  Ptr<Queue<Packet> > queue = p2p_netDev->GetQueue ();
   uint32_t backlog = (int) queue->GetNPackets();
   return backlog;
 }
@@ -178,10 +168,8 @@ uint32_t
 MyGymEnv::GetQueueLengthInBytes(Ptr<Node> node, uint32_t netDev_idx)
 {
   Ptr<NetDevice> netDev = node->GetDevice (netDev_idx);
-  //NS_LOG_UNCOND ("IsPointToPoint? : " << netDev->IsPointToPoint () << "");
-  Ptr<PointToPointNetDevice> csma_netDev = DynamicCast<PointToPointNetDevice> (netDev);
-  //Ptr<PointToPointNetDevice> ptp_netDev = netDev->GetObject<PointToPointNetDevice> ();
-  Ptr<Queue<Packet> > queue = csma_netDev->GetQueue ();
+  Ptr<PointToPointNetDevice> p2p_netDev = DynamicCast<PointToPointNetDevice> (netDev);
+  Ptr<Queue<Packet> > queue = p2p_netDev->GetQueue ();
   uint32_t backlog = (int) queue->GetNBytes();
   return backlog;
 }
@@ -195,18 +183,14 @@ MyGymEnv::GetObservation()
   std::vector<uint32_t> shape = {num_devs+4};//{(num_devs-1)*50,};
   Ptr<OpenGymBoxContainer<uint32_t> > box = CreateObject<OpenGymBoxContainer<uint32_t> >(shape);
   box->AddValue(m_dest);
-  box->AddValue(Simulator::Now().GetMilliSeconds()-m_packetStart);
-  box->AddValue(m_size);
-  box->AddValue(m_src);
+  //box->AddValue(Simulator::Now().GetMilliSeconds()-m_packetStart);
+  //box->AddValue(m_size);
+  //box->AddValue(m_src);
   //NS_LOG_UNCOND("Aqui"<<num_devs);
   for (uint32_t i=0 ; i<num_devs; i++){
     Ptr<NetDevice> netDev = m_node->GetDevice (i);
-    //NS_LOG_UNCOND("Aqui"<<num_devs);
-    //NS_LOG_UNCOND ("IsPointToPoint? : " << netDev->IsPointToPoint () << "");
-    //if (netDev->IsPointToPoint ()){ // Only P2P devices are considered: the first one is not a P2P
     uint32_t value = GetQueueLength (m_node, i);
     box->AddValue(value);
-    //}
   }
 
   NS_LOG_UNCOND ( "Node: " << m_node->GetId() << ", MyGetObservation: " << box);
@@ -222,8 +206,8 @@ MyGymEnv::GetReward()
 
   float transmission_time = (m_size*8)/m_packetRate;
   float waiting_time = (float)(value*8)/m_packetRate;
-  float reward = transmission_time + waiting_time;
-  NS_LOG_UNCOND("Size: "<<m_size<<"   Link Rate: "<<m_packetRate<<"    Queue Length: "<<value);
+  float reward = -(transmission_time + waiting_time);
+  //NS_LOG_UNCOND("Size: "<<m_size<<"   Link Rate: "<<m_packetRate<<"    Queue Length: "<<value);
   NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", MyGetReward: " << reward);
   //NS_LOG_UNCOND ("Reward: Node with ID " << m_node->GetId() << ", net device with index " << m_fwdDev_idx << ", IF idx "<< (m_node->GetDevice(m_fwdDev_idx))->GetIfIndex() << ": New  queue size: " << reward << " packets");
   return reward;
@@ -255,7 +239,7 @@ MyGymEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
   NS_LOG_FUNCTION (this);
   //NS_LOG_UNCOND ("MyExecuteActions: " << action);
   Ptr<OpenGymDiscreteContainer> discrete = DynamicCast<OpenGymDiscreteContainer>(action);
-  NS_LOG_UNCOND ("MyExecuteActionsDiscrete: " << discrete);
+  //NS_LOG_UNCOND ("MyExecuteActionsDiscrete: " << discrete);
   m_fwdDev_idx = discrete->GetValue()+1;
   if(m_isGameOver){
     NS_LOG_UNCOND("GAME OVER");
@@ -268,171 +252,77 @@ MyGymEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
   
   NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", MyExecuteActions: " << m_fwdDev_idx);
   Ptr<PointToPointNetDevice> dev = DynamicCast<PointToPointNetDevice>(m_node->GetDevice(m_fwdDev_idx));
-  //NS_LOG_UNCOND(dev->GetAddress());
-  //NS_LOG_UNCOND(m_srcAddr<<"     "<<m_destAddr<< "    "<<m_lengthType);
-  //NS_LOG_UNCOND(m_pckt->ToString());
+  
   dev->Send(m_pckt, m_destAddr, dev->PppToEther( m_lengthType));
-  //Simulator::Stop (Seconds (10.0));
-  //Simulator::Run ();
-
-  //NS_LOG_UNCOND(sent);
+  
 
   return true;
 }
   
 
+
 void
-MyGymEnv::CountPktInQueueEvent(Ptr<MyGymEnv> entity, Ptr<PointToPointNetDevice> ptpnd, uint32_t oldValue, uint32_t newValue)
-  {
-    entity->m_lastEvNode = (ptpnd->GetNode())->GetId();
-    entity->m_lastEvDev_idx = ptpnd->GetIfIndex();
-    entity->m_lastEvNumPktsInQueue = newValue;
-    
-    Ptr< Channel > p2p_channel = ptpnd->GetChannel();
-    Ptr<NetDevice> dev_a = p2p_channel->GetDevice(0);
-    Ptr<NetDevice> dev_b = p2p_channel->GetDevice(1);
+MyGymEnv::NotifyPktRcv(Ptr<MyGymEnv> entity, Ptr<Node> node, NetDeviceContainer* nd, Ptr<const Packet> packet)
+{
+  //uint8_t buf_add[6];
   
-    //NS_LOG_UNCOND ("Event (Node = " << (dev_a->GetNode())->GetId() << " -> Node = " << (dev_b->GetNode())->GetId() << ") ");
-    //NS_LOG_UNCOND ("Event (Node = " << entity->m_lastEvNode << ", IF idx = "<< entity->m_lastEvDev_idx << ")--> New queue size: " << newValue << " packets");
-  }
+  PppHeader ppp_head;
+  Ipv4Header ip_head;
+  UdpHeader udp_head;
+  //NS_LOG_UNCOND(nd_sw->Get(idx)->GetAddress());
   
-  void
-  MyGymEnv::NotifyPktInQueueEvent(Ptr<MyGymEnv> entity, Ptr<PointToPointNetDevice> ptpnd, uint32_t oldValue, uint32_t newValue)
-  {
-    entity->m_lastEvNode = (ptpnd->GetNode())->GetId();
-    //ptpnd->SetIfIndex(1);
-    entity->m_lastEvDev_idx = ptpnd->GetIfIndex();
-    entity->m_lastEvNumPktsInQueue = newValue;
-    
-    Ptr< Channel > p2p_channel = ptpnd->GetChannel();
-    Ptr<NetDevice> dev_a = p2p_channel->GetDevice(0);
-    Ptr<NetDevice> dev_b = p2p_channel->GetDevice(1);
-    
-    NS_LOG_UNCOND ("Event (Node = " << (dev_a->GetNode())->GetId() << " -> Node = " << (dev_b->GetNode())->GetId() << ") ");
-    NS_LOG_UNCOND ("Event (Node = " << entity->m_lastEvNode << ", IF idx = "<< entity->m_lastEvDev_idx << ")--> New queue size: " << newValue << " packets");
-    entity->Notify();
-  }
+  Ptr<Packet> p = packet->Copy();
+  //NS_LOG_UNCOND(p->ToString());
+  NS_LOG_UNCOND("-------------------------------------------------------------");
+  NS_LOG_UNCOND("Node "<<entity->m_node->GetId());
+  //NS_LOG_UNCOND(Simulator::Now());
+  //Remove Mac Header
+  p->RemoveHeader(ppp_head);
+  entity->m_pckt = p->Copy();
+  p->RemoveHeader(ip_head);
+  p->RemoveHeader(udp_head);
+  entity->m_size = p->GetSize();
   
-  void
-  MyGymEnv::CountRxPkts(uint32_t sinkId, Ptr<const Packet> packet, Ptr<Ipv4> header, uint32_t something)
-  {
-    //m_rxPkts[sinkId]++;
-    //NS_LOG_UNCOND("EVENT == "<<sinkId<<"   "<<srcAddr<<"                      ");
-    Ptr<Packet> copy = packet->Copy ();
-    Ipv4Header iph;
-    copy->RemoveHeader (iph);
-    NS_LOG_UNCOND("HEADER    "<<iph);
-    packet->PrintByteTags(std::cout);
-  }
-
-  void
-  MyGymEnv::NotifyPktRcv(Ptr<MyGymEnv> entity, Ptr<Node> node, NetDeviceContainer* nd, Ptr<const Packet> packet)
-  {
-    //uint8_t buf_add[6];
-    
-    PppHeader ppp_head;
-    Ipv4Header ip_head;
-    UdpHeader udp_head;
-    //NS_LOG_UNCOND(nd_sw->Get(idx)->GetAddress());
-    
-    Ptr<Packet> p = packet->Copy();
-    //NS_LOG_UNCOND(p->ToString());
-    NS_LOG_UNCOND("-------------------------------------------------------------");
-    NS_LOG_UNCOND("Node "<<entity->m_node->GetId());
-    //NS_LOG_UNCOND(Simulator::Now());
-
-    //Remove Mac Header
-    p->RemoveHeader(ppp_head);
-    entity->m_pckt = p->Copy();
-    p->RemoveHeader(ip_head);
-    p->RemoveHeader(udp_head);
-    entity->m_size = p->GetSize();
-
-    
-    uint8_t *buffer = new uint8_t [p->GetSize ()];
-    p->CopyData(buffer, p->GetSize ());
-    char* start_time_string = reinterpret_cast<char*>(&buffer[0]);
-    std::string s = std::string(start_time_string);
-    uint32_t start_time_int = (uint32_t) std::atoi(start_time_string);
-    NS_LOG_UNCOND("START TIME: "<<start_time_int<<"    NOW: "<<Simulator::Now().GetMilliSeconds());
-    entity->m_packetStart = start_time_int;
-    //entity->m_packetStart =  static_cast<uint32_t>(std::stoul(start_time_string*));
-    //NS_LOG_UNCOND("PACKET DATA"<<(uint32_t)*buffer);
-
-    //NS_LOG_UNCOND("PPP--------------------------");
-    //NS_LOG_UNCOND(ppp_head);
-    NS_LOG_UNCOND("IP--------------------------");
-    NS_LOG_UNCOND(ip_head);
-    //NS_LOG_UNCOND("UDP--------------------------");
-    //NS_LOG_UNCOND(udp_head);
-
-
-    //entity->m_lengthType = head.GetLengthType();
-    //entity->m_srcAddr = head.GetSource();
-    //entity->m_destAddr = head.GetDestination();
-    //entity->m_destAddr.CopyTo(buf_add);
-    //entity->m_dest = (uint32_t)buf_add[5];
-    //NS_LOG_UNCOND("Destination: "<<entity->m_destAddr);
-        
-    //head.Print(std::cout);
-    
-    
-    
-    //Peeking IP Header
-    //p->RemoveHeader(iph);
-    //p->Print(std::cout);
-    //NS_LOG_UNCOND("Src/dest Ip Addr "<<iph.GetSourceIpv4Address()<<"    "<<iph.GetDestinationIpv4Address()<<"    "<<packet->GetSize());
-    //NS_LOG_UNCOND(p->ToString());
-    //NS_LOG_UNCOND(ip_head.GetDestination());
-    //entity->m_srcAddr = iph.GetSourceHardwareAddress();
-
-    //head.Print(std::cout);
-    
-    //Destination
-    for(uint32_t i = 0;i<nd->GetN();i++){
-      Ptr<NetDevice> dev = nd->Get(i);
-      Ptr<Node> n = dev->GetNode();
-      Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();
-      Ipv4InterfaceAddress ipv4_int_addr = ipv4->GetAddress (1, 0);
-      Ipv4Address ip_addr = ipv4_int_addr.GetLocal ();
-      entity->m_destAddr = dev->GetBroadcast();
-
-      //NS_LOG_UNCOND(ip_addr<<"  "<<(ip_addr == ip_head.GetDestination()));
-      if(ip_addr==ip_head.GetSource()){
-        entity->m_srcAddr = dev->GetAddress();
-        entity->m_src = dev->GetNode()->GetId()-m_n_nodes;
-        NS_LOG_UNCOND("Src: "<<entity->m_src);
-      }
-      if(ip_addr == ip_head.GetDestination()){
-        //Address mac48_dest_addr = dev->GetAddress();
-        
-        //mac48_dest_addr.CopyTo(buf_add);
-        entity->m_dest = dev->GetNode()->GetId()-m_n_nodes;//(uint32_t)buf_add[5];
-
-        //NS_LOG_UNCOND("Match dest"<<entity->m_dest);
-        
-        //for(int i=0;i<6;i++){
-        //  NS_LOG_UNCOND((uint32_t) buf_add[i]);
-        //}
-        //break;
-      }
-      
+  uint8_t *buffer = new uint8_t [p->GetSize ()];
+  p->CopyData(buffer, p->GetSize ());
+  char* start_time_string = reinterpret_cast<char*>(&buffer[0]);
+  std::string s = std::string(start_time_string);
+  uint32_t start_time_int = (uint32_t) std::atoi(start_time_string);
+  NS_LOG_UNCOND("PACKET START TIME: "<<start_time_int<<"    NOW: "<<Simulator::Now().GetMilliSeconds());
+  entity->m_packetStart = start_time_int;
+  
+  //NS_LOG_UNCOND("PPP--------------------------");
+  //NS_LOG_UNCOND(ppp_head);
+  //NS_LOG_UNCOND("IP--------------------------");
+  //NS_LOG_UNCOND(ip_head);
+  //NS_LOG_UNCOND("UDP--------------------------");
+  //NS_LOG_UNCOND(udp_head);
+  //Destination and Src
+  for(uint32_t i = 0;i<nd->GetN();i++){
+    Ptr<NetDevice> dev = nd->Get(i);
+    Ptr<Node> n = dev->GetNode();
+    Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();
+    Ipv4InterfaceAddress ipv4_int_addr = ipv4->GetAddress (1, 0);
+    Ipv4Address ip_addr = ipv4_int_addr.GetLocal ();
+    entity->m_destAddr = dev->GetBroadcast();
+    //NS_LOG_UNCOND(ip_addr<<"  "<<(ip_addr == ip_head.GetDestination()));
+    if(ip_addr==ip_head.GetSource()){
+      entity->m_srcAddr = dev->GetAddress();
+      entity->m_src = dev->GetNode()->GetId()-m_n_nodes;
     }
-    entity->m_lengthType = ppp_head.GetProtocol();
-    if(entity->m_src==entity->m_dest){
-      NS_LOG_UNCOND("Packet Size: "<<entity->m_size);
-      NS_LOG_UNCOND("Dest: "<<entity->m_dest);
-      NS_LOG_UNCOND("Dest IP Addr: "<<ip_head.GetDestination());
-      //NS_LOG_UNCOND("Src Addr: "<<entity->m_srcAddr);
-      NS_LOG_UNCOND("Dest MAC Addr: "<<entity->m_destAddr);
-    }
-    //NS_LOG_UNCOND("Packet Size: "<<entity->m_size);
-    //NS_LOG_UNCOND("Dest: "<<entity->m_dest);
-    //NS_LOG_UNCOND("Dest IP Addr: "<<ip_head.GetDestination());
-    ////NS_LOG_UNCOND("Src Addr: "<<entity->m_srcAddr);
-    //NS_LOG_UNCOND("Dest MAC Addr: "<<entity->m_destAddr);
-    entity->Notify();
-
+    if(ip_addr == ip_head.GetDestination()){
+      entity->m_dest = dev->GetNode()->GetId()-m_n_nodes;//(uint32_t)buf_add[5]
+    }  
   }
+  entity->m_lengthType = ppp_head.GetProtocol();
   
-} // ns3 namespace
+  NS_LOG_UNCOND("Packet Size: "<<entity->m_size);
+  NS_LOG_UNCOND("Dest: "<<entity->m_dest);
+  NS_LOG_UNCOND("Src: "<<entity->m_src);
+  NS_LOG_UNCOND("Dest IP Addr: "<<ip_head.GetDestination());
+  //NS_LOG_UNCOND("Src Addr: "<<entity->m_srcAddr);
+  NS_LOG_UNCOND("Dest MAC Addr: "<<entity->m_destAddr);
+  entity->Notify();
+}
+
+}// ns3 namespace

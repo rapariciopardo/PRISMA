@@ -54,8 +54,6 @@ env = ns3env.Ns3Env(port=port, stepTime=stepTime, startSim=startSim, simSeed=see
 g = Graph(5, index)
 g.openFile()
 g.dijkstra()
-#g.getRoutingTable()
-#print("Rounting Table: ", g.RoutingTable)
 # simpler:
 #env = ns3env.Ns3Env()
 env.reset()
@@ -88,30 +86,27 @@ try:
                 break
             stepIdx += 1
             
+            #Select the agent: Dijkstra / Random Agent
             #action = g.getInterface(obs[0]) #env.action_space.sample()
             action = env.action_space.sample()
+            
             #print("---action: ", action)
 
             #print("Step: ", stepIdx)
             obs, reward, done, info = env.step(action)
             #print("---obs, reward, done, info: ", obs, reward, done, info)
             avg_rew_time.append(reward)
-            avg_queue_size.append(obs[5:])
+            avg_queue_size.append(obs[2:])
 
-            #if(stepIdx==2):
-            #    import global_
-            #    global_.doneAll = True
-
-            
-            #print("Done All: ", doneAll)
+           
 
 
             if done:
-                if(obs[1]<50000):
-                    #print("Size: ", obs[2])
-                    avg_delay_time.append(obs[1])
-                    avg_packet_size.append(obs[2])
-                    count_recv_nodes[obs[3]] += 1
+                #if(obs[1]<50000):
+                #    #print("Size: ", obs[2])
+                #    avg_delay_time.append(obs[1])
+                #    avg_packet_size.append(obs[2])
+                #    count_recv_nodes[obs[3]] += 1
                 stepIdx = 0
                 if currIt + 1 < iterationNum:
                     env.reset()
@@ -119,6 +114,7 @@ try:
                 break
             else:
                 counter += 1
+        print("---obs, reward, done, info: ", obs, reward, done, info)
         if(not env.connected):
             break
         currIt += 1
@@ -132,9 +128,14 @@ finally:
     print("Curr Iter: ", currIt)
     avg_queue_size = np.array(avg_queue_size)
     avg_rew_time = np.array(avg_rew_time)
+    avg_delay_time = np.array(avg_delay_time)
+    avg_packet_size = np.array(avg_packet_size)
+
+
+    #Printing some metrics 
    
     print(avg_queue_size)
-    print("Average Queue")
+    print("Average Queue size")
     print("Max: ",avg_queue_size.max(axis=0), "Min: ",avg_queue_size.min(axis=0), "Mean: ", avg_queue_size.mean(axis=0), "Std: ", avg_queue_size.std(axis=0))
     print("Max: ",avg_queue_size.max(), "Min: ",avg_queue_size.min(), "Mean: ", avg_queue_size.mean(), "Std: ", avg_queue_size.std())
 
@@ -143,22 +144,18 @@ finally:
     print("Average Reward Time")
     print("Max: ",avg_rew_time.max(), "Min: ",avg_rew_time.min(), "Mean: ", avg_rew_time.mean(), "Std: ", avg_rew_time.std())
     print("-------------------------------------------------")
-    
-    avg_delay_time = np.array(avg_delay_time)
-    print(avg_delay_time)
-    print("Average Delay Time")
-    print("QTD: ",avg_delay_time.shape)
-    print("Max: ",avg_delay_time.max(), "Min: ",avg_delay_time.min(), "Mean: ", avg_delay_time.mean(), "Std: ", avg_delay_time.std())
-    print("-------------------------------------------------")
-    
-    avg_packet_size = np.array(avg_packet_size)
-    print(avg_packet_size)
-    print("Average Packet Size")
-    print("QTD: ",avg_packet_size.shape)
-    print("Max: ",avg_packet_size.max(), "Min: ",avg_packet_size.min(), "Mean: ", avg_packet_size.mean(), "Std: ", avg_packet_size.std())
-    print("-------------------------------------------------")
-    print("Counter: ", counter)
-    print("Src Nodes: ", count_recv_nodes)
+    #print(avg_delay_time)
+    #print("Average Delay Time")
+    #print("QTD: ",avg_delay_time.shape)
+    #print("Max: ",avg_delay_time.max(), "Min: ",avg_delay_time.min(), "Mean: ", avg_delay_time.mean(), "Std: ", avg_delay_time.std())
+    #print("-------------------------------------------------")
+    #print(avg_packet_size)
+    #print("Average Packet Size")
+    #print("QTD: ",avg_packet_size.shape)
+    #print("Max: ",avg_packet_size.max(), "Min: ",avg_packet_size.min(), "Mean: ", avg_packet_size.mean(), "Std: ", avg_packet_size.std())
+    #print("-------------------------------------------------")
+    #print("Counter: ", counter)
+    #print("Src Nodes: ", count_recv_nodes)
 
     env.close()
     print("Done")
