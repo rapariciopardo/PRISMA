@@ -62,7 +62,7 @@ public:
   // the function has to be static to work with MakeBoundCallback
   // that is why we pass pointer to MyGymEnv instance to be able to store the context (node, etc)
  
-  static void NotifyPktRcv(Ptr<MyGymEnv> entity, Ptr<Node> node, NetDeviceContainer* nd, Ptr<const Packet> packet);
+  static void NotifyPktRcv(Ptr<MyGymEnv> entity, int counter_packets_sent, NetDeviceContainer* nd, Ptr<const Packet> packet);
 
 
 private:
@@ -86,7 +86,9 @@ private:
   float m_packetRate = 500.0;
   uint32_t m_packetStart;
   bool m_isGameOver;
-  //NetDeviceContainer m_list_p2pNetDevs;
+  std::vector<uint32_t> m_obs_shape;
+  int m_packetsSent;
+
   uint32_t m_fwdDev_idx;  // Last net device selected to forward the packet (last action)
   uint32_t m_lastEvDev_idx;  // Last net device triggering an event 
   uint32_t m_lastEvNode;  // Node where last net device triggering an event 

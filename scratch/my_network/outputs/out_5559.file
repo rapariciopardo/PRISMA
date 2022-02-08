@@ -2,34 +2,19 @@ Waiting for simulation script to connect on port: tcp://localhost:5559
 Please start proper ns-3 simulation script using ./waf --run "..."
 ICIIIIIIAAAAAAAAAAAAAAAAAAAAAAAAAAA
 [0]
-Observation space:  Box([0 0 0 0 0 0], [100 100 100 100 100 100], (6,), uint64) uint64
+Observation space:  Box([0 0 0], [50 50 50], (3,), uint64) uint64
 Action space:  Discrete(1) int64
-Curr Iter:  2268
-[[ 0]
- [ 0]
- [ 1]
- ...
- [46]
- [46]
- [46]]
-Average Queue
-Max:  [50] Min:  [0] Mean:  [46.92124416] Std:  [5.98175765]
-Max:  50 Min:  0 Mean:  46.92124416369129 Std:  5.981757646694636
+Curr Iter:  1149
+Average Queue size
+Max:  [8] Min:  [0] Mean:  [0.45553822] Std:  [1.03266031]
+Max:  8 Min:  0 Mean:  0.45553822152886114 Std:  1.0326603088107615
 -------------------------------------------------
-[0.004224   0.0032     0.012944   ... 0.39579201 0.38915202 0.38915202]
 Average Reward Time
-Max:  0.5667359828948975 Min:  0.00044800000614486635 Mean:  0.3486713316847573 Std:  0.15763033518405037
+Max:  -0.0031999999191612005 Min:  -0.08504000306129456 Mean:  -0.010389270321122517 Std:  0.008943253034173782
 -------------------------------------------------
-[  40   98    8 ...  401 2008 2008]
 Average Delay Time
-QTD:  (2269,)
-Max:  8258 Min:  8 Mean:  1227.2366681357425 Std:  999.3992606996483
+QTD:  (1149,)
+Max:  1521.0 Min:  7.0 Mean:  136.5082680591819 Std:  144.7719288272894
 -------------------------------------------------
-[294 413 200 ... 200 352 352]
-Average Packet Size
-QTD:  (2269,)
-Max:  1441 Min:  200 Mean:  505.51608638166596 Std:  333.65937499256063
--------------------------------------------------
-Counter:  12295
-Src Nodes:  [1043, 272, 448, 506, 0]
+Recv Packets:  1149
 Done

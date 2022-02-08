@@ -68,14 +68,7 @@
 using namespace std;
 using namespace ns3;
 
-//static std::vector<uint32_t> rxPkts;
 
-//static void
-//CountRxPkts(uint32_t sinkId, Ptr<const Packet> packet, const Address & srcAddr)
-//{
-//  printf("aquiiiiiiiiiiii\n");
-//  rxPkts[sinkId]++;
-//}
 
 
 //NS_LOG_COMPONENT_DEFINE ("OpenGym");
@@ -92,18 +85,7 @@ void countPackets(std::string path, Ptr<const Packet> packet){
   counter_send+=1;
 }
 
-/*void DevicePacketsInQueueTrace (uint32_t oldValue, uint32_t newValue){
-    std::cout  << "Time stamp: " << Simulator::Now () << ", Context: " << this <<   ", DevicePacketsInQueue: " << oldValue << " to " << newValue << std::endl;
-}*/
-/*
-static void DevPacketsInQueue (std::string context, uint32_t oldValue, uint32_t newValue)
-{
-    //uint32_t backlog = queue->GetNPackets ();
-    std::size_t pos = context.find("$");      // position of "live" in str
-    std::string node_dev_pair_str = context.substr (0,pos);     // get from "live" to the end
-    std::cout << "Time stamp: " << Simulator::Now () << ", Context: " << node_dev_pair_str << ", DevicePacketsInQueue: " << newValue << std::endl;
-}
-*/
+
 
 NS_LOG_COMPONENT_DEFINE ("GenericTopologyCreation");
 
@@ -199,14 +181,6 @@ int main (int argc, char *argv[])
   Traff_Matrix = readIntensityFile (node_intensity_file_name);
 
   
-  // Optionally display 2-dimensional intensity traffic matrix (Traff_Matrix) array
-  // printMatrix (node_intensity_file_name (),Traff_Matrix);
-
-  //vector<vector<std::string>> intensity_array;
-  //intensity_array = readIntensityFile (node_intensity_file_name);
-
-  // Optionally display node co-ordinates file
-  // printCoordinateArray (node_coordinates_file_name.c_str (),coord_array);
 
   int n_nodes = coord_array.size ();
   int matrixDimension = Adj_Matrix.size ();
@@ -332,7 +306,7 @@ int main (int argc, char *argv[])
    
     Ptr<NetDevice> dev_switch =DynamicCast<NetDevice> (switch_nd.Get(i)); //CreateObject<CsmaNetDevice> ();
     NS_LOG_UNCOND(dev_switch->GetNode()->GetId()<<"     "<< dev_switch->GetNode()->GetNDevices()<<"    "<<dev_switch->GetAddress()<<"    ");
-    dev_switch->TraceConnectWithoutContext("MacRx", MakeBoundCallback(&MyGymEnv::NotifyPktRcv, myGymEnvs[dev_switch->GetNode()->GetId()], dev_switch->GetNode(), &traffic_nd));
+    dev_switch->TraceConnectWithoutContext("MacRx", MakeBoundCallback(&MyGymEnv::NotifyPktRcv, myGymEnvs[dev_switch->GetNode()->GetId()], counter_send, &traffic_nd));
     
   }
 
@@ -371,39 +345,7 @@ int main (int argc, char *argv[])
   NS_LOG_INFO ("Number of all nodes is: " << nodes_switch.GetN ());
 
   NS_LOG_INFO ("Initialize Global Routing.");
-  //Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
-
-  // ---------- End of Network Set-up ----------------------------------------
-
-  // ---------- Allocate Node Positions --------------------------------------
-
-  /*NS_LOG_INFO ("Allocate Positions to Nodes.");
-
-  MobilityHelper mobility_n;
-  Ptr<ListPositionAllocator> positionAlloc_n = CreateObject<ListPositionAllocator> ();
-
-  for (size_t m = 0; m < coord_array.size (); m++)
-    {
-      positionAlloc_n->Add (Vector (coord_array[m][0], coord_array[m][1], 0));
-      Ptr<Node> n0 = nodes_switch.Get (m);
-      Ptr<ConstantPositionMobilityModel> nLoc =  n0->GetObject<ConstantPositionMobilityModel> ();
-      if (nLoc == 0)
-        {
-          nLoc = CreateObject<ConstantPositionMobilityModel> ();
-          n0->AggregateObject (nLoc);
-        }
-      // y-coordinates are negated for correct display in NetAnim
-      // NetAnim's (0,0) reference coordinates are located on upper left corner
-      // by negating the y coordinates, we declare the reference (0,0) coordinate
-      // to the bottom left corner
-      Vector nVec (coord_array[m][0], -coord_array[m][1], 0);
-      nLoc->SetPosition (nVec);
-
-    }
-  mobility_n.SetPositionAllocator (positionAlloc_n);
-  mobility_n.Install (nodes_switch);*/
-
-  // ---------- End of Allocate Node Positions -------------------------------
+ 
 
   // ---------- Create n*(n-1) CBR Flows -------------------------------------
 
@@ -471,57 +413,6 @@ int main (int argc, char *argv[])
   // ---------- Simulation Monitoring ----------------------------------------
 
   NS_LOG_INFO ("Configure Tracing.");
-//  string probeType = "ns3::Uinteger32Probe";
-  //string tracePath = "/NodeList/*/DeviceList/*/$ns3::PointToPointNetDevice/TxQueue/PacketsInQueue";
-  //Config::Connect (tracePath, MakeCallback (&DevPacketsInQueue));
-  //Config::Connect(tracePath, MakeBoundCallback (&MyGymEnv::CountPktInQueueEvent, myGymEnv) );
-  
-//
-//  // Use FileHelper to write out the PacketsInQueue count over time
-//  FileHelper fileHelper;
-//
-//  // Configure the file to be written, and the formatting of output data.
-//  fileHelper.ConfigureFile ("my_mat-topology-PacketsInQueue", FileAggregator::FORMATTED);
-//
-//  // Set the labels for this formatted output file.
-//  fileHelper.Set2dFormat ("Time (Seconds) = %.3e\t Packets In Queue = %.0f");
-//
-//  // Specify the probe type, probe path (in configuration namespace), and
-//  // probe output trace source ("PacketsInQueue") to write.
-//  fileHelper.WriteProbe (probeType, tracePath, "Output");
-
-
-  //AsciiTraceHelper ascii;
-  //p2p.EnableAsciiAll (ascii.CreateFileStream (tr_name.c_str ()));
-  // p2p.EnablePcapAll (pcap_name.c_str());
-
-  //Ptr<FlowMonitor> flowmon;
-  //FlowMonitorHelper flowmonHelper;
-  //flowmon = flowmonHelper.InstallAll ();
-
-  // Configure animator with default settings
-  //AnimationInterface anim (anim_name.c_str ());
-
-/*
-  
-  NS_LOG_INFO ("n: " << n << "");
-
-  NS_LOG_INFO ("Connecting OpenGym entity to event source");
-  // connect OpenGym entity to event source (node output interfaces)
-  for (uint32_t j=0 ; j<n->GetNDevices(); j++)
-  {
-    NS_LOG_INFO ("dev_idx: " << j << "");
-    Ptr<NetDevice> nd = n->GetDevice (j);
-    NS_LOG_INFO ("nd: " << nd << "");
-    NS_LOG_INFO ("IsPointToPoint? : " << nd->IsPointToPoint () << "");
-
-    Ptr<PointToPointNetDevice> ptpnd = DynamicCast<PointToPointNetDevice> (nd);
-    NS_LOG_INFO ("ptpnd: " << ptpnd << "");
-    
-    Ptr<Queue<Packet> > queue = ptpnd->GetQueue ();
-    queue->TraceConnectWithoutContext ("PacketsInQueue", MakeBoundCallback (&MyGymEnv::NotifyPktInQueueEvent, myGymEnv, j));
-    //queue->TraceConnectWithoutContext ("PacketsInQueue", MakeCallback (&DevicePacketsInQueueTrace));
-  }*/
 
   
   NS_LOG_INFO ("Run Simulation.");
