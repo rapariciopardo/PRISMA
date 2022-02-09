@@ -246,7 +246,7 @@ MyGymEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
 
 
 void
-MyGymEnv::NotifyPktRcv(Ptr<MyGymEnv> entity, int counter_packets_sent, NetDeviceContainer* nd, Ptr<const Packet> packet)
+MyGymEnv::NotifyPktRcv(Ptr<MyGymEnv> entity, int* counter_packets_sent, NetDeviceContainer* nd, Ptr<const Packet> packet)
 {
   
   PppHeader ppp_head;
@@ -304,7 +304,7 @@ MyGymEnv::NotifyPktRcv(Ptr<MyGymEnv> entity, int counter_packets_sent, NetDevice
     }  
   }
   entity->m_lengthType = ppp_head.GetProtocol();
-  entity->m_packetsSent = counter_packets_sent;
+  entity->m_packetsSent = *counter_packets_sent;
   
   NS_LOG_UNCOND("Packet Size: "<<entity->m_size);
   NS_LOG_UNCOND("Dest: "<<entity->m_dest);

@@ -210,23 +210,20 @@ void PoissonGeneratorApplication::ScheduleNextTx ()
 
   if (m_maxBytes == 0 || m_totBytes < m_maxBytes)
     {
-      //NS_LOG_UNCOND("Avg Packet Size: "<< (uint64_t) m_pktSizeMean);
-      //NS_LOG_UNCOND("Avg Data Rate:     "<< (uint64_t) m_avgRate.GetBitRate ());
+     
       
       Ptr<ExponentialRandomVariable> ev_size = CreateObject<ExponentialRandomVariable> ();
       ev_size->SetAttribute ("Mean", DoubleValue (m_pktSizeMean));
       ev_size->SetAttribute("Bound", DoubleValue(1450.0));
       m_pktSize = (uint32_t) ev_size->GetValue();
       if(m_pktSize<200) m_pktSize=200;
-      NS_LOG_UNCOND("Packet Size: "<<m_pktSize);
+     
       uint32_t bits = m_pktSize * 8;
-      //NS_LOG_UNCOND ("bits = " << bits);
       Ptr<ExponentialRandomVariable> ev_rate = CreateObject<ExponentialRandomVariable> ();
       ev_rate->SetAttribute ("Mean", DoubleValue (static_cast<double>(m_avgRate.GetBitRate ())));
-      //ev_rate->SetAttribute ("Bound", DoubleValue (static_cast<double>(m_avgRate.GetBitRate ())*5)); 
+      ev_rate->SetAttribute ("Bound", DoubleValue (static_cast<double>(m_avgRate.GetBitRate ())*5)); 
       double rate_value = ev_rate->GetValue();
       if(rate_value < static_cast<double>(m_avgRate.GetBitRate ())*0.2) rate_value = rate_value<static_cast<double>(m_avgRate.GetBitRate ())*0.2;
-      if(rate_value > static_cast<double>(m_avgRate.GetBitRate ())*5) rate_value = rate_value<static_cast<double>(m_avgRate.GetBitRate ())*5;
       double delay = bits/ev_rate->GetValue(); // bits/ static_cast<double>(m_avgRate.GetBitRate ());
       //NS_LOG_UNCOND("DELAY:     "<<delay);
       Time nextTime (Seconds (delay)); // Time till next packet
@@ -263,7 +260,7 @@ void PoissonGeneratorApplication::SendPacket ()
                    << InetSocketAddress::ConvertFrom(m_peer).GetIpv4 ()
                    << " port " << InetSocketAddress::ConvertFrom (m_peer).GetPort ()
                    << " total Tx " << m_totBytes << " bytes");
-      m_txTraceWithAddresses (packet, localAddress, InetSocketAddress::ConvertFrom (m_peer));
+      m_txTraceWithAddresses (packet, localAddress, m_peer);
     }
   else if (Inet6SocketAddress::IsMatchingType (m_peer))
     {

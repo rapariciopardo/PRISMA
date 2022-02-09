@@ -40,9 +40,17 @@ iterationNum = int(args.iterations)
 port = int(args.port)
 index = int(args.index)
 
+#port = 5555
+simTime = 20 # seconds
+stepTime = 0.01  # seconds
+seed = 0
+simArgs = {"--simTime": simTime,
+           "--testArg": 123}
+debug = False
 
 
-env = ns3env.Ns3Env(port=port, startSim=startSim)
+
+env = ns3env.Ns3Env(port=port, stepTime=stepTime, startSim=startSim, simSeed=seed, simArgs=simArgs, debug=debug)
 env.reset()
 
 g = Graph(5, index)
@@ -84,7 +92,7 @@ try:
             #print("---obs, reward, done, info: ", obs, reward, done, info)
             tokens = info.split(",")
             delay_time = float(tokens[0].split('=')[-1])
-            packets_sent = float(tokens[1].split('=')[-1])
+            count_packets_sent = int(tokens[1].split('=')[-1])
             avg_rew.append(reward)
             avg_queue_size.append(obs[2:])
 
@@ -134,9 +142,7 @@ finally:
     print("QTD: ",avg_delay_time.shape)
     print("Max: ",avg_delay_time.max(), "Min: ",avg_delay_time.min(), "Mean: ", avg_delay_time.mean(), "Std: ", avg_delay_time.std())
     print("-------------------------------------------------")
-
-    print("Recv Packets: ", count_recv_packets)
-    #print("Src Nodes: ", count_recv_nodes)
+    print("Loss Packet rate: ", max(0, float(1-count_recv_packets/count_packets_sent)))
 
     env.close()
     print("Done")

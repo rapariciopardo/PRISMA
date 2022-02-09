@@ -80,9 +80,33 @@ vector<vector<double> > readCordinatesFile (std::string node_coordinates_file_na
 vector<vector<std::string>> readIntensityFile(std::string intensity_file_name);
 void printCoordinateArray (const char* description, vector<vector<double> > coord_array);
 void printMatrix (const char* description, vector<vector<bool> > array);
-int counter_send = 0;
-void countPackets(std::string path, Ptr<const Packet> packet){
-  counter_send+=1;
+int counter_send[100]= {0};
+void countPackets(int n_nodes, NetDeviceContainer* nd, std::string path, Ptr<const Packet> packet, const Address &src, const Address &dest){
+  
+  Ptr<Packet> p = packet->Copy();
+
+  NS_LOG_UNCOND(p->ToString());
+  NS_LOG_UNCOND(InetSocketAddress::ConvertFrom(dest).GetIpv4 ());
+  
+  Ipv4Address dest_addr = InetSocketAddress::ConvertFrom(dest).GetIpv4();
+
+  //Destination and Src
+
+  for(uint32_t i = 0;i<nd->GetN();i++){
+    Ptr<NetDevice> dev = nd->Get(i);
+    Ptr<Node> n = dev->GetNode();
+    Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();
+    Ipv4InterfaceAddress ipv4_int_addr = ipv4->GetAddress (1, 0);
+    Ipv4Address ip_addr = ipv4_int_addr.GetLocal ();
+   
+   
+    if(ip_addr == dest_addr){
+      int d = dev->GetNode()->GetId()-n_nodes;
+      counter_send[d] += 1;
+    }  
+  }
+  
+  
 }
 
 
@@ -303,10 +327,9 @@ int main (int argc, char *argv[])
   NS_LOG_UNCOND("Size switch_nd :"<<switch_nd.GetN());
   for(uint32_t i=0;i<switch_nd.GetN();i++)
   {
-   
-    Ptr<NetDevice> dev_switch =DynamicCast<NetDevice> (switch_nd.Get(i)); //CreateObject<CsmaNetDevice> ();
+    Ptr<NetDevice> dev_switch =DynamicCast<NetDevice> (switch_nd.Get(i)); 
     NS_LOG_UNCOND(dev_switch->GetNode()->GetId()<<"     "<< dev_switch->GetNode()->GetNDevices()<<"    "<<dev_switch->GetAddress()<<"    ");
-    dev_switch->TraceConnectWithoutContext("MacRx", MakeBoundCallback(&MyGymEnv::NotifyPktRcv, myGymEnvs[dev_switch->GetNode()->GetId()], counter_send, &traffic_nd));
+    dev_switch->TraceConnectWithoutContext("MacRx", MakeBoundCallback(&MyGymEnv::NotifyPktRcv, myGymEnvs[dev_switch->GetNode()->GetId()], &counter_send[dev_switch->GetNode()->GetId()], &traffic_nd));
     
   }
 
@@ -376,6 +399,7 @@ int main (int argc, char *argv[])
               Ipv4Address ip_addr = ipv4_int_addr.GetLocal ();
               NS_LOG_UNCOND(ipv4_int_addr);
               PoissonAppHelper poisson ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]
+              NS_LOG_UNCOND( InetSocketAddress (ip_addr, port));
               poisson.SetAverageRate (DataRate(Traff_Matrix[i][j]));
               //poisson.SetAverageRate (DataRate(Traff_Matrix[i][j]), AvgPacketSize);
               ApplicationContainer apps = poisson.Install (nodes_traffic.Get (i));  // traffic sources are installed on all nodes
@@ -385,7 +409,7 @@ int main (int argc, char *argv[])
             }
         }
     }
-    Config::Connect ("/NodeList/*/ApplicationList/*/$ns3::PoissonGeneratorApplication/Tx",MakeCallback (&countPackets));
+    Config::Connect ("/NodeList/*/ApplicationList/*/$ns3::PoissonGeneratorApplication/TxWithAddresses",MakeBoundCallback(&countPackets, n_nodes, &traffic_nd));
 
   
   
