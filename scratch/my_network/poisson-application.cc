@@ -221,9 +221,10 @@ void PoissonGeneratorApplication::ScheduleNextTx ()
       uint32_t bits = m_pktSize * 8;
       Ptr<ExponentialRandomVariable> ev_rate = CreateObject<ExponentialRandomVariable> ();
       ev_rate->SetAttribute ("Mean", DoubleValue (static_cast<double>(m_avgRate.GetBitRate ())));
-      ev_rate->SetAttribute ("Bound", DoubleValue (static_cast<double>(m_avgRate.GetBitRate ())*5)); 
+      //ev_rate->SetAttribute ("Bound", DoubleValue (static_cast<double>(m_avgRate.GetBitRate ())*5)); 
       double rate_value = ev_rate->GetValue();
       if(rate_value < static_cast<double>(m_avgRate.GetBitRate ())*0.2) rate_value = rate_value<static_cast<double>(m_avgRate.GetBitRate ())*0.2;
+      if(rate_value > static_cast<double>(m_avgRate.GetBitRate ())*5) rate_value = rate_value<static_cast<double>(m_avgRate.GetBitRate ())*5;
       double delay = bits/ev_rate->GetValue(); // bits/ static_cast<double>(m_avgRate.GetBitRate ());
       //NS_LOG_UNCOND("DELAY:     "<<delay);
       Time nextTime (Seconds (delay)); // Time till next packet
