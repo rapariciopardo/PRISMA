@@ -4,17 +4,17 @@ ICIIIIIIAAAAAAAAAAAAAAAAAAAAAAAAAAA
 [0]
 Observation space:  Box([0 0 0], [50 50 50], (3,), uint64) uint64
 Action space:  Discrete(1) int64
-Curr Iter:  863
+Curr Iter:  747
 Average Queue size
-Max:  [13] Min:  [0] Mean:  [0.77113891] Std:  [1.75175115]
-Max:  13 Min:  0 Mean:  0.7711389128559103 Std:  1.7517511506294754
+Max:  [11] Min:  [0] Mean:  [0.6613239] Std:  [1.31014535]
+Max:  11 Min:  0 Mean:  0.6613238967527061 Std:  1.3101453526737121
 -------------------------------------------------
 Average Reward Time
-Max:  -0.0031999999191612005 Min:  -0.08747199922800064 Mean:  -0.012050664336826392 Std:  0.012120200288558846
+Max:  -0.00044800000614486635 Min:  -0.08292800188064575 Mean:  -0.011685412125362449 Std:  0.010546870075866032
 -------------------------------------------------
 Average Delay Time
-QTD:  (864,)
-Max:  1876.0 Min:  7.0 Mean:  156.00694444444446 Std:  187.47855420049524
+QTD:  (746,)
+Max:  1556.0 Min:  7.0 Mean:  143.64477211796248 Std:  158.99806457002052
 -------------------------------------------------
-Recv Packets:  864
+Loss Packet rate:  0
 Done
