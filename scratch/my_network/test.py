@@ -142,6 +142,7 @@ finally:
     print("QTD: ",avg_delay_time.shape)
     print("Max: ",avg_delay_time.max(), "Min: ",avg_delay_time.min(), "Mean: ", avg_delay_time.mean(), "Std: ", avg_delay_time.std())
     print("-------------------------------------------------")
+    print("Recv Packets: ", count_recv_packets)
     print("Loss Packet rate: ", max(0, float(1-count_recv_packets/count_packets_sent)))
 
     env.close()
