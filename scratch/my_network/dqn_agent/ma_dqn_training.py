@@ -203,7 +203,7 @@ def learn(env,
     agent = [None]*env.number_of_nodes
     for node in range(env.number_of_nodes):
         agent[node] = DQN_AGENT(
-            q_func=DQN_AGENT,
+            q_func=DQN_buffer_model,
             observation_shape=env.observation_space[node].shape,
             num_actions=env.action_space[node].n,
             num_nodes=env.number_of_nodes,

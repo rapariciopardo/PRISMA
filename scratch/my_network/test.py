@@ -22,7 +22,7 @@ parser.add_argument('--start',
                     help='Start ns-3 simulation script 0/1, Default: 1')
 parser.add_argument('--iterations',
                     type=int,
-                    default=10000000,
+                    default=10,
                     help='Number of iterations, Default: ---')
 parser.add_argument('--port',
                     type=int,
@@ -94,7 +94,7 @@ try:
             delay_time = float(tokens[0].split('=')[-1])
             count_packets_sent = int(tokens[1].split('=')[-1])
             avg_rew.append(reward)
-            avg_queue_size.append(obs[2:])
+            avg_queue_size.append(obs[1:])
 
            
 

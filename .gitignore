@@ -43,3 +43,8 @@ build/
 *.pb.cc
 *_pb2.py
 *_pb3.py
+scratch/my_network/outputs/
+waf3*/*
+venv/
+.vscode/
+
