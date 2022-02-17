@@ -94,7 +94,7 @@ try:
             delay_time = float(tokens[0].split('=')[-1])
             count_packets_sent = int(tokens[1].split('=')[-1])
             avg_rew.append(reward)
-            avg_queue_size.append(obs[2:])
+            avg_queue_size.append(obs[1:])
 
            
 

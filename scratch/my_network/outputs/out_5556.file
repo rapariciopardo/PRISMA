@@ -2,19 +2,20 @@ Waiting for simulation script to connect on port: tcp://localhost:5556
 Please start proper ns-3 simulation script using ./waf --run "..."
 ICIIIIIIAAAAAAAAAAAAAAAAAAAAAAAAAAA
 [0]
-Observation space:  Box([0 0 0], [50 50 50], (3,), uint64) uint64
+Observation space:  Box([0 0], [50 50], (2,), uint64) uint64
 Action space:  Discrete(1) int64
-Curr Iter:  1004
+Curr Iter:  865
 Average Queue size
-Max:  [14] Min:  [0] Mean:  [0.67660501] Std:  [1.60219076]
-Max:  14 Min:  0 Mean:  0.6766050054406965 Std:  1.6021907633731618
+Max:  [10] Min:  [0] Mean:  [0.50157233] Std:  [1.05753075]
+Max:  10 Min:  0 Mean:  0.5015723270440252 Std:  1.0575307524549091
 -------------------------------------------------
 Average Reward Time
-Max:  -0.00044800000614486635 Min:  -0.1104000061750412 Mean:  -0.011721168206110332 Std:  0.013227213559553723
+Max:  -0.00044800000614486635 Min:  -0.062143996357917786 Mean:  -0.01046575379956366 Std:  0.008424261216619235
 -------------------------------------------------
 Average Delay Time
-QTD:  (1004,)
-Max:  1038.0 Min:  7.0 Mean:  135.34163346613545 Std:  132.86295780800288
+QTD:  (865,)
+Max:  873.0 Min:  7.0 Mean:  149.66589595375723 Std:  149.3569354092173
 -------------------------------------------------
-Loss Packet rate:  0.0009950248756218638
+Recv Packets:  865
+Loss Packet rate:  0.0011547344110854896
 Done

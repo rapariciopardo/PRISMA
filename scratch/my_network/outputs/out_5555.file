@@ -2,19 +2,20 @@ Waiting for simulation script to connect on port: tcp://localhost:5555
 Please start proper ns-3 simulation script using ./waf --run "..."
 ICIIIIIIAAAAAAAAAAAAAAAAAAAAAAAAAAA
 [1, 2, 3, 4]
-Observation space:  Box([0 0 0 0 0 0], [50 50 50 50 50 50], (6,), uint64) uint64
+Observation space:  Box([0 0 0 0 0], [50 50 50 50 50], (5,), uint64) uint64
 Action space:  Discrete(4) int64
-Curr Iter:  1010
+Curr Iter:  821
 Average Queue size
-Max:  [16 10  8 11] Min:  [0 0 0 0] Mean:  [0.56385942 0.43017241 0.40576923 0.51233422] Std:  [1.48490422 1.00702017 0.95398432 1.24716405]
-Max:  16 Min:  0 Mean:  0.4780338196286472 Std:  1.1937954013961916
+Max:  [11 12 14 11] Min:  [0 0 0 0] Mean:  [0.47610526 0.45436468 0.61854577 0.60515676] Std:  [1.06166771 1.11303044 1.39109962 1.29555375]
+Max:  14 Min:  0 Mean:  0.5385431165904421 Std:  1.224889284808476
 -------------------------------------------------
 Average Reward Time
-Max:  -0.00044800000614486635 Min:  -0.13548800349235535 Mean:  -0.012606649324721724 Std:  0.011951530334350646
+Max:  -0.00044800000614486635 Min:  -0.10867200046777725 Mean:  -0.013492875172062503 Std:  0.012260754154080311
 -------------------------------------------------
 Average Delay Time
-QTD:  (1009,)
-Max:  102.0 Min:  7.0 Mean:  19.726461843409314 Std:  14.258150294494634
+QTD:  (821,)
+Max:  92.0 Min:  7.0 Mean:  18.71619975639464 Std:  11.96080049704592
 -------------------------------------------------
+Recv Packets:  821
 Loss Packet rate:  0
 Done
