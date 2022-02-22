@@ -121,9 +121,9 @@ int main (int argc, char *argv[])
   // Change the variables and file names only in this block!
   // Parameters of the environment
   uint32_t simSeed = 1;
-  uint32_t openGymPort = 5555;
+  uint32_t openGymPort = 6555;
   uint32_t testArg = 0;
-  double simTime        = 60.00; //seconds
+  double simTime = 60.00; //seconds
   double envStepTime = 0.1; //seconds, ns3gym env step time interval
   
   bool eventBasedEnv = true;
@@ -133,7 +133,6 @@ int main (int argc, char *argv[])
   double SinkStopTime   = 59.90001;
   double AppStartTime   = 0.0001;
   double AppStopTime    = 59.80001;
-
 
     
   CommandLine cmd;
@@ -163,7 +162,7 @@ int main (int argc, char *argv[])
   std::string AppPacketRate ("500Kbps");
   Config::SetDefault  ("ns3::OnOffApplication::PacketSize",StringValue ("1000"));
   Config::SetDefault ("ns3::OnOffApplication::DataRate",  StringValue (AppPacketRate));
-  std::string LinkRate ("500Kbps");
+  std::string LinkRate ("10Mbps");
   std::string LinkDelay ("2ms");
   
 
@@ -305,7 +304,7 @@ int main (int argc, char *argv[])
                 PointToPointHelper p2p;
                 p2p.SetDeviceAttribute ("DataRate", DataRateValue (LinkRate));
                 p2p.SetChannelAttribute ("Delay", StringValue (LinkDelay));
-                p2p.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("50p"));    
+                p2p.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("100KB"));    
                 NetDeviceContainer n_devs = p2p.Install(NodeContainer(nodes_switch.Get(i), nodes_switch.Get(j)));
                 switch_nd.Add(n_devs.Get(0));
                 switch_nd.Add(n_devs.Get(1));
@@ -333,7 +332,7 @@ int main (int argc, char *argv[])
     
   }
 
-  
+
   ///////////////////////////////////////////////////////////
   InternetStackHelper internet;
   internet.Install(nodes_traffic);
@@ -352,10 +351,6 @@ int main (int argc, char *argv[])
 
 
   
-
-
-  
-
   
       
   NS_LOG_INFO ("Create Links Between Nodes & Connecting OpenGym entity to event sources.");
@@ -375,7 +370,7 @@ int main (int argc, char *argv[])
   
   NS_LOG_INFO ("Setup CBR Traffic Sources.");
 
-  //uint32_t AvgPacketSize = 1500; //—> If you want to change the by-default 512 packet size
+  uint32_t AvgPacketSize = 1000; //—> If you want to change the by-default 512 packet size
   
   for (int i = 0; i < n_nodes; i++)
     {
@@ -400,8 +395,8 @@ int main (int argc, char *argv[])
               NS_LOG_UNCOND(ipv4_int_addr);
               PoissonAppHelper poisson ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]
               NS_LOG_UNCOND( InetSocketAddress (ip_addr, port));
-              poisson.SetAverageRate (DataRate(Traff_Matrix[i][j]));
-              //poisson.SetAverageRate (DataRate(Traff_Matrix[i][j]), AvgPacketSize);
+              // poisson.SetAverageRate (DataRate(Traff_Matrix[i][j]));
+              poisson.SetAverageRate (DataRate(Traff_Matrix[i][j]), AvgPacketSize);
               ApplicationContainer apps = poisson.Install (nodes_traffic.Get (i));  // traffic sources are installed on all nodes
             
               apps.Start (Seconds (AppStartTime + rn));

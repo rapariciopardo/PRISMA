@@ -137,7 +137,7 @@ MyGymEnv::GetObservationSpace()
   uint32_t num_devs = m_node->GetNDevices();
   float low = 0.0;
   float high = 50.0; // max buffer size --> to change depending on actual value (access to defaul sim param)
-  m_obs_shape = {num_devs,}; // Destination Node + (num_devs - 1) interfaces for other nodes
+  m_obs_shape = {num_devs + 1,}; // Destination Node + (num_devs - 1) interfaces for other nodes + packet_tag (used internally)
   std::string dtype = TypeNameGet<uint32_t> ();
   Ptr<OpenGymBoxSpace> space = CreateObject<OpenGymBoxSpace> (low, high, m_obs_shape, dtype);
   NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", GetObservationSpace: " << space);
@@ -183,9 +183,12 @@ MyGymEnv::GetObservation()
   
   for (uint32_t i=1 ; i<num_devs; i++){
     Ptr<NetDevice> netDev = m_node->GetDevice (i);
-    uint32_t value = GetQueueLength (m_node, i);
+    // uint32_t value = GetQueueLength (m_node, i);
+    uint32_t value = GetQueueLengthInBytes (m_node, i);
+    
     box->AddValue(value);
   }
+  box->AddValue(m_pckt->GetUid());
 
   NS_LOG_UNCOND ( "Node: " << m_node->GetId() << ", MyGetObservation: " << box);
   return box;
@@ -219,6 +222,15 @@ MyGymEnv::GetExtraInfo()
   myInfo += ", Packet Size=";
   myInfo += std::to_string(m_size);
   
+  // myInfo += ", Current sim time =";
+  // myInfo += std::to_string(Simulator::Now().GetMilliSeconds());
+  
+  // myInfo += ", m_lastEvNode =";
+  // myInfo += std::to_string(m_lastEvNode);
+  // myInfo += ", m_fwdDev_idx =";
+  // myInfo += std::to_string(m_pckt->GetUid());
+  // myInfo += ", m_dest =";
+  // myInfo += std::to_string(m_dest);
   return myInfo;
 }
 
@@ -309,8 +321,11 @@ MyGymEnv::NotifyPktRcv(Ptr<MyGymEnv> entity, int* counter_packets_sent, NetDevic
   NS_LOG_UNCOND("Packet Size: "<<entity->m_size);
   NS_LOG_UNCOND("Dest: "<<entity->m_dest);
   NS_LOG_UNCOND("Src: "<<entity->m_src);
-  //NS_LOG_UNCOND("Dest IP Addr: "<<ip_head.GetDestination());
-  //NS_LOG_UNCOND("Dest MAC Addr: "<<entity->m_destAddr);
+  NS_LOG_UNCOND("Dest IP Addr: "<<ip_head.GetDestination());
+  NS_LOG_UNCOND("Src IP Addr: "<<ip_head.GetSource());
+  NS_LOG_UNCOND("Packet id: "<<entity->m_pckt->GetUid());
+  NS_LOG_UNCOND("Sim time : "<<Simulator::Now().GetMilliSeconds());
+
   entity->Notify();
 }
 
