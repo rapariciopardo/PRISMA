@@ -63,6 +63,8 @@ public:
   // that is why we pass pointer to MyGymEnv instance to be able to store the context (node, etc)
  
   static void NotifyPktRcv(Ptr<MyGymEnv> entity, int* counter_packets_sent, NetDeviceContainer* nd, Ptr<const Packet> packet);
+  static void NotifyTrainStep(Ptr<MyGymEnv> entity);
+  bool is_trainStep_flag;
 
 
 private:
