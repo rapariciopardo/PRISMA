@@ -57,6 +57,7 @@ MyGymEnv::MyGymEnv ()
   m_lastEvNode = 0;
   m_lastEvDev_idx = 1;
   m_fwdDev_idx = 1;
+  is_trainStep_flag = 0;
     //m_rxPktNum = 0;
 }
   
@@ -71,6 +72,7 @@ MyGymEnv::MyGymEnv (Ptr<Node> node, uint32_t numberOfNodes, uint64_t linkRateVal
   m_lastEvNode = 0;
   m_lastEvDev_idx = 1;
   m_fwdDev_idx = 1;
+  is_trainStep_flag = 0;
   //m_rxPktNum = 0;
 }
 
@@ -86,8 +88,8 @@ MyGymEnv::MyGymEnv (Time stepTime, Ptr<Node> node)
   m_fwdDev_idx = 1;
   //m_rxPktNum = 0;
   m_interval = stepTime;
-
-  Simulator::Schedule (Seconds(0.0), &MyGymEnv::ScheduleNextStateRead, this);
+  is_trainStep_flag = 0;
+  //Simulator::Schedule (Seconds(0.0), &MyGymEnv::ScheduleNextStateRead, this);
 }
 
 void
@@ -135,9 +137,9 @@ MyGymEnv::GetObservationSpace()
 {
   NS_LOG_FUNCTION (this);
   uint32_t num_devs = m_node->GetNDevices();
-  float low = 0.0;
-  float high = 50.0; // max buffer size --> to change depending on actual value (access to defaul sim param)
-  m_obs_shape = {num_devs + 1,}; // Destination Node + (num_devs - 1) interfaces for other nodes + packet_tag (used internally)
+  uint32_t low = 0;
+  uint32_t high = 100000; // max buffer size --> to change depending on actual value (access to defaul sim param)
+  m_obs_shape = {num_devs,}; // Destination Node + (num_devs - 1) interfaces for other nodes
   std::string dtype = TypeNameGet<uint32_t> ();
   Ptr<OpenGymBoxSpace> space = CreateObject<OpenGymBoxSpace> (low, high, m_obs_shape, dtype);
   NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", GetObservationSpace: " << space);
@@ -150,7 +152,9 @@ MyGymEnv::GetGameOver()
   NS_LOG_FUNCTION (this);
   m_isGameOver = false;
   //NS_LOG_UNCOND(m_node->GetId()<<"     "<<m_dest);
-  m_isGameOver = (m_dest==m_node->GetId());
+  if (is_trainStep_flag==0){
+    m_isGameOver = (m_dest==m_node->GetId());
+  }
   //NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", MyGetGameOver: " << m_isGameOver);
   return m_isGameOver;
 }
@@ -177,9 +181,16 @@ MyGymEnv::GetQueueLengthInBytes(Ptr<Node> node, uint32_t netDev_idx)
 Ptr<OpenGymDataContainer>
 MyGymEnv::GetObservation()
 {
+
   uint32_t num_devs = m_node->GetNDevices();
-  Ptr<OpenGymBoxContainer<uint32_t> > box = CreateObject<OpenGymBoxContainer<uint32_t> >(m_obs_shape);
-  box->AddValue(m_dest);
+  Ptr<OpenGymBoxContainer<int32_t> > box = CreateObject<OpenGymBoxContainer<int32_t> >(m_obs_shape);
+  if (is_trainStep_flag==0){
+    box->AddValue(m_dest);
+  }
+  else{
+    int32_t train_reward = -1;
+    box->AddValue(train_reward);
+  }
   
   for (uint32_t i=1 ; i<num_devs; i++){
     Ptr<NetDevice> netDev = m_node->GetDevice (i);
@@ -188,7 +199,6 @@ MyGymEnv::GetObservation()
     
     box->AddValue(value);
   }
-  box->AddValue(m_pckt->GetUid());
 
   NS_LOG_UNCOND ( "Node: " << m_node->GetId() << ", MyGetObservation: " << box);
   return box;
@@ -197,59 +207,83 @@ MyGymEnv::GetObservation()
 float
 MyGymEnv::GetReward()
 {
-  uint32_t value = GetQueueLengthInBytes(m_node, m_fwdDev_idx);
+  // if (is_trainStep_flag==0){
+  
+  //   uint32_t value = GetQueueLengthInBytes(m_node, m_fwdDev_idx);
 
-  float transmission_time = (m_size*8)/m_packetRate;
-  float waiting_time = (float)(value*8)/m_packetRate;
-  float reward = -(transmission_time + waiting_time);
-  NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", MyGetReward: " << reward);
-  return reward;
+  //   float transmission_time = (m_size*8)/m_packetRate;
+  //   float waiting_time = (float)(value*8)/m_packetRate;
+  //   float reward = transmission_time + waiting_time;
+  //   NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", MyGetReward: " << reward);
+  //   return reward;
+  // }
+  // else{
+  return 1;
+  // }
 }
 
 std::string
 MyGymEnv::GetExtraInfo()
 {
   //NS_LOG_FUNCTION (this);
-  std::string myInfo = "End to End Delay=";
-  myInfo += std::to_string(Simulator::Now().GetMilliSeconds()-m_packetStart);
+  if (is_trainStep_flag==0){
+    std::string myInfo = "End to End Delay=";
+    myInfo += std::to_string(Simulator::Now().GetMilliSeconds()-m_packetStart);
 
-  myInfo += ", Packets sent =";
-  myInfo += std::to_string(m_packetsSent);
-  
-  myInfo += ", src Node =";
-  myInfo += std::to_string(m_src);
+    myInfo += ", Packets sent =";
+    myInfo += std::to_string(m_packetsSent);
+    
+    myInfo += ", src Node =";
+    myInfo += std::to_string(m_src);
 
-  myInfo += ", Packet Size=";
-  myInfo += std::to_string(m_size);
-  
-  // myInfo += ", Current sim time =";
-  // myInfo += std::to_string(Simulator::Now().GetMilliSeconds());
-  
+    myInfo += ", Packet Size=";
+    myInfo += std::to_string(m_size);
+    
+    myInfo += ", Current sim time =";
+    myInfo += std::to_string(Simulator::Now().GetSeconds());
+    
+    myInfo += ", Pkt ID =";
+    myInfo += std::to_string(m_pckt->GetUid());
+
+    return myInfo;
+  }
+  return "";
+  // myInfo += ", Is train step =";
+  // myInfo += std::to_string(is_trainStep_flag);
+   
   // myInfo += ", m_lastEvNode =";
   // myInfo += std::to_string(m_lastEvNode);
   // myInfo += ", m_fwdDev_idx =";
   // myInfo += std::to_string(m_pckt->GetUid());
   // myInfo += ", m_dest =";
   // myInfo += std::to_string(m_dest);
-  return myInfo;
 }
 
 bool
 MyGymEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
 {
   NS_LOG_FUNCTION (this);
-  Ptr<OpenGymDiscreteContainer> discrete = DynamicCast<OpenGymDiscreteContainer>(action);
-  m_fwdDev_idx = discrete->GetValue()+1;
-  if(m_isGameOver){
-    NS_LOG_UNCOND("GAME OVER");
-    m_fwdDev_idx = 0;
+  NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", MyExecuteActions: " << action );
+
+  if (is_trainStep_flag==0){
+    Ptr<OpenGymDiscreteContainer> discrete = DynamicCast<OpenGymDiscreteContainer>(action);
+    m_fwdDev_idx = discrete->GetValue()+1;
+    if(m_isGameOver){
+      NS_LOG_UNCOND("Packet arrived to destination");
+      m_fwdDev_idx = 0;
+    }
+  
+    NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", MyExecuteActions: " << m_fwdDev_idx);
+    Ptr<PointToPointNetDevice> dev = DynamicCast<PointToPointNetDevice>(m_node->GetDevice(m_fwdDev_idx));
+    bool arrived;
+    arrived=dev->Send(m_pckt, m_destAddr, dev->PppToEther( m_lengthType));
+    if (arrived == 1){
+        NS_LOG_UNCOND ("Packet Successfully delivered");
+    }
+    else{
+        NS_LOG_UNCOND ("Packet Lost");
+    }
   }
-  
-  
-  NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", MyExecuteActions: " << m_fwdDev_idx);
-  Ptr<PointToPointNetDevice> dev = DynamicCast<PointToPointNetDevice>(m_node->GetDevice(m_fwdDev_idx));
-  
-  dev->Send(m_pckt, m_destAddr, dev->PppToEther( m_lengthType));
   
 
   return true;
@@ -260,7 +294,9 @@ MyGymEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
 void
 MyGymEnv::NotifyPktRcv(Ptr<MyGymEnv> entity, int* counter_packets_sent, NetDeviceContainer* nd, Ptr<const Packet> packet)
 {
-  
+  // define is train step flag
+  entity->is_trainStep_flag = 0;
+
   PppHeader ppp_head;
   Ipv4Header ip_head;
   UdpHeader udp_head;
@@ -321,12 +357,27 @@ MyGymEnv::NotifyPktRcv(Ptr<MyGymEnv> entity, int* counter_packets_sent, NetDevic
   NS_LOG_UNCOND("Packet Size: "<<entity->m_size);
   NS_LOG_UNCOND("Dest: "<<entity->m_dest);
   NS_LOG_UNCOND("Src: "<<entity->m_src);
+  NS_LOG_UNCOND("pkt start: "<<entity->m_packetStart);
   NS_LOG_UNCOND("Dest IP Addr: "<<ip_head.GetDestination());
   NS_LOG_UNCOND("Src IP Addr: "<<ip_head.GetSource());
   NS_LOG_UNCOND("Packet id: "<<entity->m_pckt->GetUid());
+  NS_LOG_UNCOND("Sim time : "<<Simulator::Now().GetSeconds());
+  entity->Notify();
+}
+
+void
+MyGymEnv::NotifyTrainStep(Ptr<MyGymEnv> entity)
+{
+  // define is train step flag
+  entity->is_trainStep_flag = 1;
+  NS_LOG_UNCOND("-------------------------------------------------------------");
+  // NS_LOG_UNCOND("train step Node "<<entity->m_node->GetId());
+  // NS_LOG_UNCOND("Packet Size: "<<entity->m_size);
+  // NS_LOG_UNCOND("Dest: "<<entity->m_dest);
+  // NS_LOG_UNCOND("Src: "<<entity->m_src);
+  // NS_LOG_UNCOND("Packet id: "<<entity->m_pckt->GetUid());
   NS_LOG_UNCOND("Sim time : "<<Simulator::Now().GetMilliSeconds());
 
   entity->Notify();
 }
-
 }// ns3 namespace

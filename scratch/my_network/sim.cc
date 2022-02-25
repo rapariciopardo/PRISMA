@@ -80,9 +80,10 @@ vector<vector<double> > readCordinatesFile (std::string node_coordinates_file_na
 vector<vector<std::string>> readIntensityFile(std::string intensity_file_name);
 void printCoordinateArray (const char* description, vector<vector<double> > coord_array);
 void printMatrix (const char* description, vector<vector<bool> > array);
+void ScheduleNextTrainStep(Ptr<MyGymEnv> openGym);
 int counter_send[100]= {0};
 void countPackets(int n_nodes, NetDeviceContainer* nd, std::string path, Ptr<const Packet> packet, const Address &src, const Address &dest){
-  
+
   Ptr<Packet> p = packet->Copy();
 
   NS_LOG_UNCOND(p->ToString());
@@ -123,8 +124,8 @@ int main (int argc, char *argv[])
   uint32_t simSeed = 1;
   uint32_t openGymPort = 6555;
   uint32_t testArg = 0;
-  double simTime = 60.00; //seconds
-  double envStepTime = 0.1; //seconds, ns3gym env step time interval
+  double simTime = 1; //seconds
+  double envStepTime = 0.05; //seconds, ns3gym env step time interval
   
   bool eventBasedEnv = true;
   
@@ -156,15 +157,22 @@ int main (int argc, char *argv[])
   RngSeedManager::SetSeed (1);
   RngSeedManager::SetRun (simSeed);
   
-  LogComponentEnable ("GenericTopologyCreation", LOG_LEVEL_INFO);
+  // LogComponentEnable ("GenericTopologyCreation", LOG_LEVEL_INFO);
+  LogComponentEnable ("GenericTopologyCreation", LOG_NONE );
 
   //std::string AppPacketRate ("40Kbps");
-  std::string AppPacketRate ("500Kbps");
-  Config::SetDefault  ("ns3::OnOffApplication::PacketSize",StringValue ("1000"));
-  Config::SetDefault ("ns3::OnOffApplication::DataRate",  StringValue (AppPacketRate));
-  std::string LinkRate ("10Mbps");
+  // std::string AppPacketRate ("500Kbps");
+  // Config::SetDefault  ("ns3::OnOffApplication::PacketSize",StringValue ("512"));
+  // Config::SetDefault ("ns3::OnOffApplication::DataRate",  StringValue (AppPacketRate));
+
+
+  std::string MaxBufferLength ("100KB");
+
+  std::string LinkRate ("100Kbps");
   std::string LinkDelay ("2ms");
-  
+
+  uint32_t AvgPacketSize = 512 - 30; //—> If you want to change the by-default 512 packet size
+
 
   srand ( (unsigned)time ( NULL ) );   // generate different seed each time
 
@@ -285,6 +293,7 @@ int main (int argc, char *argv[])
   {
     PointToPointHelper p2p;
     DataRate data_rate(LinkRate);
+
     p2p.SetDeviceAttribute ("DataRate", DataRateValue (10000*data_rate.GetBitRate()*nodes_degree[i]));
     p2p.SetChannelAttribute ("Delay", StringValue (LinkDelay));
     p2p.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("500p"));    
@@ -304,17 +313,17 @@ int main (int argc, char *argv[])
                 PointToPointHelper p2p;
                 p2p.SetDeviceAttribute ("DataRate", DataRateValue (LinkRate));
                 p2p.SetChannelAttribute ("Delay", StringValue (LinkDelay));
-                p2p.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("100KB"));    
+                p2p.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue (MaxBufferLength));    
                 NetDeviceContainer n_devs = p2p.Install(NodeContainer(nodes_switch.Get(i), nodes_switch.Get(j)));
                 switch_nd.Add(n_devs.Get(0));
                 switch_nd.Add(n_devs.Get(1));
-                NS_LOG_INFO ("matrix element [" << i << "][" << j << "] is 1");
-                NS_LOG_UNCOND(n_devs.Get(0)->GetAddress()<<"     "<<n_devs.Get(1)->GetAddress());
+                // NS_LOG_INFO ("matrix element [" << i << "][" << j << "] is 1");
+                // NS_LOG_UNCOND(n_devs.Get(0)->GetAddress()<<"     "<<n_devs.Get(1)->GetAddress());
                 
               }
             else
               {
-                NS_LOG_INFO ("matrix element [" << i << "][" << j << "] is 0");
+                // NS_LOG_INFO ("matrix element [" << i << "][" << j << "] is 0");
               }
           }
       }
@@ -327,7 +336,7 @@ int main (int argc, char *argv[])
   for(uint32_t i=0;i<switch_nd.GetN();i++)
   {
     Ptr<NetDevice> dev_switch =DynamicCast<NetDevice> (switch_nd.Get(i)); 
-    NS_LOG_UNCOND(dev_switch->GetNode()->GetId()<<"     "<< dev_switch->GetNode()->GetNDevices()<<"    "<<dev_switch->GetAddress()<<"    ");
+    // NS_LOG_UNCOND(dev_switch->GetNode()->GetId()<<"     "<< dev_switch->GetNode()->GetNDevices()<<"    "<<dev_switch->GetAddress()<<"    ");
     dev_switch->TraceConnectWithoutContext("MacRx", MakeBoundCallback(&MyGymEnv::NotifyPktRcv, myGymEnvs[dev_switch->GetNode()->GetId()], &counter_send[dev_switch->GetNode()->GetId()], &traffic_nd));
     
   }
@@ -370,7 +379,6 @@ int main (int argc, char *argv[])
   
   NS_LOG_INFO ("Setup CBR Traffic Sources.");
 
-  uint32_t AvgPacketSize = 1000; //—> If you want to change the by-default 512 packet size
   
   for (int i = 0; i < n_nodes; i++)
     {
@@ -413,7 +421,7 @@ int main (int argc, char *argv[])
   NS_LOG_INFO ("Setup Packet Sinks.");
 
   Ipv4Address sinkAddr = Ipv4Address::GetAny();
-  NS_LOG_UNCOND(sinkAddr);
+  // NS_LOG_UNCOND(sinkAddr);
   PacketSinkHelper sink ("ns3::UdpSocketFactory", InetSocketAddress (sinkAddr, port));   
   ApplicationContainer apps_sink;  
   for (int i = 0; i < n_nodes; i++)
@@ -430,7 +438,11 @@ int main (int argc, char *argv[])
 
 
   // ---------- Simulation Monitoring ----------------------------------------
-
+  NS_LOG_UNCOND("Configuration of time based alert");
+  for(int i=0;i<n_nodes;i++)
+  {
+    Simulator::Schedule (Seconds(0.0), &ScheduleNextTrainStep, myGymEnvs[i]);
+  }
   NS_LOG_INFO ("Configure Tracing.");
 
   
@@ -444,6 +456,8 @@ int main (int argc, char *argv[])
   NS_LOG_UNCOND("Sent Packets: "<< counter_send);
   for (int i = 0; i < n_nodes; i++)
   {
+    // NS_LOG_UNCOND("" << i);
+    myGymEnvs[i]->is_trainStep_flag = 1;
     myOpenGymInterfaces[i]->NotifySimulationEnd();
   }
   Simulator::Destroy ();
@@ -657,6 +671,12 @@ void printCoordinateArray (const char* description, vector<vector<double> > coor
     }
   cout << "**** End " << description << "********" << endl;
 
+}
+
+void ScheduleNextTrainStep(Ptr<MyGymEnv> openGym)
+{
+  // Simulator::Schedule (Seconds(envStepTime), &ScheduleNextTrainStep, envStepTime, openGym);
+  openGym->NotifyTrainStep(openGym);
 }
 
 
