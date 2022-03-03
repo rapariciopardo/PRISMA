@@ -124,25 +124,35 @@ int main (int argc, char *argv[])
   uint32_t simSeed = 1;
   uint32_t openGymPort = 6555;
   uint32_t testArg = 0;
-  double simTime = 1; //seconds
+  double simTime = 60; //seconds
   double envStepTime = 0.05; //seconds, ns3gym env step time interval
   
   bool eventBasedEnv = true;
-  
-  //Parameters of the scenario
-  double SinkStartTime  = 0.0001;
-  double SinkStopTime   = 59.90001;
-  double AppStartTime   = 0.0001;
-  double AppStopTime    = 59.80001;
+  double load_factor = 0.01; // scaling applied to the traffic matrix
+  std::string MaxBufferLength ("30p");
+  std::string LinkRate ("500Kbps");
+  std::string LinkDelay ("2ms");
+  uint32_t AvgPacketSize = 512 - 30; //—> If you want to change the by-default 512 packet size
 
-    
+  std::string adj_mat_file_name ("scratch/my_network/adjacency_matrix.txt");
+  std::string node_coordinates_file_name ("scratch/my_network/node_coordinates.txt");
+  std::string node_intensity_file_name("scratch/my_network/node_intensity.txt");
+  
   CommandLine cmd;
   // required parameters for OpenGym interface
   cmd.AddValue ("openGymPort", "Port number for OpenGym env. Default: 5555", openGymPort);
   cmd.AddValue ("simSeed", "Seed for random generator. Default: 1", simSeed);
   // optional parameters
   cmd.AddValue ("eventBasedEnv", "Whether steps should be event or time based. Default: true", eventBasedEnv);
-  cmd.AddValue ("simTime", "Simulation time in seconds. Default: 10s", simTime);
+  cmd.AddValue ("simTime", "Simulation time in seconds. Default: 30s", simTime);
+  cmd.AddValue ("adj_mat_file_name", "Adjacency matrix file path. Default: scratch/my_network/adjacency_matrix.txt", adj_mat_file_name);
+  cmd.AddValue ("node_coordinates_file_name", "Node coordinates file path. Default: scratch/my_network/node_coordinates.txt", node_coordinates_file_name);
+  cmd.AddValue ("node_intensity_file_name", "Node intensity (traffic matrix) file path. Default: scratch/my_network/node_intensity.txt", node_intensity_file_name);
+  cmd.AddValue ("AvgPacketSize", "Packet size. Default: 512", AvgPacketSize);
+  cmd.AddValue ("LinkDelay", "Network links delay. Default: 2ms", LinkDelay);
+  cmd.AddValue ("LinkRate", "Network links capacity in bits per seconds. Default: 500Kbps", LinkRate);
+  cmd.AddValue ("MaxBufferLength", "Output buffers max size. Default: 30p", MaxBufferLength);
+  cmd.AddValue ("load_factor", "scale of the traffic matrix. Default: 1.0", load_factor);
   cmd.AddValue ("stepTime", "Gym Env step time in seconds. Default: 0.1s", envStepTime);
   cmd.AddValue ("testArg", "Extra simulation argument. Default: 0", testArg);
   cmd.Parse (argc, argv);
@@ -153,8 +163,23 @@ int main (int argc, char *argv[])
   NS_LOG_UNCOND("--envStepTime: " << envStepTime);
   NS_LOG_UNCOND("--seed: " << simSeed);
   NS_LOG_UNCOND("--testArg: " << testArg);
+  NS_LOG_UNCOND("--adj_mat_file_name: " << adj_mat_file_name);
+  NS_LOG_UNCOND("--node_coordinates_file_name: " << node_coordinates_file_name);
+  NS_LOG_UNCOND("--node_intensity_file_name: " << node_intensity_file_name);
+  NS_LOG_UNCOND("--LinkDelay: " << LinkDelay);
+  NS_LOG_UNCOND("--MaxBufferLength: " << MaxBufferLength);
+  NS_LOG_UNCOND("--load_factor: " << load_factor);
+  
+  //Parameters of the scenario
+  double SinkStartTime  = 0.0001;
+  double SinkStopTime   = simTime - 0.1;//59.90001;
+  double AppStartTime   = 0.0001;
+  double AppStopTime    = simTime - 0.2;
+
+  AvgPacketSize = AvgPacketSize - 30; // remove the header length
+  
     
-  RngSeedManager::SetSeed (1);
+  RngSeedManager::SetSeed (simSeed);
   RngSeedManager::SetRun (simSeed);
   
   // LogComponentEnable ("GenericTopologyCreation", LOG_LEVEL_INFO);
@@ -166,12 +191,6 @@ int main (int argc, char *argv[])
   // Config::SetDefault ("ns3::OnOffApplication::DataRate",  StringValue (AppPacketRate));
 
 
-  std::string MaxBufferLength ("100KB");
-
-  std::string LinkRate ("100Kbps");
-  std::string LinkDelay ("2ms");
-
-  uint32_t AvgPacketSize = 512 - 30; //—> If you want to change the by-default 512 packet size
 
 
   srand ( (unsigned)time ( NULL ) );   // generate different seed each time
@@ -181,13 +200,7 @@ int main (int argc, char *argv[])
   std::string flow_name ("n-node-ppp.xml");
   std::string anim_name ("n-node-ppp.anim.xml");
 
-  std::string adj_mat_file_name ("scratch/my_network/adjacency_matrix.txt");
-  std::string node_coordinates_file_name ("scratch/my_network/node_coordinates.txt");
-  std::string node_intensity_file_name("scratch/my_network/node_intensity.txt");
-  
-  //CommandLine cmd;
-  //cmd.Parse (argc, argv);
-  
+
 
   // ---------- End of Simulation Variables ----------------------------------
 
@@ -400,11 +413,12 @@ int main (int argc, char *argv[])
               Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();
               Ipv4InterfaceAddress ipv4_int_addr = ipv4->GetAddress (1, 0);
               Ipv4Address ip_addr = ipv4_int_addr.GetLocal ();
-              NS_LOG_UNCOND(ipv4_int_addr);
+              // NS_LOG_UNCOND(ipv4_int_addr);
               PoissonAppHelper poisson ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]
-              NS_LOG_UNCOND( InetSocketAddress (ip_addr, port));
+              // NS_LOG_UNCOND( InetSocketAddress (ip_addr, port));
               // poisson.SetAverageRate (DataRate(Traff_Matrix[i][j]));
-              poisson.SetAverageRate (DataRate(Traff_Matrix[i][j]), AvgPacketSize);
+
+              poisson.SetAverageRate (DataRate(round(DataRate(Traff_Matrix[i][j]).GetBitRate()*load_factor)), AvgPacketSize);
               ApplicationContainer apps = poisson.Install (nodes_traffic.Get (i));  // traffic sources are installed on all nodes
             
               apps.Start (Seconds (AppStartTime + rn));

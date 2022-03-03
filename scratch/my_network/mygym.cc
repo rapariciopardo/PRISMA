@@ -194,8 +194,8 @@ MyGymEnv::GetObservation()
   
   for (uint32_t i=1 ; i<num_devs; i++){
     Ptr<NetDevice> netDev = m_node->GetDevice (i);
-    // uint32_t value = GetQueueLength (m_node, i);
-    uint32_t value = GetQueueLengthInBytes (m_node, i);
+    uint32_t value = GetQueueLength (m_node, i);
+    // uint32_t value = GetQueueLengthInBytes (m_node, i);
     
     box->AddValue(value);
   }
