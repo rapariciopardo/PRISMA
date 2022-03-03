@@ -1,322 +1,280 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-
 ### imports
 import argparse
 from time import sleep, time
-from ns3gym import ns3env
-from ns3gym.graph import *
 import numpy as np
 import threading
 import copy
-from dqn_agent.learner import DQN_AGENT
-from dqn_agent.replay_buffer import ReplayBuffer
-from dqn_agent.models import DQN_buffer_model
-from dqn_agent.utils import save_model, load_model, LinearSchedule
 import tensorflow as tf
 import random
 import networkx as nx
 import os
 import datetime
+from tensorboard.plugins.hparams import api as hp
+import multiprocessing
+from source.agent_action import Agent
+import subprocess, signal
+import shlex
+from tensorboard.plugins.custom_scalar import summary as cs_summary
+from tensorboard.plugins.custom_scalar import layout_pb2
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 
-
-### define the global trackers 
-currIt = 0
-total_new_rcv_pkts = 0
-total_arrived_pkts = 0
-total_rewards = 0
-total_lost_pkts = 0
-# params overwritten by the args parser
-startSim = 0
-iterationNum = 1000
-simTime = 200
-stepTime = 0.01
-seed = 0
-simArgs = {"--simTime": simTime,
-        "--testArg": 123}
-
-max_buffer_size = 100000
-link_cap = 10000000
-loss_penalty = (max_buffer_size*8)/link_cap
-
-debug = False
-basePort = 6555
-# params for the network topology
-numNodes = 11
-# network topology
-G=nx.Graph()
-for i, element in enumerate(np.loadtxt(open("node_coordinates.txt"))):
-    G.add_node(i,pos=tuple(element))
-G = nx.from_numpy_matrix(np.loadtxt(open("adjacency_matrix.txt")), create_using=G)
-# params for training
-lr = 0.01
-gamma = 0.9
-batch_size = 128
-target_sync_step = 64
-between_train_steps_delay = 0.05
-# replay buffer max size
-replay_buffer_max_size = 10000
-# exploration ratio 
-exploration_fraction = 1
-exploration_initial_eps = 0.5
-exploration_final_eps = 0.1
-# dict storing the params
-envs = {}
-# define the agents
-agents = [None]*numNodes
-# define the replay buffer as a global variable
-replay_buffer = [ReplayBuffer(replay_buffer_max_size) for n in range(numNodes)]
-# define the temp observations dict to prepare the (s, a, r, s', flag) for replay buffer
-temp_obs = {}
-# # Simulation trackers
-# currIt = 0
-
-
-### define the agent fonction
-def agent_action(index):
-    """Define the agent action that will be threaded.
-    The function will reset the environment, and then retrieve observation to take the proper actions.
-    It uses the global variables to store it states, action, reward flags tuples.
-
-    Args:
-        index (int, optional): the agent index. Defaults to 0.
+def arguments_parser():
+    """ Retrieve and parse argument from the commandline
     """
-    
-    ### compute the port number
-    global currIt, total_new_rcv_pkts, total_arrived_pkts, total_rewards, total_lost_pkts
-    port = basePort + index
-    print("index :", index,  port, startSim)
-    
-    ### decalre node neighbors
-    neighbors = list(G.neighbors(index))
+    ## Setup the argparser
+    parser = argparse.ArgumentParser(prog='Multi Agents Threaded NS3', usage='python3 %(prog)s [options]')
+    parser.add_argument('--simTime', type=float, help='Simulation duration in seconds', default=60.0)
+    parser.add_argument('--session_name', type=str, help='Name of the folder where to save the logs of the session', default=None)
+    parser.add_argument('--logging_timestep', type=int, help='Time delay (in real time) between each logging in seconds', default=15)
+    parser.add_argument('--basePort', type=int, help='Starting port number', default=6555)
+    parser.add_argument('--agent_type', choices=["dqn", "sp", "opt"], type=str, help='The type of the agent. Can be dqn, sp or opt', default="dqn")
+    parser.add_argument('--train', type=int, help='Whether to train the model or test it', default=1)
+    parser.add_argument('--seed', type=int, help='Random seed used for the simulation', default=1)
+    parser.add_argument('--max_out_buffer_size', type=int, help='Max nodes output buffer limit', default=30)
+    parser.add_argument('--packet_size', type=int, help='Size of the packets in bytes', default=512)
+    parser.add_argument('--link_delay', type=str, help='Network links delay', default="2ms")
+    parser.add_argument('--lr', type=float, help='Learning rate (used when training)', default=1e-3)
+    parser.add_argument('--batch_size', type=int, help='Size of a batch (used when training)', default=128)
+    parser.add_argument('--gamma', type=float, help='Gamma ratio for RL (used when training)', default=1)
+    parser.add_argument('--iterationNum', type=int, help='Max iteration number for exploration (used when training)', default=1000)
+    parser.add_argument('--exploration_initial_eps', type=float, help='Exploration intial value (used when training)', default=0.5)
+    parser.add_argument('--exploration_final_eps', type=float, help='Exploration final value (used when training)', default=0.1)
+    parser.add_argument('--load_path', type=str, help='Path to DQN models, if not None, loads the models from the given files', default=None)
+    parser.add_argument('--save_path', type=str, help='Name of the folder where to store the models at the end of the training', default=None)
+    parser.add_argument('--link_cap', type=int, help='Network links capacity in bits per seconds', default=500000)
+    parser.add_argument('--training_freq', type=int, help='Number of timesteps to train (used when training)', default=16)
+    parser.add_argument('--replay_buffer_max_size', type=int, help='Max size of the replay buffers (used when training)', default=10000)
+    parser.add_argument('--load_factor', type=float, help='scale of the traffic matrix', default=0.01)
+    parser.add_argument('--adjacency_matrix_path', type=str, help='Path to the adjacency matrix', default="scratch/my_network/adjacency_matrix.txt")
+    parser.add_argument('--node_coordinates_path', type=str, help='Path to the nodes coordinates', default="scratch/my_network/node_coordinates.txt")
+    parser.add_argument('--traffic_matrix_path', type=str, help='Path to the traffic matrix file', default="scratch/my_network/node_intensity.txt")
+    # parser.print_help()
 
-    ### declare the ns3 env
-    env = ns3env.Ns3Env(port=int(port), stepTime=stepTime, startSim=startSim, simSeed=seed, simArgs=simArgs, debug=debug)
-    obs = env.reset()
 
-    envs[str(index)] = env
-    
-    ### declare the DQN buffer model
-    # ob_space = env.observation_space
-    # ac_space = env.action_space
-    # print("index :", index, "Observation space: ", ob_space.shape,  ob_space.dtype, out=logfile)
-    # print("index :", index, "Action space: ", ac_space, ac_space.n, ac_space.dtype, out=logfile)
-    # print("index :", index, "Action space: ", env.action_space.n,"Observation space: ", (env.action_space.n+1,), "split",[1,env.action_space.n,], obs)
-    agents[index] = DQN_AGENT(
-        q_func=DQN_buffer_model,
-        observation_shape=env.observation_space.shape,
-        num_actions=env.action_space.n,
-        num_nodes=numNodes,
-        input_size_splits = [1,
-                             env.action_space.n,
-                             ],
-        lr=lr,
-        gamma=gamma
-    )
+    return vars(parser.parse_args())
 
-    # Create the schedule for exploration.
-    exploration = LinearSchedule(schedule_timesteps=int(exploration_fraction * iterationNum),
-                                 initial_p=exploration_initial_eps,
-                                 final_p=exploration_final_eps)
-    # avg_queue_size = []
-    # avg_rew = []
-    # avg_delay_time = []
-    # avg_packet_size = []
-    episode_mean_td_error = []
-    count_arrived_packets = 0
-    count_new_pkts = 0
-    last_training_time = 0
-    # currIt = 0
-    # count_packets_sent = 0
-    gradient_step_idx = 0
-    logfile = open(f'outputs/out_{port}.txt', "w")
-    try:
-        while True:
-            obs = env.reset()
-            stepIdx = 0
-            # print(index, obs, "definition")
-            while True:
-                if(not env.connected):
-                    break
-                
-                ### schedule the exploration
-                update_eps = tf.constant(exploration.value(stepIdx))
-                
-                ### take the action
-                # action = env.action_space.sample()       
-                if obs[0] == index or stepIdx < 1: # pkt arrived to dst or it is a train step, ignore the action
-                    action = 0
-                else:
-                    ### Take action using the NN
-                    action = agents[index].step(np.array([obs]), True, update_eps).numpy().item()
-                    # print(action)*
-                    if obs[action + 1] > max_buffer_size:
-                        replay_buffer[index].add(np.array(obs, dtype=float).squeeze(),
-                                            action, 
-                                            loss_penalty,
-                                            np.array(np.ones(list(G.neighbors(neighbors[action]))), dtype=float).squeeze(), 
-                                            True)
-                        total_lost_pkts += 1
-                    ### Add to the temp obs
-                    else: 
-                        temp_obs[pkt_id]= {"node": index, "obs": obs, "action": action, "time": curr_time}
+def custom_plots():
+    """define the costume plots for tensorboard"
+    """
+    cs = cs_summary.pb(
+            layout_pb2.Layout(
+                category=[
+                    layout_pb2.Category(
+                        title="Main evaluation metrics",
+                        chart=[
+                            layout_pb2.Chart(
+                                title="Avg Delay per arrived pkts",
+                                multiline=layout_pb2.MultilineChartContent(tag=[r"avg_delay_over_time"])),
+                            layout_pb2.Chart(
+                                title="Avg Cost per arrived pkts",
+                                multiline=layout_pb2.MultilineChartContent(tag=[r"avg_cost_over_time"])),
+                            layout_pb2.Chart(
+                                title="Loss Ratio",
+                                multiline=layout_pb2.MultilineChartContent(tag=[r"avg_delay_over_time"])),
+                        ]),
+                    # layout_pb2.Category(
+                    #     title="Global info about the env",
+                    #     chart=[
+                    #         layout_pb2.Chart(
+                    #             title="Average hops over time",
+                    #             multiline=layout_pb2.MultilineChartContent(tag=[r"avg_hops_over_time"])),
+                    #         layout_pb2.Chart(
+                    #             title="total rewards with and without loss",
+                    #             multiline=layout_pb2.MultilineChartContent(tag=[r"(total_rewards_with_loss_over_time|total_rewards_over_time)"])),
+                    #         layout_pb2.Chart(
+                    #             title="Buffers occupation",
+                    #             multiline=layout_pb2.MultilineChartContent(tag=[r"nb_buffered_pkts_over_time"])),
+                    #         layout_pb2.Chart(
+                    #             title="new pkts vs lost pkts vs arrived pkts",
+                    #             multiline=layout_pb2.MultilineChartContent(tag=[r"(total_new_rcv_pkts_over_time | total_lost_pkts_over_time | total_arrived_pkts_over_time)"])),
+                    #     ]),
+                    layout_pb2.Category(
+                        title="Training metrics",
+                        chart=[
+                            layout_pb2.Chart(
+                                title="Td error",
+                                multiline=layout_pb2.MultilineChartContent(tag=[r"MSE_loss_over_time"])),
+                            layout_pb2.Chart(
+                                title="exploration value",
+                                multiline=layout_pb2.MultilineChartContent(tag=[r"exploaration_value_over_time"])),
+                            layout_pb2.Chart(
+                                title="replay buffers length",
+                                multiline=layout_pb2.MultilineChartContent(tag=[r"replay_buffer_length_over_time"])),
+                        ]),
+                ]
+            )
+        )
+    return cs
 
-                ### Apply the action
-                obs, reward, done, info = env.step(action)
-                
-                # print(obs)
-                ###check if episode is done
-                if done and obs[0] == -1:
-                    # print("episode done")
-                    break
-                
-                ### Increment the simulation and episode counters
-                stepIdx += 1
-                currIt += 1
+def write_stats():
+    """ Write the stats of the session to the logs dir using tensorboard writer
+    """
+    pass
 
-                ### info treatments
-                tokens = info.split(",")
-                delay_time = float(tokens[0].split('=')[-1])
-                # count_packets_sent = int(tokens[1].split('=')[-1])
-                curr_time = float(tokens[4].split('=')[-1])
-                pkt_id = float(tokens[5].split('=')[-1])
-                
-                if done:
-                    if(delay_time<50000):
-                        count_arrived_packets += 1
-                        total_arrived_pkts += 1
-                # print("index :", index, "---obs, reward, done, info;, temp_obs ,action, tokens: ", obs, reward, done, info, temp_obs, action, tokens)
-
-                # store the observations and reward
-                if pkt_id in temp_obs.keys(): ## check if the packet is not new in the network
-                    states_info = temp_obs.pop(pkt_id)
-                    hop_time =  curr_time - states_info["time"]
-                    replay_buffer[int(states_info["node"])].add(np.array(states_info["obs"], dtype=float).squeeze(),
-                                                                states_info["action"], 
-                                                                curr_time - states_info["time"],
-                                                                np.array(obs, dtype=float).squeeze(), 
-                                                                done)
-                    total_rewards += curr_time - states_info["time"]
-                else:
-                    count_new_pkts += 1
-                    total_new_rcv_pkts += 1
-
-                ### Do a gradient Step
-                if curr_time > (last_training_time + between_train_steps_delay) and len(replay_buffer[index])> batch_size:
-                    ### Sync target NN
-                    for indx, neighbor in enumerate(neighbors): 
-                        agents[index].sync_neighbor_target_q_network(agents[neighbor].q_network, indx)
-
-                    # print("train...", index)
-                    obses_t, actions_t, rewards_t, next_obses_t, dones_t = replay_buffer[index].sample(batch_size)
-                    weights, _ = np.ones(batch_size, dtype=np.float32), None
-
-                    ### Construct the target values
-                    targets_t = []
-                    action_indices_all = []
-                    for indx, neighbor in enumerate(neighbors):
-                        filtered_indices = np.where(np.array(list(G.neighbors(neighbor)))!=index)[0] # filter the net interface from where the pkt comes
-                        action_indices = np.where(actions_t == indx)[0]
-                        action_indices_all.append(action_indices)
-                        if len(action_indices):
-                            targets_t.append(agents[index].get_neighbor_target_value(indx, rewards_t[action_indices], tf.constant(
-                                np.array(np.vstack(next_obses_t[action_indices]), dtype=np.float)), dones_t[action_indices], filtered_indices))
-                    action_indices_all = np.concatenate(action_indices_all)
-
-                    ### prepare tf variables
-                    obses_t = tf.constant(obses_t[action_indices_all,])
-                    actions_t = tf.constant(actions_t[action_indices_all], shape=(batch_size))
-                    targets_t = tf.constant(tf.concat(targets_t, axis=0), shape=(batch_size))
-                    weights = tf.constant(weights)
-
-                    ### Make a gradient step
-                    td_errors = agents[index].train(obses_t, actions_t, targets_t, weights)    
-                    episode_mean_td_error.append(np.mean(td_errors))
-                    # print(index, "td error", np.mean(td_errors))
-                    gradient_step_idx += 1
-
-                    # stepIdx = 0
-                    # if currIt + 1 < iterationNum:
-                    #     env.reset()
-                    #     pass
-                    # break
-            # print("episode ends", index)
-            # env.close()
-            break
-
-            if(not env.connected):
-                break
-            # currIt += 1
-            if currIt == iterationNum:
-                print("index :", index, "Done by iterations number", file=logfile)
-                env.close()
-                break
-
-    except KeyboardInterrupt:
-        print("index :", index, "Ctrl-C -> Exit", file=logfile)
-        env.close()
-        
-    # finally:
-
-    #     print("index :", index, "Curr Iter: ", stepIdx, file=logfile)
-    #     avg_queue_size = np.array(avg_queue_size)
-    #     avg_rew = np.array(avg_rew)
-    #     avg_delay_time = np.array(avg_delay_time)
-    # if len(avg_queue_size):
-    #     print("index :", index, "Average Queue size", file=logfile)
-    #     print("index :", index, "Max: ",avg_queue_size.max(axis=0), "Min: ",avg_queue_size.min(axis=0), "Mean: ", avg_queue_size.mean(axis=0), "Std: ", avg_queue_size.std(axis=0), file=logfile)
-    #     print("index :", index, "Max: ",avg_queue_size.max(), "Min: ",avg_queue_size.min(), "Mean: ", avg_queue_size.mean(), "Std: ", avg_queue_size.std(), file=logfile)
-    #     print("index :", index, "-------------------------------------------------", file=logfile)
-    # if len(avg_rew):
-    #     print("index :", index, "Average Reward Time", file=logfile)
-    #     print("index :", index, "Max: ",avg_rew.max(), "Min: ",avg_rew.min(), "Mean: ", avg_rew.mean(), "Std: ", avg_rew.std(), file=logfile)
-    #     print("index :", index, "-------------------------------------------------", file=logfile)
-    # if len(avg_delay_time):
-    #     print("index :", index, "Average Delay Time", file=logfile)
-    #     print("index :", index, "QTD: ",avg_delay_time.shape, file=logfile)
-    #     print("index :", index, "Max: ",avg_delay_time.max(), "Min: ",avg_delay_time.min(), "Mean: ", avg_delay_time.mean(), "Std: ", avg_delay_time.std(), file=logfile)
-    #     print("index :", index, "-------------------------------------------------", file=logfile)
-    # print("index :", index, "Recv Packets: ", count_arrived_packets, file=logfile)
-    # print("index :", index, "Loss Packet rate: ", max(0, float(1-count_arrived_packets/count_packets_sent)), file=logfile)
-    # env.close()
-
-    env.ns3ZmqBridge.send_close_command()
-    print("index :", index, "Done", "stepIdx =", stepIdx, "arrived pkts =", count_arrived_packets,  "new received pkts", count_new_pkts, episode_mean_td_error)
-    return True
 
 def main():
-    ### fix the seed
-    tf.random.set_seed(seed)
-    np.random.seed(seed)
-    random.seed(seed)
-    # run threads
-    # global threads
-    # threads = []
-    for index in range(numNodes):
-        x = threading.Thread(target=agent_action, args=(index,))
+    ## Get the arguments from the parser
+    params = arguments_parser()
+
+    ## Add constant params
+    params["logs_parent_folder"] = "outputs/"
+    ## Metrics
+    # params["METRICS"] = ["avg_delay", "loss_ratio", "reward"]
+    ## general env params depricated
+    params["stepTime"]=0.1
+    params["startSim"]=0
+    params["simArgs"]={"--simTime": params["simTime"],
+            "--testArg": 123}
+    params["debug"]=0
+    ## compute the loss penalty
+    params["loss_penalty"] = ((params["max_out_buffer_size"] + 1)*params["packet_size"]*8)/params["link_cap"]
+    ## network topology
+    G=nx.Graph()
+    os.chdir("../../")
+    for i, element in enumerate(np.loadtxt(open(params["node_coordinates_path"]))):
+        G.add_node(i,pos=tuple(element))
+    G = nx.from_numpy_matrix(np.loadtxt(open(params["adjacency_matrix_path"])), create_using=G)
+    params["numNodes"] = G.number_of_nodes()
+    params["G"] = G
+    os.chdir("scratch/my_network")
+    if params["session_name"] == None:
+        params["session_name"] = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    params["logs_folder"] = params["logs_parent_folder"] + params["session_name"]
+
+    # between_train_steps_delay = 0.05
+
+    ## fix the seed
+    tf.random.set_seed(params["seed"])
+    np.random.seed(params["seed"])
+    random.seed(params["seed"])
+
+
+    ## setup writer for the global stats 
+    global_stats_path = f'{params["logs_folder"]}/stats'
+    params["global_stats_path"] = global_stats_path
+
+    summary_writer_parent = tf.summary.create_file_writer(logdir=params["logs_parent_folder"])
+    summary_writer_session = tf.summary.create_file_writer(logdir=global_stats_path)
+
+
+    ## write the session info
+    with tf.summary.create_file_writer(logdir=params["logs_folder"]).as_default():
+        ## adapt the dict to the hparams api
+        dict_to_store = copy.deepcopy(params)
+        dict_to_store["G"] = str(G)
+        dict_to_store["load_path"] = str(params["load_path"])
+        dict_to_store["save_path"] = str(params["save_path"])
+        dict_to_store["simArgs"] = str(params["simArgs"])
+        hp.hparams(dict_to_store)  # record the values used in this trial
+    
+    ## run NS3 simulator
+    os.chdir("../../")
+    ns3_params_format = ('my_network --simSeed={} --openGymPort={} --simTime={} --AvgPacketSize={} '
+                        '--LinkDelay={} --LinkRate={} --MaxBufferLength={} --load_factor={} '
+                        '--adj_mat_file_name={} --node_coordinates_file_name={} --node_intensity_file_name={}'.format( params["seed"],
+                                                                                                                        params["basePort"],
+                                                                                                                        str(params["simTime"]),
+                                                                                                                        params["packet_size"],
+                                                                                                                        params["link_delay"],
+                                                                                                                        str(params["link_cap"]) + "bps",
+                                                                                                                        str(params["max_out_buffer_size"]) + "p",
+                                                                                                                        params["load_factor"],
+                                                                                                                        params["adjacency_matrix_path"],
+                                                                                                                        params["node_coordinates_path"],
+                                                                                                                        params["traffic_matrix_path"]))
+    args = shlex.split(f'./waf --run "{ns3_params_format}"')
+    subprocess.Popen(args)
+    os.chdir("scratch/my_network")
+
+    ## setup the agents (fix the static variables)
+    Agent.init_static_vars(params)
+
+    ## run the agents
+    for index in range(params["numNodes"]):
+        agent_instance = Agent(index, agent_type=params["agent_type"], train=params["train"])
+        x = threading.Thread(target=agent_instance.run, args=())
         x.start()
-        # threads.append(x)
-    # print(f"index : {index}, identifier : {x}", out=logfile)
-        
+
+    ## Define the custom categories in tensorboard
+    with summary_writer_parent.as_default():
+        tf.summary.experimental.write_raw_pb(
+                custom_plots().SerializeToString(), step=0
+            )
+
+    ## Run tensorboard server
+    args = shlex.split(f'tensorboard --logdir={params["logs_parent_folder"]} --port=16666')
+    subprocess.Popen(args)
     sleep(1)
+
+    ## wait until simulation complete and update info about the env at each timestep
     while threading.active_count() > 1:
-        # print(f"threading count : {threading.active_count()}")
-        sleep(1)
+
+        sleep(params["logging_timestep"])
+
+        ## write the global stats
+        if Agent.total_new_rcv_pkts > 0:
+            loss_ratio = Agent.total_lost_pkts/Agent.total_new_rcv_pkts
+        else:
+            loss_ratio = -1
+        if Agent.total_arrived_pkts > 0:
+            avg_delay = Agent.total_rewards/Agent.total_arrived_pkts
+            avg_cost = Agent.total_rewards_with_loss/Agent.total_arrived_pkts
+            avg_hops = Agent.total_hops/Agent.total_arrived_pkts
+        else:
+            avg_delay = -1
+            avg_cost = -1
+            avg_hops = -1
+
+        with summary_writer_session.as_default():
+            tf.summary.scalar('total_rewards_over_iterations', Agent.total_rewards, step=Agent.currIt)
+            tf.summary.scalar('total_rewards_with_loss_over_iterations', Agent.total_rewards_with_loss, step=Agent.currIt)
+            tf.summary.scalar('loss_ratio_over_iterations', loss_ratio, step=Agent.currIt)
+            tf.summary.scalar('total_hops_over_iterations', Agent.total_hops, step=Agent.currIt)
+            tf.summary.scalar('avg_hops_over_iterations', avg_hops, step=Agent.currIt)
+            tf.summary.scalar('nb_buffered_pkts_over_iterations', Agent.total_new_rcv_pkts-(Agent.total_arrived_pkts + Agent.total_lost_pkts), step=Agent.currIt)
+            tf.summary.scalar('total_rewards_over_time', Agent.total_rewards, step=int(Agent.curr_time*1e6))
+            tf.summary.scalar('total_rewards_with_loss_over_time', Agent.total_rewards_with_loss, step=int(Agent.curr_time*1e6))
+            tf.summary.scalar('loss_ratio_over_time', loss_ratio, step=int(Agent.curr_time*1e6))
+            tf.summary.scalar('total_hops_over_time', Agent.total_hops, step=int(Agent.curr_time*1e6))
+            tf.summary.scalar('avg_hops_over_time', avg_hops, step=int(Agent.curr_time*1e6))
+            tf.summary.scalar('nb_buffered_pkts_over_time', Agent.total_new_rcv_pkts-(Agent.total_arrived_pkts + Agent.total_lost_pkts), step=int(Agent.curr_time*1e6))
+            tf.summary.scalar('total_arrived_pkts_over_iterations', Agent.total_arrived_pkts, step=Agent.currIt)
+            tf.summary.scalar('total_arrived_pkts_over_time', Agent.total_arrived_pkts, step=int(Agent.curr_time*1e6))
+            tf.summary.scalar('total_new_rcv_pkts_over_iterations', Agent.total_new_rcv_pkts, step=Agent.currIt)
+            tf.summary.scalar('total_new_rcv_pkts_over_time', Agent.total_new_rcv_pkts, step=int(Agent.curr_time*1e6))
+            tf.summary.scalar('total_lost_pkts_over_iterations', Agent.total_lost_pkts, step=Agent.currIt)
+            tf.summary.scalar('total_lost_pkts_over_time', Agent.total_lost_pkts, step=int(Agent.curr_time*1e6))
+            tf.summary.scalar('avg_cost_over_iterations', avg_cost, step=Agent.currIt)
+            tf.summary.scalar('avg_cost_over_time', avg_cost, step=int(Agent.curr_time*1e6))
+            tf.summary.scalar('avg_delay_over_iterations', avg_delay, step=Agent.currIt)
+            tf.summary.scalar('avg_delay_over_time', avg_delay, step=int(Agent.curr_time*1e6))
+
+
+        # print(f"""{Agent.currIt}, {Agent.total_rewards}, {Agent.total_new_rcv_pkts}, {Agent.total_arrived_pkts}, {Agent.total_lost_pkts}, {loss_ratio}, {avg_delay}""", file=global_log_file)
     print(f""" Summary of the episode :
-            Total number of Transitions = {currIt}, 
-            Total e2e delay = {total_rewards}, 
-            Total number of packets = {total_new_rcv_pkts}, 
-            Number of arrived packets = {total_arrived_pkts},
-            Number of lost packets = {total_lost_pkts},
-            Loss ratio = {total_lost_pkts/total_new_rcv_pkts},
+            Total number of Transitions = {Agent.currIt}, 
+            Total e2e delay = {Agent.total_rewards}, 
+            Total number of packets = {Agent.total_new_rcv_pkts}, 
+            Number of arrived packets = {Agent.total_arrived_pkts},
+            Number of lost packets = {Agent.total_lost_pkts},
+            Loss ratio = {loss_ratio},
             """)
-    if total_arrived_pkts:
-        print(f"Average delay per arrived packets = {total_rewards/total_arrived_pkts}")
+    if Agent.total_arrived_pkts:
+        print(f"Average delay per arrived packets = {Agent.total_rewards/Agent.total_arrived_pkts}")
 
 if __name__ == '__main__':
-
-    start_time = time()
-    main()
-    print("Elapsed time = ", str(datetime.timedelta(seconds= time() - start_time)))
+    ## create a process group
+    import traceback
+    os.setpgrp()
+    try:
+        start_time = time()
+        main()
+        print("Elapsed time = ", str(datetime.timedelta(seconds= time() - start_time)))
+    except Exception as e:
+        traceback.print_exc()
+    finally:
+        os.killpg(0, signal.SIGKILL)

@@ -66,10 +66,10 @@ class Ns3ZmqBridge(object):
         if self.startSim:
             # run simulation script
             self.ns3Process = start_sim_script(port, simSeed, simArgs, debug)
-        else:
-            print("Waiting for simulation script to connect on port: tcp://localhost:{}".format(port))
-            print('Please start proper ns-3 simulation script using ./waf --run "..."')
-        print("ICIIIIIIAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+        # else:
+        #     print("Waiting for simulation script to connect on port: tcp://localhost:{}".format(port))
+        #     print('Please start proper ns-3 simulation script using ./waf --run "..."')
+        # print("ICIIIIIIAAAAAAAAAAAAAAAAAAAAAAAAAAA")
         self._action_space = None
         self._observation_space = None
 
