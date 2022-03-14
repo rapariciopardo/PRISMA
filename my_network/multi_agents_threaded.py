@@ -45,9 +45,9 @@ def arguments_parser():
     
     group4 = parser.add_argument_group('Network parameters')
     group4.add_argument('--load_factor', type=float, help='scale of the traffic matrix', default=0.01)
-    group4.add_argument('--adjacency_matrix_path', type=str, help='Path to the adjacency matrix', default="scratch/my_network/examples/abilene/adjacency_matrix.txt")
-    group4.add_argument('--traffic_matrix_path', type=str, help='Path to the traffic matrix file', default="scratch/my_network/examples/abilene/traffic_matrices/node_intensity_0.txt")
-    group4.add_argument('--node_coordinates_path', type=str, help='Path to the nodes coordinates', default="scratch/my_network/examples/abilene/node_coordinates.txt")
+    group4.add_argument('--adjacency_matrix_path', type=str, help='Path to the adjacency matrix', default="../my_network/examples/abilene/adjacency_matrix.txt")
+    group4.add_argument('--traffic_matrix_path', type=str, help='Path to the traffic matrix file', default="../my_network/examples/abilene/traffic_matrices/node_intensity_0.txt")
+    group4.add_argument('--node_coordinates_path', type=str, help='Path to the nodes coordinates', default="../my_network/examples/abilene/node_coordinates.txt")
     group4.add_argument('--max_out_buffer_size', type=int, help='Max nodes output buffer limit', default=30)
     group4.add_argument('--link_delay', type=str, help='Network links delay', default="2ms")
     group4.add_argument('--packet_size', type=int, help='Size of the packets in bytes', default=512)
@@ -153,7 +153,8 @@ def main():
     params["loss_penalty"] = ((params["max_out_buffer_size"] + 1)*params["packet_size"]*8)/params["link_cap"]
     ## network topology
     G=nx.Graph()
-    os.chdir("../../")
+    
+    os.chdir("../ns3-gym/")
     for i, element in enumerate(np.loadtxt(open(params["node_coordinates_path"]))):
         G.add_node(i,pos=tuple(element))
     G = nx.from_numpy_matrix(np.loadtxt(open(params["adjacency_matrix_path"])), create_using=G)
@@ -209,9 +210,10 @@ def main():
                                                                                                                         params["adjacency_matrix_path"],
                                                                                                                         params["node_coordinates_path"],
                                                                                                                         params["traffic_matrix_path"]))
+    
     args = shlex.split(f'./waf --run "{ns3_params_format}"')
     subprocess.Popen(args)
-    os.chdir("scratch/my_network")
+    os.chdir("../my_network")
 
     ## setup the agents (fix the static variables)
     Agent.init_static_vars(params)

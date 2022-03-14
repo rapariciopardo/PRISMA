@@ -1,9 +1,17 @@
 #!/bin/bash  
 ## for training dqn
+cp -r ../my_network ../ns3-gym/scratch
+cd ../ns3-gym
+./waf configure && ./waf build
+sleep 3
+cd ../my_network
+
+
+
 for ((i=0; i<1; i++))
 	do  for ((j=100; j<=100; j=j+100))
 		do 
-		python multi_agents_threaded.py --simTime=40 \
+		python3 multi_agents_threaded.py --simTime=40 \
 			--basePort=$((6555+$j + (15*$i))) \
 			--train=1 \
 			--session_name="q_routing_mat_$(($i))_seed_$j"\
@@ -15,7 +23,7 @@ for ((i=0; i<1; i++))
 		sleep 5
 	done
 done
-
+rm -r ../ns3-gym/scratch/my_network
 
 ## for testing dqn 
 # couter=0
