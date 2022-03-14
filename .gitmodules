@@ -1,0 +1,3 @@
+[submodule "ns3-gym"]
+	path = ns3-gym
+	url = https://github.com/tkn-tub/ns3-gym
