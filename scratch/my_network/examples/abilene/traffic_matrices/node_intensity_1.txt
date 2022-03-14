@@ -1,0 +1,11 @@
+0Kbps 1.57Mbps 30.59Kbps 425.35Kbps 10.61Mbps 2.18Mbps 15.51Mbps 7.32Mbps 13.56Mbps 9.4Mbps 16.48Mbps
+5.17Mbps 0Kbps 7.82Mbps 16.86Mbps 19.95Mbps 6.56Mbps 10.59Mbps 7.48Mbps 14.42Mbps 8.45Mbps 12.3Mbps
+13.84Mbps 4.33Mbps 0Kbps 7.67Mbps 4.19Mbps 15.74Mbps 14.13Mbps 9.65Mbps 16.83Mbps 5.11Mbps 3.36Mbps
+3.27Mbps 13.81Mbps 9.09Mbps 0Kbps 18.51Mbps 10.41Mbps 10.72Mbps 12.63Mbps 12.15Mbps 8.82Mbps 17.84Mbps
+12.62Mbps 2.93Mbps 15.95Mbps 13.32Mbps 0Kbps 10.46Mbps 1.89Mbps 19.81Mbps 14.45Mbps 17.72Mbps 5.76Mbps
+15.85Mbps 19.77Mbps 15.42Mbps 8.36Mbps 10.26Mbps 0Kbps 15.01Mbps 19.74Mbps 3.89Mbps 14.76Mbps 6.98Mbps
+16.69Mbps 19.29Mbps 1.15Mbps 12.17Mbps 17.75Mbps 1.07Mbps 0Kbps 17.21Mbps 16.0Mbps 1.12Mbps 4.27Mbps
+5.86Mbps 14.1Mbps 4.32Mbps 7.96Mbps 18.31Mbps 1.14Mbps 7.62Mbps 0Kbps 469.21Kbps 14.06Mbps 12.52Mbps
+10.9Mbps 12.19Mbps 18.71Mbps 15.07Mbps 17.88Mbps 10.23Mbps 11.19Mbps 15.13Mbps 0Kbps 15.94Mbps 17.46Mbps
+17.58Mbps 6.07Mbps 17.05Mbps 4.63Mbps 8.6Mbps 10.03Mbps 12.18Mbps 15.05Mbps 14.73Mbps 0Kbps 4.14Mbps
+14.98Mbps 5.81Mbps 17.89Mbps 16.29Mbps 13.09Mbps 18.91Mbps 8.77Mbps 13.25Mbps 10.62Mbps 3.1Mbps 0Kbps

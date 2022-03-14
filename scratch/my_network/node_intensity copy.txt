@@ -1,5 +1,0 @@
-0Kbps 100Kbps 100Kbps 100Kbps 100Kbps
-100Kbps 0Kbps 100Kbps 100Kbps 100Kbps
-100Kbps 100Kbps 0Kbps 100Kbps 100Kbps
-100Kbps 100Kbps 100Kbps 0Kbps 100Kbps
-100Kbps 100Kbps 100Kbps 100Kbps 0Kbps

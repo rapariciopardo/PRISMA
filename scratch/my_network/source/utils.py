@@ -3,15 +3,16 @@ from networkx.algorithms.clique import number_of_cliques
 import tensorflow as tf
 import os, multiprocessing, shutil
 import numpy as np
+from source.models import SplitLayer
 
 
-def save_model(actor, path, t, num_episodes, root="saved_models/"):
+def save_model(actors, path, t, num_episodes, root="saved_models/"):
     """
     Save the DQN model for each node into a folder.
 
     Parameters
     ----------
-    actor : list
+    actors : list
         list of DQN models (one for each network node).
     path : str
         name of the folder where to store the models.
@@ -33,11 +34,11 @@ def save_model(actor, path, t, num_episodes, root="saved_models/"):
         os.mkdir(root + path)
     path = path.rstrip('/') + '/'
     folder_name = root + path + f"iteration{t}_episode{num_episodes}"
-    for i in range(len(actor)):
-        actor[i].q_network.save(f"{folder_name}/node{i}")
+    for i in range(len(actors)):
+        actors[i].q_network.save(f"{folder_name}/node{i}")
 
 
-def load_model(path):
+def load_model(path, node_index=-1):
     """
     Loads the list of agents from a directory
 
@@ -55,10 +56,14 @@ def load_model(path):
     q_functions = [1]*len(folders)
     for item in os.listdir(path):
         index = int(item.split("_")[-1][4:])
-        q_functions[index] = tf.keras.models.load_model(path + "/" + item)
-    if(1 in q_functions):
-        print("error during loading the models")
-        return None
+        if node_index >= 0 and node_index != index:
+            continue
+        try :
+            q_functions[index] = tf.keras.models.load_model(path + "/" + item, custom_objects={"K":tf.keras.backend , "layers":tf.keras.layers, "SplitLayer":SplitLayer, "tf":tf}, compile=False)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            print(e)
     return q_functions
 
 
