@@ -44,6 +44,11 @@ build/
 *_pb2.py
 *_pb3.py
 scratch/my_network/outputs/
+scratch/my_network/examples/abilene/saved_models/
+scratch/my_network/examples/abilene/results/
+scratch/my_network/examples/abilene/pre_trained_models/
+
+
 waf3*/*
 venv/
 .vscode/
