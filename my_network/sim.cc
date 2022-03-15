@@ -52,10 +52,8 @@
 #include "ns3/internet-module.h"
 #include "ns3/point-to-point-module.h"
 #include "ns3/applications-module.h"
-#include "scratch/my_network/traffic_generators/random-generator.h"
-#include "scratch/my_network/traffic_generators/random-helper.h"
-#include "scratch/my_network/traffic_generators/poisson-app-helper.h"
-#include "scratch/my_network/traffic_generators/poisson-application.h"
+
+#include "poisson-app-helper.h"
 #include "ns3/global-route-manager.h"
 #include "ns3/mobility-module.h"
 #include "ns3/netanim-module.h"
