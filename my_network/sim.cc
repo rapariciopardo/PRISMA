@@ -132,9 +132,9 @@ int main (int argc, char *argv[])
   std::string LinkDelay ("2ms");
   uint32_t AvgPacketSize = 512 - 30; //—> If you want to change the by-default 512 packet size
 
-  std::string adj_mat_file_name ("scratch/my_network/adjacency_matrix.txt");
-  std::string node_coordinates_file_name ("scratch/my_network/node_coordinates.txt");
-  std::string node_intensity_file_name("scratch/my_network/node_intensity.txt");
+  std::string adj_mat_file_name ("scratch/my_network/examples/abilene/adjacency_matrix.txt");
+  std::string node_coordinates_file_name ("scratch/my_network/examples/abilene/node_coordinates.txt");
+  std::string node_intensity_file_name("scratch/my_network/examples/abilene/node_intensity.txt");
   
   CommandLine cmd;
   // required parameters for OpenGym interface
@@ -289,9 +289,7 @@ int main (int argc, char *argv[])
           {
             if (Adj_Matrix[i][j] == 1)
               {
-                
                 nodes_degree[i] += 1;
-                nodes_degree[j] += 1;
               } 
           }
       }
@@ -316,7 +314,7 @@ int main (int argc, char *argv[])
 /////////////////////////////////////////////////////////////////
   for (size_t i = 0; i < Adj_Matrix.size (); i++)
       {
-        for (size_t j = 0; j < Adj_Matrix[i].size (); j++)
+        for (size_t j = i; j < Adj_Matrix[i].size (); j++)
           {
 
             if (Adj_Matrix[i][j] == 1)
@@ -328,13 +326,13 @@ int main (int argc, char *argv[])
                 NetDeviceContainer n_devs = p2p.Install(NodeContainer(nodes_switch.Get(i), nodes_switch.Get(j)));
                 switch_nd.Add(n_devs.Get(0));
                 switch_nd.Add(n_devs.Get(1));
-                // NS_LOG_INFO ("matrix element [" << i << "][" << j << "] is 1");
+                //NS_LOG_UNCOND ("matrix element [" << i << "][" << j << "] is 1");
                 // NS_LOG_UNCOND(n_devs.Get(0)->GetAddress()<<"     "<<n_devs.Get(1)->GetAddress());
                 
               }
             else
               {
-                // NS_LOG_INFO ("matrix element [" << i << "][" << j << "] is 0");
+                //NS_LOG_UNCOND ("matrix element [" << i << "][" << j << "] is 0");
               }
           }
       }
