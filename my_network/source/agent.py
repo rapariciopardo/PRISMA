@@ -10,7 +10,8 @@ from ns3gym import ns3env
 from source.learner import DQN_AGENT
 from source.utils import save_model, load_model, LinearSchedule
 from source.replay_buffer import ReplayBuffer
-from source.models import DQN_buffer_model
+from source.models import DQN_buffer_model, DQ_routing_model
+import threading
 # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 
 
@@ -56,7 +57,7 @@ class Agent():
     gamma = 1
     exploration_initial_eps = 0.5
     exploration_final_eps = 0.1
-    training_freq = 16
+    training_step = 16
     replay_buffer_max_size = 10000
     ## path from where to load the models
     load_path = None
@@ -83,7 +84,7 @@ class Agent():
         cl.gamma = params_dict["gamma"]
         cl.exploration_initial_eps = params_dict["exploration_initial_eps"]
         cl.exploration_final_eps = params_dict["exploration_final_eps"]
-        cl.training_freq = params_dict["training_freq"]
+        cl.training_step = params_dict["training_step"]
         cl.replay_buffer_max_size = params_dict["replay_buffer_max_size"]
         cl.envs = cl.numNodes * [None]
         cl.agents = cl.numNodes * [None]
@@ -105,21 +106,24 @@ class Agent():
     def __init__(self, index, agent_type="dqn", train=True):
         """ Init the agent
         index (int): agent index
-        agent_type (str): agent type. Can be : "dqn" for dqn buffer, "sp" for shortest path or "opt" for optimal solution
+        agent_type (str): agent type. Can be : "dqn" for dqn buffer, "dq_routing" for deep q routing, "sp" for shortest path or "opt" for optimal solution
         train (bool): if true, train the agent. Valid only for agent_type = dqn 
         """
         ### compute the port number
-        if agent_type not in ("dqn", "sp", "opt"):
-            raise('Unknown agent type, please choose from : ("dqn", "sp", "opt")')
+        if agent_type not in ("dqn", "dq_routing", "sp", "opt"):
+            raise('Unknown agent type, please choose from : ("dqn", "dq_routing", "sp", "opt")')
 
         self.agent_type = agent_type
-        if agent_type == "dqn":
+        if agent_type in ("dqn", "dq_routing"):
             self.train = train
         else:
             self.train = False
         self.index = index
         self.port = Agent.basePort + index
+        self.stepIdx = 0
         # print("index :", index,  self.port, Agent.startSim)
+        ## reset the env
+        self._reset()
     
     def _reset(self):
         """ Reset the ns3gym env 
@@ -141,6 +145,21 @@ class Agent():
             ### declare the DQN buffer model
             Agent.agents[self.index] = DQN_AGENT(
                 q_func=DQN_buffer_model,
+                # observation_shape=self.env.observation_space.shape,
+                observation_shape=self.env.observation_space.shape,
+                num_actions=self.env.action_space.n,
+                num_nodes=Agent.numNodes,
+                input_size_splits = [1,
+                                    self.env.action_space.n,
+                                    ],
+                lr=Agent.lr,
+                gamma=Agent.gamma
+            )
+        elif self.agent_type == "dq_routing":
+            ### declare the DQN buffer model
+            Agent.agents[self.index] = DQN_AGENT(
+                q_func=DQ_routing_model,
+                # observation_shape=self.env.observation_space.shape,
                 observation_shape=self.env.observation_space.shape,
                 num_actions=self.env.action_space.n,
                 num_nodes=Agent.numNodes,
@@ -154,7 +173,7 @@ class Agent():
             Agent.agents[self.index] = nx.shortest_path
 
         ## load the models
-        if Agent.load_path is not None and self.agent_type == "dqn":
+        if Agent.load_path is not None and self.agent_type in ("dqn", "dq_routing"):
             loaded_models = load_model(Agent.load_path, self.index)
             if loaded_models is not None:
                 Agent.agents[self.index].q_network.set_weights(loaded_models[self.index].get_weights())
@@ -170,22 +189,28 @@ class Agent():
         self.count_arrived_packets = 0
         self.count_new_pkts = 0
         self.last_training_time = 0
+        self.last_training_step = 0
         self.gradient_step_idx = 0
 
         ## define the log file for td error and exploration value
         self.summary_writer_td_error = tf.summary.create_file_writer(logdir=f'{Agent.logs_folder}/td_error/node_{self.index}')
         self.summary_writer_exploration = tf.summary.create_file_writer(logdir=f'{Agent.logs_folder}/exploration/node_{self.index}')
         self.summary_writer_replay_buffer_length = tf.summary.create_file_writer(logdir=f'{Agent.logs_folder}/replay_buffer_length/node_{self.index}')
+
+
     
-    def _take_action(self):
+    def _take_action(self, obs):
         """ Take an action given self.obs
+
+        Args :
+            obs (list): observation list
         """
-        if self.agent_type == "dqn":
+        if self.agent_type in("dqn", "dq_routing"):
             ### Take action using the NN
             # print(np.array([self.obs]), np.array([self.obs]).shape)
-            action = Agent.agents[self.index].step(np.array([self.obs]), True, self.update_eps).numpy().item()
+            action = Agent.agents[self.index].step(np.array([obs]), True, self.update_eps).numpy().item()
         elif self.agent_type == "sp":
-            action = self.neighbors.index(Agent.agents[self.index](Agent.G, self.index, self.obs[0])[1])
+            action = self.neighbors.index(Agent.agents[self.index](Agent.G, self.index, obs[0])[1])
         return action
 
     def _forward(self):
@@ -199,7 +224,7 @@ class Agent():
         if self.obs[0] == self.index or self.stepIdx < 1: # pkt arrived to dst or it is a train step, ignore the action
             self.action = 0
         else:
-            self.action = self._take_action()
+            self.action = self._take_action(self.obs)
             if self.obs[self.action + 1] >= Agent.max_out_buffer_size:
                 Agent.total_lost_pkts += 1
                 Agent.total_rewards_with_loss += Agent.loss_penalty
@@ -220,10 +245,11 @@ class Agent():
     def _train(self):
         ## do a training step
         self.last_training_time = Agent.curr_time
+        self.last_training_step = self.stepIdx
 
         ### Sync target NN
         for indx, neighbor in enumerate(self.neighbors): 
-            Agent.agents[self.index].sync_neighbor_target_q_network(Agent.agents[neighbor].q_network, indx)
+            Agent.agents[self.index].sync_neighbor_target_q_network(Agent.agents[neighbor], indx)
 
         # print("train...", index)
         ## sample from the replay buffer
@@ -263,11 +289,9 @@ class Agent():
             tf.summary.scalar('replay_buffer_length_over_time', len(Agent.replay_buffer[self.index]), step=int(Agent.curr_time*1e6))
         self.gradient_step_idx += 1
 
-    def run(self):
+    def run_forwarder(self):
         """ Run an episode simulation
         """
-        ## reset the env
-        self._reset()
         try:
             while True:
                 self.obs = self.env.reset()
@@ -313,11 +337,6 @@ class Agent():
                     else:
                         self.count_new_pkts += 1
                         Agent.total_new_rcv_pkts += 1
-
-                    ### Do a gradient Step
-                    # if Agent.curr_time > (last_training_time + between_train_steps_delay) and len(Agent.replay_buffer[index])> Agent.batch_size:
-                    if self.train and (self.stepIdx % Agent.training_freq)== 0 and len(Agent.replay_buffer[self.index])> Agent.batch_size:
-                        self._train()
                 break
 
                 if(not self.env.connected):
@@ -331,3 +350,20 @@ class Agent():
         print("***index :", self.index, "Done", "stepIdx =", self.stepIdx, "arrived pkts =", self.count_arrived_packets,  "new received pkts", self.count_new_pkts, "gradient steps", self.gradient_step_idx)
         return True
 
+    def run_trainer(self, train_type="event"):
+        """
+            train the agent at training_step depending on the train type.
+            Args :
+                train_type (str) : can be "event" for event based triggering or "time" for time based triggering
+        """
+        import time
+        if train_type == "event":
+            while True :
+                time.sleep(0.1)
+                if self.stepIdx > (self.last_training_step + Agent.training_step) and len(Agent.replay_buffer[self.index])> Agent.batch_size:
+                    self._train()
+        elif train_type == "time":
+            while True :
+                time.sleep(0.1)
+                if Agent.curr_time > (self.last_training_time + Agent.training_step) and len(Agent.replay_buffer[self.index])> Agent.batch_size:
+                    self._train()

@@ -117,6 +117,7 @@ class DQN_AGENT(tf.Module):
       self.gamma = gamma
       self.double_q = double_q
       self.grad_norm_clipping = grad_norm_clipping
+      self.observation_shape = observation_shape
       
       self.input_size_splits = input_size_splits
 
@@ -230,18 +231,18 @@ class DQN_AGENT(tf.Module):
 
       return q_t_selected_targets
     
-    def sync_neighbor_target_q_network(self, nn_network, neighbor_idx):
+    def sync_neighbor_target_q_network(self, agent_nn, neighbor_idx):
       """Copy nn network into neighbor target q network attribute
 
       Args:
-          nn_network (tf.network): tf neural network to copy
+          agent_nn (DQN agent): agent containing the neural network to copy
           neighbor_idx (int): neighbor index
       """
-      q_vars = nn_network.trainable_variables
+      q_vars = agent_nn.q_network.trainable_variables
       if self.neighbors_target_q_network[neighbor_idx] == []:
         with tf.name_scope(f'neighbor_target_q_network_{neighbor_idx}'):
-          self.neighbors_target_q_network[neighbor_idx] = self.q_func(nn_network.input_shape[1], nn_network.output_shape[1], self.num_nodes, 
-                                [1, 0, 0, 0,nn_network.output_shape[1]])
+          self.neighbors_target_q_network[neighbor_idx] = self.q_func(agent_nn.observation_shape, agent_nn.num_actions, self.num_nodes, 
+                                agent_nn.input_size_splits)
       target_q_vars = self.neighbors_target_q_network[neighbor_idx].trainable_variables
       for var, var_target in zip(q_vars, target_q_vars):
         var_target.assign(var)
