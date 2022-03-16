@@ -7,10 +7,11 @@ from time import sleep, time
 import numpy as np
 import threading
 import copy
-import tensorflow as tf
 import random
 import networkx as nx
 import os
+import tensorflow as tf
+
 import datetime
 from tensorboard.plugins.hparams import api as hp
 import multiprocessing
@@ -21,7 +22,9 @@ import shlex
 from tensorboard.plugins.custom_scalar import summary as cs_summary
 from tensorboard.plugins.custom_scalar import layout_pb2
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
+
 gpus = tf.config.experimental.list_physical_devices('GPU')
+print(gpus)
 if gpus:
     try:
         for gpu in gpus:
@@ -318,5 +321,7 @@ if __name__ == '__main__':
         print("Elapsed time = ", str(datetime.timedelta(seconds= time() - start_time)))
     except Exception as e:
         traceback.print_exc()
+    except KeyboardInterrupt:
+        print("Ctrl-C -> Exit")
     finally:
         os.killpg(0, signal.SIGKILL)
