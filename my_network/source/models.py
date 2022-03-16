@@ -78,3 +78,38 @@ def DQN_buffer_model(observation_shape, num_actions, num_nodes, input_size_split
 
     return tf.keras.Model(inputs=inp, outputs=out)
 
+
+def DQ_routing_model(observation_shape, num_actions, num_nodes, input_size_splits):
+    """The DQ routing : 
+        - The input : tensor with shape (batch_size, 1) containing the : destination of the packet.
+        - The output : tensor with shape (batch_size, num_actions) containing the estimated delay for routing the packet to an output buffer.
+        - The architecture : 
+            1- Split the input to separate the destination from the output buffers.
+            2- Encode the destination id using one hot encoding.
+            3- Push destination to a dense layer with size 32.
+            4- Apply a Dense layer of size 64.
+            5- Apply a Dense layer of size 64.
+            6- Apply a Dense layer of size num_actions.   
+
+    Args:
+        observation_shape (List): shape of the inputs.
+        num_actions (list): shape of the outputs.
+        num_nodes (int): number of nodes in the network.
+        input_size_splits (list): the shape of the split.
+
+    Returns:
+        model : keras NN model.
+    """
+    inp = layers.Input(shape=observation_shape)
+    one_hot_layer = layers.Lambda(lambda x: K.one_hot(K.cast(x,'int64'), num_nodes))
+    split = SplitLayer(num_or_size_splits=input_size_splits)(inp)
+    
+    flattened_split = layers.Flatten()(one_hot_layer(split[0]))
+    concatted = layers.Dense(units=32, activation="elu", kernel_initializer='he_uniform', bias_initializer='he_uniform')(flattened_split)
+
+    out = layers.Dense(units=64, activation="elu", kernel_initializer='he_uniform', bias_initializer='he_uniform')(concatted)
+    out = layers.Dense(units=64, activation="elu", kernel_initializer='he_uniform', bias_initializer='he_uniform')(out)
+    out = layers.Dense(num_actions, activation='elu', kernel_initializer='he_uniform', bias_initializer='he_uniform')(out)
+
+    return tf.keras.Model(inputs=inp, outputs=out)
+

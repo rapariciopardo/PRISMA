@@ -7,11 +7,10 @@ from time import sleep, time
 import numpy as np
 import threading
 import copy
+import tensorflow as tf
 import random
 import networkx as nx
 import os
-import tensorflow as tf
-
 import datetime
 from tensorboard.plugins.hparams import api as hp
 import multiprocessing
@@ -22,9 +21,7 @@ import shlex
 from tensorboard.plugins.custom_scalar import summary as cs_summary
 from tensorboard.plugins.custom_scalar import layout_pb2
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
-
 gpus = tf.config.experimental.list_physical_devices('GPU')
-print(gpus)
 if gpus:
     try:
         for gpu in gpus:
@@ -59,11 +56,11 @@ def arguments_parser():
 
     group2 = parser.add_argument_group('Storing session logs arguments')
     group2.add_argument('--session_name', type=str, help='Name of the folder where to save the logs of the session', default=None)
-    group2.add_argument('--logs_parent_folder', type=str, help='Name of the root folder where to save the logs of the sessions', default="examples/abilene/results")
+    group2.add_argument('--logs_parent_folder', type=str, help='Name of the root folder where to save the logs of the sessions', default="examples/abilene/")
     group2.add_argument('--logging_timestep', type=int, help='Time delay (in real time) between each logging in seconds', default=15)
     
     group3 = parser.add_argument_group('DRL Agent arguments')
-    group3.add_argument('--agent_type', choices=["dqn", "sp", "opt"], type=str, help='The type of the agent. Can be dqn, sp or opt', default="dqn")
+    group3.add_argument('--agent_type', choices=["dqn", "dq_routing", "sp", "opt"], type=str, help='The type of the agent. Can be dqn, dq_routing, sp or opt', default="dq_routing")
     group3.add_argument('--lr', type=float, help='Learning rate (used when training)', default=1e-3)
     group3.add_argument('--batch_size', type=int, help='Size of a batch (used when training)', default=128)
     group3.add_argument('--gamma', type=float, help='Gamma ratio for RL (used when training)', default=1)
@@ -72,11 +69,13 @@ def arguments_parser():
     group3.add_argument('--exploration_final_eps', type=float, help='Exploration final value (used when training)', default=0.1)
     group3.add_argument('--load_path', type=str, help='Path to DQN models, if not None, loads the models from the given files', default=None)
     group3.add_argument('--save_models', type=int, help='if True, store the models at the end of the training', default=1)
-    group3.add_argument('--training_freq', type=int, help='Number of timesteps to train (used when training)', default=16)
+    group3.add_argument('--training_trigger_type', type=str, choices=["event", "time"], help='Type of the training trigger, can be "event" (for event based) or "time" (for time based) (used when training)', default="event")
+    group3.add_argument('--training_step', type=float, help='Number of steps or seconds to train (used when training)', default=16.0)
     group3.add_argument('--replay_buffer_max_size', type=int, help='Max size of the replay buffers (used when training)', default=10000)
 
     group5 = parser.add_argument_group('Other parameters')
     group5.add_argument('--start_tensorboard', type=int, help='if True, starts a tensorboard server to keep track of simulation progress', default=1)
+    group5.add_argument('--tensorboard_port', type=int, help='Tensorboard server port', default=16666)
     # parser.print_help()
 
 
@@ -156,7 +155,7 @@ def main():
     params["loss_penalty"] = ((params["max_out_buffer_size"] + 1)*params["packet_size"]*8)/params["link_cap"]
     ## network topology
     G=nx.Graph()
-    
+
     os.chdir("../ns3-gym/")
     for i, element in enumerate(np.loadtxt(open(params["node_coordinates_path"]))):
         G.add_node(i,pos=tuple(element))
@@ -164,9 +163,10 @@ def main():
     params["numNodes"] = G.number_of_nodes()
     params["G"] = G
     os.chdir("scratch/my_network")
+    params["logs_parent_folder"] = params["logs_parent_folder"].rstrip("/")
     if params["session_name"] == None:
         params["session_name"] = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    params["logs_folder"] = params["logs_parent_folder"] + params["session_name"]
+    params["logs_folder"] = params["logs_parent_folder"] + "/results/"+ params["session_name"]
 
     # between_train_steps_delay = 0.05
 
@@ -182,12 +182,11 @@ def main():
     params["nb_new_pkts_path"] = f'{params["logs_folder"]}/nb_new_pkts'
     params["nb_lost_pkts_path"] = f'{params["logs_folder"]}/nb_lost_pkts'
 
-    summary_writer_parent = tf.summary.create_file_writer(logdir=params["logs_parent_folder"])
+    summary_writer_parent = tf.summary.create_file_writer(logdir=params["logs_folder"] )
     summary_writer_session = tf.summary.create_file_writer(logdir=params["global_stats_path"] )
     summary_writer_nb_arrived_pkts = tf.summary.create_file_writer(logdir=params["nb_arrived_pkts_path"] )
     summary_writer_nb_new_pkts = tf.summary.create_file_writer(logdir=params["nb_new_pkts_path"] )
     summary_writer_nb_lost_pkts = tf.summary.create_file_writer(logdir=params["nb_lost_pkts_path"] )
-    # raise(1)
 
     ## write the session info
     with tf.summary.create_file_writer(logdir=params["logs_folder"]).as_default():
@@ -213,7 +212,6 @@ def main():
                                                                                                                         params["adjacency_matrix_path"],
                                                                                                                         params["node_coordinates_path"],
                                                                                                                         params["traffic_matrix_path"]))
-    
     args = shlex.split(f'./waf --run "{ns3_params_format}"')
     subprocess.Popen(args)
     os.chdir("../my_network")
@@ -224,8 +222,11 @@ def main():
     ## run the agents
     for index in range(params["numNodes"]):
         agent_instance = Agent(index, agent_type=params["agent_type"], train=params["train"])
-        x = threading.Thread(target=agent_instance.run, args=())
-        x.start()
+        th1 = threading.Thread(target=agent_instance.run_forwarder, args=())
+        th1.start()
+        if params["train"]:
+            th2 = threading.Thread(target=agent_instance.run_trainer, args=(params["training_trigger_type"],))
+            th2.start()
 
     ## Define the custom categories in tensorboard
     with summary_writer_parent.as_default():
@@ -235,14 +236,15 @@ def main():
 
     ## Run tensorboard server
     if params["start_tensorboard"]:
-        args = shlex.split(f'tensorboard --logdir={params["logs_folder"]} --port=16666')
+        args = shlex.split(f'python3 -m tensorboard.main --logdir={params["logs_folder"]} --port=16666')
         subprocess.Popen(args)
     sleep(1)
     ## wait until simulation complete and update info about the env at each timestep
-    while threading.active_count() > params["numNodes"]:
+    # print(threading.active_count())
+    while threading.active_count() > params["numNodes"] * 2:
 
         sleep(params["logging_timestep"])
-
+        # print(threading.active_count())
         ## write the global stats
         if Agent.total_new_rcv_pkts > 0:
             loss_ratio = Agent.total_lost_pkts/Agent.total_new_rcv_pkts
@@ -307,7 +309,7 @@ def main():
             Loss ratio = {loss_ratio},
             """)
     if params["save_models"]:
-        save_model(Agent.agents, params["session_name"], 1, 1, root="saved_models/")
+        save_model(Agent.agents, params["session_name"], 1, 1, root=params["logs_parent_folder"] + "/saved_models/")
     if Agent.total_arrived_pkts:
         print(f"Average delay per arrived packets = {Agent.total_rewards/Agent.total_arrived_pkts}")
 
@@ -321,7 +323,5 @@ if __name__ == '__main__':
         print("Elapsed time = ", str(datetime.timedelta(seconds= time() - start_time)))
     except Exception as e:
         traceback.print_exc()
-    except KeyboardInterrupt:
-        print("Ctrl-C -> Exit")
     finally:
         os.killpg(0, signal.SIGKILL)
