@@ -43,11 +43,11 @@ build/
 *.pb.cc
 *_pb2.py
 *_pb3.py
-my_network/examples/*/outputs/
-my_network/examples/*/saved_models/
-my_network/examples/*/results/
-my_network/examples/*/pre_trained_models/
+my_network/examples/*/saved_models/*
+my_network/examples/*/results/*
+my_network/examples/*/pre_trained_models/*
 
+ns3-gym/*
 
 waf3*/*
 venv/

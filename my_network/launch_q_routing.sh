@@ -1,4 +1,6 @@
 #!/bin/bash  
+ 
+
 ## for training dqn
 rsync -r --exclude-from=../.gitignore ../my_network ../ns3-gym/scratch/
 cd ../ns3-gym
@@ -9,21 +11,18 @@ cd ../my_network
 
 ## Training DQN
 ## If using, uncomment the lines below
-for ((i=0; i<1; i++))
-	do  for ((j=100; j<=100; j=j+100))
-		do 
-		python3 multi_agents_threaded.py --simTime=40 \
-			--basePort=$((6555+$j + (15*$i))) \
-			--train=1 \
-			--session_name="q_routing_mat_$(($i))_seed_$j"\
-			--logs_parent_folder=examples/abilene/outputs/train_q_routing_no_signaling/ \
-			--traffic_matrix_path=scratch/my_network/examples/abilene/traffic_matrices/node_intensity_$(($i)).txt \
-			--seed=$j \
-			--load_factor=0.01 \
-			--start_tensorboard=0 &
-		sleep 5
-	done
-done
+
+python3 multi_agents_threaded.py --simTime=5 \
+	--basePort=6555 \
+	--train=1 \
+	--session_name="q_routing_no_signaling_time"\
+	--logs_parent_folder=examples/abilene/ \
+	--traffic_matrix_path=scratch/my_network/examples/abilene/traffic_matrices/node_intensity_0.txt \
+	--training_step=0.1 \
+	--training_trigger_type="time" \
+	--save_models=0
+	--start_tensorboard=0 
+
 
 ## Testing dqn
 ## Uncoment the lines below 

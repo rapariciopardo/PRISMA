@@ -1,7 +1,7 @@
 #!/bin/bash  
-cp -r ../my_network ../ns3-gym/scratch
+rsync -r --exclude-from=../.gitignore ../my_network ../ns3-gym/scratch/
 cd ../ns3-gym
-./waf configure && ./waf build
+./waf -d optimized configure
 sleep 3
 cd ../my_network
 
