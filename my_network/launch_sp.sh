@@ -8,13 +8,13 @@ cd ../my_network
 ## Test SP with load factor variation
 ## Uncomment the lines below
 array=(
-0.039
-0.07
-0.3
+0.016
+0.04
+0.05
 )
-#counter=0
+counter=0
 #batchSize=10
-for ((i=4; i<5; i++))
+for ((i=0; i<1; i++))
 	do  for j in ${array[@]}
 		do 
 		#res=$((counter%batchSize))
@@ -26,9 +26,9 @@ for ((i=4; i<5; i++))
         res1=${FLOAT/.*}
 		echo $res1
 		python3 multi_agents_threaded.py --simTime=600 \
-			--basePort=$((6655 )) \
+			--basePort=$((6655 + (counter*100) )) \
 			--session_name="sp_mat_$(($i))_load_$res1" \
-			--logs_parent_folder=examples/abilene/outputs/mat_$(($i))/load_$(($res1))/sp/ \
+			--logs_parent_folder=examples/geant/outputs/mat_$(($i))/load_$(($res1))/sp/ \
 			--seed=100 \
 			--start_tensorboard=0 \
 			--train=0 \
@@ -37,11 +37,11 @@ for ((i=4; i<5; i++))
 			--save_models=0 \
 			--exploration_initial_eps=0 \
 			--exploration_final_eps=0 \
-			--traffic_matrix_path=scratch/my_network/examples/abilene/traffic_matrices/node_intensity_$(($i)).txt \
-			--adjacency_matrix_path=scratch/my_network/examples/abilene/adjacency_matrix.txt \
-			--node_coordinates_path=scratch/my_network/examples/abilene/node_coordinates.txt \
+			--traffic_matrix_path=scratch/my_network/examples/geant/traffic_matrices/node_intensity_$(($i)).txt \
+			--adjacency_matrix_path=scratch/my_network/examples/geant/adjacency_matrix.txt \
+			--node_coordinates_path=scratch/my_network/examples/geant/node_coordinates.txt \
 			--load_factor=$j &		
-		counter=$((counter+"1")) &
+		counter=$((counter+1)) &
         sleep 10
 	done
 done
