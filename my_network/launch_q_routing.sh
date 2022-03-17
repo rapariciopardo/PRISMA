@@ -20,9 +20,9 @@ python3 multi_agents_threaded.py --simTime=5 \
 	--traffic_matrix_path=scratch/my_network/examples/abilene/traffic_matrices/node_intensity_0.txt \
 	--training_step=0.1 \
 	--training_trigger_type="time" \
-	--save_models=0
+	--save_models=0 \
 	--start_tensorboard=0 
-
+sleep 5
 
 ## Testing dqn
 ## Uncoment the lines below 
