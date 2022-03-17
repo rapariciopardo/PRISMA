@@ -162,7 +162,8 @@ def main():
     G = nx.from_numpy_matrix(np.loadtxt(open(params["adjacency_matrix_path"])), create_using=G)
     params["numNodes"] = G.number_of_nodes()
     params["G"] = G
-    os.chdir("scratch/my_network")
+    
+    os.chdir("../my_network")
     params["logs_parent_folder"] = params["logs_parent_folder"].rstrip("/")
     if params["session_name"] == None:
         params["session_name"] = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -182,6 +183,7 @@ def main():
     params["nb_new_pkts_path"] = f'{params["logs_folder"]}/nb_new_pkts'
     params["nb_lost_pkts_path"] = f'{params["logs_folder"]}/nb_lost_pkts'
 
+
     summary_writer_parent = tf.summary.create_file_writer(logdir=params["logs_folder"] )
     summary_writer_session = tf.summary.create_file_writer(logdir=params["global_stats_path"] )
     summary_writer_nb_arrived_pkts = tf.summary.create_file_writer(logdir=params["nb_arrived_pkts_path"] )
@@ -198,7 +200,7 @@ def main():
         hp.hparams(dict_to_store)  # record the values used in this trial
     
     ## run NS3 simulator
-    os.chdir("../../")
+    os.chdir("../ns3-gym/")
     ns3_params_format = ('my_network --simSeed={} --openGymPort={} --simTime={} --AvgPacketSize={} '
                         '--LinkDelay={} --LinkRate={} --MaxBufferLength={} --load_factor={} '
                         '--adj_mat_file_name={} --node_coordinates_file_name={} --node_intensity_file_name={}'.format( params["seed"],
