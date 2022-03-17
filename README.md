@@ -10,44 +10,45 @@ Moreover, the NetSim implementation is based on [ns3-gym](https://github.com/tkn
 Installation
 ============
 
-1. Install all required dependencies required by ns-3.
-```
-# minimal requirements for C++:
-apt-get install gcc g++ python
+If you don't have the Nse-gym alrady installed
 
-see https://www.nsnam.org/wiki/Installation
+1. If the submodule was not yet initialized, initialize them.
 ```
-2. Install ZMQ and Protocol Buffers libs:
-```
-# to install protobuf-3.6 on ubuntu 16.04:
-sudo add-apt-repository ppa:maarten-fonville/protobuf
-sudo apt-get update
-
-apt-get install libzmq5 libzmq5-dev
-apt-get install libprotobuf-dev
-apt-get install protobuf-compiler
+git submodule init
+git submodule update
 ```
 
-3. Install ns3gym located in src/opengym/model/ns3gym (Python3 required)
+2. Run the script install.sh . It will install the NS3 requirements (minimal requirements for C++, ZMQ and Protocol Buffers libs. For more information, see https://www.nsnam.org/wiki/Installation). Moreover, it will compile the messages.proto file for python. 
+
+The usage of sudo may be required.
 ```
-pip3 install ./src/opengym/model/ns3gym
+sudo sh install.sh
 ```
 
-5. Install Tensorflow
-```
-pip install --upgrade tensorflow
-```
-
-6. Run agent and simulation:
+3. Go to my_network directory and install the python packages required using the command below (numpy, networkx, gym, tensorflow, zmq)
 ```
 cd ./my_network/
-./launch_dqn.sh
+pip install -e .
 ```
 
-7. (Optional) For killing agents, use the script:
+4. For running Q-Routing Run agent and simulation:
+```
+./launch_q_routing.sh
+```
+or
+
+For launching Shortest Path agent:
+```
+./launch_sp.sh
+```
+
+
+5. (Optional) For killing agents, use the script:
 ```
 ./kill_agents.sh
 ```
+
+
 
 Agents
 ===========
