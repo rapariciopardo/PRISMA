@@ -241,7 +241,12 @@ def main():
     sleep(1)
     ## wait until simulation complete and update info about the env at each timestep
     # print(threading.active_count())
-    while threading.active_count() > params["numNodes"] * 2:
+    if(params["train"]==0):
+        n_threads = params["numNodes"]
+    else:
+        n_threads = params["numNodes"] * 2
+
+    while threading.active_count() > n_threads:
 
         sleep(params["logging_timestep"])
         # print(threading.active_count())
