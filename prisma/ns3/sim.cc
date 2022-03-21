@@ -132,9 +132,9 @@ int main (int argc, char *argv[])
   std::string LinkDelay ("2ms");
   uint32_t AvgPacketSize = 512 - 30; //—> If you want to change the by-default 512 packet size
 
-  std::string adj_mat_file_name ("scratch/my_network/examples/abilene/adjacency_matrix.txt");
-  std::string node_coordinates_file_name ("scratch/my_network/examples/abilene/node_coordinates.txt");
-  std::string node_intensity_file_name("scratch/my_network/examples/abilene/node_intensity.txt");
+  std::string adj_mat_file_name ("scratch/prisma/examples/abilene/adjacency_matrix.txt");
+  std::string node_coordinates_file_name ("scratch/prisma/examples/abilene/node_coordinates.txt");
+  std::string node_intensity_file_name("scratch/prisma/examples/abilene/node_intensity.txt");
   
   CommandLine cmd;
   // required parameters for OpenGym interface
@@ -143,9 +143,9 @@ int main (int argc, char *argv[])
   // optional parameters
   cmd.AddValue ("eventBasedEnv", "Whether steps should be event or time based. Default: true", eventBasedEnv);
   cmd.AddValue ("simTime", "Simulation time in seconds. Default: 30s", simTime);
-  cmd.AddValue ("adj_mat_file_name", "Adjacency matrix file path. Default: scratch/my_network/adjacency_matrix.txt", adj_mat_file_name);
-  cmd.AddValue ("node_coordinates_file_name", "Node coordinates file path. Default: scratch/my_network/node_coordinates.txt", node_coordinates_file_name);
-  cmd.AddValue ("node_intensity_file_name", "Node intensity (traffic matrix) file path. Default: scratch/my_network/node_intensity.txt", node_intensity_file_name);
+  cmd.AddValue ("adj_mat_file_name", "Adjacency matrix file path. Default: scratch/prisma/adjacency_matrix.txt", adj_mat_file_name);
+  cmd.AddValue ("node_coordinates_file_name", "Node coordinates file path. Default: scratch/prisma/node_coordinates.txt", node_coordinates_file_name);
+  cmd.AddValue ("node_intensity_file_name", "Node intensity (traffic matrix) file path. Default: scratch/prisma/node_intensity.txt", node_intensity_file_name);
   cmd.AddValue ("AvgPacketSize", "Packet size. Default: 512", AvgPacketSize);
   cmd.AddValue ("LinkDelay", "Network links delay. Default: 2ms", LinkDelay);
   cmd.AddValue ("LinkRate", "Network links capacity in bits per seconds. Default: 500Kbps", LinkRate);

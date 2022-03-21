@@ -43,9 +43,10 @@ build/
 *.pb.cc
 *_pb2.py
 *_pb3.py
-my_network/examples/*/saved_models/*
-my_network/examples/*/results/*
-my_network/examples/*/pre_trained_models/*
+prisma/examples/*/saved_models/*
+prisma/examples/*/results/*
+prisma/examples/*/pre_trained_models/*
+prisma/examples/*/traffic_matrices/*
 
 ns3-gym/*
 
@@ -53,3 +54,4 @@ waf3*/*
 venv/
 .vscode/
 
+tok.txt
