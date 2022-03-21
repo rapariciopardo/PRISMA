@@ -1,10 +1,10 @@
 #!/bin/bash  
 ## for training dqn
-rsync -r --exclude-from=../.gitignore ../my_network ../ns3-gym/scratch/
+rsync -r --exclude-from=../.gitignore ../prisma ../ns3-gym/scratch/
 cd ../ns3-gym
 ./waf -d optimized configure
 sleep 3
-cd ../my_network
+cd ../prisma
 
 
 ## Training DQN
@@ -12,12 +12,12 @@ cd ../my_network
 for ((i=0; i<1; i++))
 	do  for ((j=100; j<=100; j=j+100))
 		do 
-		python3 multi_agents_threaded.py --simTime=40 \
+		python3 main.py --simTime=40 \
 			--basePort=$((6555+$j + (15*$i))) \
 			--train=1 \
 			--session_name="q_routing_mat_$(($i))_seed_$j"\
 			--logs_parent_folder=examples/abilene/outputs/train_q_routing_no_signaling/ \
-			--traffic_matrix_path=scratch/my_network/examples/abilene/traffic_matrices/node_intensity_$(($i)).txt \
+			--traffic_matrix_path=scratch/prisma/examples/abilene/traffic_matrices/node_intensity_$(($i)).txt \
 			--seed=$j \
 			--load_factor=0.01 \
 			--start_tensorboard=0 &
@@ -55,4 +55,4 @@ done
 #done
 
 
-rm -r ../ns3-gym/scratch/my_network
+rm -r ../ns3-gym/scratch/prisma

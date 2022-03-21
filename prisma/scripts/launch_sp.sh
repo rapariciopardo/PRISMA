@@ -1,9 +1,16 @@
-#!/bin/bash  
-rsync -r --exclude-from=../.gitignore ../my_network ../ns3-gym/scratch/
+#!/bin/bash 
+
+## Move to main folder
+cd ..
+
+## Copy prisma into ns-3 folder
+rsync -r --exclude-from=../.gitignore ../prisma ../ns3-gym/scratch/
+
+## configure ns3
 cd ../ns3-gym
 ./waf -d optimized configure
 sleep 3
-cd ../my_network
+cd ../prisma
 
 ## Test SP with load factor variation
 ## Uncomment the lines below
@@ -38,9 +45,9 @@ for ((i=4; i<5; i++))
 			--save_models=0 \
 			--exploration_initial_eps=0 \
 			--exploration_final_eps=0 \
-			--traffic_matrix_path=scratch/my_network/examples/abilene/traffic_matrices/node_intensity_$(($i)).txt \
-			--adjacency_matrix_path=scratch/my_network/examples/abilene/adjacency_matrix.txt \
-			--node_coordinates_path=scratch/my_network/examples/abilene/node_coordinates.txt \
+			--traffic_matrix_path=scratch/prisma/examples/abilene/traffic_matrices/node_intensity_$(($i)).txt \
+			--adjacency_matrix_path=scratch/prisma/examples/abilene/adjacency_matrix.txt \
+			--node_coordinates_path=scratch/prisma/examples/abilene/node_coordinates.txt \
 			--load_factor=$j 		
 		counter=$((counter+1))
 		echo $counter
@@ -87,11 +94,11 @@ done
 # 				--exploration_initial_eps=0 \
 # 				--exploration_final_eps=0 \
 # 				--load_path=saved_models/dqn_mat_$(($i))_seed_$k/episode1 \
-# 				--traffic_matrix_path=scratch/my_network/examples/abilene/traffic_matrices/node_intensity_$(($i)).txt \
+# 				--traffic_matrix_path=scratch/prisma/examples/abilene/traffic_matrices/node_intensity_$(($i)).txt \
 # 				--load_factor=$j &		
 # 			counter=$((counter+"1"))
 # 		done
 # 	done
 # done
 
-rm -r ../ns3-gym/scratch/my_network
+rm -r ../ns3-gym/scratch/prisma
