@@ -91,8 +91,8 @@ def arguments_parser():
     params["logs_parent_folder"] = os.path.abspath(params["logs_parent_folder"])
     if params["load_path"]:
         params["load_path"] = os.path.abspath(params["load_path"])
-    if params["save_models"]:
-        params["save_models"] = os.path.abspath(params["save_models"])
+    #if params["save_models"]:
+    #    params["save_models"] = os.path.abspath(params["save_models"])
     params["adjacency_matrix_path"] = os.path.abspath(params["adjacency_matrix_path"])
     params["traffic_matrix_path"] = os.path.abspath(params["traffic_matrix_path"])
     params["node_coordinates_path"] = os.path.abspath(params["node_coordinates_path"])
@@ -315,7 +315,7 @@ def main():
     sleep(1)
 
     ## wait until simulation complete and update info about the env at each timestep
-    while threading.active_count() > params["numNodes"] * 2:
+    while threading.active_count() > params["numNodes"] * (1+ params["train"]):
         sleep(params["logging_timestep"])
 
         stats_writer(summary_writer_session, summary_writer_nb_arrived_pkts, summary_writer_nb_lost_pkts, summary_writer_nb_new_pkts)

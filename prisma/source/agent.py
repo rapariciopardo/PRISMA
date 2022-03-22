@@ -211,7 +211,7 @@ class Agent():
         if self.agent_type in("dqn", "dq_routing"):
             ### Take action using the NN
             # print(np.array([self.obs]), np.array([self.obs]).shape)
-            action = Agent.agents[self.index].step(np.array([obs]), True, self.update_eps).numpy().item()
+            action = Agent.agents[self.index].step(np.array([obs]), self.train, self.update_eps).numpy().item()
         elif self.agent_type == "sp":
             action = self.neighbors.index(Agent.agents[self.index](Agent.G, self.index, obs[0])[1])
         return action
