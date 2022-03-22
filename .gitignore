@@ -46,7 +46,6 @@ build/
 prisma/examples/*/saved_models/*
 prisma/examples/*/results/*
 prisma/examples/*/pre_trained_models/*
-prisma/examples/*/traffic_matrices/*
 
 ns3-gym/*
 
