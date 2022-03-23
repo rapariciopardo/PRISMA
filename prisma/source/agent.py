@@ -36,6 +36,7 @@ class Agent():
     curr_time=0
     total_hops=0
     total_rewards_with_loss=0
+    total_e2e_delay=0
     # define the replay buffer as a global variable
     replay_buffer = []
     # define the temp observations dict to prepare the (s, a, r, s', flag) for replay buffer
@@ -100,7 +101,7 @@ class Agent():
         cl.currIt = 0
         cl.total_new_rcv_pkts=0
         cl.total_arrived_pkts=0
-        cl.total_rewards=0
+        cl.total_e2e_delay=0
         cl.total_lost_pkts=0
         cl.curr_time=0
         cl.total_hops=0
@@ -328,6 +329,7 @@ class Agent():
                     if self.done:       
                         self.count_arrived_packets += 1
                         Agent.total_arrived_pkts += 1
+                        Agent.total_e2e_delay += delay_time
                         if Agent.max_nb_arrived_pkts > 0 and Agent.max_nb_arrived_pkts <= Agent.total_arrived_pkts:
                             print("Done by max number of arrived pkts")
                             break 
@@ -338,11 +340,10 @@ class Agent():
                         hop_time =  Agent.curr_time - states_info["time"]
                         Agent.replay_buffer[int(states_info["node"])].add(np.array(states_info["obs"], dtype=float).squeeze(),
                                                                     states_info["action"], 
-                                                                    Agent.curr_time - states_info["time"],
+                                                                    hop_time,
                                                                     np.array(self.obs, dtype=float).squeeze(), 
                                                                     self.done)
-                        Agent.total_rewards += Agent.curr_time - states_info["time"]
-                        Agent.total_rewards_with_loss += Agent.curr_time - states_info["time"]
+                        Agent.total_rewards_with_loss += hop_time
                         Agent.total_hops += 1
                     else:
                         self.count_new_pkts += 1
