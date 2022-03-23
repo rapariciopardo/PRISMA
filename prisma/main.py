@@ -222,8 +222,8 @@ def stats_writer(summary_writer_session, summary_writer_nb_arrived_pkts, summary
     else:
         loss_ratio = -1
     if Agent.total_arrived_pkts > 0:
-        avg_delay = Agent.total_rewards/Agent.total_arrived_pkts
-        avg_cost = Agent.total_rewards_with_loss/Agent.total_arrived_pkts
+        avg_delay = Agent.total_e2e_delay/(Agent.total_arrived_pkts*1000)
+        avg_cost = Agent.total_rewards_with_loss/Agent.total_new_rcv_pkts
         avg_hops = Agent.total_hops/Agent.total_arrived_pkts
     else:
         avg_delay = -1
@@ -232,8 +232,8 @@ def stats_writer(summary_writer_session, summary_writer_nb_arrived_pkts, summary
 
     with summary_writer_session.as_default():
         ## total rewards
-        tf.summary.scalar('total_rewards_over_iterations', Agent.total_rewards, step=Agent.currIt)
-        tf.summary.scalar('total_rewards_over_time', Agent.total_rewards, step=int(Agent.curr_time*1e6))
+        tf.summary.scalar('total_e2e_delay_over_iterations', Agent.total_e2e_delay, step=Agent.currIt)
+        tf.summary.scalar('total_e2e_delay_over_time', Agent.total_e2e_delay, step=int(Agent.curr_time*1e6))
         tf.summary.scalar('total_rewards_with_loss_over_iterations', Agent.total_rewards_with_loss, step=Agent.currIt)
         tf.summary.scalar('total_rewards_with_loss_over_time', Agent.total_rewards_with_loss, step=int(Agent.curr_time*1e6))
         ## loss ratio
@@ -373,13 +373,14 @@ def main():
 
     print(f""" Summary of the episode :
             Total number of Transitions = {Agent.currIt}, 
-            Total e2e delay = {Agent.total_rewards}, 
+            Total e2e delay = {Agent.total_e2e_delay}, 
             Total number of packets = {Agent.total_new_rcv_pkts}, 
             Number of arrived packets = {Agent.total_arrived_pkts},
             Number of lost packets = {Agent.total_lost_pkts},
+            Loss ratio = {Agent.total_lost_pkts/Agent.total_new_rcv_pkts}
             """)
     if Agent.total_arrived_pkts:
-        print(f"Average delay per arrived packets = {Agent.total_rewards/Agent.total_arrived_pkts}")
+        print(f"Average delay per arrived packets = {Agent.total_e2e_delay/(Agent.total_arrived_pkts*1000)}")
 
     ## save models        
     if params["save_models"]:
