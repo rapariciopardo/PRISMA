@@ -2,6 +2,14 @@ import tensorflow as tf
 from tensorflow.keras import layers
 from tensorflow.keras import backend as K
 
+__author__ = "Redha A. Alliche, Tiago Da Silva Barros, Ramon Aparicio-Pardo, Lucile Sassatelli"
+__copyright__ = "Copyright (c) 2022 Redha A. Alliche, Tiago Da Silva Barros, Ramon Aparicio-Pardo, Lucile Sassatelli"
+__license__ = "GPL"
+__email__ = "alliche,raparicio,sassatelli@i3s.unice.fr, tiago.da-silva-barros@inria.fr"
+
+# This work was partially based on openai/baselines available on https://github.com/openai/baselines/tree/tf2/baselines/deepq
+
+
 class SplitLayer(layers.Layer):
     """Split input layer
     """

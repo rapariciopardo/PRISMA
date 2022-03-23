@@ -1,7 +1,8 @@
-/* -*-  Mode: C++; c-file-style: "gnu"; indent-tabs-mode:nil; -*- */
+/* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2018 Technische Universität Berlin
+ * Copyright (c) 2022 Redha A. Alliche, Tiago Da Silva Barros, Ramon Aparicio-Pardo and Lucile Sassatelli
  *
+ * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation;
@@ -15,10 +16,19 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * Author: Piotr Gawlowicz <gawlowicz@tkn.tu-berlin.de>
+ * Author: Redha A. Alliche, <alliche@i3s.unice.fr,>
+ * Author: Tiago Da Silva Barros    <tiago.da-silva-barros@inria.fr>
+ * Author: Ramon Aparicio-Pardo       <raparicio@i3s.unice.fr,>
+ * Author: Lucile Sassatelli       <sassatelli@i3s.unice.fr,>
+ *
+ * Université Côte d’Azur, CNRS, I3S, Inria Sophia Antipolis, France
+ *
+ * Work supported in part by he  support  of  the  French  Agence  Nationale  dela Recherche (ANR), 
+ * under grant ANR-19-CE-25-0001-01 (ARTIC project).
+ * This  work  was  performed  using  HPC  resources  from  GENCI-IDRIS  (Grant2021-AD011012577).
+ *
  */
-
-#include "mygym.h"
+#include "packet-routing-gym.h"
 #include "ns3/object.h"
 #include "ns3/core-module.h"
 #include "ns3/network-module.h"
@@ -37,14 +47,14 @@
 
 
 namespace ns3 {
-uint32_t MyGymEnv::m_n_nodes;
+uint32_t PacketRoutingEnv::m_n_nodes;
 
 
-NS_LOG_COMPONENT_DEFINE ("MyGymEnv");
+NS_LOG_COMPONENT_DEFINE ("PacketRoutingEnv");
 
-NS_OBJECT_ENSURE_REGISTERED (MyGymEnv);
+NS_OBJECT_ENSURE_REGISTERED (PacketRoutingEnv);
 
-MyGymEnv::MyGymEnv ()
+PacketRoutingEnv::PacketRoutingEnv ()
 {
   NS_LOG_FUNCTION (this);
   
@@ -61,7 +71,7 @@ MyGymEnv::MyGymEnv ()
     //m_rxPktNum = 0;
 }
   
-MyGymEnv::MyGymEnv (Ptr<Node> node, uint32_t numberOfNodes, uint64_t linkRateValue)
+PacketRoutingEnv::PacketRoutingEnv (Ptr<Node> node, uint32_t numberOfNodes, uint64_t linkRateValue)
 {
   NS_LOG_FUNCTION (this);
   //NetDeviceContainer m_list_p2pNetDevs = list_p2pNetDevs;
@@ -76,7 +86,7 @@ MyGymEnv::MyGymEnv (Ptr<Node> node, uint32_t numberOfNodes, uint64_t linkRateVal
   //m_rxPktNum = 0;
 }
 
-MyGymEnv::MyGymEnv (Time stepTime, Ptr<Node> node)
+PacketRoutingEnv::PacketRoutingEnv (Time stepTime, Ptr<Node> node)
 {
   NS_LOG_FUNCTION (this);
   //NetDeviceContainer m_list_p2pNetDevs = list_p2pNetDevs;
@@ -89,41 +99,41 @@ MyGymEnv::MyGymEnv (Time stepTime, Ptr<Node> node)
   //m_rxPktNum = 0;
   m_interval = stepTime;
   is_trainStep_flag = 0;
-  //Simulator::Schedule (Seconds(0.0), &MyGymEnv::ScheduleNextStateRead, this);
+  //Simulator::Schedule (Seconds(0.0), &PacketRoutingEnv::ScheduleNextStateRead, this);
 }
 
 void
-MyGymEnv::ScheduleNextStateRead ()
+PacketRoutingEnv::ScheduleNextStateRead ()
 {
   NS_LOG_FUNCTION (this);
-  Simulator::Schedule (m_interval, &MyGymEnv::ScheduleNextStateRead, this);
+  Simulator::Schedule (m_interval, &PacketRoutingEnv::ScheduleNextStateRead, this);
   //Notify();
 }
 
-MyGymEnv::~MyGymEnv ()
+PacketRoutingEnv::~PacketRoutingEnv ()
 {
   NS_LOG_FUNCTION (this);
 }
 
 TypeId
-MyGymEnv::GetTypeId (void)
+PacketRoutingEnv::GetTypeId (void)
 {
-  static TypeId tid = TypeId ("MyGymEnv")
+  static TypeId tid = TypeId ("PacketRoutingEnv")
     .SetParent<OpenGymEnv> ()
     .SetGroupName ("OpenGym")
-    .AddConstructor<MyGymEnv> ()
+    .AddConstructor<PacketRoutingEnv> ()
   ;
   return tid;
 }
 
 void
-MyGymEnv::DoDispose ()
+PacketRoutingEnv::DoDispose ()
 {
   NS_LOG_FUNCTION (this);
 }
 
 Ptr<OpenGymSpace>
-MyGymEnv::GetActionSpace()
+PacketRoutingEnv::GetActionSpace()
 {
   NS_LOG_FUNCTION (this);
   uint32_t num_devs = m_node->GetNDevices();
@@ -133,7 +143,7 @@ MyGymEnv::GetActionSpace()
 }
 
 Ptr<OpenGymSpace>
-MyGymEnv::GetObservationSpace()
+PacketRoutingEnv::GetObservationSpace()
 {
   NS_LOG_FUNCTION (this);
   uint32_t num_devs = m_node->GetNDevices();
@@ -147,7 +157,7 @@ MyGymEnv::GetObservationSpace()
 }
 
 bool
-MyGymEnv::GetGameOver()
+PacketRoutingEnv::GetGameOver()
 {
   NS_LOG_FUNCTION (this);
   m_isGameOver = false;
@@ -160,7 +170,7 @@ MyGymEnv::GetGameOver()
 }
 
 uint32_t
-MyGymEnv::GetQueueLength(Ptr<Node> node, uint32_t netDev_idx)
+PacketRoutingEnv::GetQueueLength(Ptr<Node> node, uint32_t netDev_idx)
 {
   Ptr<NetDevice> netDev = node->GetDevice (netDev_idx);
   Ptr<PointToPointNetDevice> p2p_netDev = DynamicCast<PointToPointNetDevice> (netDev);
@@ -169,7 +179,7 @@ MyGymEnv::GetQueueLength(Ptr<Node> node, uint32_t netDev_idx)
   return backlog;
 }
 uint32_t
-MyGymEnv::GetQueueLengthInBytes(Ptr<Node> node, uint32_t netDev_idx)
+PacketRoutingEnv::GetQueueLengthInBytes(Ptr<Node> node, uint32_t netDev_idx)
 {
   Ptr<NetDevice> netDev = node->GetDevice (netDev_idx);
   Ptr<PointToPointNetDevice> p2p_netDev = DynamicCast<PointToPointNetDevice> (netDev);
@@ -179,7 +189,7 @@ MyGymEnv::GetQueueLengthInBytes(Ptr<Node> node, uint32_t netDev_idx)
 }
 
 Ptr<OpenGymDataContainer>
-MyGymEnv::GetObservation()
+PacketRoutingEnv::GetObservation()
 {
 
   uint32_t num_devs = m_node->GetNDevices();
@@ -205,7 +215,7 @@ MyGymEnv::GetObservation()
 }
 
 float
-MyGymEnv::GetReward()
+PacketRoutingEnv::GetReward()
 {
   // if (is_trainStep_flag==0){
   
@@ -223,7 +233,7 @@ MyGymEnv::GetReward()
 }
 
 std::string
-MyGymEnv::GetExtraInfo()
+PacketRoutingEnv::GetExtraInfo()
 {
   //NS_LOG_FUNCTION (this);
   if (is_trainStep_flag==0){
@@ -260,7 +270,7 @@ MyGymEnv::GetExtraInfo()
 }
 
 bool
-MyGymEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
+PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
 {
   NS_LOG_FUNCTION (this);
   NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", MyExecuteActions: " << action );
@@ -292,7 +302,7 @@ MyGymEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
 
 
 void
-MyGymEnv::NotifyPktRcv(Ptr<MyGymEnv> entity, int* counter_packets_sent, NetDeviceContainer* nd, Ptr<const Packet> packet)
+PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, int* counter_packets_sent, NetDeviceContainer* nd, Ptr<const Packet> packet)
 {
   // define is train step flag
   entity->is_trainStep_flag = 0;
@@ -366,7 +376,7 @@ MyGymEnv::NotifyPktRcv(Ptr<MyGymEnv> entity, int* counter_packets_sent, NetDevic
 }
 
 void
-MyGymEnv::NotifyTrainStep(Ptr<MyGymEnv> entity)
+PacketRoutingEnv::NotifyTrainStep(Ptr<PacketRoutingEnv> entity)
 {
   // define is train step flag
   entity->is_trainStep_flag = 1;

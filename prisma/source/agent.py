@@ -14,6 +14,10 @@ from source.models import DQN_buffer_model, DQ_routing_model
 import threading
 # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 
+__author__ = "Redha A. Alliche, Tiago Da Silva Barros, Ramon Aparicio-Pardo, Lucile Sassatelli"
+__copyright__ = "Copyright (c) 2022 Redha A. Alliche, Tiago Da Silva Barros, Ramon Aparicio-Pardo, Lucile Sassatelli"
+__license__ = "GPL"
+__email__ = "alliche,raparicio,sassatelli@i3s.unice.fr, tiago.da-silva-barros@inria.fr"
 
 ### define the agent fonction
 class Agent():

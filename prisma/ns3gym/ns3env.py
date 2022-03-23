@@ -16,11 +16,12 @@ import ns3gym.messages_pb2 as pb
 from google.protobuf.any_pb2 import Any
 
 
-__author__ = "Piotr Gawlowicz"
-__copyright__ = "Copyright (c) 2018, Technische Universität Berlin"
-__version__ = "0.1.0"
-__email__ = "gawlowicz@tkn.tu-berlin.de"
+__author__ = "Redha A. Alliche, Tiago Da Silva Barros, Ramon Aparicio-Pardo, Lucile Sassatelli"
+__copyright__ = "Copyright (c) 2022 Redha A. Alliche, Tiago Da Silva Barros, Ramon Aparicio-Pardo, Lucile Sassatelli"
+__license__ = "GPL"
+__email__ = "alliche,raparicio,sassatelli@i3s.unice.fr, tiago.da-silva-barros@inria.fr"
 
+# This work was based on ns3env.py available on https://github.com/tkn-tub/ns3-gym/blob/master/src/opengym/model/ns3gym/ns3gym/ns3env.py 
 
 class Ns3ZmqBridge(object):
     """docstring for Ns3ZmqBridge"""

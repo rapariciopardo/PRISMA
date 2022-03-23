@@ -1,26 +1,35 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-//
-// Copyright (c) 2006 Georgia Tech Research Corporation
-//
-// This program is free software; you can redistribute it and/or modify
-// it under the terms of the GNU General Public License version 2 as
-// published by the Free Software Foundation;
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-//
-// Author: George F. Riley<riley@ece.gatech.edu>
-//
+/*
+ * Copyright (c) 2022 Redha A. Alliche, Tiago Da Silva Barros, Ramon Aparicio-Pardo and Lucile Sassatelli
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation;
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * Author: Redha A. Alliche, <alliche@i3s.unice.fr,>
+ * Author: Tiago Da Silva Barros    <tiago.da-silva-barros@inria.fr>
+ * Author: Ramon Aparicio-Pardo       <raparicio@i3s.unice.fr,>
+ * Author: Lucile Sassatelli       <sassatelli@i3s.unice.fr,>
+ *
+ * Université Côte d’Azur, CNRS, I3S, Inria Sophia Antipolis, France
+ *
+ * Work supported in part by he  support  of  the  French  Agence  Nationale  dela Recherche (ANR), 
+ * under grant ANR-19-CE-25-0001-01 (ARTIC project).
+ * This  work  was  performed  using  HPC  resources  from  GENCI-IDRIS  (Grant2021-AD011012577).
+ *
+ * This work is parially based on Copyright (c) 2006 Georgia Tech Research Corporation
+ * available on https://www.nsnam.org/doxygen/onoff-application_8cc_source.html
+ */
 
-// ns3 - On/Off Data Source Application class
-// George F. Riley, Georgia Tech, Spring 2007
-// Adapted from ApplicationOnOff in GTNetS.
 
 #include "ns3/log.h"
 #include "ns3/address.h"

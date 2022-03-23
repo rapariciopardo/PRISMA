@@ -96,6 +96,14 @@ The functions in this model:
 """
 import tensorflow as tf
 
+__author__ = "Redha A. Alliche, Tiago Da Silva Barros, Ramon Aparicio-Pardo, Lucile Sassatelli"
+__copyright__ = "Copyright (c) 2022 Redha A. Alliche, Tiago Da Silva Barros, Ramon Aparicio-Pardo, Lucile Sassatelli"
+__license__ = "GPL"
+__email__ = "alliche,raparicio,sassatelli@i3s.unice.fr, tiago.da-silva-barros@inria.fr"
+
+# This work was partially based on openai/baselines available on https://github.com/openai/baselines/tree/tf2/baselines/deepq
+ 
+
 #tf.function
 def huber_loss(x, delta=1.0):
     """Reference: https://en.wikipedia.org/wiki/Huber_loss"""
