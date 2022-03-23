@@ -1,21 +1,7 @@
 #!/bin/bash  
- 
-## Move to main folder
-cd ..
 
-## Copy prisma into ns-3 folder
-rsync -r --exclude-from=../.gitignore ../prisma ../ns3-gym/scratch/
-
-## configure ns3
-cd ../ns3-gym
-mv scratch/prisma/ns3/* scratch/prisma/.
-
-./waf -d optimized configure
-sleep 3
-cd ../prisma
-
-
-#Testing Q-Routing
+#Testing DQN-Routing
+cd .. 
 
 #Load factors array. The execution will iterate over the array.
 array=(

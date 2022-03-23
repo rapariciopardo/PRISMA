@@ -87,7 +87,7 @@ def DQN_buffer_model(observation_shape, num_actions, num_nodes, input_size_split
     return tf.keras.Model(inputs=inp, outputs=out)
 
 
-def DQ_routing_model(observation_shape, num_actions, num_nodes, input_size_splits):
+def DQN_routing_model(observation_shape, num_actions, num_nodes, input_size_splits):
     """The DQ routing : 
         - The input : tensor with shape (batch_size, 1) containing the : destination of the packet.
         - The output : tensor with shape (batch_size, num_actions) containing the estimated delay for routing the packet to an output buffer.
