@@ -1,7 +1,8 @@
-/* -*-  Mode: C++; c-file-style: "gnu"; indent-tabs-mode:nil; -*- */
+/* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2018 Technische Universität Berlin
+ * Copyright (c) 2022 Redha A. Alliche, Tiago Da Silva Barros, Ramon Aparicio-Pardo and Lucile Sassatelli
  *
+ * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation;
@@ -15,11 +16,22 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * Author: Piotr Gawlowicz <gawlowicz@tkn.tu-berlin.de>
+ * Author: Redha A. Alliche, <alliche@i3s.unice.fr,>
+ * Author: Tiago Da Silva Barros    <tiago.da-silva-barros@inria.fr>
+ * Author: Ramon Aparicio-Pardo       <raparicio@i3s.unice.fr,>
+ * Author: Lucile Sassatelli       <sassatelli@i3s.unice.fr,>
+ *
+ * Université Côte d’Azur, CNRS, I3S, Inria Sophia Antipolis, France
+ *
+ * Work supported in part by he  support  of  the  French  Agence  Nationale  dela Recherche (ANR), 
+ * under grant ANR-19-CE-25-0001-01 (ARTIC project).
+ * This  work  was  performed  using  HPC  resources  from  GENCI-IDRIS  (Grant2021-AD011012577).
+ *
+ * 
  */
 
-#ifndef MY_GYM_ENTITY_H
-#define MY_GYM_ENTITY_H
+#ifndef PACKET_ROUTING_GYM_ENTITY_H
+#define PACKET_ROUTING_GYM_ENTITY_H
 
 #include "ns3/stats-module.h"
 #include "ns3/opengym-module.h"
@@ -40,13 +52,13 @@ class NetDeviceContainer;
 //class QueueBase;
 
 
-class MyGymEnv : public OpenGymEnv
+class PacketRoutingEnv : public OpenGymEnv
 {
 public:
-  MyGymEnv ();
-  MyGymEnv (Ptr<Node> node, uint32_t numberOfNodes, uint64_t linkRateValue);
-  MyGymEnv (Time stepTime, Ptr<Node> node);
-  virtual ~MyGymEnv ();
+  PacketRoutingEnv ();
+  PacketRoutingEnv (Ptr<Node> node, uint32_t numberOfNodes, uint64_t linkRateValue);
+  PacketRoutingEnv (Time stepTime, Ptr<Node> node);
+  virtual ~PacketRoutingEnv ();
   static TypeId GetTypeId (void);
   virtual void DoDispose ();
 
@@ -60,10 +72,10 @@ public:
   static std::vector<uint32_t> m_rxPkts;
 
   // the function has to be static to work with MakeBoundCallback
-  // that is why we pass pointer to MyGymEnv instance to be able to store the context (node, etc)
+  // that is why we pass pointer to PacketRoutingEnv instance to be able to store the context (node, etc)
  
-  static void NotifyPktRcv(Ptr<MyGymEnv> entity, int* counter_packets_sent, NetDeviceContainer* nd, Ptr<const Packet> packet);
-  static void NotifyTrainStep(Ptr<MyGymEnv> entity);
+  static void NotifyPktRcv(Ptr<PacketRoutingEnv> entity, int* counter_packets_sent, NetDeviceContainer* nd, Ptr<const Packet> packet);
+  static void NotifyTrainStep(Ptr<PacketRoutingEnv> entity);
   bool is_trainStep_flag;
 
 
@@ -104,4 +116,4 @@ private:
 }
 
 
-#endif // MY_GYM_ENTITY_H
+#endif // PACKET_ROUTING_GYM_ENTITY_H

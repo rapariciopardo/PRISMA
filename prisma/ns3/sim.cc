@@ -1,7 +1,8 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2010 Egemen K. Cetinkaya, Justin P. Rohrer, and Amit Dandekar
+ * Copyright (c) 2022 Redha A. Alliche, Tiago Da Silva Barros, Ramon Aparicio-Pardo and Lucile Sassatelli
  *
+ * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation;
@@ -15,26 +16,25 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * Author: Egemen K. Cetinkaya <ekc@ittc.ku.edu>
- * Author: Justin P. Rohrer    <rohrej@ittc.ku.edu>
- * Author: Amit Dandekar       <dandekar@ittc.ku.edu>
+ * Author: Redha A. Alliche, <alliche@i3s.unice.fr,>
+ * Author: Tiago Da Silva Barros    <tiago.da-silva-barros@inria.fr>
+ * Author: Ramon Aparicio-Pardo       <raparicio@i3s.unice.fr,>
+ * Author: Lucile Sassatelli       <sassatelli@i3s.unice.fr,>
  *
- * James P.G. Sterbenz <jpgs@ittc.ku.edu>, director
- * ResiliNets Research Group  http://wiki.ittc.ku.edu/resilinets
- * Information and Telecommunication Technology Center
- * and
- * Department of Electrical Engineering and Computer Science
- * The University of Kansas
- * Lawrence, KS  USA
+ * Université Côte d’Azur, CNRS, I3S, Inria Sophia Antipolis, France
  *
- * Work supported in part by NSF FIND (Future Internet Design) Program
- * under grant CNS-0626918 (Postmodern Internet Architecture) and
- * by NSF grant CNS-1050226 (Multilayer Network Resilience Analysis and Experimentation on GENI)
+ * Work supported in part by he  support  of  the  French  Agence  Nationale  dela Recherche (ANR), 
+ * under grant ANR-19-CE-25-0001-01 (ARTIC project).
+ * This  work  was  performed  using  HPC  resources  from  GENCI-IDRIS  (Grant2021-AD011012577).
+ * 
+ * This work is partially based on Copyright (c) 2010 Egemen K. Cetinkaya, Justin P. Rohrer, and Amit Dandekar
+ * available on https://www.nsnam.org/doxygen/matrix-topology_8cc_source.html
  *
- * This program reads an upper triangular adjacency matrix (e.g. adjacency_matrix.txt) and
- * node coordinates file (e.g. node_coordinates.txt). The program also set-ups a
- * wired network topology with P2P links according to the adjacency matrix with
- * nx(n-1) CBR traffic flows, in which n is the number of nodes in the adjacency matrix.
+ * This program reads an upper triangular adjacency matrix (e.g. adjacency_matrix.txt),
+ * node coordinates file (e.g. node_coordinates.txt) an a traffic rate matrix (e.g. nodes_intensity_normalized.txt). 
+ * The program also set-ups a wired network topology with P2P links according to the adjacency matrix with
+ * nx(n-1) CBR traffic flows, in which n is the number of nodes in the adjacency matrix. Then the programs makes a callback funtion for each time
+ * a packet arrives a node.
  */
 
 // ---------- Header Includes -------------------------------------------------
@@ -61,7 +61,7 @@
 #include "ns3/ipv4-global-routing-helper.h"
 #include "ns3/stats-module.h"
 #include "ns3/opengym-module.h"
-#include "mygym.h"
+#include "packet-routing-gym.h"
 
 using namespace std;
 using namespace ns3;
@@ -78,7 +78,7 @@ vector<vector<double> > readCordinatesFile (std::string node_coordinates_file_na
 vector<vector<std::string>> readIntensityFile(std::string intensity_file_name);
 void printCoordinateArray (const char* description, vector<vector<double> > coord_array);
 void printMatrix (const char* description, vector<vector<bool> > array);
-void ScheduleNextTrainStep(Ptr<MyGymEnv> openGym);
+void ScheduleNextTrainStep(Ptr<PacketRoutingEnv> openGym);
 int counter_send[100]= {0};
 void countPackets(int n_nodes, NetDeviceContainer* nd, std::string path, Ptr<const Packet> packet, const Address &src, const Address &dest){
 
@@ -249,7 +249,7 @@ int main (int argc, char *argv[])
   NS_LOG_INFO ("Setting up OpemGym Envs for each node.");
   
   std::vector<Ptr<OpenGymInterface> > myOpenGymInterfaces;
-  std::vector<Ptr<MyGymEnv> > myGymEnvs;
+  std::vector<Ptr<PacketRoutingEnv> > packetRoutingEnvs;
 
   uint64_t linkRateValue= DataRate(LinkRate).GetBitRate();
 
@@ -259,16 +259,16 @@ int main (int argc, char *argv[])
       Ptr<Node> n = nodes_switch.Get (i); // ref node
       //nodeOpenGymPort = openGymPort + i;
       Ptr<OpenGymInterface> openGymInterface = CreateObject<OpenGymInterface> (openGymPort + i);
-       Ptr<MyGymEnv> myGymEnv;
+       Ptr<PacketRoutingEnv> packetRoutingEnv;
       if (eventBasedEnv){
-        myGymEnv = CreateObject<MyGymEnv> (n, n_nodes, linkRateValue); // event-driven step
+        packetRoutingEnv = CreateObject<PacketRoutingEnv> (n, n_nodes, linkRateValue); // event-driven step
       } else {
-        myGymEnv = CreateObject<MyGymEnv> (Seconds(envStepTime), n); // time-driven step
+        packetRoutingEnv = CreateObject<PacketRoutingEnv> (Seconds(envStepTime), n); // time-driven step
       }
-      myGymEnv->SetOpenGymInterface(openGymInterface);
+      packetRoutingEnv->SetOpenGymInterface(openGymInterface);
 
       myOpenGymInterfaces.push_back (openGymInterface);
-      myGymEnvs.push_back (myGymEnv);
+      packetRoutingEnvs.push_back (packetRoutingEnv);
     }  
 ///////////////////////////////
   NS_LOG_INFO ("Create P2P Link Attributes.");
@@ -346,7 +346,7 @@ int main (int argc, char *argv[])
   {
     Ptr<NetDevice> dev_switch =DynamicCast<NetDevice> (switch_nd.Get(i)); 
     // NS_LOG_UNCOND(dev_switch->GetNode()->GetId()<<"     "<< dev_switch->GetNode()->GetNDevices()<<"    "<<dev_switch->GetAddress()<<"    ");
-    dev_switch->TraceConnectWithoutContext("MacRx", MakeBoundCallback(&MyGymEnv::NotifyPktRcv, myGymEnvs[dev_switch->GetNode()->GetId()], &counter_send[dev_switch->GetNode()->GetId()], &traffic_nd));
+    dev_switch->TraceConnectWithoutContext("MacRx", MakeBoundCallback(&PacketRoutingEnv::NotifyPktRcv, packetRoutingEnvs[dev_switch->GetNode()->GetId()], &counter_send[dev_switch->GetNode()->GetId()], &traffic_nd));
     
   }
 
@@ -451,7 +451,7 @@ int main (int argc, char *argv[])
   NS_LOG_UNCOND("Configuration of time based alert");
   for(int i=0;i<n_nodes;i++)
   {
-    Simulator::Schedule (Seconds(0.0), &ScheduleNextTrainStep, myGymEnvs[i]);
+    Simulator::Schedule (Seconds(0.0), &ScheduleNextTrainStep, packetRoutingEnvs[i]);
   }
   NS_LOG_INFO ("Configure Tracing.");
 
@@ -467,7 +467,7 @@ int main (int argc, char *argv[])
   for (int i = 0; i < n_nodes; i++)
   {
     // NS_LOG_UNCOND("" << i);
-    myGymEnvs[i]->is_trainStep_flag = 1;
+    packetRoutingEnvs[i]->is_trainStep_flag = 1;
     myOpenGymInterfaces[i]->NotifySimulationEnd();
   }
   Simulator::Destroy ();
@@ -683,7 +683,7 @@ void printCoordinateArray (const char* description, vector<vector<double> > coor
 
 }
 
-void ScheduleNextTrainStep(Ptr<MyGymEnv> openGym)
+void ScheduleNextTrainStep(Ptr<PacketRoutingEnv> openGym)
 {
   // Simulator::Schedule (Seconds(envStepTime), &ScheduleNextTrainStep, envStepTime, openGym);
   openGym->NotifyTrainStep(openGym);

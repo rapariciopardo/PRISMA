@@ -5,6 +5,11 @@ import os, multiprocessing, shutil
 import numpy as np
 from source.models import SplitLayer
 
+__author__ = "Redha A. Alliche, Tiago Da Silva Barros, Ramon Aparicio-Pardo, Lucile Sassatelli"
+__copyright__ = "Copyright (c) 2022 Redha A. Alliche, Tiago Da Silva Barros, Ramon Aparicio-Pardo, Lucile Sassatelli"
+__license__ = "GPL"
+__email__ = "alliche,raparicio,sassatelli@i3s.unice.fr, tiago.da-silva-barros@inria.fr"
+
 
 def save_model(actors, path, t, num_episodes, root="saved_models/"):
     """
