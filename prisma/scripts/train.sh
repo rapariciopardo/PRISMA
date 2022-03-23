@@ -1,28 +1,16 @@
 #!/bin/bash  
- 
-## Move to main folder
-cd ..
-
-## Copy prisma into ns-3 folder
-rsync -r --exclude-from=../.gitignore ../prisma ../ns3-gym/scratch/
-
-## configure ns3
-cd ../ns3-gym
-mv scratch/prisma/ns3/* scratch/prisma/.
-
-./waf -d optimized configure
-sleep 3
-cd ../prisma
 
 ## Training DQN
 
 #For running different agents, add the following arg:
 # --agent_type=sp \   #e.g., for Shortest Path agent
 
+cd ..
+
 python3 main.py --simTime=60 \
 	--basePort=6555 \
 	--train=1 \
-	--session_name="test"\
+	--session_name="train"\
 	--logs_parent_folder=examples/geant/ \
 	--traffic_matrix_path=examples/geant/traffic_matrices/node_intensity_normalized.txt \
 	--adjacency_matrix_path=examples/geant/adjacency_matrix.txt \
@@ -39,6 +27,5 @@ python3 main.py --simTime=60 \
 	--start_tensorboard=0 \
 	--load_factor=0.5
 sleep 5
-
 
 rm -r ../ns3-gym/scratch/prisma

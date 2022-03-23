@@ -10,7 +10,7 @@ from ns3gym import ns3env
 from source.learner import DQN_AGENT
 from source.utils import save_model, load_model, LinearSchedule
 from source.replay_buffer import ReplayBuffer
-from source.models import DQN_buffer_model, DQ_routing_model
+from source.models import DQN_buffer_model, DQN_routing_model
 import threading
 # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 
@@ -110,15 +110,15 @@ class Agent():
     def __init__(self, index, agent_type="dqn", train=True):
         """ Init the agent
         index (int): agent index
-        agent_type (str): agent type. Can be : "dqn" for dqn buffer, "dq_routing" for deep q routing, "sp" for shortest path or "opt" for optimal solution
+        agent_type (str): agent type. Can be : "dqn" for dqn buffer, "dqn_routing" for deep q routing, "sp" for shortest path or "opt" for optimal solution
         train (bool): if true, train the agent. Valid only for agent_type = dqn 
         """
         ### compute the port number
-        if agent_type not in ("dqn", "dq_routing", "sp", "opt"):
-            raise('Unknown agent type, please choose from : ("dqn", "dq_routing", "sp", "opt")')
+        if agent_type not in ("dqn_buffer", "dqn_routing", "sp", "opt"):
+            raise('Unknown agent type, please choose from : ("dqn_buffer", "dqn_routing", "sp", "opt")')
 
         self.agent_type = agent_type
-        if agent_type in ("dqn", "dq_routing"):
+        if agent_type in ("dqn_buffer", "dqn_routing"):
             self.train = train
         else:
             self.train = False
@@ -145,7 +145,7 @@ class Agent():
         Agent.envs[self.index] = self.env
 
         ## define the agent
-        if self.agent_type == "dqn":
+        if self.agent_type == "dqn_buffer":
             ### declare the DQN buffer model
             Agent.agents[self.index] = DQN_AGENT(
                 q_func=DQN_buffer_model,
@@ -159,10 +159,10 @@ class Agent():
                 lr=Agent.lr,
                 gamma=Agent.gamma
             )
-        elif self.agent_type == "dq_routing":
+        elif self.agent_type == "dqn_routing":
             ### declare the DQN buffer model
             Agent.agents[self.index] = DQN_AGENT(
-                q_func=DQ_routing_model,
+                q_func=DQN_routing_model,
                 # observation_shape=self.env.observation_space.shape,
                 observation_shape=self.env.observation_space.shape,
                 num_actions=self.env.action_space.n,
@@ -177,7 +177,7 @@ class Agent():
             Agent.agents[self.index] = nx.shortest_path
 
         ## load the models
-        if Agent.load_path is not None and self.agent_type in ("dqn", "dq_routing"):
+        if Agent.load_path is not None and self.agent_type in ("dqn_buffer", "dqn_routing"):
             loaded_models = load_model(Agent.load_path, self.index)
             if loaded_models is not None:
                 Agent.agents[self.index].q_network.set_weights(loaded_models[self.index].get_weights())
@@ -212,7 +212,7 @@ class Agent():
         Args :
             obs (list): observation list
         """
-        if self.agent_type in("dqn", "dq_routing"):
+        if self.agent_type in("dqn_buffer", "dqn_routing"):
             ### Take action using the NN
             # print(np.array([self.obs]), np.array([self.obs]).shape)
             action = Agent.agents[self.index].step(np.array([obs]), self.train, self.update_eps).numpy().item()
@@ -224,7 +224,7 @@ class Agent():
         """
         Do an env step
         """
-         ## schedule the exploration
+        ## schedule the exploration
         self.update_eps = tf.constant(self.exploration.value(self.stepIdx))
         
         ## take the action
@@ -251,7 +251,9 @@ class Agent():
         return self.env.step(self.action)
 
     def _train(self):
-        ## do a training step
+        """
+        Do a training step
+        """
         self.last_training_time = Agent.curr_time
         self.last_training_step = self.stepIdx
 

@@ -41,18 +41,47 @@ def arguments_parser():
     """ Retrieve and parse argument from the commandline
     """
     ## Setup the argparser
-    parser = argparse.ArgumentParser(prog='main.py', usage='python3 %(prog)s [options]', description="PRISMA: ns3-gym interface for multi-agents deep reinforcement learning")
+    description_txt = """PRISMA : Packet Routing Simulator for Multi-Agent Reinforcement Learning
+                        PRISMA is a network simulation playground for developing and testing Multi-Agent Reinforcement Learning (MARL) solutions for dynamic packet routing (DPR). 
+                        This framework is based on the OpenAI Gym toolkit and the Ns3 simulator.
+                        """
+    epilog_txt = """Examples:
+                    For training a dqn routing model  :
+                    python3 main.py --simTime=60 \
+                                    --basePort=6555 \
+                                    --train=1 \
+                                    --agent_type="dqn_routing"\
+                                    --session_name="train"\
+                                    --logs_parent_folder=examples/geant/ \
+                                    --traffic_matrix_path=examples/geant/traffic_matrices/node_intensity_normalized.txt \
+                                    --adjacency_matrix_path=examples/geant/adjacency_matrix.txt \
+                                    --node_coordinates_path=examples/geant/node_coordinates.txt \
+                                    --training_step=0.007 \
+                                    --batch_size=512 \
+                                    --lr=1e-4 \
+                                    --exploration_final_eps=0.1 \
+                                    --exploration_initial_eps=1.0 \
+                                    --iterationNum=3000 \
+                                    --gamma=1 \
+                                    --training_trigger_type="time" \
+                                    --save_models=1 \
+                                    --start_tensorboard=0 \
+                                    --load_factor=0.5
+                    """
+    
+    parser = argparse.ArgumentParser(prog='main.py', usage='python3 %(prog)s [options]', description=description_txt, epilog=epilog_txt, allow_abbrev=False)
     group1 = parser.add_argument_group('Global simulation arguments')
     group1.add_argument('--simTime', type=float, help='Simulation duration in seconds', default=60.0)
     group1.add_argument('--basePort', type=int, help='Starting port number', default=6555)
     group1.add_argument('--seed', type=int, help='Random seed used for the simulation', default=100)
     group1.add_argument('--train', type=int, help='If 1, train the model.Else, test it', default=1)
     group1.add_argument('--max_nb_arrived_pkts', type=int, help='If < 0, stops the episode at the provided number of arrived packets', default=-1)
+    group1.add_argument('--ns3_sim_path', type=str, help='Path to the ns3-gym simulator folder', default="../ns3-gym/")
     
     group4 = parser.add_argument_group('Network parameters')
     group4.add_argument('--load_factor', type=float, help='scale of the traffic matrix', default=1)
     group4.add_argument('--adjacency_matrix_path', type=str, help='Path to the adjacency matrix', default="examples/abilene/adjacency_matrix.txt")
-    group4.add_argument('--traffic_matrix_path', type=str, help='Path to the traffic matrix file', default="examples/abilene/traffic_matrices/node_intensity_0.txt")
+    group4.add_argument('--traffic_matrix_path', type=str, help='Path to the traffic matrix file', default="examples/abilene/traffic_matrices/node_intensity_normalized.txt")
     group4.add_argument('--node_coordinates_path', type=str, help='Path to the nodes coordinates', default="examples/abilene/node_coordinates.txt")
     group4.add_argument('--max_out_buffer_size', type=int, help='Max nodes output buffer limit', default=30)
     group4.add_argument('--link_delay', type=str, help='Network links delay', default="2ms")
@@ -66,12 +95,12 @@ def arguments_parser():
     group2.add_argument('--logging_timestep', type=int, help='Time delay (in real time) between each logging in seconds', default=15)
     
     group3 = parser.add_argument_group('DRL Agent arguments')
-    group3.add_argument('--agent_type', choices=["dqn", "dq_routing", "sp", "opt"], type=str, help='The type of the agent. Can be dqn, dq_routing, sp or opt', default="dq_routing")
-    group3.add_argument('--lr', type=float, help='Learning rate (used when training)', default=1e-3)
-    group3.add_argument('--batch_size', type=int, help='Size of a batch (used when training)', default=128)
+    group3.add_argument('--agent_type', choices=["dqn_buffer", "dqn_routing", "sp", "opt"], type=str, help='The type of the agent. Can be dqn_buffer, dqn_routing, sp or opt', default="dqn_routing")
+    group3.add_argument('--lr', type=float, help='Learning rate (used when training)', default=1e-4)
+    group3.add_argument('--batch_size', type=int, help='Size of a batch (used when training)', default=512)
     group3.add_argument('--gamma', type=float, help='Gamma ratio for RL (used when training)', default=1)
-    group3.add_argument('--iterationNum', type=int, help='Max iteration number for exploration (used when training)', default=1000)
-    group3.add_argument('--exploration_initial_eps', type=float, help='Exploration intial value (used when training)', default=0.5)
+    group3.add_argument('--iterationNum', type=int, help='Max iteration number for exploration (used when training)', default=3000)
+    group3.add_argument('--exploration_initial_eps', type=float, help='Exploration intial value (used when training)', default=1.0)
     group3.add_argument('--exploration_final_eps', type=float, help='Exploration final value (used when training)', default=0.1)
     group3.add_argument('--load_path', type=str, help='Path to DQN models, if not None, loads the models from the given files', default=None)
     group3.add_argument('--save_models', type=int, help='if True, store the models at the end of the training', default=1)
@@ -102,6 +131,7 @@ def arguments_parser():
     params["adjacency_matrix_path"] = os.path.abspath(params["adjacency_matrix_path"])
     params["traffic_matrix_path"] = os.path.abspath(params["traffic_matrix_path"])
     params["node_coordinates_path"] = os.path.abspath(params["node_coordinates_path"])
+    params["ns3_sim_path"] = os.path.abspath(params["ns3_sim_path"])
 
     ## add the network topology to the params
     G=nx.Graph()
@@ -178,7 +208,6 @@ def custom_plots():
         )
     return cs
 
-
 def stats_writer(summary_writer_session, summary_writer_nb_arrived_pkts, summary_writer_nb_lost_pkts, summary_writer_nb_new_pkts):
     """ Write the stats of the session to the logs dir using tensorboard writer
     Args:
@@ -242,8 +271,23 @@ def run_ns3(params):
     Args: 
         params(dict): parameter dict
     """ 
+    ## check if ns3-gym is in the folder
+    if "waf" not in os.listdir(params["ns3_sim_path"]):
+        raise Exception(f'Unable to locate ns3-gym in the folder : {params["ns3_sim_path"]}')
+        
+    ## store current folder path
+    current_folder_path = os.getcwd()
+
+    ## Copy prisma into ns-3 folder
+    os.system(f'rsync -r ./ns3/* {params["ns3_sim_path"].rstrip("/")}/scratch/prisma')
+    
+    ## go to ns3 dir
+    os.chdir(params["ns3_sim_path"])
+    
+    ## run ns3 configure
+    os.system('./waf -d optimized configure')
+
     ## run NS3 simulator
-    os.chdir("../ns3-gym/")
     ns3_params_format = ('prisma --simSeed={} --openGymPort={} --simTime={} --AvgPacketSize={} '
                         '--LinkDelay={} --LinkRate={} --MaxBufferLength={} --load_factor={} '
                         '--adj_mat_file_name={} --node_coordinates_file_name={} --node_intensity_file_name={}'.format( params["seed"],
@@ -256,10 +300,10 @@ def run_ns3(params):
                                                                                                                         params["load_factor"],
                                                                                                                         params["adjacency_matrix_path"],
                                                                                                                         params["node_coordinates_path"],
-                                                                                                                        params["traffic_matrix_path"]))
-    args = shlex.split(f'./waf --run "{ns3_params_format}"')
-    subprocess.Popen(args)
-    os.chdir("../prisma")
+                                                                                                                       params["traffic_matrix_path"]))
+    run_ns3_command = shlex.split(f'./waf --run "{ns3_params_format}"')
+    subprocess.Popen(run_ns3_command)
+    os.chdir(current_folder_path)
 
 def main():
     ## Get the arguments from the parser
