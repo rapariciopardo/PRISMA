@@ -336,6 +336,12 @@ def main():
         dict_to_store["simArgs"] = str(params["simArgs"])
         hp.hparams(dict_to_store)  # record the values used in this trial
     
+    ## Define the custom categories in tensorboard
+    with summary_writer_parent.as_default():
+        tf.summary.experimental.write_raw_pb(
+                custom_plots().SerializeToString(), step=0
+            )
+
     ## run ns3 simulator
     run_ns3(params)
 
@@ -351,15 +357,9 @@ def main():
             th2 = threading.Thread(target=agent_instance.run_trainer, args=(params["training_trigger_type"],))
             th2.start()
 
-    ## Define the custom categories in tensorboard
-    with summary_writer_parent.as_default():
-        tf.summary.experimental.write_raw_pb(
-                custom_plots().SerializeToString(), step=0
-            )
-
     ## Run tensorboard server
     if params["start_tensorboard"]:
-        args = shlex.split(f'python3 -m tensorboard.main --logdir={params["logs_folder"]} --port=16666')
+        args = shlex.split(f'python3 -m tensorboard.main --logdir={params["logs_folder"]} --port={params["tensorboard_port"]}')
         subprocess.Popen(args)
     
     sleep(1)

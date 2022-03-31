@@ -233,6 +233,7 @@ class Agent():
             self.action = 0
         else:
             self.action = self._take_action(self.obs)
+            ## check if the pkt is lost
             if self.obs[self.action + 1] >= Agent.max_out_buffer_size:
                 Agent.total_lost_pkts += 1
                 rew = self._get_reward()
@@ -316,17 +317,18 @@ class Agent():
                     if self.done and self.obs[0] == -1:
                         break
                     
-                    ### Increment the simulation and episode counters
+                    ## Increment the simulation and episode counters
                     self.stepIdx += 1
                     Agent.currIt += 1
 
-                    ### info treatments
+                    ## info treatments
                     tokens = self.info.split(",")
                     delay_time = float(tokens[0].split('=')[-1])
                     Agent.curr_time = float(tokens[4].split('=')[-1])
                     self.pkt_id = float(tokens[5].split('=')[-1])
                     
-                    if self.done:       
+                    if self.done:
+                        ## the packet arrived to destination  
                         self.count_arrived_packets += 1
                         Agent.total_arrived_pkts += 1
                         Agent.total_e2e_delay += delay_time
