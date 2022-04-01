@@ -79,6 +79,13 @@ vector<vector<std::string>> readIntensityFile(std::string intensity_file_name);
 void printCoordinateArray (const char* description, vector<vector<double> > coord_array);
 void printMatrix (const char* description, vector<vector<bool> > array);
 void ScheduleNextTrainStep(Ptr<PacketRoutingEnv> openGym);
+
+void ModifyLinkRate(NetDeviceContainer *ptp, u_int32_t idx1, u_int32_t idx2, DataRate lr) {
+  //NS_LOG_UNCOND(idx1<<"     "<<idx2<< "    aqui    "<<lr);
+  StaticCast<PointToPointNetDevice>(ptp->Get(idx1))->SetDataRate(lr);
+  StaticCast<PointToPointNetDevice>(ptp->Get(idx2))->SetDataRate(lr);
+    
+}
 int counter_send[100]= {0};
 void countPackets(int n_nodes, NetDeviceContainer* nd, std::string path, Ptr<const Packet> packet, const Address &src, const Address &dest){
 
@@ -312,6 +319,7 @@ int main (int argc, char *argv[])
   }
 
 /////////////////////////////////////////////////////////////////
+  vector<tuple<int, int>> link_devs;
   for (size_t i = 0; i < Adj_Matrix.size (); i++)
       {
         for (size_t j = i; j < Adj_Matrix[i].size (); j++)
@@ -326,6 +334,9 @@ int main (int argc, char *argv[])
                 NetDeviceContainer n_devs = p2p.Install(NodeContainer(nodes_switch.Get(i), nodes_switch.Get(j)));
                 switch_nd.Add(n_devs.Get(0));
                 switch_nd.Add(n_devs.Get(1));
+                link_devs.push_back(make_tuple(switch_nd.GetN()-1, switch_nd.GetN()-2));
+
+                
                 //NS_LOG_UNCOND ("matrix element [" << i << "][" << j << "] is 1");
                 // NS_LOG_UNCOND(n_devs.Get(0)->GetAddress()<<"     "<<n_devs.Get(1)->GetAddress());
                 
@@ -336,8 +347,13 @@ int main (int argc, char *argv[])
               }
           }
       }
+  //for(size_t i=0;i<link_devs.size();i++){
+  //  NS_LOG_UNCOND(get<0>(link_devs[i]) << "     " << get<1>(link_devs[i])<<"    "<<switch_nd.Get(get<0>(link_devs[i]))->GetNode()->GetId()<<"     "<<switch_nd.Get(get<1>(link_devs[i]))->GetNode()->GetId());
+  //}
 
-
+  int link_failed = rand() % link_devs.size();
+  Simulator::Schedule(Seconds(25.0), &ModifyLinkRate, &switch_nd, get<0>(link_devs[link_failed]), get<1>(link_devs[link_failed]),  DataRate("0.001Kbps"));
+  //Simulator::Schedule(Seconds(2.0), &ModifyLinkRate, &traffic_nd, DataRate("0.001Kbps"));
 
 ////////////////////////////////////////////////////////////////
 
@@ -354,13 +370,14 @@ int main (int argc, char *argv[])
   ///////////////////////////////////////////////////////////
   InternetStackHelper internet;
   internet.Install(nodes_traffic);
-  //////////////////////////////////////////////////////////
+
   Ipv4AddressHelper ipv4_helper;
   ipv4_helper.SetBase ("10.2.2.0", "255.255.255.0");
   ipv4_helper.Assign (traffic_nd);
 
 
-  ////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////
+ 
 
   
 
@@ -454,6 +471,7 @@ int main (int argc, char *argv[])
     Simulator::Schedule (Seconds(0.0), &ScheduleNextTrainStep, packetRoutingEnvs[i]);
   }
   NS_LOG_INFO ("Configure Tracing.");
+
 
   
   NS_LOG_INFO ("Run Simulation.");
