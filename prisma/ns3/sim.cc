@@ -144,6 +144,7 @@ int main (int argc, char *argv[])
   int nblinksFailed = 3;
   double linkFailureDuration = 3;
   int nbNodesUpdated = 1;
+  double updateTrafficRateTime = 10.0;
   
   bool eventBasedEnv = true;
   double load_factor = 0.01; // scaling applied to the traffic matrix
@@ -177,6 +178,7 @@ int main (int argc, char *argv[])
   cmd.AddValue ("nbLinksFailed", "Number of links failing. Default: 3", nblinksFailed);
   cmd.AddValue ("linkFailureDuration", "Duration of the link Failure. Default: 10 s", linkFailureDuration);
   cmd.AddValue ("nbNodesUpdated", "Number of nodes to be updated (Average Traffic Rate). Default: 1", nbNodesUpdated);
+  cmd.AddValue ("updateTrafficRateTime", "Frequency to update Traffic rate. Default: 10.0s", updateTrafficRateTime);
   cmd.Parse (argc, argv);
     
   NS_LOG_UNCOND("Ns3Env parameters:");
@@ -422,7 +424,15 @@ int main (int argc, char *argv[])
 
   // ---------- Create n*(n-1) CBR Flows -------------------------------------
 
-  
+  vector<bool> updatable_nodes;
+  for(int i=0;i<n_nodes;i++){
+    if(i<nbNodesUpdated){
+      updatable_nodes.push_back(true);
+    } else{
+      updatable_nodes.push_back(false);
+    }
+  }
+  random_shuffle(begin(updatable_nodes), end(updatable_nodes));
   NS_LOG_INFO ("Setup CBR Traffic Sources.");
 
   
@@ -452,6 +462,7 @@ int main (int argc, char *argv[])
               // poisson.SetAverageRate (DataRate(Traff_Matrix[i][j]));
 
               poisson.SetAverageRate (DataRate(round(DataRate(Traff_Matrix[i][j]).GetBitRate()*load_factor)), AvgPacketSize);
+              poisson.SetUpdatable(updatable_nodes[i], updateTrafficRateTime);
               ApplicationContainer apps = poisson.Install (nodes_traffic.Get (i));  // traffic sources are installed on all nodes
             
               apps.Start (Seconds (AppStartTime + rn));
@@ -461,6 +472,7 @@ int main (int argc, char *argv[])
     }
     Config::Connect ("/NodeList/*/ApplicationList/*/$ns3::PoissonGeneratorApplication/TxWithAddresses",MakeBoundCallback(&countPackets, n_nodes, &traffic_nd));
 
+ 
   
   
 
