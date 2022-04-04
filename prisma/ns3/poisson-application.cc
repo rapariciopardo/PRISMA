@@ -204,11 +204,20 @@ void PoissonGeneratorApplication::CancelEvents ()
   Simulator::Cancel (m_sendEvent);
 }
 
+void PoissonGeneratorApplication::UpdateAvgTrafficRate(){
+  int min = 100; //in bitsPerSec
+  int max = 1000; //in bitsPerSec
+  m_avgRate = DataRate (m_avgRate.GetBitRate() + min + rand() % (( max + 1 ) - min));
+  //NS_LOG_UNCOND("RATE: "<<m_avgRate.GetBitRate());
+  Simulator::Schedule(Seconds(10.0), &PoissonGeneratorApplication::UpdateAvgTrafficRate, this);
+}
+
 // Event handlers
 void PoissonGeneratorApplication::StartSending ()
 {
   NS_LOG_FUNCTION (this);
   m_lastStartTime = Simulator::Now ();
+  UpdateAvgTrafficRate();
   ScheduleNextTx ();  // Schedule the send packet event
 }
 

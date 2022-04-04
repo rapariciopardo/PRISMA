@@ -112,6 +112,8 @@ private:
    */
   void SendPacket ();
 
+  void UpdateAvgTrafficRate();
+
   Ptr<Socket>     m_socket;       //!< Associated socket
   Address         m_peer;         //!< Peer address
   bool            m_connected;    //!< True if connected
