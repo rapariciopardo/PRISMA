@@ -50,7 +50,8 @@
 #include "ns3/core-module.h"
 #include "ns3/network-module.h"
 #include "ns3/internet-module.h"
-#include "ns3/point-to-point-module.h"
+//#include "ns3/point-to-point-module.h"
+#include "point-to-point-helper.h"
 #include "ns3/applications-module.h"
 
 #include "poisson-app-helper.h"
@@ -79,13 +80,21 @@ vector<vector<std::string>> readIntensityFile(std::string intensity_file_name);
 void printCoordinateArray (const char* description, vector<vector<double> > coord_array);
 void printMatrix (const char* description, vector<vector<bool> > array);
 void ScheduleNextTrainStep(Ptr<PacketRoutingEnv> openGym);
-
-void ModifyLinkRate(NetDeviceContainer *ptp, u_int32_t idx1, u_int32_t idx2, DataRate lr) {
-  //NS_LOG_UNCOND(idx1<<"     "<<idx2<< "    aqui    "<<lr);
-  StaticCast<PointToPointNetDevice>(ptp->Get(idx1))->SetDataRate(lr);
-  StaticCast<PointToPointNetDevice>(ptp->Get(idx2))->SetDataRate(lr);
+void RestoreLinkRate(NetDeviceContainer *ptp, u_int32_t idx1, u_int32_t idx2) {
+  NS_LOG_UNCOND("tempo: "<<Simulator::Now());
+  NS_LOG_UNCOND(idx1<<"     "<<idx2<< "    aqui    ");
+  StaticCast<PointToPointNetDevice>(ptp->Get(idx1))->NotifyLink(true);
+  StaticCast<PointToPointNetDevice>(ptp->Get(idx2))->NotifyLink(true);
     
 }
+void ModifyLinkRate(NetDeviceContainer *ptp, u_int32_t idx1, u_int32_t idx2, double duration) {
+  NS_LOG_UNCOND(idx1<<"     "<<idx2<< "    aqui    ");
+  StaticCast<PointToPointNetDevice>(ptp->Get(idx1))->NotifyLink(false);
+  StaticCast<PointToPointNetDevice>(ptp->Get(idx2))->NotifyLink(false);
+  Simulator::Schedule(Seconds(duration), &RestoreLinkRate, ptp, idx1, idx2);
+}
+
+
 int counter_send[100]= {0};
 void countPackets(int n_nodes, NetDeviceContainer* nd, std::string path, Ptr<const Packet> packet, const Address &src, const Address &dest){
 
@@ -131,7 +140,10 @@ int main (int argc, char *argv[])
   uint32_t testArg = 0;
   double simTime = 60; //seconds
   double envStepTime = 0.05; //seconds, ns3gym env step time interval
-  double linkFailureTime = 30; //seconds
+  double linkFailureTime = 25; //seconds
+  int nblinksFailed = 3;
+  double linkFailureDuration = 3;
+  int nbNodesUpdated = 1;
   
   bool eventBasedEnv = true;
   double load_factor = 0.01; // scaling applied to the traffic matrix
@@ -161,7 +173,10 @@ int main (int argc, char *argv[])
   cmd.AddValue ("load_factor", "scale of the traffic matrix. Default: 1.0", load_factor);
   cmd.AddValue ("stepTime", "Gym Env step time in seconds. Default: 0.1s", envStepTime);
   cmd.AddValue ("testArg", "Extra simulation argument. Default: 0", testArg);
-  cmd.AddValue("linkFailure", "link Failure time. Default: 30", linkFailureTime);
+  cmd.AddValue ("linkFailure", "link Failure time. Default: 30", linkFailureTime);
+  cmd.AddValue ("nbLinksFailed", "Number of links failing. Default: 3", nblinksFailed);
+  cmd.AddValue ("linkFailureDuration", "Duration of the link Failure. Default: 10 s", linkFailureDuration);
+  cmd.AddValue ("nbNodesUpdated", "Number of nodes to be updated (Average Traffic Rate). Default: 1", nbNodesUpdated);
   cmd.Parse (argc, argv);
     
   NS_LOG_UNCOND("Ns3Env parameters:");
@@ -353,9 +368,11 @@ int main (int argc, char *argv[])
   //for(size_t i=0;i<link_devs.size();i++){
   //  NS_LOG_UNCOND(get<0>(link_devs[i]) << "     " << get<1>(link_devs[i])<<"    "<<switch_nd.Get(get<0>(link_devs[i]))->GetNode()->GetId()<<"     "<<switch_nd.Get(get<1>(link_devs[i]))->GetNode()->GetId());
   //}
-
-  int link_failed = rand() % link_devs.size();
-  Simulator::Schedule(Seconds(linkFailureTime), &ModifyLinkRate, &switch_nd, get<0>(link_devs[link_failed]), get<1>(link_devs[link_failed]),  DataRate("0.001Kbps"));
+  random_shuffle(begin(link_devs), end(link_devs));
+  if(nblinksFailed>int(link_devs.size())) nblinksFailed = int(link_devs.size());
+  for(int i=0;i<nblinksFailed;i++){
+    Simulator::Schedule(Seconds(linkFailureTime), &ModifyLinkRate, &switch_nd, get<0>(link_devs[i]), get<1>(link_devs[i]), linkFailureDuration);
+  }
   //Simulator::Schedule(Seconds(2.0), &ModifyLinkRate, &traffic_nd, DataRate("0.001Kbps"));
 
 ////////////////////////////////////////////////////////////////
