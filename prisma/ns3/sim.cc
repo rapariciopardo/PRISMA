@@ -174,7 +174,7 @@ int main (int argc, char *argv[])
   double AppStartTime   = 0.0001;
   double AppStopTime    = simTime - 0.2;
 
-  AvgPacketSize = AvgPacketSize - 30; // remove the header length
+  AvgPacketSize = AvgPacketSize - 42; // remove the header length
   
     
   RngSeedManager::SetSeed (simSeed);

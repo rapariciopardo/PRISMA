@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin python3
 # -*- coding: utf-8 -*-
 
 
@@ -96,6 +96,7 @@ def arguments_parser():
     
     group3 = parser.add_argument_group('DRL Agent arguments')
     group3.add_argument('--agent_type', choices=["dqn_buffer", "dqn_routing", "sp", "opt"], type=str, help='The type of the agent. Can be dqn_buffer, dqn_routing, sp or opt', default="dqn_routing")
+    group3.add_argument('--signaling_type', type=str, choices=["NN", "target", "ideal"], help='Type of the signaling. Can be "NN" for sending neighbors NN and (r,s\') tuple, "target" for sending only the target value and "ideal" for no signalisation (used when training)', default="ideal")
     group3.add_argument('--lr', type=float, help='Learning rate (used when training)', default=1e-4)
     group3.add_argument('--batch_size', type=int, help='Size of a batch (used when training)', default=512)
     group3.add_argument('--gamma', type=float, help='Gamma ratio for RL (used when training)', default=1)
@@ -103,13 +104,14 @@ def arguments_parser():
     group3.add_argument('--exploration_initial_eps', type=float, help='Exploration intial value (used when training)', default=1.0)
     group3.add_argument('--exploration_final_eps', type=float, help='Exploration final value (used when training)', default=0.1)
     group3.add_argument('--load_path', type=str, help='Path to DQN models, if not None, loads the models from the given files', default=None)
-    group3.add_argument('--save_models', type=int, help='if True, store the models at the end of the training', default=1)
+    group3.add_argument('--save_models', type=int, help='if True, store the models at the end of the training', default=0)
     group3.add_argument('--training_trigger_type', type=str, choices=["event", "time"], help='Type of the training trigger, can be "event" (for event based) or "time" (for time based) (used when training)', default="time")
     group3.add_argument('--training_step', type=float, help='Number of steps or seconds to train (used when training)', default=0.05)
+    group3.add_argument('--sync_step', type=float, help='Number of seconds to sync NN if signaling_type is "NN" (used when training)', default=0.05)
     group3.add_argument('--replay_buffer_max_size', type=int, help='Max size of the replay buffers (used when training)', default=10000)
 
     group5 = parser.add_argument_group('Other parameters')
-    group5.add_argument('--start_tensorboard', type=int, help='if True, starts a tensorboard server to keep track of simulation progress', default=1)
+    group5.add_argument('--start_tensorboard', type=int, help='if True, starts a tensorboard server to keep track of simulation progress', default=0)
     group5.add_argument('--tensorboard_port', type=int, help='Tensorboard server port', default=16666)
     # parser.print_help()
 
@@ -285,7 +287,8 @@ def run_ns3(params):
     os.chdir(params["ns3_sim_path"])
     
     ## run ns3 configure
-    os.system('./waf -d optimized configure')
+    # os.system('./waf -d optimized configure')
+    # os.system('./waf configure')
 
     ## run NS3 simulator
     ns3_params_format = ('prisma --simSeed={} --openGymPort={} --simTime={} --AvgPacketSize={} '
