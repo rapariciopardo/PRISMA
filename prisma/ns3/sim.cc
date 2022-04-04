@@ -131,6 +131,7 @@ int main (int argc, char *argv[])
   uint32_t testArg = 0;
   double simTime = 60; //seconds
   double envStepTime = 0.05; //seconds, ns3gym env step time interval
+  double linkFailureTime = 30; //seconds
   
   bool eventBasedEnv = true;
   double load_factor = 0.01; // scaling applied to the traffic matrix
@@ -160,6 +161,7 @@ int main (int argc, char *argv[])
   cmd.AddValue ("load_factor", "scale of the traffic matrix. Default: 1.0", load_factor);
   cmd.AddValue ("stepTime", "Gym Env step time in seconds. Default: 0.1s", envStepTime);
   cmd.AddValue ("testArg", "Extra simulation argument. Default: 0", testArg);
+  cmd.AddValue("linkFailure", "link Failure time. Default: 30", linkFailureTime);
   cmd.Parse (argc, argv);
     
   NS_LOG_UNCOND("Ns3Env parameters:");
@@ -174,6 +176,7 @@ int main (int argc, char *argv[])
   NS_LOG_UNCOND("--LinkDelay: " << LinkDelay);
   NS_LOG_UNCOND("--MaxBufferLength: " << MaxBufferLength);
   NS_LOG_UNCOND("--load_factor: " << load_factor);
+  NS_LOG_UNCOND("--linkFailureTime: "<<linkFailureTime);
   
   //Parameters of the scenario
   double SinkStartTime  = 0.0001;
@@ -352,7 +355,7 @@ int main (int argc, char *argv[])
   //}
 
   int link_failed = rand() % link_devs.size();
-  Simulator::Schedule(Seconds(25.0), &ModifyLinkRate, &switch_nd, get<0>(link_devs[link_failed]), get<1>(link_devs[link_failed]),  DataRate("0.001Kbps"));
+  Simulator::Schedule(Seconds(linkFailureTime), &ModifyLinkRate, &switch_nd, get<0>(link_devs[link_failed]), get<1>(link_devs[link_failed]),  DataRate("0.001Kbps"));
   //Simulator::Schedule(Seconds(2.0), &ModifyLinkRate, &traffic_nd, DataRate("0.001Kbps"));
 
 ////////////////////////////////////////////////////////////////

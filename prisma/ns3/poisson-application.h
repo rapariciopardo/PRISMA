@@ -126,6 +126,7 @@ private:
   uint64_t        m_totBytes;     //!< Total bytes sent so far
   EventId         m_sendEvent;    //!< Event id of pending "send packet" event
   TypeId          m_tid;          //!< Type of the socket used
+  float           m_updateTrafficRateTime = 10.0;
 
   /// Traced Callback: transmitted packets.
   TracedCallback<Ptr<const Packet> > m_txTrace;

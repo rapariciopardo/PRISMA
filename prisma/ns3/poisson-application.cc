@@ -209,7 +209,7 @@ void PoissonGeneratorApplication::UpdateAvgTrafficRate(){
   int max = 1000; //in bitsPerSec
   m_avgRate = DataRate (m_avgRate.GetBitRate() + min + rand() % (( max + 1 ) - min));
   //NS_LOG_UNCOND("RATE: "<<m_avgRate.GetBitRate());
-  Simulator::Schedule(Seconds(10.0), &PoissonGeneratorApplication::UpdateAvgTrafficRate, this);
+  Simulator::Schedule(Seconds(m_updateTrafficRateTime), &PoissonGeneratorApplication::UpdateAvgTrafficRate, this);
 }
 
 // Event handlers
