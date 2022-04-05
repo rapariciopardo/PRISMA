@@ -4,6 +4,7 @@ import tensorflow as tf
 import os, multiprocessing, shutil
 import numpy as np
 from source.models import SplitLayer
+import math
 
 __author__ = "Redha A. Alliche, Tiago Da Silva Barros, Ramon Aparicio-Pardo, Lucile Sassatelli"
 __copyright__ = "Copyright (c) 2022 Redha A. Alliche, Tiago Da Silva Barros, Ramon Aparicio-Pardo, Lucile Sassatelli"
@@ -96,3 +97,40 @@ class LinearSchedule(object):
         """See Schedule.value"""
         fraction = min(float(t) / self.schedule_timesteps, 1.0)
         return self.initial_p + fraction * (self.final_p - self.initial_p)
+
+
+
+def convert_data_rate_to_bps(data_rate):
+    """
+    Convert the int data rate into text
+
+    Args:
+        data_rate (int): data rate in bps 
+    """
+    if data_rate == 0:
+        return "0bps"
+    size_name = ("bps", "Kbps", "Mbps", "Gbps", "Tbps")
+    i = int(math.floor(math.log(data_rate, 1000)))
+    p = math.pow(1000, i)
+    s = round(data_rate / p, 2)
+    return "%s%s" % (s, size_name[i])
+
+def convert_bps_to_data_rate(bps):
+    """
+    Convert the text data rate into int
+
+    Args:
+        bps (str): data rate in text
+    """
+
+    unit = bps.rstrip("bps")
+    size_name = ("K", "M", "G", "T")
+    if unit[-1] in size_name:
+        i = size_name.index(unit[-1])
+        p = math.pow(1000, i+1)
+        data_rate = float(unit[:-1])
+    else:
+        p = 1
+        data_rate = float(unit)
+
+    return data_rate*p

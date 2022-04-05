@@ -8,7 +8,7 @@ import numpy as np
 import os
 from ns3gym import ns3env
 from source.learner import DQN_AGENT
-from source.utils import save_model, load_model, LinearSchedule
+from source.utils import save_model, load_model, LinearSchedule, convert_bps_to_data_rate
 from source.replay_buffer import ReplayBuffer
 from source.models import DQN_buffer_model, DQN_routing_model
 import threading
@@ -95,7 +95,10 @@ class Agent():
         cl.signaling_type = params_dict["signaling_type"]
         cl.training_step = params_dict["training_step"]
         cl.sync_step = params_dict["sync_step"]
+        cl.sync_ratio = params_dict["sync_ratio"]
         cl.replay_buffer_max_size = params_dict["replay_buffer_max_size"]
+        cl.traffic_matrix_path = params_dict["traffic_matrix_path"]
+        cl.packet_size = params_dict["packet_size"]
         cl.envs = cl.numNodes * [None]
         cl.agents = cl.numNodes * [None]
         cl.replay_buffer = [ReplayBuffer(cl.replay_buffer_max_size) for n in range(cl.numNodes)]
@@ -150,11 +153,13 @@ class Agent():
 
         ### compute small signaling delay
         if Agent.signaling_type == "NN":
-            small_signaling_pkt_size = 64 + 8 + (8 * (len(self.neighbors)+1)) # header + reward (float) + s' (double)
-            self.small_signaling_delay = (small_signaling_pkt_size / Agent.link_cap) + Agent.link_delay
+            self.small_signaling_pkt_size = 64 + 8 + (8 * (len(self.neighbors)+1)) # header + reward (float) + s' (double)
+            self.small_signaling_delay = (self.small_signaling_pkt_size / Agent.link_cap) + Agent.link_delay
+            if Agent.sync_step < 0:
+                Agent.sync_step = self._compute_sync_step(ratio=Agent.sync_ratio)
         elif Agent.signaling_type == "target":
-            small_signaling_pkt_size = 64 + 8  # header + target (float)
-            self.small_signaling_delay = (small_signaling_pkt_size / Agent.link_cap) + Agent.link_delay
+            self.small_signaling_pkt_size = 64 + 8  # header + target (float)
+            self.small_signaling_delay = (self.small_signaling_pkt_size / Agent.link_cap) + Agent.link_delay
 
         ### define the ns3 env
         self.env = ns3env.Ns3Env(port=int(self.port), stepTime=Agent.stepTime, startSim=Agent.startSim, simSeed=Agent.seed, simArgs=Agent.simArgs, debug=Agent.debug)
@@ -210,6 +215,7 @@ class Agent():
         self.count_arrived_packets = 0
         self.count_new_pkts = 0
         self.last_training_time = 0
+        self.last_sync_time = 0
         self.last_training_step = 0
         self.gradient_step_idx = 0
 
@@ -295,6 +301,29 @@ class Agent():
             if Agent.curr_time > (self.last_sync_time + Agent.big_signaling_delay + Agent.sync_step):
                 self._sync_all()
                 self.last_sync_time = Agent.curr_time
+
+    def _compute_sync_step(self, ratio=0.1):
+        """
+        Compute sync step to have control over data of ratio.
+        """
+        ## load traffic matrix and convert it to bps
+        traff_mat = np.loadtxt(Agent.traffic_matrix_path, dtype=object)
+        traff_mat = np.vectorize(convert_bps_to_data_rate)(traff_mat)
+        
+        
+        ## data load per second
+        data_load_per_s = np.sum(traff_mat)
+
+        ## number of pkts per second
+        nb_pkts_per_s = data_load_per_s/ (Agent.packet_size*8)
+
+        ## small signaling load per s
+        control_load_per_s = (nb_pkts_per_s * self.small_signaling_pkt_size)
+
+        ## compute sync step
+        sync_step = (100000) /((data_load_per_s * ratio)- control_load_per_s)
+        print(f"Sync step computed automatically : {sync_step} seconds")
+        return sync_step
 
     def _get_upcoming_events(self):
         """
