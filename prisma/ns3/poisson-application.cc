@@ -45,6 +45,7 @@
 #include "ns3/socket-factory.h"
 #include "ns3/packet.h"
 #include "ns3/uinteger.h"
+#include "ns3/boolean.h"
 #include "ns3/double.h"
 #include "ns3/trace-source-accessor.h"
 #include "poisson-application.h"
@@ -73,6 +74,14 @@ PoissonGeneratorApplication::GetTypeId (void)
                    UintegerValue (512),
                    MakeUintegerAccessor (&PoissonGeneratorApplication::m_pktSizeMean),
                    MakeUintegerChecker<uint32_t> (1))
+    .AddAttribute ("Updatable", "The Traffic Rate of node is updatable",
+                   BooleanValue(false),
+                   MakeBooleanAccessor (&PoissonGeneratorApplication::m_updatable),
+                   MakeBooleanChecker())
+    .AddAttribute ("UpdateTrafficRateTime", "The frequency the Traffic Rate of node is updatable",
+                   DoubleValue(10.0),
+                   MakeDoubleAccessor (&PoissonGeneratorApplication::m_updateTrafficRateTime),
+                   MakeDoubleChecker<double>())
     .AddAttribute ("Remote", "The address of the destination",
                    AddressValue (),
                    MakeAddressAccessor (&PoissonGeneratorApplication::m_peer),
@@ -204,11 +213,31 @@ void PoissonGeneratorApplication::CancelEvents ()
   Simulator::Cancel (m_sendEvent);
 }
 
+void PoissonGeneratorApplication::UpdateAvgTrafficRate(){
+  double mean = double(m_avgRate.GetBitRate());
+  double variance = mean/2.0;
+ 
+  Ptr<NormalRandomVariable> x = CreateObject<NormalRandomVariable> ();
+  x->SetAttribute ("Mean", DoubleValue (mean));
+  x->SetAttribute ("Variance", DoubleValue (variance));
+ 
+  
+  m_avgRate = DataRate (x->GetValue ());
+  //int min = 100; //in bitsPerSec
+  //int max = 1000; //in bitsPerSec
+  //m_avgRate = DataRate (m_avgRate.GetBitRate() + min + rand() % (( max + 1 ) - min));
+  NS_LOG_UNCOND("RATE: "<<m_avgRate.GetBitRate());
+  Simulator::Schedule(Seconds(m_updateTrafficRateTime), &PoissonGeneratorApplication::UpdateAvgTrafficRate, this);
+}
+
 // Event handlers
 void PoissonGeneratorApplication::StartSending ()
 {
   NS_LOG_FUNCTION (this);
   m_lastStartTime = Simulator::Now ();
+  if(m_updatable){
+    UpdateAvgTrafficRate();
+  }
   ScheduleNextTx ();  // Schedule the send packet event
 }
 

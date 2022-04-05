@@ -82,6 +82,8 @@ public:
    */
   void SetAverageRate (DataRate dataRate, uint32_t packetSize = 512);
 
+  void SetUpdatable(bool updatable, double updateTrafficRateTime);
+
   /**
    * Install an ns3::PoissonGeneratorApplication on each node of the input container
    * configured with all the attributes set with SetAttribute.

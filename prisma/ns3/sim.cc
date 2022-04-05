@@ -50,7 +50,8 @@
 #include "ns3/core-module.h"
 #include "ns3/network-module.h"
 #include "ns3/internet-module.h"
-#include "ns3/point-to-point-module.h"
+//#include "ns3/point-to-point-module.h"
+#include "point-to-point-helper.h"
 #include "ns3/applications-module.h"
 
 #include "poisson-app-helper.h"
@@ -79,6 +80,21 @@ vector<vector<std::string>> readIntensityFile(std::string intensity_file_name);
 void printCoordinateArray (const char* description, vector<vector<double> > coord_array);
 void printMatrix (const char* description, vector<vector<bool> > array);
 void ScheduleNextTrainStep(Ptr<PacketRoutingEnv> openGym);
+void RestoreLinkRate(NetDeviceContainer *ptp, u_int32_t idx1, u_int32_t idx2) {
+  NS_LOG_UNCOND("tempo: "<<Simulator::Now());
+  NS_LOG_UNCOND(idx1<<"     "<<idx2<< "    aqui    ");
+  StaticCast<PointToPointNetDevice>(ptp->Get(idx1))->NotifyLink(true);
+  StaticCast<PointToPointNetDevice>(ptp->Get(idx2))->NotifyLink(true);
+    
+}
+void ModifyLinkRate(NetDeviceContainer *ptp, u_int32_t idx1, u_int32_t idx2, double duration) {
+  NS_LOG_UNCOND(idx1<<"     "<<idx2<< "    aqui    ");
+  StaticCast<PointToPointNetDevice>(ptp->Get(idx1))->NotifyLink(false);
+  StaticCast<PointToPointNetDevice>(ptp->Get(idx2))->NotifyLink(false);
+  Simulator::Schedule(Seconds(duration), &RestoreLinkRate, ptp, idx1, idx2);
+}
+
+
 int counter_send[100]= {0};
 void countPackets(int n_nodes, NetDeviceContainer* nd, std::string path, Ptr<const Packet> packet, const Address &src, const Address &dest){
 
@@ -124,6 +140,11 @@ int main (int argc, char *argv[])
   uint32_t testArg = 0;
   double simTime = 60; //seconds
   double envStepTime = 0.05; //seconds, ns3gym env step time interval
+  double linkFailureTime = 25; //seconds
+  int nblinksFailed = 3;
+  double linkFailureDuration = 3;
+  int nbNodesUpdated = 1;
+  double updateTrafficRateTime = 10.0;
   
   bool eventBasedEnv = true;
   double load_factor = 0.01; // scaling applied to the traffic matrix
@@ -153,6 +174,11 @@ int main (int argc, char *argv[])
   cmd.AddValue ("load_factor", "scale of the traffic matrix. Default: 1.0", load_factor);
   cmd.AddValue ("stepTime", "Gym Env step time in seconds. Default: 0.1s", envStepTime);
   cmd.AddValue ("testArg", "Extra simulation argument. Default: 0", testArg);
+  cmd.AddValue ("linkFailure", "link Failure time. Default: 30", linkFailureTime);
+  cmd.AddValue ("nbLinksFailed", "Number of links failing. Default: 3", nblinksFailed);
+  cmd.AddValue ("linkFailureDuration", "Duration of the link Failure. Default: 10 s", linkFailureDuration);
+  cmd.AddValue ("nbNodesUpdated", "Number of nodes to be updated (Average Traffic Rate). Default: 1", nbNodesUpdated);
+  cmd.AddValue ("updateTrafficRateTime", "Frequency to update Traffic rate. Default: 10.0s", updateTrafficRateTime);
   cmd.Parse (argc, argv);
     
   NS_LOG_UNCOND("Ns3Env parameters:");
@@ -167,6 +193,7 @@ int main (int argc, char *argv[])
   NS_LOG_UNCOND("--LinkDelay: " << LinkDelay);
   NS_LOG_UNCOND("--MaxBufferLength: " << MaxBufferLength);
   NS_LOG_UNCOND("--load_factor: " << load_factor);
+  NS_LOG_UNCOND("--linkFailureTime: "<<linkFailureTime);
   
   //Parameters of the scenario
   double SinkStartTime  = 0.0001;
@@ -312,6 +339,7 @@ int main (int argc, char *argv[])
   }
 
 /////////////////////////////////////////////////////////////////
+  vector<tuple<int, int>> link_devs;
   for (size_t i = 0; i < Adj_Matrix.size (); i++)
       {
         for (size_t j = i; j < Adj_Matrix[i].size (); j++)
@@ -326,6 +354,9 @@ int main (int argc, char *argv[])
                 NetDeviceContainer n_devs = p2p.Install(NodeContainer(nodes_switch.Get(i), nodes_switch.Get(j)));
                 switch_nd.Add(n_devs.Get(0));
                 switch_nd.Add(n_devs.Get(1));
+                link_devs.push_back(make_tuple(switch_nd.GetN()-1, switch_nd.GetN()-2));
+
+                
                 //NS_LOG_UNCOND ("matrix element [" << i << "][" << j << "] is 1");
                 // NS_LOG_UNCOND(n_devs.Get(0)->GetAddress()<<"     "<<n_devs.Get(1)->GetAddress());
                 
@@ -336,8 +367,15 @@ int main (int argc, char *argv[])
               }
           }
       }
-
-
+  //for(size_t i=0;i<link_devs.size();i++){
+  //  NS_LOG_UNCOND(get<0>(link_devs[i]) << "     " << get<1>(link_devs[i])<<"    "<<switch_nd.Get(get<0>(link_devs[i]))->GetNode()->GetId()<<"     "<<switch_nd.Get(get<1>(link_devs[i]))->GetNode()->GetId());
+  //}
+  random_shuffle(begin(link_devs), end(link_devs));
+  if(nblinksFailed>int(link_devs.size())) nblinksFailed = int(link_devs.size());
+  for(int i=0;i<nblinksFailed;i++){
+    Simulator::Schedule(Seconds(linkFailureTime), &ModifyLinkRate, &switch_nd, get<0>(link_devs[i]), get<1>(link_devs[i]), linkFailureDuration);
+  }
+  //Simulator::Schedule(Seconds(2.0), &ModifyLinkRate, &traffic_nd, DataRate("0.001Kbps"));
 
 ////////////////////////////////////////////////////////////////
 
@@ -354,13 +392,14 @@ int main (int argc, char *argv[])
   ///////////////////////////////////////////////////////////
   InternetStackHelper internet;
   internet.Install(nodes_traffic);
-  //////////////////////////////////////////////////////////
+
   Ipv4AddressHelper ipv4_helper;
   ipv4_helper.SetBase ("10.2.2.0", "255.255.255.0");
   ipv4_helper.Assign (traffic_nd);
 
 
-  ////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////
+ 
 
   
 
@@ -385,7 +424,15 @@ int main (int argc, char *argv[])
 
   // ---------- Create n*(n-1) CBR Flows -------------------------------------
 
-  
+  vector<bool> updatable_nodes;
+  for(int i=0;i<n_nodes;i++){
+    if(i<nbNodesUpdated){
+      updatable_nodes.push_back(true);
+    } else{
+      updatable_nodes.push_back(false);
+    }
+  }
+  random_shuffle(begin(updatable_nodes), end(updatable_nodes));
   NS_LOG_INFO ("Setup CBR Traffic Sources.");
 
   
@@ -415,6 +462,7 @@ int main (int argc, char *argv[])
               // poisson.SetAverageRate (DataRate(Traff_Matrix[i][j]));
 
               poisson.SetAverageRate (DataRate(round(DataRate(Traff_Matrix[i][j]).GetBitRate()*load_factor)), AvgPacketSize);
+              poisson.SetUpdatable(updatable_nodes[i], updateTrafficRateTime);
               ApplicationContainer apps = poisson.Install (nodes_traffic.Get (i));  // traffic sources are installed on all nodes
             
               apps.Start (Seconds (AppStartTime + rn));
@@ -424,6 +472,7 @@ int main (int argc, char *argv[])
     }
     Config::Connect ("/NodeList/*/ApplicationList/*/$ns3::PoissonGeneratorApplication/TxWithAddresses",MakeBoundCallback(&countPackets, n_nodes, &traffic_nd));
 
+ 
   
   
 
@@ -454,6 +503,7 @@ int main (int argc, char *argv[])
     Simulator::Schedule (Seconds(0.0), &ScheduleNextTrainStep, packetRoutingEnvs[i]);
   }
   NS_LOG_INFO ("Configure Tracing.");
+
 
   
   NS_LOG_INFO ("Run Simulation.");
