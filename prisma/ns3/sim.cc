@@ -145,6 +145,7 @@ int main (int argc, char *argv[])
   double linkFailureDuration = 3;
   int nbNodesUpdated = 1;
   double updateTrafficRateTime = 10.0;
+  bool perturbations = false;
   
   bool eventBasedEnv = true;
   double load_factor = 0.01; // scaling applied to the traffic matrix
@@ -179,6 +180,7 @@ int main (int argc, char *argv[])
   cmd.AddValue ("linkFailureDuration", "Duration of the link Failure. Default: 10 s", linkFailureDuration);
   cmd.AddValue ("nbNodesUpdated", "Number of nodes to be updated (Average Traffic Rate). Default: 1", nbNodesUpdated);
   cmd.AddValue ("updateTrafficRateTime", "Frequency to update Traffic rate. Default: 10.0s", updateTrafficRateTime);
+  cmd.AddValue ("perturbations", "Adding perturbations for the network. Default: false", perturbations);
   cmd.Parse (argc, argv);
     
   NS_LOG_UNCOND("Ns3Env parameters:");
@@ -370,13 +372,15 @@ int main (int argc, char *argv[])
   //for(size_t i=0;i<link_devs.size();i++){
   //  NS_LOG_UNCOND(get<0>(link_devs[i]) << "     " << get<1>(link_devs[i])<<"    "<<switch_nd.Get(get<0>(link_devs[i]))->GetNode()->GetId()<<"     "<<switch_nd.Get(get<1>(link_devs[i]))->GetNode()->GetId());
   //}
-  random_shuffle(begin(link_devs), end(link_devs));
-  if(nblinksFailed>int(link_devs.size())) nblinksFailed = int(link_devs.size());
-  for(int i=0;i<nblinksFailed;i++){
-    Simulator::Schedule(Seconds(linkFailureTime), &ModifyLinkRate, &switch_nd, get<0>(link_devs[i]), get<1>(link_devs[i]), linkFailureDuration);
+  if(perturbations==true){
+    random_shuffle(begin(link_devs), end(link_devs));
+    if(nblinksFailed>int(link_devs.size())) nblinksFailed = int(link_devs.size());
+    for(int i=0;i<nblinksFailed;i++){
+      Simulator::Schedule(Seconds(linkFailureTime), &ModifyLinkRate, &switch_nd, get<0>(link_devs[i]), get<1>(link_devs[i]), linkFailureDuration);
+    }
+    //Simulator::Schedule(Seconds(2.0), &ModifyLinkRate, &traffic_nd, DataRate("0.001Kbps"));
   }
-  //Simulator::Schedule(Seconds(2.0), &ModifyLinkRate, &traffic_nd, DataRate("0.001Kbps"));
-
+  
 ////////////////////////////////////////////////////////////////
 
   NS_LOG_UNCOND("Size switch_nd :"<<switch_nd.GetN());
@@ -426,7 +430,7 @@ int main (int argc, char *argv[])
 
   vector<bool> updatable_nodes;
   for(int i=0;i<n_nodes;i++){
-    if(i<nbNodesUpdated){
+    if(i<nbNodesUpdated && perturbations==true){
       updatable_nodes.push_back(true);
     } else{
       updatable_nodes.push_back(false);

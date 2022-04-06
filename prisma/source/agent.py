@@ -288,7 +288,7 @@ class Agent():
         Sync this node all neighbors neural networks
         """
         for indx, neighbor in enumerate(self.neighbors): 
-            self._sync_all(neighbor, indx)
+            self._sync(neighbor, indx)
 
     def _check_sync(self):
         """
@@ -361,7 +361,7 @@ class Agent():
         weights, _ = np.ones(Agent.batch_size, dtype=np.float32), None
 
         if Agent.signaling_type == "target":
-            targets_t = tf.constant(rewards_t)          
+            targets_t = tf.constant(rewards_t, dtype=float)          
             obses_t = tf.constant(obses_t)          
             actions_t = tf.constant(actions_t)       
         else:
