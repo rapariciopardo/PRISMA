@@ -317,7 +317,7 @@ def main():
     # params["METRICS"] = ["avg_delay", "loss_ratio", "reward"]
 
     ## compute the loss penalty
-    params["loss_penalty"] = ((params["max_out_buffer_size"] + 1)*params["packet_size"]*8)/params["link_cap"]
+    params["loss_penalty"] = ((((params["max_out_buffer_size"] + 1)*params["packet_size"]*8)/params["link_cap"]) + 0.002)*6 
 
     ## fix the seed
     tf.random.set_seed(params["seed"])
