@@ -134,3 +134,34 @@ def convert_bps_to_data_rate(bps):
         data_rate = float(unit)
 
     return data_rate*p
+
+def _optimal_routing(graph, routing_mat, lost_mat, actual_node, src_node, dst_node, tag):
+    src = int(src_node)
+    dst = int(dst_node)
+    actual = int(actual_node)
+    indices = np.where(np.array(list(graph.edges))[ :,0]==actual)[0]
+    prob_to_neighbors = routing_mat[src][dst][indices]
+    lost_prob = lost_mat[src][dst]
+    if actual == src:
+        if np.random.rand() <= lost_prob:
+            return -1
+    
+    if tag == None:
+        if tag in prob_to_neighbors and tag < 1:
+            return list(graph.neighbors(actual))[list(prob_to_neighbors).index(tag)], tag
+        
+    prob_general = list(prob_to_neighbors/sum(prob_to_neighbors))
+    
+    choice = np.random.choice(list(graph.neighbors(actual)), p=prob_general)
+    tag = prob_to_neighbors[list(graph.neighbors(actual)).index(choice)]
+    return choice, tag
+
+
+def optimal_routing_decision(obs, n, env, routing_mat, lost_mat, **kwargs):
+    packet = env.G.nodes[n]['in_buffer'][0]
+    next_hop = _optimal_routing(env.G, routing_mat, lost_mat, packet)
+    if next_hop == -1:
+        action = -2
+    else:
+        action = list(env.G.neighbors(n)).index(next_hop)
+    return action

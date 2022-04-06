@@ -240,6 +240,8 @@ class Agent():
             action = Agent.agents[self.index].step(np.array([obs]), self.train, self.update_eps).numpy().item()
         elif self.agent_type == "sp":
             action = self.neighbors.index(Agent.agents[self.index](Agent.G, self.index, obs[0])[1])
+        elif self.agent_type == "opt":
+            action = -1
         return action
 
     def _forward(self):
@@ -288,7 +290,7 @@ class Agent():
         Sync this node all neighbors neural networks
         """
         for indx, neighbor in enumerate(self.neighbors): 
-            self._sync_all(neighbor, indx)
+            self._sync(neighbor, indx)
 
     def _check_sync(self):
         """

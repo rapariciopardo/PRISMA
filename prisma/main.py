@@ -95,7 +95,7 @@ def arguments_parser():
     group2.add_argument('--logging_timestep', type=int, help='Time delay (in real time) between each logging in seconds', default=15)
     
     group3 = parser.add_argument_group('DRL Agent arguments')
-    group3.add_argument('--agent_type', choices=["dqn_buffer", "dqn_routing", "sp", "opt"], type=str, help='The type of the agent. Can be dqn_buffer, dqn_routing, sp or opt', default="dqn_routing")
+    group3.add_argument('--agent_type', choices=["dqn_buffer", "dqn_routing", "sp", "opt"], type=str, help='The type of the agent. Can be dqn_buffer, dqn_routing, sp or opt', default="dqn_buffer")
     group3.add_argument('--signaling_type', type=str, choices=["NN", "target", "ideal"], help='Type of the signaling. Can be "NN" for sending neighbors NN and (r,s\') tuple, "target" for sending only the target value and "ideal" for no signalisation (used when training)', default="ideal")
     group3.add_argument('--lr', type=float, help='Learning rate (used when training)', default=1e-4)
     group3.add_argument('--batch_size', type=int, help='Size of a batch (used when training)', default=512)
@@ -108,7 +108,7 @@ def arguments_parser():
     group3.add_argument('--training_trigger_type', type=str, choices=["event", "time"], help='Type of the training trigger, can be "event" (for event based) or "time" (for time based) (used when training)', default="time")
     group3.add_argument('--training_step', type=float, help='Number of steps or seconds to train (used when training)', default=0.05)
     group3.add_argument('--sync_step', type=float, help='Number of seconds to sync NN if signaling_type is "NN". if -1, then compute it to have control/data of 10% (used when training)', default=-1)
-    group3.add_argument('--sync_ratio', type=float, help=' control/data ratio for computing the sync step automatically (used when training and sync step <0)', default=0.2)
+    group3.add_argument('--sync_ratio', type=float, help=' control/data ratio for computing the sync step automatically (used when training and sync step <0)', default=0.1)
     group3.add_argument('--replay_buffer_max_size', type=int, help='Max size of the replay buffers (used when training)', default=10000)
 
     group5 = parser.add_argument_group('Other parameters')

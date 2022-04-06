@@ -3,7 +3,7 @@
 for ((i=0; i<1; i++))
 	do  for ((j=100; j<=100; j=j+100))
 		do 
-		python multi_agents_threaded.py --simTime=40 \
+		python main.py --simTime=40 \
 			--basePort=$((6555+$j + (15*$i))) \
 			--train=1 \
 			--session_name="q_routing_mat_$(($i))_seed_$j"\
@@ -28,7 +28,7 @@ done
 # 			wait
 # 		fi
 # 		sleep $i
-# 		python multi_agents_threaded.py --simTime=60 \
+# 		python main.py --simTime=60 \
 # 			--basePort=$((6555+$j + (15*$i))) \
 # 			--session_name="dqn_mat_$(($i))_seed_$j" \
 # 			--logs_parent_folder=outputs/test_dqn_buffer_no_signaling/ \
@@ -70,7 +70,7 @@ done
 # 		sleep $i
 # 		res1=$(printf "%.0f" $(echo "scale=2; ($j  / 0.01 * 100 )" | bc ))
 # 		echo $res1
-# 		python multi_agents_threaded.py --simTime=600 \
+# 		python main.py --simTime=600 \
 # 			--basePort=$((6555 + (15*counter))) \
 # 			--session_name="sp_mat_$(($i))_load_$j" \
 # 			--logs_parent_folder=outputs/tests/mat_$(($i))/load_$(($res1))/sp/ \
@@ -114,7 +114,7 @@ done
 # 			sleep $i
 # 			res1=$(printf "%.0f" $(echo "scale=2; ($j  / 0.01 * 100 )" | bc ))
 # 			echo $res1
-# 			python multi_agents_threaded.py --simTime=600 \
+# 			python main.py --simTime=600 \
 # 				--basePort=$((6555 + (15*counter))) \
 # 				--session_name="dqn_mat_$(($i))_load_$j" \
 # 				--logs_parent_folder=outputs/tests/mat_$(($i))/load_$(($res1))/dqn_buffer/seed_$(($k))/ \

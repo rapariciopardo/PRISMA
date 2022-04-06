@@ -1,0 +1,15 @@
+python3 main.py --simTime=40 \
+    --basePort=8555 \
+    --train=1 \
+    --session_name="test1" \
+    --logs_parent_folder=examples/abilene/ \
+    --traffic_matrix_path=examples/abilene/traffic_matrices/node_intensity_normalized.txt \
+    --seed=0 \
+    --load_factor=0.7 \
+    --start_tensorboard=1 \
+    --simTime=10 \
+    --signaling_type="ideal" \
+    --exploration_initial_eps=0.5 \
+    --exploration_final_eps=0.01 \
+    --iterationNum=3000 \
+    --sync_ratio=0.1
