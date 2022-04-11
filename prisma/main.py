@@ -137,10 +137,11 @@ def arguments_parser():
     params["ns3_sim_path"] = os.path.abspath(params["ns3_sim_path"])
 
     ## add the network topology to the params
-    G=nx.Graph()
+    G=nx.DiGraph(nx.empty_graph())
     for i, element in enumerate(np.loadtxt(open(params["node_coordinates_path"]))):
         G.add_node(i,pos=tuple(element))
-    G = nx.from_numpy_matrix(np.loadtxt(open(params["adjacency_matrix_path"])), create_using=G)
+    G = nx.from_numpy_matrix(np.loadtxt(open(params["adjacency_matrix_path"])), parallel_edges=False, create_using=G)
+
     params["numNodes"] = G.number_of_nodes()
     params["G"] = G
     params["logs_parent_folder"] = params["logs_parent_folder"].rstrip("/")
@@ -156,6 +157,9 @@ def arguments_parser():
     params["nb_new_pkts_path"] = f'{params["logs_folder"]}/nb_new_pkts'
     params["nb_lost_pkts_path"] = f'{params["logs_folder"]}/nb_lost_pkts'
     
+    ## Add optimal solution path
+    topology_name = params["adjacency_matrix_path"].split("/")[-2]
+    params["optimal_soltion_path"] = f"examples/{topology_name}/optimal_solution/0_norm_matrix_uniform/{int(params['load_factor']*100)}_ut_minCostMCF.json"
     return params
 
 def custom_plots():
@@ -317,7 +321,7 @@ def main():
     # params["METRICS"] = ["avg_delay", "loss_ratio", "reward"]
 
     ## compute the loss penalty
-    params["loss_penalty"] = ((((params["max_out_buffer_size"] + 1)*params["packet_size"]*8)/params["link_cap"]) + 0.002)*6 
+    params["loss_penalty"] = ((((params["max_out_buffer_size"] + 1)*params["packet_size"]*8)/params["link_cap"]) + 0.002)*params["numNodes"]
 
     ## fix the seed
     tf.random.set_seed(params["seed"])

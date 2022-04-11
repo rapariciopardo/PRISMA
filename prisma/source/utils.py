@@ -135,33 +135,32 @@ def convert_bps_to_data_rate(bps):
 
     return data_rate*p
 
-def _optimal_routing(graph, routing_mat, lost_mat, actual_node, src_node, dst_node, tag):
+def optimal_routing_decision(graph, routing_mat, actual_node, src_node, dst_node, tag):
+    """Compute the action based on the optimal solution
+
+    Args:
+        graph (nx.graph): network graph
+        routing_mat (np.array): optimal routing matrix
+        actual_node (int): actual node index
+        src_node (int): source node index
+        dst_node (int): destination node index
+        tag (float): tag used to decide the action
+
+    Returns:
+        tuple: (action, tag)
+    """
     src = int(src_node)
     dst = int(dst_node)
     actual = int(actual_node)
     indices = np.where(np.array(list(graph.edges))[ :,0]==actual)[0]
     prob_to_neighbors = routing_mat[src][dst][indices]
-    lost_prob = lost_mat[src][dst]
-    if actual == src:
-        if np.random.rand() <= lost_prob:
-            return -1
-    
-    if tag == None:
+    # print(np.array(list(graph.edges)), prob_to_neighbors, actual, src, dst, indices, list(graph.neighbors(actual)))
+    if tag:
         if tag in prob_to_neighbors and tag < 1:
             return list(graph.neighbors(actual))[list(prob_to_neighbors).index(tag)], tag
         
-    prob_general = list(prob_to_neighbors/sum(prob_to_neighbors))
-    
+    prob_general = list(prob_to_neighbors/sum(prob_to_neighbors))  
+    # print(prob_general)
     choice = np.random.choice(list(graph.neighbors(actual)), p=prob_general)
     tag = prob_to_neighbors[list(graph.neighbors(actual)).index(choice)]
-    return choice, tag
-
-
-def optimal_routing_decision(obs, n, env, routing_mat, lost_mat, **kwargs):
-    packet = env.G.nodes[n]['in_buffer'][0]
-    next_hop = _optimal_routing(env.G, routing_mat, lost_mat, packet)
-    if next_hop == -1:
-        action = -2
-    else:
-        action = list(env.G.neighbors(n)).index(next_hop)
-    return action
+    return list(graph.neighbors(actual_node)).index(choice), tag

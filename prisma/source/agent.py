@@ -8,11 +8,13 @@ import numpy as np
 import os
 from ns3gym import ns3env
 from source.learner import DQN_AGENT
-from source.utils import save_model, load_model, LinearSchedule, convert_bps_to_data_rate
+from source.utils import save_model, load_model, LinearSchedule, convert_bps_to_data_rate, optimal_routing_decision
 from source.replay_buffer import ReplayBuffer
 from source.models import DQN_buffer_model, DQN_routing_model
 import threading
 import operator
+import copy 
+import json
 # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 
 __author__ = "Redha A. Alliche, Tiago Da Silva Barros, Ramon Aparicio-Pardo, Lucile Sassatelli"
@@ -28,7 +30,7 @@ class Agent():
     """
     ## static variables for env description
     envs=[]
-    agents = []
+    agents = {}
     currIt = 0
     total_new_rcv_pkts=0
     total_arrived_pkts=0
@@ -44,6 +46,8 @@ class Agent():
     temp_obs = {}
     # define upcoming events list for each node
     upcoming_events = []
+    ## define pkt tracking
+    pkt_tracking_dict = {}
     ## general env params
     stepTime=0.1
     startSim=0
@@ -100,7 +104,7 @@ class Agent():
         cl.traffic_matrix_path = params_dict["traffic_matrix_path"]
         cl.packet_size = params_dict["packet_size"]
         cl.envs = cl.numNodes * [None]
-        cl.agents = cl.numNodes * [None]
+        cl.agents = {i: None for i in range(cl.numNodes)}
         cl.replay_buffer = [ReplayBuffer(cl.replay_buffer_max_size) for n in range(cl.numNodes)]
         cl.upcoming_events = [[] for n in range(cl.numNodes)]
         cl.basePort = params_dict["basePort"]
@@ -119,6 +123,7 @@ class Agent():
         cl.total_hops=0
         cl.total_rewards_with_loss=0
         cl.max_nb_arrived_pkts = params_dict["max_nb_arrived_pkts"]
+        cl.optimal_solution_mat = np.array(json.load(open(params_dict["optimal_soltion_path"]))["routing"])
 
     def __init__(self, index, agent_type="dqn", train=True):
         """ Init the agent
@@ -168,7 +173,7 @@ class Agent():
 
         ## define the agent
         if self.agent_type == "dqn_buffer":
-            ### declare the DQN buffer model
+            ## declare the DQN buffer model
             Agent.agents[self.index] = DQN_AGENT(
                 q_func=DQN_buffer_model,
                 # observation_shape=self.env.observation_space.shape,
@@ -182,7 +187,7 @@ class Agent():
                 gamma=Agent.gamma
             )
         elif self.agent_type == "dqn_routing":
-            ### declare the DQN buffer model
+            ## declare the DQN buffer model
             Agent.agents[self.index] = DQN_AGENT(
                 q_func=DQN_routing_model,
                 # observation_shape=self.env.observation_space.shape,
@@ -195,6 +200,8 @@ class Agent():
                 lr=Agent.lr,
                 gamma=Agent.gamma
             )
+        elif self.agent_type == "opt":
+            Agent.agents[self.index] = optimal_routing_decision
         else:
             Agent.agents[self.index] = nx.shortest_path
 
@@ -241,7 +248,8 @@ class Agent():
         elif self.agent_type == "sp":
             action = self.neighbors.index(Agent.agents[self.index](Agent.G, self.index, obs[0])[1])
         elif self.agent_type == "opt":
-            action = -1
+            track =  Agent.pkt_tracking_dict[int(self.pkt_id)]
+            action, track["tag"] = optimal_routing_decision(Agent.G, Agent.optimal_solution_mat, self.index, track["src"], track["dst"], track["tag"])
         return action
 
     def _forward(self):
@@ -270,7 +278,7 @@ class Agent():
                                         True)
             ### Add to the temp obs
             else:
-                Agent.temp_obs[self.pkt_id]= {"node": self.index, "obs": self.obs, "action": self.action, "time": Agent.curr_time}
+                Agent.temp_obs[int(self.pkt_id)]= {"node": self.index, "obs": self.obs, "action": self.action, "time": Agent.curr_time}
 
         ### Apply the action
         return self.env.step(self.action)
@@ -298,7 +306,8 @@ class Agent():
         """
         ### Sync target NN
         if Agent.signaling_type == "ideal":
-            self._sync_all()
+            # self._sync_all()
+            pass
         elif Agent.signaling_type == "NN":
             if Agent.curr_time > (self.last_sync_time + Agent.big_signaling_delay + Agent.sync_step):
                 self._sync_all()
@@ -363,9 +372,9 @@ class Agent():
         weights, _ = np.ones(Agent.batch_size, dtype=np.float32), None
 
         if Agent.signaling_type == "target":
-            targets_t = tf.constant(rewards_t, dtype=float)          
-            obses_t = tf.constant(obses_t)          
-            actions_t = tf.constant(actions_t)       
+            targets_t = tf.constant(rewards_t, dtype=float)
+            obses_t = tf.constant(obses_t)
+            actions_t = tf.constant(actions_t)
         else:
             ### Construct the target values
             targets_t = []
@@ -375,8 +384,12 @@ class Agent():
                 action_indices = np.where(actions_t == indx)[0]
                 action_indices_all.append(action_indices)
                 if len(action_indices):
-                    targets_t.append(Agent.agents[self.index].get_neighbor_target_value(indx, rewards_t[action_indices], tf.constant(
-                        np.array(np.vstack(next_obses_t[action_indices]), dtype=float)), dones_t[action_indices], filtered_indices))
+                    if Agent.signaling_type == "ideal":
+                        targets_t.append(Agent.agents[neighbor].get_targest_value(rewards_t[action_indices], tf.constant(
+                            np.array(np.vstack(next_obses_t[action_indices]), dtype=float)), dones_t[action_indices], filtered_indices))
+                    else:
+                        targets_t.append(Agent.agents[self.index].get_neighbor_target_value(indx, rewards_t[action_indices], tf.constant(
+                            np.array(np.vstack(next_obses_t[action_indices]), dtype=float)), dones_t[action_indices], filtered_indices))
             action_indices_all = np.concatenate(action_indices_all)
 
             ### prepare tf variables
@@ -432,6 +445,8 @@ class Agent():
                         self.count_arrived_packets += 1
                         Agent.total_arrived_pkts += 1
                         Agent.total_e2e_delay += delay_time
+                        Agent.total_hops += (len(Agent.pkt_tracking_dict[int(self.pkt_id)])["hops"] - 1)
+                        Agent.pkt_tracking_dict.remove(self.pkt_id)
                         if Agent.max_nb_arrived_pkts > 0 and Agent.max_nb_arrived_pkts <= Agent.total_arrived_pkts:
                             print("Done by max number of arrived pkts")
                             break 
@@ -441,7 +456,9 @@ class Agent():
                         states_info = Agent.temp_obs.pop(self.pkt_id)
                         hop_time =  Agent.curr_time - states_info["time"]
                         Agent.total_rewards_with_loss += hop_time
-                        Agent.total_hops += 1
+                        ## add to tracked pkts
+                        Agent.pkt_tracking_dict[int(self.pkt_id)]["hops"].append(self.index)
+                        Agent.pkt_tracking_dict[int(self.pkt_id)]["node"] = self.index
                         if Agent.signaling_type == "ideal":
                             Agent.replay_buffer[int(states_info["node"])].add(np.array(states_info["obs"], dtype=float).squeeze(),
                                                                         states_info["action"], 
@@ -472,10 +489,13 @@ class Agent():
                     else:
                         self.count_new_pkts += 1
                         Agent.total_new_rcv_pkts += 1
+                        ## add to tracked pkts
+                        Agent.pkt_tracking_dict[int(self.pkt_id)]= {"src": self.index,
+                                                                    "node": self.index,
+                                                                    "dst": int(self.obs[0]),
+                                                                    "hops": [self.index],
+                                                                    "tag": None}
                 break
-
-                if(not self.env.connected):
-                    break
 
         except KeyboardInterrupt:
             print("index :", self.index, "Ctrl-C -> Exit")
@@ -494,7 +514,7 @@ class Agent():
         import time
         if train_type == "event":
             while True :
-                time.sleep(0.1)
+                time.sleep(np.random.uniform(0.1, 0.7))
                 ## check if there are signaling pkts arrived
                 if Agent.signaling_type in ("NN", "target"):
                     self._get_upcoming_events()
@@ -503,7 +523,7 @@ class Agent():
                     self._train()
         elif train_type == "time":
             while True :
-                time.sleep(0.1)
+                time.sleep(np.random.uniform(0.1, 0.7))
                 ## check if there are signaling pkts arrived if signaling type NN
                 if Agent.signaling_type in ("NN", "target"):
                     self._get_upcoming_events()

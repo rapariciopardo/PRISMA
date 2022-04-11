@@ -196,24 +196,24 @@ class DQN_AGENT(tf.Module):
     #   for var, var_target in zip(q_vars, target_q_vars):
     #     var_target.assign(var)
 
-    # def get_target_value(self, rewards, obs1, dones, filtered_indices):
-    #   q_tp1 = tf.gather(self.target_q_network(obs1), filtered_indices, axis=1)
+    def get_target_value(self, rewards, obs1, dones, filtered_indices):
+        q_tp1 = tf.gather(self.q_network(obs1), filtered_indices, axis=1)
 
-    #   if self.double_q:
-    #     q_tp1_using_online_net = tf.gather(self.q_network(obs1), filtered_indices, axis=1)
-    #     #q_tp1_best_using_online_net = tf.argmax(q_tp1_using_online_net, 1)
-    #     q_tp1_best_using_online_net = tf.argmin(q_tp1_using_online_net, 1)
-    #     q_tp1_best = tf.reduce_sum(q_tp1 * tf.one_hot(q_tp1_best_using_online_net, len(filtered_indices), dtype=tf.float32), 1)
-    #   else:
-    #      #q_tp1_best = tf.reduce_max(q_tp1, 1)
-    #     q_tp1_best = tf.reduce_min(q_tp1, 1)
+        #   if self.double_q:
+        #     q_tp1_using_online_net = tf.gather(self.q_network(obs1), filtered_indices, axis=1)
+        #     #q_tp1_best_using_online_net = tf.argmax(q_tp1_using_online_net, 1)
+        #     q_tp1_best_using_online_net = tf.argmin(q_tp1_using_online_net, 1)
+        #     q_tp1_best = tf.reduce_sum(q_tp1 * tf.one_hot(q_tp1_best_using_online_net, len(filtered_indices), dtype=tf.float32), 1)
+        #   else:
+         #q_tp1_best = tf.reduce_max(q_tp1, 1)
+        q_tp1_best = tf.reduce_min(q_tp1, 1)
 
-    #   dones = tf.cast(dones, q_tp1_best.dtype)
-    #   q_tp1_best_masked = (1.0 - dones) * q_tp1_best
+        dones = tf.cast(dones, q_tp1_best.dtype)
+        q_tp1_best_masked = (1.0 - dones) * q_tp1_best
 
-    #   q_t_selected_targets = rewards + self.gamma * q_tp1_best_masked
+        q_t_selected_targets = rewards + self.gamma * q_tp1_best_masked
 
-    #   return q_t_selected_targets
+        return q_t_selected_targets
 
 
     def get_neighbor_target_value(self, neighbor_idx, rewards, obs1, dones, filtered_indices):
