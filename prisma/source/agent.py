@@ -276,7 +276,7 @@ class Agent():
                                         rew,
                                         np.array([self.obs[0]] + [0]*len(next_hop_degree), dtype=float).squeeze(), 
                                         True)
-            ### Add to the temp obs
+            ## Add to the temp obs
             else:
                 Agent.temp_obs[int(self.pkt_id)]= {"node": self.index, "obs": self.obs, "action": self.action, "time": Agent.curr_time}
 
@@ -385,7 +385,7 @@ class Agent():
                 action_indices_all.append(action_indices)
                 if len(action_indices):
                     if Agent.signaling_type == "ideal":
-                        targets_t.append(Agent.agents[neighbor].get_targest_value(rewards_t[action_indices], tf.constant(
+                        targets_t.append(Agent.agents[neighbor].get_target_value(rewards_t[action_indices], tf.constant(
                             np.array(np.vstack(next_obses_t[action_indices]), dtype=float)), dones_t[action_indices], filtered_indices))
                     else:
                         targets_t.append(Agent.agents[self.index].get_neighbor_target_value(indx, rewards_t[action_indices], tf.constant(
@@ -439,20 +439,17 @@ class Agent():
                     delay_time = float(tokens[0].split('=')[-1])
                     Agent.curr_time = float(tokens[4].split('=')[-1])
                     self.pkt_id = float(tokens[5].split('=')[-1])
-                    
-                    if self.done:
-                        ## the packet arrived to destination  
-                        self.count_arrived_packets += 1
-                        Agent.total_arrived_pkts += 1
-                        Agent.total_e2e_delay += delay_time
-                        Agent.total_hops += (len(Agent.pkt_tracking_dict[int(self.pkt_id)])["hops"] - 1)
-                        Agent.pkt_tracking_dict.remove(self.pkt_id)
-                        if Agent.max_nb_arrived_pkts > 0 and Agent.max_nb_arrived_pkts <= Agent.total_arrived_pkts:
-                            print("Done by max number of arrived pkts")
-                            break 
 
-                    # store the observations and reward
-                    if self.pkt_id in Agent.temp_obs.keys(): ## check if the packet is not new in the network
+                    if self.pkt_id not in Agent.pkt_tracking_dict.keys(): ## check if the packet is a new arrival
+                        self.count_new_pkts += 1
+                        Agent.total_new_rcv_pkts += 1
+                        ## add to tracked pkts
+                        Agent.pkt_tracking_dict[int(self.pkt_id)]= {"src": self.index,
+                                                                    "node": self.index,
+                                                                    "dst": int(self.obs[0]),
+                                                                    "hops": [self.index],
+                                                                    "tag": None}
+                    else: ## if the packet is not new in the network
                         states_info = Agent.temp_obs.pop(self.pkt_id)
                         hop_time =  Agent.curr_time - states_info["time"]
                         Agent.total_rewards_with_loss += hop_time
@@ -486,15 +483,16 @@ class Agent():
                                                         "flag": self.done
                                                         })
                             self.upcoming_events[int(states_info["node"])].sort(key=operator.itemgetter("time"))
-                    else:
-                        self.count_new_pkts += 1
-                        Agent.total_new_rcv_pkts += 1
-                        ## add to tracked pkts
-                        Agent.pkt_tracking_dict[int(self.pkt_id)]= {"src": self.index,
-                                                                    "node": self.index,
-                                                                    "dst": int(self.obs[0]),
-                                                                    "hops": [self.index],
-                                                                    "tag": None}
+                        
+                        if self.done: ## if the packet arrived to destination  
+                            self.count_arrived_packets += 1
+                            Agent.total_arrived_pkts += 1
+                            Agent.total_e2e_delay += delay_time
+                            Agent.total_hops += len(Agent.pkt_tracking_dict[int(self.pkt_id)]["hops"]) - 1
+                            Agent.pkt_tracking_dict.pop(int(self.pkt_id))
+                            if Agent.max_nb_arrived_pkts > 0 and Agent.max_nb_arrived_pkts <= Agent.total_arrived_pkts:
+                                print("Done by max number of arrived pkts")
+                                break
                 break
 
         except KeyboardInterrupt:

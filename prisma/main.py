@@ -292,7 +292,7 @@ def run_ns3(params):
     os.chdir(params["ns3_sim_path"])
     
     ## run ns3 configure
-    # os.system('./waf -d optimized configure')
+    os.system('./waf -d optimized configure')
     # os.system('./waf configure')
 
     ## run NS3 simulator
