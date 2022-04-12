@@ -46,6 +46,9 @@ build/
 prisma/examples/*/saved_models/*
 prisma/examples/*/results/*
 prisma/examples/*/pre_trained_models/*
+prisma/scripts/figures/*
+prisma/scripts/logs/*
+prisma/logs/*
 
 ns3-gym/*
 

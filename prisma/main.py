@@ -251,6 +251,8 @@ def stats_writer(summary_writer_session, summary_writer_nb_arrived_pkts, summary
         tf.summary.scalar('total_hops_over_time', Agent.total_hops, step=int(Agent.curr_time*1e6))
         tf.summary.scalar('avg_hops_over_iterations', avg_hops, step=Agent.currIt)
         tf.summary.scalar('avg_hops_over_time', avg_hops, step=int(Agent.curr_time*1e6))
+        tf.summary.scalar('ma_avg_hops_over_iterations', np.array(Agent.nb_hops).mean(), step=Agent.currIt)
+        tf.summary.scalar('ma_avg_hops_over_time', np.array(Agent.nb_hops).mean(), step=int(Agent.curr_time*1e6))
         ## buffers occupation
         tf.summary.scalar('nb_buffered_pkts_over_time', Agent.total_new_rcv_pkts-(Agent.total_arrived_pkts + Agent.total_lost_pkts), step=int(Agent.curr_time*1e6))
         tf.summary.scalar('nb_buffered_pkts_over_iterations', Agent.total_new_rcv_pkts-(Agent.total_arrived_pkts + Agent.total_lost_pkts), step=Agent.currIt)
@@ -259,6 +261,8 @@ def stats_writer(summary_writer_session, summary_writer_nb_arrived_pkts, summary
         tf.summary.scalar('avg_cost_over_time', avg_cost, step=int(Agent.curr_time*1e6))
         tf.summary.scalar('avg_delay_over_iterations', avg_delay, step=Agent.currIt)
         tf.summary.scalar('avg_delay_over_time', avg_delay, step=int(Agent.curr_time*1e6))
+        tf.summary.scalar('ma_delays_over_iterations', np.array(Agent.delays).mean(), step=Agent.currIt)
+        tf.summary.scalar('ma_delays_over_time', np.array(Agent.delays).mean(), step=int(Agent.curr_time*1e6))
 
     with summary_writer_nb_arrived_pkts.as_default():
         tf.summary.scalar('pkts_over_iterations', Agent.total_arrived_pkts, step=Agent.currIt)
