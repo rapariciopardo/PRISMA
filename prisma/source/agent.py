@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 ### imports
+from ast import Param
 import tensorflow as tf
 import networkx as nx
 import numpy as np
@@ -40,6 +41,10 @@ class Agent():
     total_hops=0
     total_rewards_with_loss=0
     total_e2e_delay=0
+    nb_hops =[]
+    delays = []
+    info_debug = []
+    sessionName=None
     # define the replay buffer as a global variable
     replay_buffer = []
     # define the temp observations dict to prepare the (s, a, r, s', flag) for replay buffer
@@ -114,7 +119,7 @@ class Agent():
         cl.load_path = params_dict["load_path"]
         cl.logs_folder = params_dict["logs_folder"]
         cl.loss_penalty = params_dict["loss_penalty"]
-        cl.link_delay = 0.002#params_dict["link_delay"]
+        cl.link_delay = 0.00#params_dict["link_delay"]
         cl.link_cap = params_dict["link_cap"]
         cl.packet_size = params_dict["packet_size"]
         cl.big_signaling_delay = (100000 / cl.link_cap) + cl.link_delay
@@ -125,6 +130,10 @@ class Agent():
         cl.total_lost_pkts=0
         cl.curr_time=0
         cl.total_hops=0
+        cl.nb_hops=[]
+        cl.delays=[]
+        cl.info_debug=[]
+        cl.sessionName=params_dict["session_name"]
         cl.total_rewards_with_loss=0
         cl.max_nb_arrived_pkts = params_dict["max_nb_arrived_pkts"]
         cl.optimal_solution_mat = np.array(json.load(open(params_dict["optimal_soltion_path"]))["routing"])
@@ -520,8 +529,17 @@ class Agent():
                             Agent.total_arrived_pkts += 1
                             # Agent.total_e2e_delay += delay_time
                             hops =  len(Agent.pkt_tracking_dict[int(self.pkt_id)]["hops"]) - 1
-                            Agent.total_e2e_delay += Agent.curr_time - Agent.pkt_tracking_dict[int(self.pkt_id)]["start_time"]
+                            # Agent.total_e2e_delay += Agent.curr_time - Agent.pkt_tracking_dict[int(self.pkt_id)]["start_time"]
                             Agent.total_hops += hops
+                            Agent.total_e2e_delay += delay_time
+                            Agent.delays.append(delay_time)
+                            Agent.info_debug.append([Agent.pkt_tracking_dict[int(self.pkt_id)]["src"], Agent.pkt_tracking_dict[int(self.pkt_id)]["dst"], Agent.pkt_tracking_dict[int(self.pkt_id)]["hops"], len(Agent.pkt_tracking_dict[int(self.pkt_id)]["hops"])-1])
+                            Agent.total_hops += hops
+                            Agent.nb_hops.append(hops)
+                            if(len(Agent.nb_hops)>50):
+                                Agent.nb_hops = Agent.nb_hops[-50:]
+                            if(len(Agent.delays)>50):
+                                Agent.delays = Agent.delays[-50:]
                             Agent.pkt_tracking_dict.pop(int(self.pkt_id))
                             if Agent.max_nb_arrived_pkts > 0 and Agent.max_nb_arrived_pkts <= Agent.total_arrived_pkts:
                                 print("Done by max number of arrived pkts")
@@ -531,7 +549,9 @@ class Agent():
         except KeyboardInterrupt:
             print("index :", self.index, "Ctrl-C -> Exit")
             self.env.close()
-
+        if(not os.path.exists("logs/")):
+            os.mkdir("logs")
+        np.savetxt("logs/log_dict_"+Agent.sessionName+".txt", np.asarray(Agent.info_debug, dtype='object'), fmt='%s')
         self.env.ns3ZmqBridge.send_close_command()
         # print("***index :", self.index, "Done", "stepIdx =", self.stepIdx, "arrived pkts =", self.count_arrived_packets,  "new received pkts", self.count_new_pkts, "gradient steps", self.gradient_step_idx)
         return True
