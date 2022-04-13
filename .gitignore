@@ -54,3 +54,6 @@ venv/
 .vscode/
 
 tok.txt
+prisma/lock_files/*
+prisma/savings
+prisma/run_script.sh

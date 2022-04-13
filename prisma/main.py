@@ -292,7 +292,7 @@ def run_ns3(params):
     os.chdir(params["ns3_sim_path"])
     
     ## run ns3 configure
-    os.system('./waf -d optimized configure')
+    # os.system('./waf -d optimized configure')
     # os.system('./waf configure')
 
     ## run NS3 simulator
@@ -321,7 +321,7 @@ def main():
     # params["METRICS"] = ["avg_delay", "loss_ratio", "reward"]
 
     ## compute the loss penalty
-    params["loss_penalty"] = ((((params["max_out_buffer_size"] + 1)*params["packet_size"]*8)/params["link_cap"]) + 0.002)*params["numNodes"]
+    params["loss_penalty"] = ((((params["max_out_buffer_size"] + 1)*params["packet_size"]*8)/params["link_cap"]))*params["numNodes"]
 
     ## fix the seed
     tf.random.set_seed(params["seed"])
@@ -381,6 +381,7 @@ def main():
 
     print(f""" Summary of the episode :
             Total number of Transitions = {Agent.currIt}, 
+            Simulation time = {Agent.curr_time},
             Total e2e delay = {Agent.total_e2e_delay}, 
             Total number of packets = {Agent.total_new_rcv_pkts}, 
             Number of arrived packets = {Agent.total_arrived_pkts},
@@ -389,6 +390,10 @@ def main():
             """)
     if Agent.total_arrived_pkts:
         print(f"Average delay per arrived packets = {Agent.total_e2e_delay/(Agent.total_arrived_pkts*1000)}")
+
+    ## saving the transition array
+    for node_idx in range(Agent.numNodes):
+        np.savetxt(f"lock_files/{params['session_name']}/{node_idx}.txt", np.array(Agent.lock_info_array[node_idx], dtype=object), fmt = "%s", header = "src dst node next_hop ideal_time real_time obs action")
 
     ## save models        
     if params["save_models"]:

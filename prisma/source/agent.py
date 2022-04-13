@@ -48,6 +48,7 @@ class Agent():
     upcoming_events = []
     ## define pkt tracking
     pkt_tracking_dict = {}
+
     ## general env params
     stepTime=0.1
     startSim=0
@@ -107,12 +108,15 @@ class Agent():
         cl.agents = {i: None for i in range(cl.numNodes)}
         cl.replay_buffer = [ReplayBuffer(cl.replay_buffer_max_size) for n in range(cl.numNodes)]
         cl.upcoming_events = [[] for n in range(cl.numNodes)]
+        ## transition array to be saved for each node
+        cl.lock_info_array = [[] for n in range(cl.numNodes)]
         cl.basePort = params_dict["basePort"]
         cl.load_path = params_dict["load_path"]
         cl.logs_folder = params_dict["logs_folder"]
         cl.loss_penalty = params_dict["loss_penalty"]
         cl.link_delay = 0.002#params_dict["link_delay"]
         cl.link_cap = params_dict["link_cap"]
+        cl.packet_size = params_dict["packet_size"]
         cl.big_signaling_delay = (100000 / cl.link_cap) + cl.link_delay
         cl.currIt = 0
         cl.total_new_rcv_pkts=0
@@ -278,7 +282,14 @@ class Agent():
                                         True)
             ## Add to the temp obs
             else:
-                Agent.temp_obs[int(self.pkt_id)]= {"node": self.index, "obs": self.obs, "action": self.action, "time": Agent.curr_time}
+                Agent.temp_obs[int(self.pkt_id)]= {"node": self.index,
+                                                   "obs": self.obs,
+                                                   "action": self.action,
+                                                   "time": Agent.curr_time, 
+                                                   "src" :Agent.pkt_tracking_dict[int(self.pkt_id)]["src"],
+                                                   "dst" :Agent.pkt_tracking_dict[int(self.pkt_id)]["dst"],
+                                                   }
+                
 
         ### Apply the action
         return self.env.step(self.action)
@@ -365,7 +376,9 @@ class Agent():
         """
         self.last_training_time = Agent.curr_time
         self.last_training_step = self.stepIdx
-
+        # if self.gradient_step_idx ==0 and self.index == 8:
+        #     indices = np.where(np.stack(np.array(Agent.replay_buffer[self.index]._storage)[:,0], axis=0)[:, 0] == 4.)[0]
+        #     np.savetxt(f"savings/replay_buffer{self.index}.txt", np.array(Agent.replay_buffer[self.index]._storage, dtype=object)[indices], "%s")
         # print("train...", index)
         ## sample from the replay buffer
         obses_t, actions_t, rewards_t, next_obses_t, dones_t = Agent.replay_buffer[self.index].sample(Agent.batch_size)
@@ -448,25 +461,43 @@ class Agent():
                                                                     "node": self.index,
                                                                     "dst": int(self.obs[0]),
                                                                     "hops": [self.index],
+                                                                    "start_time": Agent.curr_time,
                                                                     "tag": None}
                     else: ## if the packet is not new in the network
                         states_info = Agent.temp_obs.pop(self.pkt_id)
-                        hop_time =  Agent.curr_time - states_info["time"]
-                        Agent.total_rewards_with_loss += hop_time
+                        hop_time_real =  Agent.curr_time - states_info["time"]
+                        hop_time_ideal = (states_info["obs"][states_info["action"] + 1] +1 ) * Agent.packet_size * 8 / Agent.link_cap
+                        Agent.total_rewards_with_loss += hop_time_real
                         ## add to tracked pkts
-                        Agent.pkt_tracking_dict[int(self.pkt_id)]["hops"].append(self.index)
+                        Agent.pkt_tracking_dict[int(self.pkt_id)]["hops"].append(self.index)                        
                         Agent.pkt_tracking_dict[int(self.pkt_id)]["node"] = self.index
+                        
+                        ## saving state info
+                        states_info["hop_time_real"] = hop_time_real
+                        states_info["hop_time_ideal"] = hop_time_ideal
+                        curr_node_to_save= int(states_info["node"])
+                        Agent.lock_info_array[curr_node_to_save].append([int(states_info["src"]),
+                                                                   int(states_info["dst"]),
+                                                                   curr_node_to_save,
+                                                                   list(Agent.G.neighbors(curr_node_to_save))[states_info["action"]],
+                                                                   hop_time_ideal,
+                                                                   hop_time_real,
+                                                                   states_info["obs"],
+                                                                   states_info["action"]
+                                                                        ])
+                        
+                        
                         if Agent.signaling_type == "ideal":
                             Agent.replay_buffer[int(states_info["node"])].add(np.array(states_info["obs"], dtype=float).squeeze(),
                                                                         states_info["action"], 
-                                                                        hop_time,
+                                                                        hop_time_ideal,
                                                                         np.array(self.obs, dtype=float).squeeze(), 
                                                                         self.done)
                         elif Agent.signaling_type == "NN":
                             self.upcoming_events[int(states_info["node"])].append({ "time": Agent.curr_time + self.small_signaling_delay,
                                                                                     "obs" : np.array(states_info["obs"], dtype=float).squeeze(),
                                                                                     "action": states_info["action"], 
-                                                                                    "reward": hop_time,
+                                                                                    "reward": hop_time_ideal,
                                                                                     "new_obs": np.array(self.obs, dtype=float).squeeze(), 
                                                                                     "flag": self.done
                                                                                     })
@@ -474,7 +505,7 @@ class Agent():
 
                         elif Agent.signaling_type == "target":
                             ## compute the target value
-                            target = hop_time + Agent.gamma * (1- int(self.done)) * tf.reduce_min(Agent.agents[self.index].q_network(np.array([self.obs], dtype=float)), 1)
+                            target = hop_time_ideal + Agent.gamma * (1- int(self.done)) * tf.reduce_min(Agent.agents[self.index].q_network(np.array([self.obs], dtype=float)), 1)
                             self.upcoming_events[int(states_info["node"])].append({ "time": Agent.curr_time + self.small_signaling_delay,
                                                         "obs" : np.array(states_info["obs"], dtype=float).squeeze(),
                                                         "action": states_info["action"], 
@@ -487,8 +518,10 @@ class Agent():
                         if self.done: ## if the packet arrived to destination  
                             self.count_arrived_packets += 1
                             Agent.total_arrived_pkts += 1
-                            Agent.total_e2e_delay += delay_time
-                            Agent.total_hops += len(Agent.pkt_tracking_dict[int(self.pkt_id)]["hops"]) - 1
+                            # Agent.total_e2e_delay += delay_time
+                            hops =  len(Agent.pkt_tracking_dict[int(self.pkt_id)]["hops"]) - 1
+                            Agent.total_e2e_delay += Agent.curr_time - Agent.pkt_tracking_dict[int(self.pkt_id)]["start_time"]
+                            Agent.total_hops += hops
                             Agent.pkt_tracking_dict.pop(int(self.pkt_id))
                             if Agent.max_nb_arrived_pkts > 0 and Agent.max_nb_arrived_pkts <= Agent.total_arrived_pkts:
                                 print("Done by max number of arrived pkts")
@@ -500,7 +533,7 @@ class Agent():
             self.env.close()
 
         self.env.ns3ZmqBridge.send_close_command()
-        print("***index :", self.index, "Done", "stepIdx =", self.stepIdx, "arrived pkts =", self.count_arrived_packets,  "new received pkts", self.count_new_pkts, "gradient steps", self.gradient_step_idx)
+        # print("***index :", self.index, "Done", "stepIdx =", self.stepIdx, "arrived pkts =", self.count_arrived_packets,  "new received pkts", self.count_new_pkts, "gradient steps", self.gradient_step_idx)
         return True
 
     def run_trainer(self, train_type="event"):
