@@ -152,7 +152,7 @@ int main (int argc, char *argv[])
   std::string MaxBufferLength ("30p");
   std::string LinkRate ("500Kbps");
   std::string LinkDelay ("2ms");
-  uint32_t AvgPacketSize = 512 - 30; //—> If you want to change the by-default 512 packet size
+  uint32_t AvgPacketSize = 512 ; //—> If you want to change the by-default 512 packet size
 
   std::string adj_mat_file_name ("scratch/prisma/examples/abilene/adjacency_matrix.txt");
   std::string node_coordinates_file_name ("scratch/prisma/examples/abilene/node_coordinates.txt");
@@ -203,7 +203,7 @@ int main (int argc, char *argv[])
   double AppStartTime   = 0.0001;
   double AppStopTime    = simTime - 0.2;
 
-  AvgPacketSize = AvgPacketSize - 42; // remove the header length
+  AvgPacketSize = AvgPacketSize - 30; // remove the header length 8 20 18
   
     
   RngSeedManager::SetSeed (simSeed);

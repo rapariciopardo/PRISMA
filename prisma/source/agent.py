@@ -136,7 +136,8 @@ class Agent():
         cl.sessionName=params_dict["session_name"]
         cl.total_rewards_with_loss=0
         cl.max_nb_arrived_pkts = params_dict["max_nb_arrived_pkts"]
-        cl.optimal_solution_mat = np.array(json.load(open(params_dict["optimal_soltion_path"]))["routing"])
+        if params_dict["agent_type"] == "opt":
+            cl.optimal_solution_mat = np.array(json.load(open(params_dict["optimal_soltion_path"]))["routing"])
 
     def __init__(self, index, agent_type="dqn", train=True):
         """ Init the agent
@@ -326,8 +327,10 @@ class Agent():
         """
         ### Sync target NN
         if Agent.signaling_type == "ideal":
-            # self._sync_all()
-            pass
+            if Agent.curr_time > (self.last_sync_time + Agent.sync_step):
+                self._sync_all()
+                self.last_sync_time = Agent.curr_time
+                
         elif Agent.signaling_type == "NN":
             if Agent.curr_time > (self.last_sync_time + Agent.big_signaling_delay + Agent.sync_step):
                 self._sync_all()
@@ -406,12 +409,12 @@ class Agent():
                 action_indices = np.where(actions_t == indx)[0]
                 action_indices_all.append(action_indices)
                 if len(action_indices):
-                    if Agent.signaling_type == "ideal":
-                        targets_t.append(Agent.agents[neighbor].get_target_value(rewards_t[action_indices], tf.constant(
-                            np.array(np.vstack(next_obses_t[action_indices]), dtype=float)), dones_t[action_indices], filtered_indices))
-                    else:
-                        targets_t.append(Agent.agents[self.index].get_neighbor_target_value(indx, rewards_t[action_indices], tf.constant(
-                            np.array(np.vstack(next_obses_t[action_indices]), dtype=float)), dones_t[action_indices], filtered_indices))
+                    # if Agent.signaling_type == "ideal":
+                    #     targets_t.append(Agent.agents[neighbor].get_target_value(rewards_t[action_indices], tf.constant(
+                    #         np.array(np.vstack(next_obses_t[action_indices]), dtype=float)), dones_t[action_indices], filtered_indices))
+                    # else:
+                    targets_t.append(Agent.agents[self.index].get_neighbor_target_value(indx, rewards_t[action_indices], tf.constant(
+                        np.array(np.vstack(next_obses_t[action_indices]), dtype=float)), dones_t[action_indices], filtered_indices))
             action_indices_all = np.concatenate(action_indices_all)
 
             ### prepare tf variables
