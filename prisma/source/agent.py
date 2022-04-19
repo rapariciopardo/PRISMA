@@ -536,7 +536,7 @@ class Agent():
                             Agent.total_hops += hops
                             Agent.total_e2e_delay += delay_time
                             Agent.delays.append(delay_time)
-                            Agent.info_debug.append([Agent.pkt_tracking_dict[int(self.pkt_id)]["src"], Agent.pkt_tracking_dict[int(self.pkt_id)]["dst"], Agent.pkt_tracking_dict[int(self.pkt_id)]["hops"], len(Agent.pkt_tracking_dict[int(self.pkt_id)]["hops"])-1])
+                            Agent.info_debug.append([Agent.pkt_tracking_dict[int(self.pkt_id)]["src"], Agent.pkt_tracking_dict[int(self.pkt_id)]["dst"], Agent.pkt_tracking_dict[int(self.pkt_id)]["hops"], len(Agent.pkt_tracking_dict[int(self.pkt_id)]["hops"])-1, delay_time])
                             Agent.total_hops += hops
                             Agent.nb_hops.append(hops)
                             if(len(Agent.nb_hops)>50):

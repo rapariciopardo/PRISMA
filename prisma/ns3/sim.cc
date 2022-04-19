@@ -199,9 +199,9 @@ int main (int argc, char *argv[])
   
   //Parameters of the scenario
   double SinkStartTime  = 0.0001;
-  double SinkStopTime   = simTime - 0.1;//59.90001;
+  double SinkStopTime   = simTime; // - 0.1;//59.90001;
   double AppStartTime   = 0.0001;
-  double AppStopTime    = simTime - 0.2;
+  double AppStopTime    = simTime; // - 0.2;
 
   AvgPacketSize = AvgPacketSize - 30; // remove the header length 8 20 18
   
