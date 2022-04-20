@@ -222,7 +222,7 @@ class Agent():
         if self.agent_type in ("dqn_buffer", "dqn_routing"):
             self.nn_size = np.sum([np.prod(x.shape) for x in Agent.agents[self.index].q_network.trainable_weights])*32
             self.big_signaling_delay = (self.nn_size/ Agent.link_cap) + Agent.link_delay
-            print(self.index, "size", self.big_signaling_delay)
+            self._sync_all() # intialize target networks
         
         ## load the models
         if Agent.load_path is not None and self.agent_type in ("dqn_buffer", "dqn_routing"):
@@ -321,17 +321,21 @@ class Agent():
 
     def _sync_all(self):
         """
-        Sync this node all neighbors neural networks
+        Sync this node all neighbors neural networks.
+        If signaling type is target, sync the node target NN.
         """
-        for indx, neighbor in enumerate(self.neighbors): 
-            self._sync(neighbor, indx)
+        if self.signaling_type == "target":
+            Agent.agents[self.index].update_target()
+        else:
+            for indx, neighbor in enumerate(self.neighbors): 
+                self._sync(neighbor, indx)
 
     def _check_sync(self):
         """
         Check the time to sync the NN depending on the signaling mode
         """
         ### Sync target NN
-        if Agent.signaling_type == "ideal":
+        if Agent.signaling_type in ("ideal", "target"):
             if Agent.curr_time > (self.last_sync_time + Agent.sync_step):
                 self._sync_all()
                 self.last_sync_time = Agent.curr_time
@@ -414,10 +418,6 @@ class Agent():
                 action_indices = np.where(actions_t == indx)[0]
                 action_indices_all.append(action_indices)
                 if len(action_indices):
-                    # if Agent.signaling_type == "ideal":
-                    #     targets_t.append(Agent.agents[neighbor].get_target_value(rewards_t[action_indices], tf.constant(
-                    #         np.array(np.vstack(next_obses_t[action_indices]), dtype=float)), dones_t[action_indices], filtered_indices))
-                    # else:
                     targets_t.append(Agent.agents[self.index].get_neighbor_target_value(indx, rewards_t[action_indices], tf.constant(
                         np.array(np.vstack(next_obses_t[action_indices]), dtype=float)), dones_t[action_indices], filtered_indices))
             action_indices_all = np.concatenate(action_indices_all)
@@ -522,7 +522,9 @@ class Agent():
 
                         elif Agent.signaling_type == "target":
                             ## compute the target value
-                            target = hop_time_ideal + Agent.gamma * (1- int(self.done)) * tf.reduce_min(Agent.agents[self.index].q_network(np.array([self.obs], dtype=float)), 1)
+                            filtered_index = np.where(np.array(list(Agent.G.neighbors(self.index)))!=int(states_info["node"]))[0] # filter the net interface from where the pkt comes 
+                            target = Agent.agents[self.index].get_target_value(np.array([hop_time_ideal]), np.array([self.obs]), np.array([self.done]), filtered_index)
+                            # target = hop_time_ideal + Agent.gamma * (1- int(self.done)) * tf.reduce_min(Agent.agents[self.index].q_network(np.array([self.obs], dtype=float)), 1)
                             self.upcoming_events[int(states_info["node"])].append({ "time": Agent.curr_time + self.small_signaling_delay,
                                                         "obs" : np.array(states_info["obs"], dtype=float).squeeze(),
                                                         "action": states_info["action"], 

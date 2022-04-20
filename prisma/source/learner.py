@@ -191,13 +191,15 @@ class DQN_AGENT(tf.Module):
 
     #tf.function(autograph=False)
     def update_target(self):
-      q_vars = self.q_network.trainable_variables
-      target_q_vars = self.target_q_network.trainable_variables
-      for var, var_target in zip(q_vars, target_q_vars):
-        var_target.assign(var)
+        """Update the target q network
+        """
+        q_vars = self.q_network.trainable_variables
+        target_q_vars = self.target_q_network.trainable_variables
+        for var, var_target in zip(q_vars, target_q_vars):
+            var_target.assign(var)
 
     def get_target_value(self, rewards, obs1, dones, filtered_indices):
-        q_tp1 = tf.gather(self.q_network(obs1), filtered_indices, axis=1)
+        q_tp1 = tf.gather(self.target_q_network(obs1), filtered_indices, axis=1)
 
         #   if self.double_q:
         #     q_tp1_using_online_net = tf.gather(self.q_network(obs1), filtered_indices, axis=1)
