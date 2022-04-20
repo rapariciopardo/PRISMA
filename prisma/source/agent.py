@@ -156,6 +156,7 @@ class Agent():
         self.index = index
         self.port = Agent.basePort + index
         self.stepIdx = 0
+        self.sync_step = Agent.sync_step
         ## reset the env
         self._reset()
     
@@ -169,15 +170,6 @@ class Agent():
         ### define node neighbors
         self.neighbors = list(Agent.G.neighbors(self.index))
 
-        ### compute small signaling delay
-        if Agent.signaling_type == "NN":
-            self.small_signaling_pkt_size = 64 + 8 + (8 * (len(self.neighbors)+1)) # header + reward (float) + s' (double)
-            self.small_signaling_delay = (self.small_signaling_pkt_size / Agent.link_cap) + Agent.link_delay
-            if Agent.sync_step < 0:
-                Agent.sync_step = self._compute_sync_step(ratio=Agent.sync_ratio)
-        elif Agent.signaling_type == "target":
-            self.small_signaling_pkt_size = 64 + 8  # header + target (float)
-            self.small_signaling_delay = (self.small_signaling_pkt_size / Agent.link_cap) + Agent.link_delay
 
         ### define the ns3 env
         self.env = ns3env.Ns3Env(port=int(self.port), stepTime=Agent.stepTime, startSim=Agent.startSim, simSeed=Agent.seed, simArgs=Agent.simArgs, debug=Agent.debug)
@@ -224,6 +216,16 @@ class Agent():
             self.big_signaling_delay = (self.nn_size/ Agent.link_cap) + Agent.link_delay
             self._sync_all() # intialize target networks
         
+        ### compute small signaling delay
+        if Agent.signaling_type == "NN":
+            self.small_signaling_pkt_size = 64 + 8 + (8 * (len(self.neighbors)+1)) # header + reward (float) + s' (double)
+            self.small_signaling_delay = (self.small_signaling_pkt_size / Agent.link_cap) + Agent.link_delay
+            if self.sync_step < 0:
+                self.sync_step = self._compute_sync_step(ratio=Agent.sync_ratio)
+        elif Agent.signaling_type == "target":
+            self.small_signaling_pkt_size = 64 + 8  # header + target (float)
+            self.small_signaling_delay = (self.small_signaling_pkt_size / Agent.link_cap) + Agent.link_delay
+            
         ## load the models
         if Agent.load_path is not None and self.agent_type in ("dqn_buffer", "dqn_routing"):
             loaded_models = load_model(Agent.load_path, self.index)
@@ -336,12 +338,12 @@ class Agent():
         """
         ### Sync target NN
         if Agent.signaling_type in ("ideal", "target"):
-            if Agent.curr_time > (self.last_sync_time + Agent.sync_step):
+            if Agent.curr_time > (self.last_sync_time + self.sync_step):
                 self._sync_all()
                 self.last_sync_time = Agent.curr_time
                 
         elif Agent.signaling_type == "NN":
-            if Agent.curr_time > (self.last_sync_time + self.big_signaling_delay + Agent.sync_step):
+            if Agent.curr_time > (self.last_sync_time + self.big_signaling_delay + self.sync_step):
                 self._sync_all()
                 self.last_sync_time = Agent.curr_time
 
@@ -364,7 +366,7 @@ class Agent():
         control_load_per_s = (nb_pkts_per_s * self.small_signaling_pkt_size)
 
         ## compute sync step
-        sync_step = (100000) /((data_load_per_s * ratio)- control_load_per_s)
+        sync_step = (self.nn_size) /((data_load_per_s * ratio)- control_load_per_s)
         print(f"Sync step computed automatically : {sync_step} seconds")
         return sync_step
 
