@@ -134,9 +134,9 @@ class DQN_AGENT(tf.Module):
       with tf.name_scope('q_network'):
         self.q_network = q_func(observation_shape, num_actions, num_nodes, 
                                 input_size_splits)
-      # with tf.name_scope('target_q_network'):
-      #   self.target_q_network = q_func(observation_shape, num_actions, num_nodes, 
-      #                           input_size_splits)
+      with tf.name_scope('target_q_network'):
+        self.target_q_network = q_func(observation_shape, num_actions, num_nodes, 
+                                input_size_splits)
       self.eps = tf.Variable(0., name="eps")
       
       self.loss = tf.keras.losses.MeanSquaredError()
@@ -190,11 +190,11 @@ class DQN_AGENT(tf.Module):
       return td_error
 
     #tf.function(autograph=False)
-    # def update_target(self):
-    #   q_vars = self.q_network.trainable_variables
-    #   target_q_vars = self.target_q_network.trainable_variables
-    #   for var, var_target in zip(q_vars, target_q_vars):
-    #     var_target.assign(var)
+    def update_target(self):
+      q_vars = self.q_network.trainable_variables
+      target_q_vars = self.target_q_network.trainable_variables
+      for var, var_target in zip(q_vars, target_q_vars):
+        var_target.assign(var)
 
     def get_target_value(self, rewards, obs1, dones, filtered_indices):
         q_tp1 = tf.gather(self.q_network(obs1), filtered_indices, axis=1)

@@ -122,7 +122,6 @@ class Agent():
         cl.link_delay = 0.00#params_dict["link_delay"]
         cl.link_cap = params_dict["link_cap"]
         cl.packet_size = params_dict["packet_size"]
-        cl.big_signaling_delay = (100000 / cl.link_cap) + cl.link_delay
         cl.currIt = 0
         cl.total_new_rcv_pkts=0
         cl.total_arrived_pkts=0
@@ -219,6 +218,12 @@ class Agent():
         else:
             Agent.agents[self.index] = nx.shortest_path
 
+        ## compute big signaling delay
+        if self.agent_type in ("dqn_buffer", "dqn_routing"):
+            self.nn_size = np.sum([np.prod(x.shape) for x in Agent.agents[self.index].q_network.trainable_weights])*32
+            self.big_signaling_delay = (self.nn_size/ Agent.link_cap) + Agent.link_delay
+            print(self.index, "size", self.big_signaling_delay)
+        
         ## load the models
         if Agent.load_path is not None and self.agent_type in ("dqn_buffer", "dqn_routing"):
             loaded_models = load_model(Agent.load_path, self.index)
@@ -332,7 +337,7 @@ class Agent():
                 self.last_sync_time = Agent.curr_time
                 
         elif Agent.signaling_type == "NN":
-            if Agent.curr_time > (self.last_sync_time + Agent.big_signaling_delay + Agent.sync_step):
+            if Agent.curr_time > (self.last_sync_time + self.big_signaling_delay + Agent.sync_step):
                 self._sync_all()
                 self.last_sync_time = Agent.curr_time
 
