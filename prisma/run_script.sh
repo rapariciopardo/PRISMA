@@ -13,7 +13,7 @@ python3 main.py \
     --agent_type="dqn_buffer" \
     --max_nb_arrived_pkts=10000 \
     --simTime=100 \
-    --signaling_type="ideal" \
+    --signaling_type="NN" \
     --save_models=0 \
     --exploration_initial_eps=0.35 \
     --exploration_final_eps=0.01 \
