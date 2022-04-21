@@ -84,7 +84,7 @@ def arguments_parser():
     group4.add_argument('--traffic_matrix_path', type=str, help='Path to the traffic matrix file', default="examples/abilene/traffic_matrices/node_intensity_normalized.txt")
     group4.add_argument('--node_coordinates_path', type=str, help='Path to the nodes coordinates', default="examples/abilene/node_coordinates.txt")
     group4.add_argument('--max_out_buffer_size', type=int, help='Max nodes output buffer limit', default=30)
-    group4.add_argument('--link_delay', type=str, help='Network links delay', default="2ms")
+    group4.add_argument('--link_delay', type=str, help='Network links delay', default="0ms")
     group4.add_argument('--packet_size', type=int, help='Size of the packets in bytes', default=512)
     group4.add_argument('--link_cap', type=int, help='Network links capacity in bits per seconds', default=500000)
 
@@ -296,7 +296,7 @@ def run_ns3(params):
     os.chdir(params["ns3_sim_path"])
     
     ## run ns3 configure
-    # os.system('./waf -d optimized configure')
+    os.system('./waf -d optimized configure')
     # os.system('./waf configure')
 
     ## run NS3 simulator
@@ -325,7 +325,7 @@ def main():
     # params["METRICS"] = ["avg_delay", "loss_ratio", "reward"]
 
     ## compute the loss penalty
-    params["loss_penalty"] = ((((params["max_out_buffer_size"] + 1)*params["packet_size"]*8)/params["link_cap"]))*params["numNodes"]
+    params["loss_penalty"] = ((((params["max_out_buffer_size"] + 1)*params["packet_size"]*8)/params["link_cap"]))*1 #params["numNodes"]
 
     ## fix the seed
     tf.random.set_seed(params["seed"])
@@ -391,17 +391,24 @@ def main():
             Number of arrived packets = {Agent.total_arrived_pkts},
             Number of lost packets = {Agent.total_lost_pkts},
             Loss ratio = {Agent.total_lost_pkts/Agent.total_new_rcv_pkts}
+            Delay_ideal = {np.array(Agent.delays_ideal).mean()}
+            Delay_real = {np.array(Agent.delays_real).mean()}
+            Reward = {np.array(Agent.rewards).mean()}
             """)
     if Agent.total_arrived_pkts:
         print(f"Average delay per arrived packets = {Agent.total_e2e_delay/(Agent.total_arrived_pkts*1000)}")
 
-    ## saving the transition array
-    for node_idx in range(Agent.numNodes):
-        np.savetxt(f"lock_files/{params['session_name']}/{node_idx}.txt", np.array(Agent.lock_info_array[node_idx], dtype=object), fmt = "%s", header = "src dst node next_hop ideal_time real_time obs action")
-
+    
     ## save models        
     if params["save_models"]:
         save_model(Agent.agents, params["session_name"], 1, 1, root=params["logs_parent_folder"] + "/saved_models/")
+    
+    ## saving the transition array
+    for node_idx in range(Agent.numNodes):
+        if(not os.path.exists(f"lock_files/{params['session_name']}")):  
+            os.mkdir(f"lock_files/{params['session_name']}/") 
+        np.savetxt(f"lock_files/{params['session_name']}/{node_idx}.txt", np.array(Agent.lock_info_array[node_idx], dtype=object), fmt = "%s", header = "src dst node next_hop ideal_time real_time obs action")
+
 
 if __name__ == '__main__':
     ## create a process group

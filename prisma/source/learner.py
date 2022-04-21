@@ -231,7 +231,9 @@ class DQN_AGENT(tf.Module):
       Returns:
           tf tensor: the target values
       """
+      #print(type(self.neighbors_target_q_network))
       q_tp1 = tf.gather(self.neighbors_target_q_network[neighbor_idx](obs1), filtered_indices, axis=1)
+      #q_tp1 = self.neighbors_target_q_network[neighbor_idx](obs1)
 
       q_tp1_best = tf.reduce_min(q_tp1, 1)
 

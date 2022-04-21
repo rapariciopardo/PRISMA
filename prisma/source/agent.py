@@ -43,6 +43,9 @@ class Agent():
     total_e2e_delay=0
     nb_hops =[]
     delays = []
+    delays_ideal =[]
+    delays_real = []
+    rewards = []
     info_debug = []
     sessionName=None
     # define the replay buffer as a global variable
@@ -131,7 +134,10 @@ class Agent():
         cl.total_hops=0
         cl.nb_hops=[]
         cl.delays=[]
+        cl.delays_ideal=[]
+        cl.delays_real=[]
         cl.info_debug=[]
+        cl.rewards=[]
         cl.sessionName=params_dict["session_name"]
         cl.total_rewards_with_loss=0
         cl.max_nb_arrived_pkts = params_dict["max_nb_arrived_pkts"]
@@ -321,6 +327,8 @@ class Agent():
             neighbor_num (int): neighbor number
             neighbor_idx (int): neighbor index for this node
         """
+        #print("aqui2")
+        #print(Agent.agents[neighbor_num])
         Agent.agents[self.index].sync_neighbor_target_q_network(Agent.agents[neighbor_num], neighbor_idx)
 
     def _sync_all(self):
@@ -331,6 +339,7 @@ class Agent():
         if self.signaling_type == "target":
             Agent.agents[self.index].update_target()
         else:
+            #print("aqui2")
             for indx, neighbor in enumerate(self.neighbors): 
                 self._sync(neighbor, indx)
 
@@ -345,6 +354,7 @@ class Agent():
                 self.last_sync_time = Agent.curr_time
                 
         elif Agent.signaling_type == "NN":
+            #print("aqui")
             if Agent.curr_time > (self.last_sync_time + self.big_signaling_delay + self.sync_step):
                 self._sync_all()
                 self.last_sync_time = Agent.curr_time
@@ -482,6 +492,8 @@ class Agent():
                                                                     "node": self.index,
                                                                     "dst": int(self.obs[0]),
                                                                     "hops": [self.index],
+                                                                    "delays_ideal": [],
+                                                                    "delays_real": [],
                                                                     "start_time": Agent.curr_time,
                                                                     "tag": None}
                     else: ## if the packet is not new in the network
@@ -496,6 +508,10 @@ class Agent():
                         ## saving state info
                         states_info["hop_time_real"] = hop_time_real
                         states_info["hop_time_ideal"] = hop_time_ideal
+                        Agent.rewards.append(hop_time_ideal)
+                        Agent.pkt_tracking_dict[int(self.pkt_id)]["delays_ideal"].append(hop_time_ideal)
+                        Agent.pkt_tracking_dict[int(self.pkt_id)]["delays_real"].append(hop_time_real)                  
+      
                         curr_node_to_save= int(states_info["node"])
                         Agent.lock_info_array[curr_node_to_save].append([int(states_info["src"]),
                                                                    int(states_info["dst"]),
@@ -546,6 +562,10 @@ class Agent():
                             # Agent.total_e2e_delay += Agent.curr_time - Agent.pkt_tracking_dict[int(self.pkt_id)]["start_time"]
                             Agent.total_hops += hops
                             Agent.total_e2e_delay += delay_time
+                            
+                            Agent.delays_ideal.append(sum(Agent.pkt_tracking_dict[int(self.pkt_id)]["delays_ideal"]))
+                            Agent.delays_real.append(sum(Agent.pkt_tracking_dict[int(self.pkt_id)]["delays_real"]))
+                            
                             Agent.delays.append(delay_time)
                             Agent.info_debug.append([Agent.pkt_tracking_dict[int(self.pkt_id)]["src"], Agent.pkt_tracking_dict[int(self.pkt_id)]["dst"], Agent.pkt_tracking_dict[int(self.pkt_id)]["hops"], len(Agent.pkt_tracking_dict[int(self.pkt_id)]["hops"])-1, delay_time])
                             Agent.total_hops += hops
@@ -594,5 +614,6 @@ class Agent():
                     self._get_upcoming_events()
                 ## check if it is time to train
                 if Agent.curr_time > (self.last_training_time + Agent.training_step) and len(Agent.replay_buffer[self.index])> Agent.batch_size:
+                    #print(len(Agent.replay_buffer[self.index]))
                     self._check_sync()
                     self._train()
