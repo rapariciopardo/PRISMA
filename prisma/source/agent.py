@@ -189,7 +189,8 @@ class Agent():
                                     self.env.action_space.n,
                                     ],
                 lr=Agent.lr,
-                gamma=Agent.gamma
+                gamma=Agent.gamma,
+                neighbors_degrees=[len(list(Agent.G.neighbors(x))) for x in self.neighbors]
             )
         elif self.agent_type == "dqn_routing":
             ## declare the DQN buffer model
@@ -203,7 +204,8 @@ class Agent():
                                     self.env.action_space.n,
                                     ],
                 lr=Agent.lr,
-                gamma=Agent.gamma
+                gamma=Agent.gamma,
+                neighbors_degrees=[len(list(Agent.G.neighbors(x))) for x in self.neighbors]
             )
         elif self.agent_type == "opt":
             Agent.agents[self.index] = optimal_routing_decision
@@ -214,7 +216,6 @@ class Agent():
         if self.agent_type in ("dqn_buffer", "dqn_routing"):
             self.nn_size = np.sum([np.prod(x.shape) for x in Agent.agents[self.index].q_network.trainable_weights])*32
             self.big_signaling_delay = (self.nn_size/ Agent.link_cap) + Agent.link_delay
-            self._sync_all() # intialize target networks
         
         ### compute small signaling delay
         if Agent.signaling_type == "NN":
@@ -225,7 +226,8 @@ class Agent():
         elif Agent.signaling_type == "target":
             self.small_signaling_pkt_size = 64 + 8  # header + target (float)
             self.small_signaling_delay = (self.small_signaling_pkt_size / Agent.link_cap) + Agent.link_delay
-            
+            self._sync_all() # intialize target networks
+
         ## load the models
         if Agent.load_path is not None and self.agent_type in ("dqn_buffer", "dqn_routing"):
             loaded_models = load_model(Agent.load_path, self.index)
@@ -485,7 +487,7 @@ class Agent():
                     else: ## if the packet is not new in the network
                         states_info = Agent.temp_obs.pop(self.pkt_id)
                         hop_time_real =  Agent.curr_time - states_info["time"]
-                        hop_time_ideal = (states_info["obs"][states_info["action"] + 1] +1 ) * Agent.packet_size * 8 / Agent.link_cap
+                        hop_time_ideal = ((states_info["obs"][states_info["action"] + 1] +1 ) * Agent.packet_size * 8 / Agent.link_cap) + Agent.link_delay
                         Agent.total_rewards_with_loss += hop_time_real
                         ## add to tracked pkts
                         Agent.pkt_tracking_dict[int(self.pkt_id)]["hops"].append(self.index)                        

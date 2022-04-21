@@ -116,7 +116,7 @@ def huber_loss(x, delta=1.0):
 class DQN_AGENT(tf.Module):
 
     def __init__(self, q_func, observation_shape, num_actions, num_nodes, lr,
-                 input_size_splits,
+                 input_size_splits, neighbors_degrees,
                  grad_norm_clipping=None, gamma=1.0, double_q=False):
 
       self.num_actions = num_actions
@@ -136,7 +136,7 @@ class DQN_AGENT(tf.Module):
                                 input_size_splits)
       with tf.name_scope('target_q_network'):
         self.target_q_network = q_func(observation_shape, num_actions, num_nodes, 
-                                input_size_splits)
+                                    input_size_splits)
       self.eps = tf.Variable(0., name="eps")
       
       self.loss = tf.keras.losses.MeanSquaredError()
@@ -144,7 +144,8 @@ class DQN_AGENT(tf.Module):
       self.neighbors_target_q_network = []
       for neighbor in range(num_actions):
           with tf.name_scope(f'neighbor_target_q_network_{neighbor}'):
-            self.neighbors_target_q_network.append([])
+                self.neighbors_target_q_network.append(q_func((neighbors_degrees[neighbor]+1,), neighbors_degrees[neighbor], num_nodes, 
+                                    [1, neighbors_degrees[neighbor]]))
 
     #@tf.function
     def step(self, obs, stochastic=True, update_eps=-1):
