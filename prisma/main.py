@@ -81,8 +81,9 @@ def arguments_parser():
     group4 = parser.add_argument_group('Network parameters')
     group4.add_argument('--load_factor', type=float, help='scale of the traffic matrix', default=1)
     group4.add_argument('--adjacency_matrix_path', type=str, help='Path to the adjacency matrix', default="examples/abilene/adjacency_matrix.txt")
-    group4.add_argument('--traffic_matrix_path', type=str, help='Path to the traffic matrix file', default="examples/abilene/traffic_matrices/node_intensity_normalized.txt")
-    group4.add_argument('--node_coordinates_path', type=str, help='Path to the nodes coordinates', default="examples/abilene/node_coordinates.txt")
+    group4.add_argument('--traffic_matrix_root_path', type=str, help='Path to the traffic matrix folder', default="examples/abilene/traffic_matrices/")
+    group4.add_argument('--traffic_matrix_index', type=str, help='Index of the traffic matrix', default="examples/abilene/traffic_matrices/")
+    group4.add_argument('--node_coordinates_path', type=int, help='Path to the nodes coordinates', default=0)
     group4.add_argument('--max_out_buffer_size', type=int, help='Max nodes output buffer limit', default=30)
     group4.add_argument('--link_delay', type=str, help='Network links delay', default="0ms")
     group4.add_argument('--packet_size', type=int, help='Size of the packets in bytes', default=512)
@@ -132,7 +133,7 @@ def arguments_parser():
     #if params["save_models"]:
     #    params["save_models"] = os.path.abspath(params["save_models"])
     params["adjacency_matrix_path"] = os.path.abspath(params["adjacency_matrix_path"])
-    params["traffic_matrix_path"] = os.path.abspath(params["traffic_matrix_path"])
+    params["traffic_matrix_path"] = os.path.abspath(f'{params["traffic_matrix_root_path"].rstrip("/")}/node_intensity_normalized_{params["traffic_matrix_index"]}.txt')
     params["node_coordinates_path"] = os.path.abspath(params["node_coordinates_path"])
     params["ns3_sim_path"] = os.path.abspath(params["ns3_sim_path"])
 
@@ -159,7 +160,7 @@ def arguments_parser():
     
     ## Add optimal solution path
     topology_name = params["adjacency_matrix_path"].split("/")[-2]
-    params["optimal_soltion_path"] = f"examples/{topology_name}/optimal_solution/0_norm_matrix_uniform/{int(params['load_factor']*100)}_ut_minCostMCF.json"
+    params["optimal_soltion_path"] = f"examples/{topology_name}/optimal_solution/{params['traffic_matrix_index']}_norm_matrix_uniform/{int(params['load_factor']*100)}_ut_minCostMCF.json"
     return params
 
 def custom_plots():
