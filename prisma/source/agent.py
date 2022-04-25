@@ -142,7 +142,8 @@ class Agent():
         cl.total_rewards_with_loss=0
         cl.max_nb_arrived_pkts = params_dict["max_nb_arrived_pkts"]
         if params_dict["agent_type"] == "opt":
-            cl.optimal_solution_mat = np.array(json.load(open(params_dict["optimal_soltion_path"]))["routing"])
+            cl.optimal_routing_mat = np.array(json.load(open(params_dict["optimal_soltion_path"]))["routing"])
+            cl.optimal_rejected_mat = np.array(json.load(open(params_dict["optimal_soltion_path"]))["rejected_flows"])
 
     def __init__(self, index, agent_type="dqn", train=True):
         """ Init the agent
@@ -278,7 +279,7 @@ class Agent():
             action = self.neighbors.index(Agent.agents[self.index](Agent.G, self.index, obs[0])[1])
         elif self.agent_type == "opt":
             track =  Agent.pkt_tracking_dict[int(self.pkt_id)]
-            action, track["tag"] = optimal_routing_decision(Agent.G, Agent.optimal_solution_mat, self.index, track["src"], track["dst"], track["tag"])
+            action, track["tag"] = optimal_routing_decision(Agent.G, Agent.optimal_routing_mat, Agent.optimal_rejected_mat, self.index, track["src"], track["dst"], track["tag"])
         return action
 
     def _forward(self):
@@ -294,7 +295,7 @@ class Agent():
         else:
             self.action = self._take_action(self.obs)
             ## check if the pkt is lost
-            if self.obs[self.action + 1] >= Agent.max_out_buffer_size:
+            if self.obs[self.action + 1] >= Agent.max_out_buffer_size or self.action == -1:
                 Agent.total_lost_pkts += 1
                 rew = self._get_reward()
                 Agent.total_rewards_with_loss += rew
@@ -305,6 +306,9 @@ class Agent():
                                         rew,
                                         np.array([self.obs[0]] + [0]*len(next_hop_degree), dtype=float).squeeze(), 
                                         True)
+                if  self.action == -1:
+                    self.action =Agent.numNodes
+                
             ## Add to the temp obs
             else:
                 Agent.temp_obs[int(self.pkt_id)]= {"node": self.index,

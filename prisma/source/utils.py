@@ -135,12 +135,13 @@ def convert_bps_to_data_rate(bps):
 
     return data_rate*p
 
-def optimal_routing_decision(graph, routing_mat, actual_node, src_node, dst_node, tag):
+def optimal_routing_decision(graph, routing_mat, rejected_mat, actual_node, src_node, dst_node, tag):
     """Compute the action based on the optimal solution
 
     Args:
         graph (nx.graph): network graph
         routing_mat (np.array): optimal routing matrix
+        lost_mat (np.array): optimal rejected flow matrix
         actual_node (int): actual node index
         src_node (int): source node index
         dst_node (int): destination node index
@@ -152,15 +153,19 @@ def optimal_routing_decision(graph, routing_mat, actual_node, src_node, dst_node
     src = int(src_node)
     dst = int(dst_node)
     actual = int(actual_node)
+    neighbors = list(graph.neighbors(actual))
     indices = np.where(np.array(list(graph.edges))[ :,0]==actual)[0]
     prob_to_neighbors = routing_mat[src][dst][indices]
-    # print(np.array(list(graph.edges)), prob_to_neighbors, actual, src, dst, indices, list(graph.neighbors(actual)))
+    loss_prob = rejected_mat[src][dst]
+    if actual == src: ## see if the packet is rejected
+        if np.random.rand() <= loss_prob:
+            return -1, None
+        
     if tag:
         if tag in prob_to_neighbors and tag < 1:
-            return list(graph.neighbors(actual))[list(prob_to_neighbors).index(tag)], tag
+            return list(prob_to_neighbors).index(tag), tag
         
     prob_general = list(prob_to_neighbors/sum(prob_to_neighbors))  
-    # print(prob_general)
-    choice = np.random.choice(list(graph.neighbors(actual)), p=prob_general)
-    tag = prob_to_neighbors[list(graph.neighbors(actual)).index(choice)]
-    return list(graph.neighbors(actual_node)).index(choice), tag
+    choice = np.random.choice(neighbors, p=prob_general)
+    tag = prob_to_neighbors[neighbors.index(choice)]
+    return neighbors.index(choice), tag

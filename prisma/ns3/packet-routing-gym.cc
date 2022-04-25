@@ -284,15 +284,20 @@ PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
       m_fwdDev_idx = 0;
     }
   
-    NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", MyExecuteActions: " << m_fwdDev_idx);
-    Ptr<PointToPointNetDevice> dev = DynamicCast<PointToPointNetDevice>(m_node->GetDevice(m_fwdDev_idx));
-    bool arrived;
-    arrived=dev->Send(m_pckt, m_destAddr, 0x0800);
-    if (arrived == 1){
-        NS_LOG_UNCOND ("Packet Successfully delivered");
+    NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", MyExecuteActions: " << m_fwdDev_idx << "mdevices " << m_node->GetNDevices());
+    if (m_fwdDev_idx < m_node->GetNDevices()){
+      Ptr<PointToPointNetDevice> dev = DynamicCast<PointToPointNetDevice>(m_node->GetDevice(m_fwdDev_idx));
+      bool arrived;
+      arrived=dev->Send(m_pckt, m_destAddr, 0x0800);
+      if (arrived == 1){
+          NS_LOG_UNCOND ("Packet Successfully delivered");
+      }
+      else{
+          NS_LOG_UNCOND ("Packet Lost");
+      }
     }
     else{
-        NS_LOG_UNCOND ("Packet Lost");
+      NS_LOG_UNCOND ("Packet Rejected");
     }
   }
   
