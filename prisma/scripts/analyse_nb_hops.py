@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import os
 
 def draw_plot(data, offset,edge_color, fill_color):
+    print(data)
     pos = np.arange(data.shape[0])+offset 
     bp = ax.boxplot(data, positions= pos, widths=0.3, patch_artist=True, manage_ticks=True)
     for element in ['boxes', 'whiskers', 'fliers', 'medians', 'caps']:
@@ -47,9 +48,10 @@ for a in A:
   else:
     d_sp[(src, dest)] = [nhops]
 
-step = int(len(d)/10)
-for i in range(0, len(d),step):
+step = 5#int(len(d)/10)
+for i in range(0, int(len(d)/10),step):
   fig, ax = plt.subplots()
+  print(d)
   bp1 = draw_plot(np.array(list(d.values())[i:i+step]), -0.2, "tomato", "white")
   bp2 = draw_plot(np.array(list(d_sp.values())[i:i+step]), +0.2,"skyblue", "white")
   ax.set_xticks(ticks=range(len(list(d.keys())[i:i+step])) ,labels=list(d.keys())[i:i+step])

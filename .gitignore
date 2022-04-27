@@ -43,7 +43,6 @@ build/
 *.pb.cc
 *_pb2.py
 *_pb3.py
-prisma/examples/*/saved_models/*
 prisma/examples/*/results/*
 prisma/examples/*/pre_trained_models/*
 prisma/scripts/figures/*
