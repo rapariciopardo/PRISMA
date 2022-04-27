@@ -398,17 +398,32 @@ def main():
             """)
     if Agent.total_arrived_pkts:
         print(f"Average delay per arrived packets = {Agent.total_e2e_delay/(Agent.total_arrived_pkts*1000)}")
-
+    if params["train"] == 0:
+        import csv    
+        fields_loss_rate=[params["agent_type"],params["signaling_type"], params["traffic_matrix_path"][-5], params['load_factor'],Agent.total_lost_pkts/Agent.total_new_rcv_pkts] 
+        with open('res_new_loss_rate', 'a') as f: 
+            writer = csv.writer(f) 
+            writer.writerow(fields_loss_rate) 
     
+        fields_delay=[params["agent_type"],params["signaling_type"], params["traffic_matrix_path"][-5], params['load_factor'], np.array(Agent.delays_ideal).mean()] 
+        with open('res_new_delay', 'a') as f: 
+            writer = csv.writer(f) 
+            writer.writerow(fields_delay) 
+    
+        fields_rw=[params["agent_type"],params["signaling_type"], params["traffic_matrix_path"][-5], params['load_factor'], np.array(Agent.rewards).mean()] 
+        with open('res_new_rw', 'a') as f: 
+            writer = csv.writer(f) 
+            writer.writerow(fields_rw) 
+
     ## save models        
     if params["save_models"]:
         save_model(Agent.agents, params["session_name"], 1, 1, root=params["logs_parent_folder"] + "/saved_models/")
     
     ## saving the transition array
-    for node_idx in range(Agent.numNodes):
-        if(not os.path.exists(f"lock_files/{params['session_name']}")):  
-            os.mkdir(f"lock_files/{params['session_name']}/") 
-        np.savetxt(f"lock_files/{params['session_name']}/{node_idx}.txt", np.array(Agent.lock_info_array[node_idx], dtype=object), fmt = "%s", header = "src dst node next_hop ideal_time real_time obs action")
+    #for node_idx in range(Agent.numNodes):
+    #    if(not os.path.exists(f"lock_files/{params['session_name']}")):  
+    #        os.mkdir(f"lock_files/{params['session_name']}/") 
+    #    np.savetxt(f"lock_files/{params['session_name']}/{node_idx}.txt", np.array(Agent.lock_info_array[node_idx], dtype=object), fmt = "%s", header = "src dst node next_hop ideal_time real_time obs action")
 
 
 if __name__ == '__main__':

@@ -299,6 +299,7 @@ class Agent():
                 Agent.total_lost_pkts += 1
                 rew = self._get_reward()
                 Agent.total_rewards_with_loss += rew
+                Agent.rewards.append(rew)
                 if self.train:
                     next_hop_degree = list(Agent.G.neighbors(self.neighbors[self.action]))
                     Agent.replay_buffer[self.index].add(np.array(self.obs, dtype=float).squeeze(),
