@@ -7,11 +7,12 @@ Created on Thu Jan 20 2022
 """
 import tensorflow as tf
 from tensorflow import keras
-from tensorflow.keras import layers
+from keras import layers
 import numpy as np
 import networkx as nx
-from source.models import DQN_buffer_model
-from source.utils import save_model
+import sys
+sys.path.insert(0, "source")
+from models import DQN_buffer_model
 
 if __name__ == '__main__':
     """
@@ -20,12 +21,13 @@ if __name__ == '__main__':
     
     ### define the params
     size_of_data_per_dst = 1000 
-    
+    topology_name = "abilene"
+    buffer_max_length = 30
     ### load the topology graph
     G=nx.Graph()
-    for i, element in enumerate(np.loadtxt(open("../node_coordinates.txt"))):
+    for i, element in enumerate(np.loadtxt(open(f"examples/{topology_name}/node_coordinates.txt"))):
         G.add_node(i,pos=tuple(element))
-    G = nx.from_numpy_matrix(np.loadtxt(open("../adjacency_matrix.txt")), create_using=G)
+    G = nx.from_numpy_matrix(np.loadtxt(open(f"examples/{topology_name}/adjacency_matrix.txt")), create_using=G)
     
     ### loop for nodes
     models = []
@@ -39,7 +41,7 @@ if __name__ == '__main__':
                 continue
             ### generate the random data for each destination
             x_dst = np.concatenate((dst * np.ones(shape=(size_of_data_per_dst, 1), dtype=int),
-                                np.random.randint(low=0, high=30, size=(size_of_data_per_dst, number_of_neighbors)),
+                                np.random.randint(low=0, high=buffer_max_length, size=(size_of_data_per_dst, number_of_neighbors)),
                                 ),
                                 axis=1)
             y_dst = []
@@ -67,8 +69,8 @@ if __name__ == '__main__':
                       loss=keras.losses.MeanSquaredError(),
                       metrics=[keras.metrics.MeanSquaredError()]
                       )
-        model.fit(x_all, y_all, batch_size=128, epochs=20)
+        model.fit(x_all, y_all, batch_size=128, epochs=100)
         ### saving the model    
-        model.save(f"../DQN_buffer_sp_init/node{node}")
+        model.save(f"examples/{topology_name}/DQN_buffer_sp_init/node{node}")
         print()
     raise(1)

@@ -52,6 +52,7 @@
 #include "ns3/internet-module.h"
 //#include "ns3/point-to-point-module.h"
 #include "point-to-point-helper.h"
+#include "ns3/traffic-control-helper.h" 
 #include "ns3/applications-module.h"
 
 #include "poisson-app-helper.h"
@@ -63,6 +64,7 @@
 #include "ns3/stats-module.h"
 #include "ns3/opengym-module.h"
 #include "packet-routing-gym.h"
+
 
 using namespace std;
 using namespace ns3;
@@ -350,6 +352,8 @@ int main (int argc, char *argv[])
             if (Adj_Matrix[i][j] == 1)
               {
                 PointToPointHelper p2p;
+
+
                 p2p.SetDeviceAttribute ("DataRate", DataRateValue (LinkRate));
                 p2p.SetChannelAttribute ("Delay", StringValue (LinkDelay));
                 p2p.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue (MaxBufferLength));    
@@ -358,7 +362,11 @@ int main (int argc, char *argv[])
                 switch_nd.Add(n_devs.Get(1));
                 link_devs.push_back(make_tuple(switch_nd.GetN()-1, switch_nd.GetN()-2));
 
-                
+                //  NS_LOG_UNCOND("Creating the prio queue disc");
+                // TrafficControlHelper tch;
+                // uint16_t handle = tch.SetRootQueueDisc ("ns3::PrioQueueDisc");
+                // tch.AddInternalQueues (handle, 2, "ns3::DropTailQueue", "MaxSize", StringValue (MaxBufferLength));
+                // QueueDiscContainer qdiscs = tch.Install (n_devs);
                 //NS_LOG_UNCOND ("matrix element [" << i << "][" << j << "] is 1");
                 // NS_LOG_UNCOND(n_devs.Get(0)->GetAddress()<<"     "<<n_devs.Get(1)->GetAddress());
                 
@@ -372,6 +380,8 @@ int main (int argc, char *argv[])
   //for(size_t i=0;i<link_devs.size();i++){
   //  NS_LOG_UNCOND(get<0>(link_devs[i]) << "     " << get<1>(link_devs[i])<<"    "<<switch_nd.Get(get<0>(link_devs[i]))->GetNode()->GetId()<<"     "<<switch_nd.Get(get<1>(link_devs[i]))->GetNode()->GetId());
   //}
+ 
+
   if(perturbations==true){
     random_shuffle(begin(link_devs), end(link_devs));
     if(nblinksFailed>int(link_devs.size())) nblinksFailed = int(link_devs.size());

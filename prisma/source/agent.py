@@ -319,7 +319,6 @@ class Agent():
                                                    "src" :Agent.pkt_tracking_dict[int(self.pkt_id)]["src"],
                                                    "dst" :Agent.pkt_tracking_dict[int(self.pkt_id)]["dst"],
                                                    }
-                
 
         ### Apply the action
         return self.env.step(self.action)

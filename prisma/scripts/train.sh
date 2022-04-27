@@ -7,16 +7,20 @@
 
 cd ..
 
-python3 main.py --simTime=60 \
+python3 main.py \
+	--seed=100 \
+	--simTime=60 \
 	--basePort=6555 \
 	--train=1 \
-	--session_name="train_abilene_ideal_ts_0_03_batch_512_lr_1e-3_gamma_0_95_final_eps_0_01_ratio_0_1_loss_x6"\
+	--agent_type="dqn_buffer" \
+	--session_name="train_abilene_ideal_ts_0_03_batch_512_lr_1e-3_gamma_1_final_eps_0_01_load_40_sync_05_loss_x1_sp_init"\
 	--signaling_type="ideal" \
 	--logs_parent_folder=examples/abilene/ \
-	--traffic_matrix_path=examples/abilene/traffic_matrices/node_intensity_normalized.txt \
+	--traffic_matrix_root_path=examples/abilene/traffic_matrices/ \
+	--traffic_matrix_index=0 \
 	--adjacency_matrix_path=examples/abilene/adjacency_matrix.txt \
 	--node_coordinates_path=examples/abilene/node_coordinates.txt \
-	--training_step=0.030 \
+	--training_step=0.01 \
 	--batch_size=512 \
 	--lr=0.001 \
 	--exploration_final_eps=0.01 \
@@ -26,7 +30,12 @@ python3 main.py --simTime=60 \
 	--training_trigger_type="time" \
 	--save_models=1 \
 	--start_tensorboard=0 \
-	--load_factor=0.5
+	--replay_buffer_max_size=50000 \
+   	--link_delay="0ms" \
+	--load_factor=0.4 \
+	--sync_step=0.5 \
+	--load_path=examples/abilene/DQN_buffer_sp_init \
+
 sleep 5
 
 rm -r ../ns3-gym/scratch/prisma
