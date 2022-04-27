@@ -395,6 +395,7 @@ def main():
             Delay_ideal = {np.array(Agent.delays_ideal).mean()}
             Delay_real = {np.array(Agent.delays_real).mean()}
             Reward = {np.array(Agent.rewards).mean()}
+
             """)
     if Agent.total_arrived_pkts:
         print(f"Average delay per arrived packets = {Agent.total_e2e_delay/(Agent.total_arrived_pkts*1000)}")
@@ -414,6 +415,11 @@ def main():
         with open('res_new_rw', 'a') as f: 
             writer = csv.writer(f) 
             writer.writerow(fields_rw) 
+        
+        fields_modified_rw=[params["agent_type"],params["signaling_type"], params["traffic_matrix_path"][-5], params['load_factor'], (Agent.total_arrived_pkts * np.array(Agent.delays_ideal).mean() +  params["loss_penalty"]*Agent.total_lost_pkts) / (Agent.total_lost_pkts + Agent.total_arrived_pkts)] 
+        with open('res_new_modified_rw', 'a') as f: 
+            writer = csv.writer(f) 
+            writer.writerow(fields_modified_rw) 
 
     ## save models        
     if params["save_models"]:
