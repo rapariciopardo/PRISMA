@@ -290,7 +290,7 @@ class Agent():
         self.update_eps = tf.constant(self.exploration.value(self.stepIdx))
         
         ## take the action
-        if self.obs[0] == self.index or self.stepIdx < 1: # pkt arrived to dst or it is a train step, ignore the action
+        if self.obs[0] == self.index or self.stepIdx < 1 or self.signaling: # pkt arrived to dst or it is a train step, ignore the action
             self.action = 0
         else:
             self.action = self._take_action(self.obs)
@@ -487,6 +487,11 @@ class Agent():
                     delay_time = float(tokens[0].split('=')[-1])
                     Agent.curr_time = float(tokens[4].split('=')[-1])
                     self.pkt_id = float(tokens[5].split('=')[-1])
+                    self.signaling = float(tokens[6].split('=')[-1])
+                    
+                    if(self.signaling != 0):
+                        continue
+
 
                     if self.pkt_id not in Agent.pkt_tracking_dict.keys(): ## check if the packet is a new arrival
                         self.count_new_pkts += 1

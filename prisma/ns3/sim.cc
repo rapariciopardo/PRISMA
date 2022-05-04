@@ -52,10 +52,14 @@
 #include "ns3/internet-module.h"
 //#include "ns3/point-to-point-module.h"
 #include "point-to-point-helper.h"
+#include "point-to-point-net-device.h"
 #include "ns3/traffic-control-helper.h" 
 #include "ns3/applications-module.h"
 
 #include "poisson-app-helper.h"
+#include "big-signaling-app-helper.h"
+#include "big-signaling-application.h"
+#include "tcp-application.h"
 #include "ns3/global-route-manager.h"
 #include "ns3/mobility-module.h"
 #include "ns3/netanim-module.h"
@@ -103,25 +107,25 @@ void countPackets(int n_nodes, NetDeviceContainer* nd, std::string path, Ptr<con
   Ptr<Packet> p = packet->Copy();
 
   NS_LOG_UNCOND(p->ToString());
-  NS_LOG_UNCOND(InetSocketAddress::ConvertFrom(dest).GetIpv4 ());
+  //NS_LOG_UNCOND(InetSocketAddress::ConvertFrom(dest).GetIpv4 ());
   
-  Ipv4Address dest_addr = InetSocketAddress::ConvertFrom(dest).GetIpv4();
+  //Ipv4Address dest_addr = InetSocketAddress::ConvertFrom(dest).GetIpv4();
 
   //Destination and Src
 
-  for(uint32_t i = 0;i<nd->GetN();i++){
-    Ptr<NetDevice> dev = nd->Get(i);
-    Ptr<Node> n = dev->GetNode();
-    Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();
-    Ipv4InterfaceAddress ipv4_int_addr = ipv4->GetAddress (1, 0);
-    Ipv4Address ip_addr = ipv4_int_addr.GetLocal ();
-   
-   
-    if(ip_addr == dest_addr){
-      int d = dev->GetNode()->GetId()-n_nodes;
-      counter_send[d] += 1;
-    }  
-  }
+  //for(uint32_t i = 0;i<nd->GetN();i++){
+  //  Ptr<NetDevice> dev = nd->Get(i);
+  //  Ptr<Node> n = dev->GetNode();
+  //  Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();
+  //  Ipv4InterfaceAddress ipv4_int_addr = ipv4->GetAddress (1, 0);
+  //  Ipv4Address ip_addr = ipv4_int_addr.GetLocal ();
+  // 
+  // 
+  //  if(ip_addr == dest_addr){
+  //    int d = dev->GetNode()->GetId()-n_nodes;
+  //    counter_send[d] += 1;
+  //  }  
+  //}
   
   
 }
@@ -200,10 +204,10 @@ int main (int argc, char *argv[])
   NS_LOG_UNCOND("--linkFailureTime: "<<linkFailureTime);
   
   //Parameters of the scenario
-  double SinkStartTime  = 0.0001;
-  double SinkStopTime   = simTime; // - 0.1;//59.90001;
-  double AppStartTime   = 0.0001;
-  double AppStopTime    = simTime; // - 0.2;
+  //double SinkStartTime  = 0.0001;
+  //double SinkStopTime   = simTime; // - 0.1;//59.90001;
+  //double AppStartTime   = 0.0001;
+  //double AppStopTime    = simTime; // - 0.2;
 
   AvgPacketSize = AvgPacketSize - 30; // remove the header length 8 20 18
   
@@ -398,18 +402,37 @@ int main (int argc, char *argv[])
   {
     Ptr<NetDevice> dev_switch =DynamicCast<NetDevice> (switch_nd.Get(i)); 
     // NS_LOG_UNCOND(dev_switch->GetNode()->GetId()<<"     "<< dev_switch->GetNode()->GetNDevices()<<"    "<<dev_switch->GetAddress()<<"    ");
-    dev_switch->TraceConnectWithoutContext("MacRx", MakeBoundCallback(&PacketRoutingEnv::NotifyPktRcv, packetRoutingEnvs[dev_switch->GetNode()->GetId()], &counter_send[dev_switch->GetNode()->GetId()], &traffic_nd));
+    dev_switch->TraceConnectWithoutContext("MacRx", MakeBoundCallback(&PacketRoutingEnv::NotifyPktRcv, packetRoutingEnvs[dev_switch->GetNode()->GetId()], dev_switch, &traffic_nd));
     
   }
 
 
   ///////////////////////////////////////////////////////////
-  InternetStackHelper internet;
-  internet.Install(nodes_traffic);
 
-  Ipv4AddressHelper ipv4_helper;
-  ipv4_helper.SetBase ("10.2.2.0", "255.255.255.0");
-  ipv4_helper.Assign (traffic_nd);
+  NodeContainer nodes_test;
+  nodes_test.Add(nodes_traffic.Get(0));
+  nodes_test.Add(nodes_switch.Get(0));
+
+
+  NodeContainer nodes;
+  nodes.Create (2);
+
+  PointToPointHelper pointToPoint;
+  pointToPoint.SetDeviceAttribute ("DataRate", StringValue ("5Mbps"));
+  pointToPoint.SetChannelAttribute ("Delay", StringValue ("2ms"));
+
+  NetDeviceContainer devices;
+  devices = pointToPoint.Install (nodes);
+  InternetStackHelper internet;
+  internet.Install(nodes);
+  //InternetStackHelper internet;
+  //internet.Install(nodes_traffic);
+  //InternetStackHelper internet_v2;
+  //internet_v2.Install(nodes_switch);
+
+  //Ipv4AddressHelper ipv4_helper;
+  //ipv4_helper.SetBase ("10.2.2.0", "255.255.255.0");
+  //ipv4_helper.Assign (traffic_nd);
 
 
   //////////////////////////////////////////////////////////
@@ -418,7 +441,7 @@ int main (int argc, char *argv[])
   
 
   
-  uint16_t port = 9;
+  //uint16_t port = 90;
 
 
   
@@ -449,42 +472,91 @@ int main (int argc, char *argv[])
   random_shuffle(begin(updatable_nodes), end(updatable_nodes));
   NS_LOG_INFO ("Setup CBR Traffic Sources.");
 
-  
-  for (int i = 0; i < n_nodes; i++)
-    {
-      for (int j = 0; j < n_nodes; j++)
-        {
-          if (i != j)
-            {
-  
-              // We needed to generate a random number (rn) to be used to eliminate
-              // the artificial congestion caused by sending the packets at the
-              // same time. This rn is added to AppStartTime to have the sources
-              // start at different time, however they will still send at the same rate.
-              
-              Ptr<UniformRandomVariable> x = CreateObject<UniformRandomVariable> ();
-              x->SetAttribute ("Min", DoubleValue (0));
-              x->SetAttribute ("Max", DoubleValue (1));
-              double rn = x->GetValue ();
-              Ptr<Node> n = nodes_traffic.Get (j);
-              Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();
-              Ipv4InterfaceAddress ipv4_int_addr = ipv4->GetAddress (1, 0);
-              Ipv4Address ip_addr = ipv4_int_addr.GetLocal ();
-              // NS_LOG_UNCOND(ipv4_int_addr);
-              PoissonAppHelper poisson ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]
-              // NS_LOG_UNCOND( InetSocketAddress (ip_addr, port));
-              // poisson.SetAverageRate (DataRate(Traff_Matrix[i][j]));
+  NetDeviceContainer test_nd;
+  test_nd.Add(traffic_nd.Get(0));
+  test_nd.Add(switch_nd.Get(0));
+  uint16_t sinkPort = 9;
+  Address sinkAddress;
+  Address anyAddress;
+  Ipv4AddressHelper address;
+  address.SetBase ("10.1.1.0", "255.255.255.0");
+  Ipv4InterfaceContainer interfaces = address.Assign (devices);
 
-              poisson.SetAverageRate (DataRate(round(DataRate(Traff_Matrix[i][j]).GetBitRate()*load_factor)), AvgPacketSize);
-              poisson.SetUpdatable(updatable_nodes[i], updateTrafficRateTime);
-              ApplicationContainer apps = poisson.Install (nodes_traffic.Get (i));  // traffic sources are installed on all nodes
-            
-              apps.Start (Seconds (AppStartTime + rn));
-              apps.Stop (Seconds (AppStopTime));
-            }
-        }
-    }
-    Config::Connect ("/NodeList/*/ApplicationList/*/$ns3::PoissonGeneratorApplication/TxWithAddresses",MakeBoundCallback(&countPackets, n_nodes, &traffic_nd));
+  sinkAddress = InetSocketAddress (interfaces.GetAddress (1), sinkPort);
+  anyAddress = InetSocketAddress (Ipv4Address::GetAny (), sinkPort);
+  PacketSinkHelper packetSinkHelper ("ns3::TcpSocketFactory", anyAddress);
+  ApplicationContainer sinkApps = packetSinkHelper.Install (nodes.Get (1));
+  
+  sinkApps.Start (Seconds (0.));
+  sinkApps.Stop (Seconds (20.));
+  
+  BigSignalingAppHelper sign ("ns3::TcpSocketFactory",sinkAddress);
+  sign.SetAverageStep (0.5, 36000);
+  ApplicationContainer apps = sign.Install (nodes.Get (0));  // traffic sources are installed on all nodes
+  apps.Start (Seconds (0.0));
+  apps.Stop (Seconds (20.0));
+  //Ptr<Socket> ns3TcpSocket = Socket::CreateSocket (nodes.Get (0), TcpSocketFactory::GetTypeId ());
+  //Ptr<MyApp> app = CreateObject<MyApp> ();
+  //app->Setup (ns3TcpSocket, sinkAddress, 10040, 1000, DataRate ("1Mbps"));
+  //nodes.Get (0)->AddApplication (app);
+  //app->SetStartTime (Seconds (0.));
+  //app->SetStopTime (Seconds (20.));
+  //for (int i = 0; i < n_nodes; i++)
+  //  {
+  //    for (int j = 0; j < n_nodes; j++)
+  //      {
+  //        if (i != j)
+  //          {
+  //
+  //            // We needed to generate a random number (rn) to be used to eliminate
+  //            // the artificial congestion caused by sending the packets at the
+  //            // same time. This rn is added to AppStartTime to have the sources
+  //            // start at different time, however they will still send at the same rate.
+  //            
+  //            Ptr<UniformRandomVariable> x = CreateObject<UniformRandomVariable> ();
+  //            x->SetAttribute ("Min", DoubleValue (0));
+  //            x->SetAttribute ("Max", DoubleValue (1));
+  //            double rn = x->GetValue ();
+  //            Ptr<Node> n = nodes_traffic.Get (j);
+  //            Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();
+  //            Ipv4InterfaceAddress ipv4_int_addr = ipv4->GetAddress (1, 0);
+  //            Ipv4Address ip_addr = ipv4_int_addr.GetLocal ();
+  //            // NS_LOG_UNCOND(ipv4_int_addr);
+  //            //PoissonAppHelper poisson ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]
+  //            
+  //            // NS_LOG_UNCOND( InetSocketAddress (ip_addr, port));
+  //            //poisson.SetAverageRate (DataRate(Traff_Matrix[i][j]));
+//
+  //            //poisson.SetAverageRate (DataRate(round(DataRate(Traff_Matrix[i][j]).GetBitRate()*load_factor)), AvgPacketSize);
+  //            //poisson.SetUpdatable(updatable_nodes[i], updateTrafficRateTime);
+  //            //ApplicationContainer apps = poisson.Install (nodes_traffic.Get (i));  // traffic sources are installed on all nodes
+  //            //apps.Start (Seconds (AppStartTime + rn));
+  //            //apps.Stop (Seconds (AppStopTime));
+  //            
+  //            if (Adj_Matrix[i][j] == 1 && i==0 && j==2){
+  //              
+  //              
+  //
+  //              //big_sign.SetSourceDest(uint32_t(i+1), uint32_t(j+1));
+  //              //big_sign.SetAverageStep(1.0, 60);
+  //              //big_sign.SetAverageRate(DataRate(round(DataRate(Traff_Matrix[i][j]).GetBitRate()*load_factor)), 1000);
+  //              //ApplicationContainer signs = big_sign.Install(nodes_traffic.Get(i));
+  //              //Ptr<BigSignalingGeneratorApplication> app = DynamicCast<BigSignalingGeneratorApplication> (signs.Get(0));
+  //              //NS_LOG_UNCOND("AQUI ");
+  //              //Ptr<NetDevice> dev_traffic =DynamicCast<NetDevice> (traffic_nd.Get(i));
+  //              //NS_LOG_UNCOND ("NODE ND "<<dev_traffic->GetNode()->GetId());
+  //              //app->GetSocket()->BindToNetDevice(dev_traffic);
+  //              //NS_LOG_UNCOND("GET N "<< app->GetNode()->GetId());
+  //              signs.Start (Seconds (AppStartTime + rn));
+  //              signs.Stop (Seconds (AppStopTime));
+  //            
+  //            }
+  //        
+  //            
+  //          }
+  //      }
+  //  }
+  //  Config::Connect ("/NodeList/*/ApplicationList/*/$ns3::BigSignalingGeneratorApplication/TxWithAddresses",MakeBoundCallback(&countPackets, n_nodes, &traffic_nd));
 
  
   
@@ -493,19 +565,19 @@ int main (int argc, char *argv[])
 
   NS_LOG_INFO ("Setup Packet Sinks.");
 
-  Ipv4Address sinkAddr = Ipv4Address::GetAny();
-  // NS_LOG_UNCOND(sinkAddr);
-  PacketSinkHelper sink ("ns3::UdpSocketFactory", InetSocketAddress (sinkAddr, port));   
-  ApplicationContainer apps_sink;  
-  for (int i = 0; i < n_nodes; i++)
-    {
-      //apps_sink = sink.Install (nodes.Get (i));   // sink is installed on all nodes
-      sink.SetAttribute ("Protocol", TypeIdValue (UdpSocketFactory::GetTypeId ()));
-      apps_sink.Add (sink.Install (nodes_traffic.Get(i)));
-    }
-  apps_sink.Start (Seconds (SinkStartTime));
-  apps_sink.Stop (Seconds (SinkStopTime));
-  
+  //Ipv4Address sinkAddr = Ipv4Address::GetAny();
+  //// NS_LOG_UNCOND(sinkAddr);
+  //PacketSinkHelper sink ("ns3::TcpSocketFactory", InetSocketAddress (sinkAddr, port));   
+  //ApplicationContainer apps_sink;  
+  //for (int i = 0; i < n_nodes; i++)
+  //  {
+  //    //apps_sink = sink.Install (nodes.Get (i));   // sink is installed on all nodes
+  //    //sink.SetAttribute ("Protocol", TypeIdValue (UdpSocketFactory::GetTypeId ()));
+  //    apps_sink.Add (sink.Install (nodes_traffic.Get(i)));
+  //  }
+  //apps_sink.Start (Seconds (SinkStartTime));
+  //apps_sink.Stop (Seconds (SinkStopTime));
+  //
   
   // ---------- End of Create n*(n-1) CBR Flows ------------------------------
 

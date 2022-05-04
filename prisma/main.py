@@ -297,8 +297,8 @@ def run_ns3(params):
     os.chdir(params["ns3_sim_path"])
     
     ## run ns3 configure
-    os.system('./waf -d optimized configure')
-    # os.system('./waf configure')
+    #os.system('./waf -d optimized configure')
+    os.system('./waf configure')
 
     ## run NS3 simulator
     ns3_params_format = ('prisma --simSeed={} --openGymPort={} --simTime={} --AvgPacketSize={} '
