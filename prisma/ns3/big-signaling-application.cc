@@ -253,13 +253,13 @@ void BigSignalingGeneratorApplication::SendPacket ()
   NS_ASSERT (m_sendEvent.IsExpired ());
   m_pktSize = m_pktSizeMean;
   Ptr<Packet> packet = Create<Packet> (m_pktSize);
-  //MyTag tag;
-  //tag.SetSimpleValue(0x01);
-  //packet->AddByteTag(tag);
+  MyTag tag;
+  tag.SetSimpleValue(0x01);
+  packet->AddPacketTag(tag);
   m_txTrace (packet);
   std::string start_time = std::to_string(Simulator::Now().GetMilliSeconds());
-  NS_LOG_UNCOND("START: "<<start_time<<"   SIZE: "<<m_pktSize);
-  NS_LOG_UNCOND("SRC: "<<m_src<<"    DEST: "<<m_dest);
+  //NS_LOG_UNCOND("START: "<<start_time<<"   SIZE: "<<m_pktSize);
+  //NS_LOG_UNCOND("SRC: "<<m_src<<"    DEST: "<<m_dest);
   //const uint8_t* start_int = reinterpret_cast<const uint8_t*>(&start_time[0]);
   //Ptr<Packet> pcopy = packet->Copy();
   //MyTag tagcopy;

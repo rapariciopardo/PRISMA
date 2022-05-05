@@ -18,6 +18,7 @@
 
 #include "ns3/log.h"
 #include "ns3/queue.h"
+
 #include "ns3/simulator.h"
 #include "ns3/mac48-address.h"
 #include "ns3/llc-snap-header.h"
@@ -337,7 +338,6 @@ PointToPointNetDevice::Receive (Ptr<Packet> packet)
 {
   NS_LOG_FUNCTION (this << packet);
   uint16_t protocol = 0;
-  NS_LOG_UNCOND("RECEIVED A PACKET" << packet->ToString());
   if (m_receiveErrorModel && m_receiveErrorModel->IsCorrupt (packet) ) 
     {
       // 
@@ -538,21 +538,25 @@ PointToPointNetDevice::Send (
   //
   // We should enqueue and dequeue the packet to hit the tracing hooks.
   //
-  if (m_queue->Enqueue (packet))
-    {
-      //
-      // If the channel is ready for transition we send the packet right now
-      // 
-      if (m_txMachineState == READY)
-        {
-          packet = m_queue->Dequeue ();
-          m_snifferTrace (packet);
-          m_promiscSnifferTrace (packet);
-          bool ret = TransmitStart (packet);
-          return ret;
-        }
-      return true;
-    }
+  bool enq = m_queue->Enqueue (packet);
+  
+  if (enq)
+  {
+    //
+    // If the channel is ready for transition we send the packet right now
+    // 
+    if (m_txMachineState == READY)
+      {
+        packet = m_queue->Dequeue ();
+        m_snifferTrace (packet);
+        m_promiscSnifferTrace (packet);
+        bool ret = TransmitStart (packet);
+        return ret;
+      }
+    return true;
+  }
+
+  
 
   // Enqueue may fail (overflow)
 
@@ -566,7 +570,6 @@ PointToPointNetDevice::SendFrom (Ptr<Packet> packet,
                                  const Address &dest, 
                                  uint16_t protocolNumber)
 {
-  NS_LOG_UNCOND("SEND FROM");
   NS_LOG_FUNCTION (this << packet << source << dest << protocolNumber);
   return false;
 }

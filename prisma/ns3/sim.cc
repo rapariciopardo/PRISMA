@@ -204,10 +204,10 @@ int main (int argc, char *argv[])
   NS_LOG_UNCOND("--linkFailureTime: "<<linkFailureTime);
   
   //Parameters of the scenario
-  //double SinkStartTime  = 0.0001;
-  //double SinkStopTime   = simTime; // - 0.1;//59.90001;
-  //double AppStartTime   = 0.0001;
-  //double AppStopTime    = simTime; // - 0.2;
+  double SinkStartTime  = 0.0001;
+  double SinkStopTime   = simTime; // - 0.1;//59.90001;
+  double AppStartTime   = 0.0001;
+  double AppStopTime    = simTime; // - 0.2;
 
   AvgPacketSize = AvgPacketSize - 30; // remove the header length 8 20 18
   
@@ -275,48 +275,16 @@ int main (int argc, char *argv[])
 
   NodeContainer nodes_switch;
   nodes_switch.Create(n_nodes);
-
+  
   NodeContainer nodes_traffic;   // Declare nodes objects
   nodes_traffic.Create (n_nodes);
 
-/////////////////////////////////////////////////////////////////////
-  // OpenGym Env
-  NS_LOG_INFO ("Setting up OpemGym Envs for each node.");
-  
-  std::vector<Ptr<OpenGymInterface> > myOpenGymInterfaces;
-  std::vector<Ptr<PacketRoutingEnv> > packetRoutingEnvs;
-
-  uint64_t linkRateValue= DataRate(LinkRate).GetBitRate();
-
-  for (int i = 0; i < n_nodes; i++)
-    {
-
-      Ptr<Node> n = nodes_switch.Get (i); // ref node
-      //nodeOpenGymPort = openGymPort + i;
-      Ptr<OpenGymInterface> openGymInterface = CreateObject<OpenGymInterface> (openGymPort + i);
-       Ptr<PacketRoutingEnv> packetRoutingEnv;
-      if (eventBasedEnv){
-        packetRoutingEnv = CreateObject<PacketRoutingEnv> (n, n_nodes, linkRateValue); // event-driven step
-      } else {
-        packetRoutingEnv = CreateObject<PacketRoutingEnv> (Seconds(envStepTime), n); // time-driven step
-      }
-      packetRoutingEnv->SetOpenGymInterface(openGymInterface);
-
-      myOpenGymInterfaces.push_back (openGymInterface);
-      packetRoutingEnvs.push_back (packetRoutingEnv);
-    }  
-///////////////////////////////
   NS_LOG_INFO ("Create P2P Link Attributes.");
-
-  
-  
-
-
 
   NetDeviceContainer traffic_nd;
   NetDeviceContainer switch_nd;
 
-
+  std::vector<NetDeviceContainer> dev_links;
   int nodes_degree[n_nodes] ={0};
   for (size_t i = 0; i < Adj_Matrix.size (); i++)
       {
@@ -342,12 +310,14 @@ int main (int argc, char *argv[])
     p2p.SetChannelAttribute ("Delay", StringValue (LinkDelay));
     p2p.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("500p"));    
     NetDeviceContainer n_devs = p2p.Install (NodeContainer (nodes_traffic.Get(i), nodes_switch.Get(i)));
+    dev_links.push_back(n_devs);
     traffic_nd.Add(n_devs.Get(0));
     switch_nd.Add(n_devs.Get(1));
   }
 
 /////////////////////////////////////////////////////////////////
   vector<tuple<int, int>> link_devs;
+  Ptr<NetDevice> nds_switch [n_nodes][n_nodes];
   for (size_t i = 0; i < Adj_Matrix.size (); i++)
       {
         for (size_t j = i; j < Adj_Matrix[i].size (); j++)
@@ -364,6 +334,8 @@ int main (int argc, char *argv[])
                 NetDeviceContainer n_devs = p2p.Install(NodeContainer(nodes_switch.Get(i), nodes_switch.Get(j)));
                 switch_nd.Add(n_devs.Get(0));
                 switch_nd.Add(n_devs.Get(1));
+                nds_switch[i][j] = n_devs.Get(0);
+                nds_switch[j][i] = n_devs.Get(1);
                 link_devs.push_back(make_tuple(switch_nd.GetN()-1, switch_nd.GetN()-2));
 
                 //  NS_LOG_UNCOND("Creating the prio queue disc");
@@ -381,10 +353,41 @@ int main (int argc, char *argv[])
               }
           }
       }
-  //for(size_t i=0;i<link_devs.size();i++){
-  //  NS_LOG_UNCOND(get<0>(link_devs[i]) << "     " << get<1>(link_devs[i])<<"    "<<switch_nd.Get(get<0>(link_devs[i]))->GetNode()->GetId()<<"     "<<switch_nd.Get(get<1>(link_devs[i]))->GetNode()->GetId());
-  //}
- 
+  for(size_t i=0;i<link_devs.size();i++){
+    NS_LOG_UNCOND(get<0>(link_devs[i]) << "     " << get<1>(link_devs[i])<<"    "<<switch_nd.Get(get<0>(link_devs[i]))->GetNode()->GetId()<<"     "<<switch_nd.Get(get<1>(link_devs[i]))->GetNode()->GetId());
+  }
+  InternetStackHelper internet;
+  internet.Install(nodes_traffic);
+  internet.Install(nodes_switch);
+
+/////////////////////////////////////////////////////////////////////
+  // OpenGym Env
+  NS_LOG_INFO ("Setting up OpemGym Envs for each node.");
+  
+  std::vector<Ptr<OpenGymInterface> > myOpenGymInterfaces;
+  std::vector<Ptr<PacketRoutingEnv> > packetRoutingEnvs;
+  
+  uint64_t linkRateValue= DataRate(LinkRate).GetBitRate();
+  
+  for (int i = 0; i < n_nodes; i++)
+    {
+  
+      Ptr<Node> n = nodes_switch.Get (i); // ref node
+      //nodeOpenGymPort = openGymPort + i;
+      Ptr<OpenGymInterface> openGymInterface = CreateObject<OpenGymInterface> (openGymPort + i);
+       Ptr<PacketRoutingEnv> packetRoutingEnv;
+      if (eventBasedEnv){
+        packetRoutingEnv = CreateObject<PacketRoutingEnv> (n, n_nodes, linkRateValue); // event-driven step
+      } else {
+        packetRoutingEnv = CreateObject<PacketRoutingEnv> (Seconds(envStepTime), n); // time-driven step
+      }
+      packetRoutingEnv->SetOpenGymInterface(openGymInterface);
+  
+      myOpenGymInterfaces.push_back (openGymInterface);
+      packetRoutingEnvs.push_back (packetRoutingEnv);
+    }  
+/////////////////////////////////
+  
 
   if(perturbations==true){
     random_shuffle(begin(link_devs), end(link_devs));
@@ -409,43 +412,6 @@ int main (int argc, char *argv[])
 
   ///////////////////////////////////////////////////////////
 
-  NodeContainer nodes_test;
-  nodes_test.Add(nodes_traffic.Get(0));
-  nodes_test.Add(nodes_switch.Get(0));
-
-
-  NodeContainer nodes;
-  nodes.Create (2);
-
-  PointToPointHelper pointToPoint;
-  pointToPoint.SetDeviceAttribute ("DataRate", StringValue ("5Mbps"));
-  pointToPoint.SetChannelAttribute ("Delay", StringValue ("2ms"));
-
-  NetDeviceContainer devices;
-  devices = pointToPoint.Install (nodes);
-  InternetStackHelper internet;
-  internet.Install(nodes);
-  //InternetStackHelper internet;
-  //internet.Install(nodes_traffic);
-  //InternetStackHelper internet_v2;
-  //internet_v2.Install(nodes_switch);
-
-  //Ipv4AddressHelper ipv4_helper;
-  //ipv4_helper.SetBase ("10.2.2.0", "255.255.255.0");
-  //ipv4_helper.Assign (traffic_nd);
-
-
-  //////////////////////////////////////////////////////////
- 
-
-  
-
-  
-  //uint16_t port = 90;
-
-
-  
-  
       
   NS_LOG_INFO ("Create Links Between Nodes & Connecting OpenGym entity to event sources.");
   //NetDeviceContainer list_p2pNetDevs = NetDeviceContainer();
@@ -454,7 +420,7 @@ int main (int argc, char *argv[])
   uint32_t linkCount = 0;
   
   NS_LOG_INFO ("Number of links in the adjacency matrix is: " << linkCount);
-  NS_LOG_INFO ("Number of all nodes is: " << nodes_switch.GetN ());
+  //NS_LOG_INFO ("Number of all nodes is: " << nodes_switch.GetN ());
 
   NS_LOG_INFO ("Initialize Global Routing.");
  
@@ -472,90 +438,89 @@ int main (int argc, char *argv[])
   random_shuffle(begin(updatable_nodes), end(updatable_nodes));
   NS_LOG_INFO ("Setup CBR Traffic Sources.");
 
-  NetDeviceContainer test_nd;
-  test_nd.Add(traffic_nd.Get(0));
-  test_nd.Add(switch_nd.Get(0));
+  
+  
+  
+  int countLinks = 0;
   uint16_t sinkPort = 9;
-  Address sinkAddress;
-  Address anyAddress;
+  uint16_t sinkPortUDP = 11;
   Ipv4AddressHelper address;
-  address.SetBase ("10.1.1.0", "255.255.255.0");
-  Ipv4InterfaceContainer interfaces = address.Assign (devices);
+  address.SetBase ("10.2.2.0", "255.255.255.0");
+  Ipv4InterfaceContainer interfaces = address.Assign (traffic_nd);
 
-  sinkAddress = InetSocketAddress (interfaces.GetAddress (1), sinkPort);
-  anyAddress = InetSocketAddress (Ipv4Address::GetAny (), sinkPort);
-  PacketSinkHelper packetSinkHelper ("ns3::TcpSocketFactory", anyAddress);
-  ApplicationContainer sinkApps = packetSinkHelper.Install (nodes.Get (1));
+  for (int i = 0; i < n_nodes; i++)
+    {
+      for (int j = 0; j < n_nodes; j++)
+        {
+          if (i != j)
+            {
   
-  sinkApps.Start (Seconds (0.));
-  sinkApps.Stop (Seconds (20.));
-  
-  BigSignalingAppHelper sign ("ns3::TcpSocketFactory",sinkAddress);
-  sign.SetAverageStep (0.5, 36000);
-  ApplicationContainer apps = sign.Install (nodes.Get (0));  // traffic sources are installed on all nodes
-  apps.Start (Seconds (0.0));
-  apps.Stop (Seconds (20.0));
-  //Ptr<Socket> ns3TcpSocket = Socket::CreateSocket (nodes.Get (0), TcpSocketFactory::GetTypeId ());
-  //Ptr<MyApp> app = CreateObject<MyApp> ();
-  //app->Setup (ns3TcpSocket, sinkAddress, 10040, 1000, DataRate ("1Mbps"));
-  //nodes.Get (0)->AddApplication (app);
-  //app->SetStartTime (Seconds (0.));
-  //app->SetStopTime (Seconds (20.));
-  //for (int i = 0; i < n_nodes; i++)
-  //  {
-  //    for (int j = 0; j < n_nodes; j++)
-  //      {
-  //        if (i != j)
-  //          {
-  //
-  //            // We needed to generate a random number (rn) to be used to eliminate
-  //            // the artificial congestion caused by sending the packets at the
-  //            // same time. This rn is added to AppStartTime to have the sources
-  //            // start at different time, however they will still send at the same rate.
-  //            
-  //            Ptr<UniformRandomVariable> x = CreateObject<UniformRandomVariable> ();
-  //            x->SetAttribute ("Min", DoubleValue (0));
-  //            x->SetAttribute ("Max", DoubleValue (1));
-  //            double rn = x->GetValue ();
-  //            Ptr<Node> n = nodes_traffic.Get (j);
-  //            Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();
-  //            Ipv4InterfaceAddress ipv4_int_addr = ipv4->GetAddress (1, 0);
-  //            Ipv4Address ip_addr = ipv4_int_addr.GetLocal ();
-  //            // NS_LOG_UNCOND(ipv4_int_addr);
-  //            //PoissonAppHelper poisson ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]
-  //            
-  //            // NS_LOG_UNCOND( InetSocketAddress (ip_addr, port));
-  //            //poisson.SetAverageRate (DataRate(Traff_Matrix[i][j]));
-//
-  //            //poisson.SetAverageRate (DataRate(round(DataRate(Traff_Matrix[i][j]).GetBitRate()*load_factor)), AvgPacketSize);
-  //            //poisson.SetUpdatable(updatable_nodes[i], updateTrafficRateTime);
-  //            //ApplicationContainer apps = poisson.Install (nodes_traffic.Get (i));  // traffic sources are installed on all nodes
-  //            //apps.Start (Seconds (AppStartTime + rn));
-  //            //apps.Stop (Seconds (AppStopTime));
-  //            
-  //            if (Adj_Matrix[i][j] == 1 && i==0 && j==2){
-  //              
-  //              
-  //
-  //              //big_sign.SetSourceDest(uint32_t(i+1), uint32_t(j+1));
-  //              //big_sign.SetAverageStep(1.0, 60);
-  //              //big_sign.SetAverageRate(DataRate(round(DataRate(Traff_Matrix[i][j]).GetBitRate()*load_factor)), 1000);
-  //              //ApplicationContainer signs = big_sign.Install(nodes_traffic.Get(i));
-  //              //Ptr<BigSignalingGeneratorApplication> app = DynamicCast<BigSignalingGeneratorApplication> (signs.Get(0));
-  //              //NS_LOG_UNCOND("AQUI ");
-  //              //Ptr<NetDevice> dev_traffic =DynamicCast<NetDevice> (traffic_nd.Get(i));
-  //              //NS_LOG_UNCOND ("NODE ND "<<dev_traffic->GetNode()->GetId());
-  //              //app->GetSocket()->BindToNetDevice(dev_traffic);
-  //              //NS_LOG_UNCOND("GET N "<< app->GetNode()->GetId());
-  //              signs.Start (Seconds (AppStartTime + rn));
-  //              signs.Stop (Seconds (AppStopTime));
-  //            
-  //            }
-  //        
-  //            
-  //          }
-  //      }
-  //  }
+              // We needed to generate a random number (rn) to be used to eliminate
+              // the artificial congestion caused by sending the packets at the
+              // same time. This rn is added to AppStartTime to have the sources
+              // start at different time, however they will still send at the same rate.
+              
+              Ptr<UniformRandomVariable> x = CreateObject<UniformRandomVariable> ();
+              x->SetAttribute ("Min", DoubleValue (0));
+              x->SetAttribute ("Max", DoubleValue (1));
+              double rn = x->GetValue ();
+
+              Address sinkAddress;
+              Ptr<Node> n = nodes_traffic.Get (j);
+              Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();
+              Ipv4InterfaceAddress ipv4_int_addr = ipv4->GetAddress (1, 0);
+              Ipv4Address ip_addr = ipv4_int_addr.GetLocal ();
+              sinkAddress = InetSocketAddress (ip_addr, sinkPortUDP);
+              
+              PoissonAppHelper poisson  ("ns3::UdpSocketFactory",sinkAddress);
+              poisson.SetAverageRate (DataRate(round(DataRate(Traff_Matrix[i][j]).GetBitRate()*load_factor)), AvgPacketSize);
+              poisson.SetUpdatable(updatable_nodes[i], updateTrafficRateTime);
+              ApplicationContainer apps = poisson.Install (nodes_traffic.Get (i));
+
+              apps.Start (Seconds (AppStartTime + rn));
+              apps.Stop (Seconds (AppStopTime));
+              
+              
+              
+              
+            if (Adj_Matrix[i][j] == 1){
+                countLinks++;
+                
+                NodeContainer nodes_test;
+                nodes_test.Add(nodes_switch.Get(i));
+                nodes_test.Add(nodes_switch.Get(j));
+
+
+                NetDeviceContainer test_nd;
+                test_nd.Add(nds_switch[i][j]);
+                test_nd.Add(nds_switch[j][i]);
+
+
+
+
+
+                
+                Address sinkAddress;
+                Ipv4AddressHelper address;
+                std::string ip_str = "10.1."+std::to_string(countLinks)+".0";
+                address.SetBase (ip_str.c_str(), "255.255.255.0");
+                Ipv4InterfaceContainer interfaces = address.Assign (test_nd);
+                sinkAddress = InetSocketAddress (interfaces.GetAddress (1), sinkPort);
+                
+                BigSignalingAppHelper sign ("ns3::TcpSocketFactory",sinkAddress);
+                sign.SetAverageStep (0.5, 36000);
+                NS_LOG_UNCOND(i);
+                sign.SetSourceDest(i+1, j+1);
+                ApplicationContainer apps = sign.Install (nodes_test.Get (0));  // traffic sources are installed on all nodes
+                apps.Start (Seconds (0.0));
+                apps.Stop (Seconds (20.0));
+                
+              }
+          
+              
+            }
+        }
+    }
   //  Config::Connect ("/NodeList/*/ApplicationList/*/$ns3::BigSignalingGeneratorApplication/TxWithAddresses",MakeBoundCallback(&countPackets, n_nodes, &traffic_nd));
 
  
@@ -565,19 +530,27 @@ int main (int argc, char *argv[])
 
   NS_LOG_INFO ("Setup Packet Sinks.");
 
-  //Ipv4Address sinkAddr = Ipv4Address::GetAny();
-  //// NS_LOG_UNCOND(sinkAddr);
-  //PacketSinkHelper sink ("ns3::TcpSocketFactory", InetSocketAddress (sinkAddr, port));   
-  //ApplicationContainer apps_sink;  
-  //for (int i = 0; i < n_nodes; i++)
-  //  {
-  //    //apps_sink = sink.Install (nodes.Get (i));   // sink is installed on all nodes
-  //    //sink.SetAttribute ("Protocol", TypeIdValue (UdpSocketFactory::GetTypeId ()));
-  //    apps_sink.Add (sink.Install (nodes_traffic.Get(i)));
-  //  }
-  //apps_sink.Start (Seconds (SinkStartTime));
-  //apps_sink.Stop (Seconds (SinkStopTime));
-  //
+  for (int i=0;i<n_nodes;i++){
+    Address anyAddress;
+    anyAddress = InetSocketAddress (Ipv4Address::GetAny (), sinkPort);
+    PacketSinkHelper packetSinkHelper ("ns3::TcpSocketFactory", anyAddress);
+    ApplicationContainer sinkApps = packetSinkHelper.Install (nodes_switch.Get (i));
+    sinkApps.Start (Seconds (SinkStartTime));
+    sinkApps.Stop (Seconds (SinkStopTime));
+
+  }
+
+  for (int i=0;i<n_nodes;i++){
+    Address anyAddress;
+    anyAddress = InetSocketAddress (Ipv4Address::GetAny (), sinkPortUDP);
+    PacketSinkHelper packetSinkHelper ("ns3::UdpSocketFactory", anyAddress);
+    ApplicationContainer sinkApps = packetSinkHelper.Install (nodes_switch.Get (i));
+    sinkApps.Start (Seconds (SinkStartTime));
+    sinkApps.Stop (Seconds (SinkStopTime));
+
+  }
+
+  
   
   // ---------- End of Create n*(n-1) CBR Flows ------------------------------
 
@@ -589,7 +562,7 @@ int main (int argc, char *argv[])
     Simulator::Schedule (Seconds(0.0), &ScheduleNextTrainStep, packetRoutingEnvs[i]);
   }
   NS_LOG_INFO ("Configure Tracing.");
-
+  
 
   
   NS_LOG_INFO ("Run Simulation.");

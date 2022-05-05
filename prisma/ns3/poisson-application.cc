@@ -152,7 +152,6 @@ PoissonGeneratorApplication::DoDispose (void)
 void PoissonGeneratorApplication::StartApplication () // Called at time specified by Start
 {
   NS_LOG_FUNCTION (this);
-  NS_LOG_UNCOND("AQUI");
   // Create the socket if not already
   if (!m_socket)
     {
@@ -238,7 +237,6 @@ void PoissonGeneratorApplication::StartSending ()
   if(m_updatable){
     UpdateAvgTrafficRate();
   }
-  NS_LOG_UNCOND("ND "<< m_socket->GetBoundNetDevice());
   ScheduleNextTx ();  // Schedule the send packet event
 }
 
