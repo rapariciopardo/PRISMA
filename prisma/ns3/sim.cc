@@ -152,6 +152,10 @@ int main (int argc, char *argv[])
   int nbNodesUpdated = 1;
   double updateTrafficRateTime = 10.0;
   bool perturbations = false;
+  bool activateSignaling = false;
+  std::string agentType("DQN-buffer");
+  std::string signalingType("NN");
+  double syncStep = 1.0;
   
   bool eventBasedEnv = true;
   double load_factor = 0.01; // scaling applied to the traffic matrix
@@ -163,6 +167,7 @@ int main (int argc, char *argv[])
   std::string adj_mat_file_name ("scratch/prisma/examples/abilene/adjacency_matrix.txt");
   std::string node_coordinates_file_name ("scratch/prisma/examples/abilene/node_coordinates.txt");
   std::string node_intensity_file_name("scratch/prisma/examples/abilene/node_intensity.txt");
+
   
   CommandLine cmd;
   // required parameters for OpenGym interface
@@ -187,6 +192,10 @@ int main (int argc, char *argv[])
   cmd.AddValue ("nbNodesUpdated", "Number of nodes to be updated (Average Traffic Rate). Default: 1", nbNodesUpdated);
   cmd.AddValue ("updateTrafficRateTime", "Frequency to update Traffic rate. Default: 10.0s", updateTrafficRateTime);
   cmd.AddValue ("perturbations", "Adding perturbations for the network. Default: false", perturbations);
+  cmd.AddValue ("signaling", "Adding signaling to the NS3 simulation", activateSignaling);
+  cmd.AddValue ("AgentType", "Agent Type", agentType);
+  cmd.AddValue ("signalingType", "Signaling Type", signalingType);
+  cmd.AddValue ("syncStep", "synchronization Step (in seconds)", syncStep);
   cmd.Parse (argc, argv);
     
   NS_LOG_UNCOND("Ns3Env parameters:");
@@ -202,6 +211,8 @@ int main (int argc, char *argv[])
   NS_LOG_UNCOND("--MaxBufferLength: " << MaxBufferLength);
   NS_LOG_UNCOND("--load_factor: " << load_factor);
   NS_LOG_UNCOND("--linkFailureTime: "<<linkFailureTime);
+
+  
   
   //Parameters of the scenario
   double SinkStartTime  = 0.0001;
@@ -297,7 +308,23 @@ int main (int argc, char *argv[])
           }
       }
 
-
+  //Parameters of signaling
+  double smallSignalingSize[n_nodes] = {0.0};
+  double bigSignalingSize = 36000;
+  if(agentType=="sp" || agentType=="opt" || signalingType=="ideal"){
+    activateSignaling = false;
+  } else{
+    if(signalingType=="NN"){
+      for(int i=0;i<n_nodes;i++){
+        smallSignalingSize[i] = 64 + 8 + (8 * (nodes_degree[i]+1));
+      }
+    } else if(signalingType=="target"){
+      for(int i=0;i<n_nodes;i++){
+        smallSignalingSize[i] = 64 + 8;
+      }
+    }
+    
+  }
 
   NS_LOG_UNCOND("Creating link between switch nodes");
   
@@ -377,7 +404,7 @@ int main (int argc, char *argv[])
       Ptr<OpenGymInterface> openGymInterface = CreateObject<OpenGymInterface> (openGymPort + i);
        Ptr<PacketRoutingEnv> packetRoutingEnv;
       if (eventBasedEnv){
-        packetRoutingEnv = CreateObject<PacketRoutingEnv> (n, n_nodes, linkRateValue); // event-driven step
+        packetRoutingEnv = CreateObject<PacketRoutingEnv> (n, n_nodes, linkRateValue, activateSignaling, smallSignalingSize[i]); // event-driven step
       } else {
         packetRoutingEnv = CreateObject<PacketRoutingEnv> (Seconds(envStepTime), n); // time-driven step
       }
@@ -476,14 +503,14 @@ int main (int argc, char *argv[])
               poisson.SetAverageRate (DataRate(round(DataRate(Traff_Matrix[i][j]).GetBitRate()*load_factor)), AvgPacketSize);
               poisson.SetUpdatable(updatable_nodes[i], updateTrafficRateTime);
               ApplicationContainer apps = poisson.Install (nodes_traffic.Get (i));
-
+              
               apps.Start (Seconds (AppStartTime + rn));
               apps.Stop (Seconds (AppStopTime));
               
               
               
               
-            if (Adj_Matrix[i][j] == 1){
+            if (Adj_Matrix[i][j] == 1 && activateSignaling && signalingType=="NN"){
                 countLinks++;
                 
                 NodeContainer nodes_test;
@@ -507,13 +534,13 @@ int main (int argc, char *argv[])
                 Ipv4InterfaceContainer interfaces = address.Assign (test_nd);
                 sinkAddress = InetSocketAddress (interfaces.GetAddress (1), sinkPort);
                 
-                BigSignalingAppHelper sign ("ns3::TcpSocketFactory",sinkAddress);
-                sign.SetAverageStep (0.5, 36000);
+                BigSignalingAppHelper sign ("ns3::UdpSocketFactory",sinkAddress);
+                sign.SetAverageStep (syncStep, bigSignalingSize);
                 NS_LOG_UNCOND(i);
                 sign.SetSourceDest(i+1, j+1);
                 ApplicationContainer apps = sign.Install (nodes_test.Get (0));  // traffic sources are installed on all nodes
-                apps.Start (Seconds (0.0));
-                apps.Stop (Seconds (20.0));
+                apps.Start (Seconds (AppStartTime + rn*3));
+                apps.Stop (Seconds (AppStopTime));
                 
               }
           
@@ -533,7 +560,7 @@ int main (int argc, char *argv[])
   for (int i=0;i<n_nodes;i++){
     Address anyAddress;
     anyAddress = InetSocketAddress (Ipv4Address::GetAny (), sinkPort);
-    PacketSinkHelper packetSinkHelper ("ns3::TcpSocketFactory", anyAddress);
+    PacketSinkHelper packetSinkHelper ("ns3::UdpSocketFactory", anyAddress);
     ApplicationContainer sinkApps = packetSinkHelper.Install (nodes_switch.Get (i));
     sinkApps.Start (Seconds (SinkStartTime));
     sinkApps.Stop (Seconds (SinkStopTime));

@@ -56,7 +56,7 @@ class PacketRoutingEnv : public OpenGymEnv
 {
 public:
   PacketRoutingEnv ();
-  PacketRoutingEnv (Ptr<Node> node, uint32_t numberOfNodes, uint64_t linkRateValue);
+  PacketRoutingEnv (Ptr<Node> node, uint32_t numberOfNodes, uint64_t linkRateValue, bool activateSignaling, double signPacketSize);
   PacketRoutingEnv (Time stepTime, Ptr<Node> node);
   virtual ~PacketRoutingEnv ();
   static TypeId GetTypeId (void);
@@ -109,7 +109,12 @@ private:
   uint32_t m_lastEvNode;  // Node where last net device triggering an event 
   uint32_t m_lastEvNumPktsInQueue; // Queue backlog of last event device
 
+  bool m_activateSignaling;
+  double m_signPacketSize; 
   uint64_t m_pcktIdSign;
+  uint32_t m_nodeIdSign;
+  uint32_t m_NNIndex;
+  uint32_t m_segIndex;
   int m_signaling;
 
 

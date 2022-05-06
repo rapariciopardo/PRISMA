@@ -124,6 +124,9 @@ private:
   float           m_syncStep;
   uint32_t        m_src;
   uint32_t        m_dest;
+  uint32_t        m_segIndex;
+  uint32_t        m_NNIndex;
+  uint32_t        m_segSize;
   Time            m_lastStartTime; //!< Time last packet sent
   uint64_t        m_maxBytes;     //!< Limit total number of bytes sent
   uint64_t        m_totBytes;     //!< Total bytes sent so far

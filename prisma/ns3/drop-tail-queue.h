@@ -105,7 +105,7 @@ DropTailQueue<Item>::Enqueue (Ptr<Item> item)
   //NS_LOG_UNCOND(item->ToString());  
   if(tag.GetSimpleValue()==0x01 or tag.GetSimpleValue()==0x02){
     NS_LOG_LOGIC("PRIOR");
-    return DoEnqueue (Head (), item);
+    return DoEnqueue (Tail (), item);
   }
   else{
     NS_LOG_LOGIC("NORMAL");

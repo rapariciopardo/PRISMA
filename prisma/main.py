@@ -77,6 +77,7 @@ def arguments_parser():
     group1.add_argument('--train', type=int, help='If 1, train the model.Else, test it', default=1)
     group1.add_argument('--max_nb_arrived_pkts', type=int, help='If < 0, stops the episode at the provided number of arrived packets', default=-1)
     group1.add_argument('--ns3_sim_path', type=str, help='Path to the ns3-gym simulator folder', default="../ns3-gym/")
+    group1.add_argument('--signalingSim', type=int, help='Allows the signaling in NS3 Simulation', default=0)
     
     group4 = parser.add_argument_group('Network parameters')
     group4.add_argument('--load_factor', type=float, help='scale of the traffic matrix', default=1)
@@ -297,23 +298,29 @@ def run_ns3(params):
     os.chdir(params["ns3_sim_path"])
     
     ## run ns3 configure
-    #os.system('./waf -d optimized configure')
-    os.system('./waf configure')
+    os.system('./waf -d optimized configure')
+    #os.system('./waf configure')
 
     ## run NS3 simulator
     ns3_params_format = ('prisma --simSeed={} --openGymPort={} --simTime={} --AvgPacketSize={} '
                         '--LinkDelay={} --LinkRate={} --MaxBufferLength={} --load_factor={} '
-                        '--adj_mat_file_name={} --node_coordinates_file_name={} --node_intensity_file_name={}'.format( params["seed"],
-                                                                                                                        params["basePort"],
-                                                                                                                        str(params["simTime"]),
-                                                                                                                        params["packet_size"],
-                                                                                                                        params["link_delay"],
-                                                                                                                        str(params["link_cap"]) + "bps",
-                                                                                                                        str(params["max_out_buffer_size"]) + "p",
-                                                                                                                        params["load_factor"],
-                                                                                                                        params["adjacency_matrix_path"],
-                                                                                                                        params["node_coordinates_path"],
-                                                                                                                       params["traffic_matrix_path"]))
+                        '--adj_mat_file_name={} --node_coordinates_file_name={} --node_intensity_file_name={}'
+                        ' --signaling={} --AgentType={} --signalingType={} --syncStep={}'.format( params["seed"],
+                                                                                                  params["basePort"],
+                                                                                                  str(params["simTime"]),
+                                                                                                  params["packet_size"],
+                                                                                                  params["link_delay"],
+                                                                                                  str(params["link_cap"]) + "bps",
+                                                                                                  str(params["max_out_buffer_size"]) + "p",
+                                                                                                  params["load_factor"],
+                                                                                                  params["adjacency_matrix_path"],
+                                                                                                  params["node_coordinates_path"],
+                                                                                                  params["traffic_matrix_path"],
+                                                                                                  bool(params["signalingSim"]),
+                                                                                                  params["agent_type"],
+                                                                                                  params["signaling_type"],
+                                                                                                  params["sync_step"]
+                                                                                                  ))
     run_ns3_command = shlex.split(f'./waf --run "{ns3_params_format}"')
     subprocess.Popen(run_ns3_command)
     os.chdir(current_folder_path)

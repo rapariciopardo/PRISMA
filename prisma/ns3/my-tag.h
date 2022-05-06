@@ -20,9 +20,18 @@ public:
   uint8_t GetSimpleValue (void) const;
   void SetIdValue (uint64_t value);
   uint64_t GetIdValue (void) const;
+  void SetSegIndex (uint32_t value);
+  uint32_t GetSegIndex (void) const;
+  void SetNNIndex (uint32_t value);
+  uint32_t GetNNIndex (void) const;
+  void SetNodeId (uint32_t value);
+  uint32_t GetNodeId (void) const;
 private:
   uint8_t m_simpleValue;
-  uint64_t m_pktId;  
+  uint64_t m_pktId;
+  uint32_t m_segIndex;
+  uint32_t m_NNIndex;
+  uint32_t m_nodeId;  
 };
 }
 

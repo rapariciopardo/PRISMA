@@ -73,7 +73,7 @@ PacketRoutingEnv::PacketRoutingEnv ()
     //m_rxPktNum = 0;
 }
   
-PacketRoutingEnv::PacketRoutingEnv (Ptr<Node> node, uint32_t numberOfNodes, uint64_t linkRateValue)
+PacketRoutingEnv::PacketRoutingEnv (Ptr<Node> node, uint32_t numberOfNodes, uint64_t linkRateValue, bool activateSignaling, double signPacketSize)
 {
   NS_LOG_FUNCTION (this);
   //NetDeviceContainer m_list_p2pNetDevs = list_p2pNetDevs;
@@ -85,6 +85,8 @@ PacketRoutingEnv::PacketRoutingEnv (Ptr<Node> node, uint32_t numberOfNodes, uint
   m_lastEvDev_idx = 1;
   m_fwdDev_idx = 1;
   is_trainStep_flag = 0;
+  m_activateSignaling = activateSignaling;
+  m_signPacketSize = signPacketSize;
   //m_rxPktNum = 0;
 }
 
@@ -264,6 +266,15 @@ PacketRoutingEnv::GetExtraInfo()
 
     myInfo += ", Signaling =";
     myInfo += std::to_string(m_signaling);
+
+    myInfo += ", NodeIdSignaled =";
+    myInfo += std::to_string(m_nodeIdSign);
+
+    myInfo += ", NNIndex =";
+    myInfo += std::to_string(m_NNIndex);
+
+    myInfo += ", segIndex =";
+    myInfo += std::to_string(m_segIndex);
     
 
     return myInfo;
@@ -311,24 +322,29 @@ PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
       //uint32_t backlog = (int) queue->GetNPackets();
       //NS_LOG_UNCOND("SIZE BUFFER BEFORE"<<backlog);
 
-      Ptr<Packet> pckt = Create<Packet> (72);
+      if(m_activateSignaling){
+        //NS_LOG_UNCOND("Sending "<<m_signPacketSize);
+        Ptr<Packet> pckt = Create<Packet> (m_signPacketSize);
       
-      MyTag tagSmallSignaling;
-      tagSmallSignaling.SetSimpleValue(0x02);
-      uint64_t id = m_pckt->GetUid();
-      //NS_LOG_UNCOND("SIGN "<<uint32_t(id));
-      tagSmallSignaling.SetIdValue(id);
-      pckt->AddPacketTag(tagSmallSignaling);
-      
+        MyTag tagSmallSignaling;
+        tagSmallSignaling.SetSimpleValue(0x02);
+        uint64_t id = m_pckt->GetUid();
+        //NS_LOG_UNCOND("SIGN "<<uint32_t(id));
+        tagSmallSignaling.SetIdValue(id);
+        pckt->AddPacketTag(tagSmallSignaling);
 
+
+
+        arrived = m_recvDev->Send(pckt, m_destAddr, 0x800);
+        if (arrived == 1){
+            //NS_LOG_UNCOND ("Packet Successfully delivered");
+        }
+        else{
+            //NS_LOG_UNCOND ("Packet Lost");
+        }
       
-      arrived = m_recvDev->Send(pckt, m_destAddr, 0x800);
-      if (arrived == 1){
-          //NS_LOG_UNCOND ("Packet Successfully delivered");
       }
-      else{
-          //NS_LOG_UNCOND ("Packet Lost");
-      }
+
       //p2p_netDev = DynamicCast<PointToPointNetDevice> (m_recvDev);
       //queue = p2p_netDev->GetQueue ();
       //backlog = (int) queue->GetNPackets();
@@ -367,6 +383,7 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
   MyTag tagCopy;
   packetTag->PeekPacketTag(tagCopy);
   //NS_LOG_UNCOND(uint32_t(tagCopy.GetSimpleValue()));
+  //NS_LOG_UNCOND(packetTag->ToString());
   entity->m_signaling = 0;
   if(tagCopy.GetSimpleValue()==0x02){
     entity->m_signaling=1;
@@ -376,7 +393,13 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
   if(tagCopy.GetSimpleValue()==0x01){
     //NS_LOG_UNCOND("AQUI........");
     //NS_LOG_UNCOND(p->ToString());
-    return ;
+    entity->m_signaling=1;
+    entity->m_NNIndex = tagCopy.GetNNIndex();
+    entity->m_segIndex = tagCopy.GetSegIndex();
+    entity->m_nodeIdSign = tagCopy.GetNodeId();
+    //NS_LOG_UNCOND(tagCopy.GetNNIndex());
+    //NS_LOG_UNCOND(tagCopy.GetSegIndex());
+    //NS_LOG_UNCOND(tagCopy.GetNodeId());
   }
   //if(p->GetSize()<50){
   //  NS_LOG_UNCOND("AQUI");

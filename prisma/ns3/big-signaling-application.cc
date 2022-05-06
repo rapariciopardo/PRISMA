@@ -221,7 +221,9 @@ void BigSignalingGeneratorApplication::StartSending ()
   NS_LOG_FUNCTION (this);
   m_lastStartTime = Simulator::Now ();
   //NS_LOG_UNCOND("NET DEVICE "<<m_socket->GetBoundNetDevice()->GetNode()->GetId());
-  SendPacket ();  // Schedule the send packet event
+  m_NNIndex = 0;
+  m_segIndex = 0;
+  ScheduleNextTx ();  // Schedule the send packet event
 }
 
 // Private helpers
@@ -231,9 +233,15 @@ void BigSignalingGeneratorApplication::ScheduleNextTx ()
 
   if (m_maxBytes == 0 || m_totBytes < m_maxBytes)
     {
-     
-     
-      double delay = m_syncStep; //iat->GetValue(); // bits/ static_cast<double>(m_avgRate.GetBitRate ());
+      m_segIndex++;
+      m_segSize = 512;
+      if(m_segIndex>=uint32_t(m_pktSizeMean/m_segSize)){
+        m_NNIndex++;
+        m_segIndex=0;
+      }
+      double dataRate = (m_pktSizeMean*8)/m_syncStep;
+      double delay = ((m_segSize*8)/dataRate);
+       //iat->GetValue(); // bits/ static_cast<double>(m_avgRate.GetBitRate ());
       //NS_LOG_UNCOND("DELAY:     "<<delay);
       Time nextTime (Seconds (delay)); // Time till next packet
       //NS_LOG_LOGIC ("nextTime = " << nextTime);
@@ -252,9 +260,12 @@ void BigSignalingGeneratorApplication::SendPacket ()
 
   NS_ASSERT (m_sendEvent.IsExpired ());
   m_pktSize = m_pktSizeMean;
-  Ptr<Packet> packet = Create<Packet> (m_pktSize);
+  Ptr<Packet> packet = Create<Packet> (m_segSize);
   MyTag tag;
   tag.SetSimpleValue(0x01);
+  tag.SetSegIndex(m_segIndex);
+  tag.SetNNIndex(m_NNIndex);
+  tag.SetNodeId(m_src-1);
   packet->AddPacketTag(tag);
   m_txTrace (packet);
   std::string start_time = std::to_string(Simulator::Now().GetMilliSeconds());
