@@ -48,69 +48,69 @@
 #include "ns3/boolean.h"
 #include "ns3/double.h"
 #include "ns3/trace-source-accessor.h"
-#include "poisson-application.h"
-#include "ns3/udp-socket-factory.h"
+#include "big-signaling-application.h"
+#include "ns3/tcp-socket-factory.h"
 #include "ns3/string.h"
 #include "ns3/pointer.h"
-
+#include "my-tag.h"
 namespace ns3 {
 
-NS_LOG_COMPONENT_DEFINE ("PoissonGeneratorApplication");
+NS_LOG_COMPONENT_DEFINE ("BigSignalingGeneratorApplication");
 
-NS_OBJECT_ENSURE_REGISTERED (PoissonGeneratorApplication);
+NS_OBJECT_ENSURE_REGISTERED (BigSignalingGeneratorApplication);
 
 TypeId
-PoissonGeneratorApplication::GetTypeId (void)
+BigSignalingGeneratorApplication::GetTypeId (void)
 {
-  static TypeId tid = TypeId ("ns3::PoissonGeneratorApplication")
+  static TypeId tid = TypeId ("ns3::BigSignalingGeneratorApplication")
     .SetParent<Application> ()
     .SetGroupName("Applications")
-    .AddConstructor<PoissonGeneratorApplication> ()
-    .AddAttribute ("AvgDataRate", "The flow average data rate.",
-                   DataRateValue (DataRate ("500kb/s")),
-                   MakeDataRateAccessor (&PoissonGeneratorApplication::m_avgRate),
-                   MakeDataRateChecker ())
+    .AddConstructor<BigSignalingGeneratorApplication> ()
     .AddAttribute ("AvgPacketSize", "The average size of packets sent",
-                   UintegerValue (512),
-                   MakeUintegerAccessor (&PoissonGeneratorApplication::m_pktSizeMean),
+                   UintegerValue (36000),
+                   MakeUintegerAccessor (&BigSignalingGeneratorApplication::m_pktSizeMean),
                    MakeUintegerChecker<uint32_t> (1))
-    .AddAttribute ("Updatable", "The Traffic Rate of node is updatable",
-                   BooleanValue(false),
-                   MakeBooleanAccessor (&PoissonGeneratorApplication::m_updatable),
-                   MakeBooleanChecker())
-    .AddAttribute ("UpdateTrafficRateTime", "The frequency the Traffic Rate of node is updatable",
-                   DoubleValue(10.0),
-                   MakeDoubleAccessor (&PoissonGeneratorApplication::m_updateTrafficRateTime),
+    .AddAttribute ("src", "src",
+                   UintegerValue (0),
+                   MakeUintegerAccessor (&BigSignalingGeneratorApplication::m_src),
+                   MakeUintegerChecker<uint32_t> (1))
+    .AddAttribute ("dest", "dest",
+                   UintegerValue (1),
+                   MakeUintegerAccessor (&BigSignalingGeneratorApplication::m_dest),
+                   MakeUintegerChecker<uint32_t> (1))
+    .AddAttribute ("SyncStep", "The frequency the big signaling is sent, Synchronized in seconds.",
+                   DoubleValue(0.5),
+                   MakeDoubleAccessor (&BigSignalingGeneratorApplication::m_syncStep),
                    MakeDoubleChecker<double>())
     .AddAttribute ("Remote", "The address of the destination",
                    AddressValue (),
-                   MakeAddressAccessor (&PoissonGeneratorApplication::m_peer),
+                   MakeAddressAccessor (&BigSignalingGeneratorApplication::m_peer),
                    MakeAddressChecker ())
     .AddAttribute ("MaxBytes", 
                    "The total number of bytes to send. Once these bytes are sent, "
                    "no packet is sent again. The value zero means "
                    "that there is no limit.",
                    UintegerValue (0),
-                   MakeUintegerAccessor (&PoissonGeneratorApplication::m_maxBytes),
+                   MakeUintegerAccessor (&BigSignalingGeneratorApplication::m_maxBytes),
                    MakeUintegerChecker<uint64_t> ())
     .AddAttribute ("Protocol", "The type of protocol to use. This should be "
                    "a subclass of ns3::SocketFactory",
-                   TypeIdValue (UdpSocketFactory::GetTypeId ()),
-                   MakeTypeIdAccessor (&PoissonGeneratorApplication::m_tid),
+                   TypeIdValue (TcpSocketFactory::GetTypeId ()),
+                   MakeTypeIdAccessor (&BigSignalingGeneratorApplication::m_tid),
                    // This should check for SocketFactory as a parent
                    MakeTypeIdChecker ())
     .AddTraceSource ("Tx", "A new packet is created and is sent",
-                     MakeTraceSourceAccessor (&PoissonGeneratorApplication::m_txTrace),
+                     MakeTraceSourceAccessor (&BigSignalingGeneratorApplication::m_txTrace),
                      "ns3::Packet::TracedCallback")
     .AddTraceSource ("TxWithAddresses", "A new packet is created and is sent",
-                     MakeTraceSourceAccessor (&PoissonGeneratorApplication::m_txTraceWithAddresses),
+                     MakeTraceSourceAccessor (&BigSignalingGeneratorApplication::m_txTraceWithAddresses),
                      "ns3::Packet::TwoAddressTracedCallback")
   ;
   return tid;
 }
 
 
-PoissonGeneratorApplication::PoissonGeneratorApplication ()
+BigSignalingGeneratorApplication::BigSignalingGeneratorApplication ()
   : m_socket (0),
     m_connected (false),
     m_lastStartTime (Seconds (0)),
@@ -119,27 +119,27 @@ PoissonGeneratorApplication::PoissonGeneratorApplication ()
   NS_LOG_FUNCTION (this);
 }
 
-PoissonGeneratorApplication::~PoissonGeneratorApplication()
+BigSignalingGeneratorApplication::~BigSignalingGeneratorApplication()
 {
   NS_LOG_FUNCTION (this);
 }
 
 void 
-PoissonGeneratorApplication::SetMaxBytes (uint64_t maxBytes)
+BigSignalingGeneratorApplication::SetMaxBytes (uint64_t maxBytes)
 {
   NS_LOG_FUNCTION (this << maxBytes);
   m_maxBytes = maxBytes;
 }
 
 Ptr<Socket>
-PoissonGeneratorApplication::GetSocket (void) const
+BigSignalingGeneratorApplication::GetSocket (void) const
 {
   NS_LOG_FUNCTION (this);
   return m_socket;
 }
 
 void
-PoissonGeneratorApplication::DoDispose (void)
+BigSignalingGeneratorApplication::DoDispose (void)
 {
   NS_LOG_FUNCTION (this);
 
@@ -149,12 +149,14 @@ PoissonGeneratorApplication::DoDispose (void)
 }
 
 // Application Methods
-void PoissonGeneratorApplication::StartApplication () // Called at time specified by Start
+void BigSignalingGeneratorApplication::StartApplication () // Called at time specified by Start
 {
   NS_LOG_FUNCTION (this);
+
   // Create the socket if not already
   if (!m_socket)
     {
+      NS_LOG_UNCOND(m_tid);
       m_socket = Socket::CreateSocket (GetNode (), m_tid);
       if (Inet6SocketAddress::IsMatchingType (m_peer))
         {
@@ -176,8 +178,8 @@ void PoissonGeneratorApplication::StartApplication () // Called at time specifie
       m_socket->ShutdownRecv ();
 
       m_socket->SetConnectCallback (
-        MakeCallback (&PoissonGeneratorApplication::ConnectionSucceeded, this),
-        MakeCallback (&PoissonGeneratorApplication::ConnectionFailed, this));
+        MakeCallback (&BigSignalingGeneratorApplication::ConnectionSucceeded, this),
+        MakeCallback (&BigSignalingGeneratorApplication::ConnectionFailed, this));
     }
   m_avgRateFailSafe = m_avgRate;
 
@@ -190,7 +192,7 @@ void PoissonGeneratorApplication::StartApplication () // Called at time specifie
   StartSending();
 }
 
-void PoissonGeneratorApplication::StopApplication () // Called at time specified by Stop
+void BigSignalingGeneratorApplication::StopApplication () // Called at time specified by Stop
 {
   NS_LOG_FUNCTION (this);
 
@@ -201,74 +203,50 @@ void PoissonGeneratorApplication::StopApplication () // Called at time specified
     }
   else
     {
-      NS_LOG_WARN ("PoissonGeneratorApplication found null socket to close in StopApplication");
+      NS_LOG_WARN ("BigSignalingGeneratorApplication found null socket to close in StopApplication");
     }
 }
 
-void PoissonGeneratorApplication::CancelEvents ()
+void BigSignalingGeneratorApplication::CancelEvents ()
 {
   NS_LOG_FUNCTION (this);
   m_avgRateFailSafe = m_avgRate;
   Simulator::Cancel (m_sendEvent);
 }
 
-void PoissonGeneratorApplication::UpdateAvgTrafficRate(){
-  double mean = double(m_avgRate.GetBitRate());
-  double variance = mean/2.0;
- 
-  Ptr<NormalRandomVariable> x = CreateObject<NormalRandomVariable> ();
-  x->SetAttribute ("Mean", DoubleValue (mean));
-  x->SetAttribute ("Variance", DoubleValue (variance));
- 
-  
-  m_avgRate = DataRate (x->GetValue ());
-  //int min = 100; //in bitsPerSec
-  //int max = 1000; //in bitsPerSec
-  //m_avgRate = DataRate (m_avgRate.GetBitRate() + min + rand() % (( max + 1 ) - min));
-  NS_LOG_UNCOND("RATE: "<<m_avgRate.GetBitRate());
-  Simulator::Schedule(Seconds(m_updateTrafficRateTime), &PoissonGeneratorApplication::UpdateAvgTrafficRate, this);
-}
 
 // Event handlers
-void PoissonGeneratorApplication::StartSending ()
+void BigSignalingGeneratorApplication::StartSending ()
 {
   NS_LOG_FUNCTION (this);
   m_lastStartTime = Simulator::Now ();
-  if(m_updatable){
-    UpdateAvgTrafficRate();
-  }
+  //NS_LOG_UNCOND("NET DEVICE "<<m_socket->GetBoundNetDevice()->GetNode()->GetId());
+  m_NNIndex = 0;
+  m_segIndex = 0;
   ScheduleNextTx ();  // Schedule the send packet event
 }
 
 // Private helpers
-void PoissonGeneratorApplication::ScheduleNextTx ()
+void BigSignalingGeneratorApplication::ScheduleNextTx ()
 {
   NS_LOG_FUNCTION (this);
 
   if (m_maxBytes == 0 || m_totBytes < m_maxBytes)
     {
-     
-      
-      // Ptr<ExponentialRandomVariable> ev_size = CreateObject<ExponentialRandomVariable> ();
-      // ev_size->SetAttribute ("Mean", DoubleValue (m_pktSizeMean));
-      // ev_size->SetAttribute("Bound", DoubleValue(1450.0));
-      // m_pktSize = (uint32_t) ev_size->GetValue();
-      m_pktSize = m_pktSizeMean;
-      if(m_pktSize<200) m_pktSize=200;
-     
-      uint32_t bits = m_pktSize * 8;
-      Ptr<ExponentialRandomVariable> iat = CreateObject<ExponentialRandomVariable> ();
-      iat->SetAttribute ("Mean", DoubleValue (bits/static_cast<double>(m_avgRate.GetBitRate ())));
-      //iat->SetAttribute ("Bound", DoubleValue (static_cast<double>(m_avgRate.GetBitRate ())*5)); 
-      //double rate_value = iat->GetValue();
-      //if(rate_value < static_cast<double>(m_avgRate.GetBitRate ())*0.2) rate_value = rate_value<static_cast<double>(m_avgRate.GetBitRate ())*0.2;
-      //if(rate_value > static_cast<double>(m_avgRate.GetBitRate ())*5) rate_value = rate_value<static_cast<double>(m_avgRate.GetBitRate ())*5;
-      double delay = iat->GetValue(); // bits/ static_cast<double>(m_avgRate.GetBitRate ());
+      m_segIndex++;
+      m_segSize = 512;
+      if(m_segIndex>=uint32_t(m_pktSizeMean/m_segSize)){
+        m_NNIndex++;
+        m_segIndex=0;
+      }
+      double dataRate = (m_pktSizeMean*8)/m_syncStep;
+      double delay = ((m_segSize*8)/dataRate);
+       //iat->GetValue(); // bits/ static_cast<double>(m_avgRate.GetBitRate ());
       //NS_LOG_UNCOND("DELAY:     "<<delay);
       Time nextTime (Seconds (delay)); // Time till next packet
       //NS_LOG_LOGIC ("nextTime = " << nextTime);
       m_sendEvent = Simulator::Schedule (nextTime,
-                                         &PoissonGeneratorApplication::SendPacket, this);
+                                         &BigSignalingGeneratorApplication::SendPacket, this);
     }
   else
     { // All done, cancel any pending events
@@ -276,17 +254,30 @@ void PoissonGeneratorApplication::ScheduleNextTx ()
     }
 }
 
-void PoissonGeneratorApplication::SendPacket ()
+void BigSignalingGeneratorApplication::SendPacket ()
 {
   NS_LOG_FUNCTION (this);
 
   NS_ASSERT (m_sendEvent.IsExpired ());
-  Ptr<Packet> packet = Create<Packet> (m_pktSize);
+  m_pktSize = m_pktSizeMean;
+  Ptr<Packet> packet = Create<Packet> (m_segSize);
+  MyTag tag;
+  tag.SetSimpleValue(0x01);
+  tag.SetSegIndex(m_segIndex);
+  tag.SetNNIndex(m_NNIndex);
+  tag.SetNodeId(m_src-1);
+  packet->AddPacketTag(tag);
   m_txTrace (packet);
   std::string start_time = std::to_string(Simulator::Now().GetMilliSeconds());
   //NS_LOG_UNCOND("START: "<<start_time<<"   SIZE: "<<m_pktSize);
-  const uint8_t* start_int = reinterpret_cast<const uint8_t*>(&start_time[0]);
-  m_socket->Send(start_int, m_pktSize, 0);
+  //NS_LOG_UNCOND("SRC: "<<m_src<<"    DEST: "<<m_dest);
+  //const uint8_t* start_int = reinterpret_cast<const uint8_t*>(&start_time[0]);
+  //Ptr<Packet> pcopy = packet->Copy();
+  //MyTag tagcopy;
+  //pcopy->PrintByteTags(std::cout);
+  //NS_LOG_UNCOND(int(tagcopy.GetSimpleValue()));
+  m_socket->Send(packet);
+  //NS_LOG_UNCOND("res = "<<res );
   m_totBytes += m_pktSize;
   Address localAddress;
   m_socket->GetSockName (localAddress);
@@ -316,13 +307,13 @@ void PoissonGeneratorApplication::SendPacket ()
 }
 
 
-void PoissonGeneratorApplication::ConnectionSucceeded (Ptr<Socket> socket)
+void BigSignalingGeneratorApplication::ConnectionSucceeded (Ptr<Socket> socket)
 {
   NS_LOG_FUNCTION (this << socket);
   m_connected = true;
 }
 
-void PoissonGeneratorApplication::ConnectionFailed (Ptr<Socket> socket)
+void BigSignalingGeneratorApplication::ConnectionFailed (Ptr<Socket> socket)
 {
   NS_LOG_FUNCTION (this << socket);
 }

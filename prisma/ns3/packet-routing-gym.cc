@@ -37,6 +37,7 @@
 #include "ns3/ppp-header.h"
 #include "ns3/csma-net-device.h"
 #include "ns3/csma-module.h"
+#include "my-tag.h"
 
 //#include "ns3/wifi-module.h"
 #include "ns3/node-list.h"
@@ -72,7 +73,7 @@ PacketRoutingEnv::PacketRoutingEnv ()
     //m_rxPktNum = 0;
 }
   
-PacketRoutingEnv::PacketRoutingEnv (Ptr<Node> node, uint32_t numberOfNodes, uint64_t linkRateValue)
+PacketRoutingEnv::PacketRoutingEnv (Ptr<Node> node, uint32_t numberOfNodes, uint64_t linkRateValue, bool activateSignaling, double signPacketSize)
 {
   NS_LOG_FUNCTION (this);
   //NetDeviceContainer m_list_p2pNetDevs = list_p2pNetDevs;
@@ -84,6 +85,8 @@ PacketRoutingEnv::PacketRoutingEnv (Ptr<Node> node, uint32_t numberOfNodes, uint
   m_lastEvDev_idx = 1;
   m_fwdDev_idx = 1;
   is_trainStep_flag = 0;
+  m_activateSignaling = activateSignaling;
+  m_signPacketSize = signPacketSize;
   //m_rxPktNum = 0;
 }
 
@@ -138,7 +141,7 @@ PacketRoutingEnv::GetActionSpace()
 {
   NS_LOG_FUNCTION (this);
   uint32_t num_devs = m_node->GetNDevices();
-  Ptr<OpenGymDiscreteSpace> space = CreateObject<OpenGymDiscreteSpace> (num_devs-1); // first dev is not p2p
+  Ptr<OpenGymDiscreteSpace> space = CreateObject<OpenGymDiscreteSpace> (num_devs-2); // first dev is not p2p
   NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", GetActionSpace: " << space);
   return space;
 }
@@ -147,7 +150,7 @@ Ptr<OpenGymSpace>
 PacketRoutingEnv::GetObservationSpace()
 {
   NS_LOG_FUNCTION (this);
-  uint32_t num_devs = m_node->GetNDevices();
+  uint32_t num_devs = m_node->GetNDevices()-1;
   uint32_t low = 0;
   uint32_t high = 100000; // max buffer size --> to change depending on actual value (access to defaul sim param)
   m_obs_shape = {num_devs,}; // Destination Node + (num_devs - 1) interfaces for other nodes
@@ -162,11 +165,11 @@ PacketRoutingEnv::GetGameOver()
 {
   NS_LOG_FUNCTION (this);
   m_isGameOver = false;
-  //NS_LOG_UNCOND(m_node->GetId()<<"     "<<m_dest);
+  ////NS_LOG_UNCOND(m_node->GetId()<<"     "<<m_dest);
   if (is_trainStep_flag==0){
     m_isGameOver = (m_dest==m_node->GetId());
   }
-  //NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", MyGetGameOver: " << m_isGameOver);
+  ////NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", MyGetGameOver: " << m_isGameOver);
   return m_isGameOver;
 }
 
@@ -193,7 +196,7 @@ Ptr<OpenGymDataContainer>
 PacketRoutingEnv::GetObservation()
 {
 
-  uint32_t num_devs = m_node->GetNDevices();
+  uint32_t num_devs = m_node->GetNDevices()-1;
   Ptr<OpenGymBoxContainer<int32_t> > box = CreateObject<OpenGymBoxContainer<int32_t> >(m_obs_shape);
   if (is_trainStep_flag==0){
     box->AddValue(m_dest);
@@ -202,7 +205,6 @@ PacketRoutingEnv::GetObservation()
     int32_t train_reward = -1;
     box->AddValue(train_reward);
   }
-  
   for (uint32_t i=1 ; i<num_devs; i++){
     Ptr<NetDevice> netDev = m_node->GetDevice (i);
     uint32_t value = GetQueueLength (m_node, i);
@@ -211,7 +213,7 @@ PacketRoutingEnv::GetObservation()
     box->AddValue(value);
   }
 
-  NS_LOG_UNCOND ( "Node: " << m_node->GetId() << ", MyGetObservation: " << box);
+  //NS_LOG_UNCOND ( "Node: " << m_node->GetId() << ", MyGetObservation: " << box);
   return box;
 }
 
@@ -225,7 +227,7 @@ PacketRoutingEnv::GetReward()
   //   float transmission_time = (m_size*8)/m_packetRate;
   //   float waiting_time = (float)(value*8)/m_packetRate;
   //   float reward = transmission_time + waiting_time;
-  //   NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", MyGetReward: " << reward);
+  //   //NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", MyGetReward: " << reward);
   //   return reward;
   // }
   // else{
@@ -254,7 +256,26 @@ PacketRoutingEnv::GetExtraInfo()
     myInfo += std::to_string(Simulator::Now().GetSeconds());
     
     myInfo += ", Pkt ID =";
-    myInfo += std::to_string(m_pckt->GetUid());
+    if(m_signaling==0){
+      myInfo += std::to_string(m_pckt->GetUid());
+    }
+    else{
+      //NS_LOG_UNCOND(std::to_string(m_pcktIdSign));
+      myInfo += std::to_string(m_pcktIdSign);
+    }
+
+    myInfo += ", Signaling =";
+    myInfo += std::to_string(m_signaling);
+
+    myInfo += ", NodeIdSignaled =";
+    myInfo += std::to_string(m_nodeIdSign);
+
+    myInfo += ", NNIndex =";
+    myInfo += std::to_string(m_NNIndex);
+
+    myInfo += ", segIndex =";
+    myInfo += std::to_string(m_segIndex);
+    
 
     return myInfo;
   }
@@ -274,31 +295,65 @@ bool
 PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
 {
   NS_LOG_FUNCTION (this);
-  NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", MyExecuteActions: " << action );
+  //NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", MyExecuteActions: " << action );
 
   if (is_trainStep_flag==0){
     Ptr<OpenGymDiscreteContainer> discrete = DynamicCast<OpenGymDiscreteContainer>(action);
     m_fwdDev_idx = discrete->GetValue()+1;
     if(m_isGameOver){
-      NS_LOG_UNCOND("Packet arrived to destination");
+      //NS_LOG_UNCOND("Packet arrived to destination");
       m_fwdDev_idx = 0;
     }
   
-    NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", MyExecuteActions: " << m_fwdDev_idx << "mdevices " << m_node->GetNDevices());
-    if (m_fwdDev_idx < m_node->GetNDevices()){
+    //NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", MyExecuteActions: " << m_fwdDev_idx << "mdevices " << m_node->GetNDevices());
+    if (m_fwdDev_idx < m_node->GetNDevices()-1 && m_signaling==0){
       Ptr<PointToPointNetDevice> dev = DynamicCast<PointToPointNetDevice>(m_node->GetDevice(m_fwdDev_idx));
       bool arrived;
       arrived=dev->Send(m_pckt, m_destAddr, 0x0800);
       if (arrived == 1){
-          NS_LOG_UNCOND ("Packet Successfully delivered");
+          //NS_LOG_UNCOND ("Packet Successfully delivered");
       }
       else{
-          NS_LOG_UNCOND ("Packet Lost");
+          //NS_LOG_UNCOND ("Packet Lost");
       }
+
+      //Ptr<PointToPointNetDevice> p2p_netDev = DynamicCast<PointToPointNetDevice> (m_recvDev);
+      //Ptr<Queue<Packet> > queue = p2p_netDev->GetQueue ();
+      //uint32_t backlog = (int) queue->GetNPackets();
+      //NS_LOG_UNCOND("SIZE BUFFER BEFORE"<<backlog);
+
+      if(m_activateSignaling){
+        //NS_LOG_UNCOND("Sending "<<m_signPacketSize);
+        Ptr<Packet> pckt = Create<Packet> (m_signPacketSize);
+      
+        MyTag tagSmallSignaling;
+        tagSmallSignaling.SetSimpleValue(0x02);
+        uint64_t id = m_pckt->GetUid();
+        //NS_LOG_UNCOND("SIGN "<<uint32_t(id));
+        tagSmallSignaling.SetIdValue(id);
+        pckt->AddPacketTag(tagSmallSignaling);
+
+
+
+        arrived = m_recvDev->Send(pckt, m_destAddr, 0x800);
+        if (arrived == 1){
+            //NS_LOG_UNCOND ("Packet Successfully delivered");
+        }
+        else{
+            //NS_LOG_UNCOND ("Packet Lost");
+        }
+      
+      }
+
+      //p2p_netDev = DynamicCast<PointToPointNetDevice> (m_recvDev);
+      //queue = p2p_netDev->GetQueue ();
+      //backlog = (int) queue->GetNPackets();
+      //NS_LOG_UNCOND("SIZE BUFFER AFTER "<<backlog);
     }
     else{
-      NS_LOG_UNCOND ("Packet Rejected");
+      //NS_LOG_UNCOND ("Packet Rejected");
     }
+    
   }
   
 
@@ -308,7 +363,7 @@ PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
 
 
 void
-PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, int* counter_packets_sent, NetDeviceContainer* nd, Ptr<const Packet> packet)
+PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netDev, NetDeviceContainer* nd, Ptr<const Packet> packet)
 {
   // define is train step flag
   entity->is_trainStep_flag = 0;
@@ -319,15 +374,60 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, int* counter_packet
   
   Ptr<Packet> p = packet->Copy();
 
-  NS_LOG_UNCOND("-------------------------------------------------------------");
-  NS_LOG_UNCOND("Node "<<entity->m_node->GetId());
+  //NS_LOG_UNCOND("-------------------------------------------------------------");
+  //NS_LOG_UNCOND("Node "<<entity->m_node->GetId());
 
-  
+  Ptr<Packet> packetTag;
+  packetTag = p->Copy();
+
+  MyTag tagCopy;
+  packetTag->PeekPacketTag(tagCopy);
+  //NS_LOG_UNCOND(uint32_t(tagCopy.GetSimpleValue()));
+  //NS_LOG_UNCOND(packetTag->ToString());
+  entity->m_signaling = 0;
+  if(tagCopy.GetSimpleValue()==0x02){
+    entity->m_signaling=1;
+    //NS_LOG_UNCOND("GET ID VALUE "<<uint32_t(tagCopy.GetIdValue()));
+    entity->m_pcktIdSign = tagCopy.GetIdValue();
+  }
+  if(tagCopy.GetSimpleValue()==0x01){
+    //NS_LOG_UNCOND("AQUI........");
+    //NS_LOG_UNCOND(p->ToString());
+    entity->m_signaling=1;
+    entity->m_NNIndex = tagCopy.GetNNIndex();
+    entity->m_segIndex = tagCopy.GetSegIndex();
+    entity->m_nodeIdSign = tagCopy.GetNodeId();
+    //NS_LOG_UNCOND(tagCopy.GetNNIndex());
+    //NS_LOG_UNCOND(tagCopy.GetSegIndex());
+    //NS_LOG_UNCOND(tagCopy.GetNodeId());
+  }
+  //if(p->GetSize()<50){
+  //  NS_LOG_UNCOND("AQUI");
+  //  return ;
+  //}
+
+
+
   //Remove Header
   p->RemoveHeader(ppp_head);
   entity->m_pckt = p->Copy();
+  //NS_LOG_UNCOND("SIZE "<<p->GetSize());
+  //if (p->GetSize()==72) return ;
+  
   p->RemoveHeader(ip_head);
   p->RemoveHeader(udp_head);
+  if(ip_head.GetProtocol()==0x06){
+    //NS_LOG_UNCOND("TCP");
+    //NS_LOG_UNCOND(Simulator::Now().GetMilliSeconds());
+    return ;
+  }
+
+  if(ip_head.GetProtocol()==0x06){
+    NS_LOG_UNCOND("TCP");
+    //NS_LOG_UNCOND(Simulator::Now().GetMilliSeconds());
+    //return ;
+  }
+
 
   //Get Size
   entity->m_size = p->GetSize();
@@ -341,12 +441,12 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, int* counter_packet
   entity->m_packetStart = start_time_int;
 
   
-  //NS_LOG_UNCOND("PPP--------------------------");
-  //NS_LOG_UNCOND(ppp_head);
-  //NS_LOG_UNCOND("IP--------------------------");
-  //NS_LOG_UNCOND(ip_head);
-  //NS_LOG_UNCOND("UDP--------------------------");
-  //NS_LOG_UNCOND(udp_head);
+  ////NS_LOG_UNCOND("PPP--------------------------");
+  ////NS_LOG_UNCOND(ppp_head);
+  ////NS_LOG_UNCOND("IP--------------------------");
+  ////NS_LOG_UNCOND(ip_head);
+  ////NS_LOG_UNCOND("UDP--------------------------");
+  ////NS_LOG_UNCOND(udp_head);
 
   //Destination and Src
 
@@ -368,16 +468,17 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, int* counter_packet
     }  
   }
   entity->m_lengthType = ppp_head.GetProtocol();
-  entity->m_packetsSent = *counter_packets_sent;
+  entity->m_packetsSent = 0;
+  entity->m_recvDev = netDev;
   
-  NS_LOG_UNCOND("Packet Size: "<<entity->m_size);
-  NS_LOG_UNCOND("Dest: "<<entity->m_dest);
-  NS_LOG_UNCOND("Src: "<<entity->m_src);
-  NS_LOG_UNCOND("pkt start: "<<entity->m_packetStart);
-  NS_LOG_UNCOND("Dest IP Addr: "<<ip_head.GetDestination());
-  NS_LOG_UNCOND("Src IP Addr: "<<ip_head.GetSource());
-  NS_LOG_UNCOND("Packet id: "<<entity->m_pckt->GetUid());
-  NS_LOG_UNCOND("Sim time : "<<Simulator::Now().GetSeconds());
+  //NS_LOG_UNCOND("Packet Size: "<<entity->m_size);
+  //NS_LOG_UNCOND("Dest: "<<entity->m_dest);
+  //NS_LOG_UNCOND("Src: "<<entity->m_src);
+  //NS_LOG_UNCOND("pkt start: "<<entity->m_packetStart);
+  //NS_LOG_UNCOND("Dest IP Addr: "<<ip_head.GetDestination());
+  //NS_LOG_UNCOND("Src IP Addr: "<<ip_head.GetSource());
+  //NS_LOG_UNCOND("Packet id: "<<entity->m_pckt->GetUid());
+  //NS_LOG_UNCOND("Sim time : "<<Simulator::Now().GetSeconds());
   entity->Notify();
 }
 
@@ -386,13 +487,13 @@ PacketRoutingEnv::NotifyTrainStep(Ptr<PacketRoutingEnv> entity)
 {
   // define is train step flag
   entity->is_trainStep_flag = 1;
-  NS_LOG_UNCOND("-------------------------------------------------------------");
-  // NS_LOG_UNCOND("train step Node "<<entity->m_node->GetId());
-  // NS_LOG_UNCOND("Packet Size: "<<entity->m_size);
-  // NS_LOG_UNCOND("Dest: "<<entity->m_dest);
-  // NS_LOG_UNCOND("Src: "<<entity->m_src);
-  // NS_LOG_UNCOND("Packet id: "<<entity->m_pckt->GetUid());
-  NS_LOG_UNCOND("Sim time : "<<Simulator::Now().GetMilliSeconds());
+  //NS_LOG_UNCOND("-------------------------------------------------------------");
+  // //NS_LOG_UNCOND("train step Node "<<entity->m_node->GetId());
+  // //NS_LOG_UNCOND("Packet Size: "<<entity->m_size);
+  // //NS_LOG_UNCOND("Dest: "<<entity->m_dest);
+  // //NS_LOG_UNCOND("Src: "<<entity->m_src);
+  // //NS_LOG_UNCOND("Packet id: "<<entity->m_pckt->GetUid());
+  //NS_LOG_UNCOND("Sim time : "<<Simulator::Now().GetMilliSeconds());
 
   entity->Notify();
 }

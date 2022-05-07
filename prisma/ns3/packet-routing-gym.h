@@ -56,7 +56,7 @@ class PacketRoutingEnv : public OpenGymEnv
 {
 public:
   PacketRoutingEnv ();
-  PacketRoutingEnv (Ptr<Node> node, uint32_t numberOfNodes, uint64_t linkRateValue);
+  PacketRoutingEnv (Ptr<Node> node, uint32_t numberOfNodes, uint64_t linkRateValue, bool activateSignaling, double signPacketSize);
   PacketRoutingEnv (Time stepTime, Ptr<Node> node);
   virtual ~PacketRoutingEnv ();
   static TypeId GetTypeId (void);
@@ -74,7 +74,7 @@ public:
   // the function has to be static to work with MakeBoundCallback
   // that is why we pass pointer to PacketRoutingEnv instance to be able to store the context (node, etc)
  
-  static void NotifyPktRcv(Ptr<PacketRoutingEnv> entity, int* counter_packets_sent, NetDeviceContainer* nd, Ptr<const Packet> packet);
+  static void NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netDev, NetDeviceContainer* nd, Ptr<const Packet> packet);
   static void NotifyTrainStep(Ptr<PacketRoutingEnv> entity);
   bool is_trainStep_flag;
 
@@ -102,11 +102,21 @@ private:
   bool m_isGameOver;
   std::vector<uint32_t> m_obs_shape;
   int m_packetsSent;
+  Ptr<NetDevice> m_recvDev;
 
   uint32_t m_fwdDev_idx;  // Last net device selected to forward the packet (last action)
   uint32_t m_lastEvDev_idx;  // Last net device triggering an event 
   uint32_t m_lastEvNode;  // Node where last net device triggering an event 
   uint32_t m_lastEvNumPktsInQueue; // Queue backlog of last event device
+
+  bool m_activateSignaling;
+  double m_signPacketSize; 
+  uint64_t m_pcktIdSign;
+  uint32_t m_nodeIdSign;
+  uint32_t m_NNIndex;
+  uint32_t m_segIndex;
+  int m_signaling;
+
 
   
   //uint64_t m_rxPktNum;
