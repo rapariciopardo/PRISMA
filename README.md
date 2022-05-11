@@ -22,7 +22,7 @@ This tool has been developed and tested under Linux Ubuntu 20.04 LTS (Focal Foss
 git clone https://github.com/rapariciopardo/PRISMA.git
 ```
 
-2. If you don't have the ns3-gym alrady installed, you could initialize and update the ns3-gym submodules it using the information in .git:
+2. If you don't have the ns3-gym alrady installed, you could initialize and update the ns3-gym submodule using the information in .git:
 ```
 git submodule init
 git submodule update
