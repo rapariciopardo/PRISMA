@@ -15,39 +15,43 @@ The main contributions of this framework:
 
 Installation
 ============
+This tool has been developed and tested under Linux Ubuntu 20.04 LTS (Focal Fossa).
 
-If you don't have the ns3-gym alrady installed
+1. We recommend you to clone the repository (to get the .git):
+```
+git clone https://github.com/rapariciopardo/PRISMA.git
+```
 
-1. If the submodule was not yet initialized, initialize them.
+2. If you don't have the ns3-gym alrady installed, you could initialize and update the ns3-gym submodules it using the information in .git:
 ```
 git submodule init
 git submodule update
 ```
 
-2. Run the script install.sh . It will install the ns-3 requirements (minimal requirements for C++, ZMQ and Protocol Buffers libs. For more information, see https://www.nsnam.org/wiki/Installation). Moreover, it will compile the messages.proto file for python. 
+3. Run the script install.sh . It will install the ns-3 requirements (minimal requirements for C++, ZMQ and Protocol Buffers libs. For more information, see https://www.nsnam.org/wiki/Installation). Moreover, it will compile the messages.proto file for python. 
 
 The usage of sudo may be required.
 ```
 sudo sh install.sh
 ```
 
-3. Go to my_network directory and install the python packages required using the command below (numpy, networkx, gym, tensorflow, zmq)
+4. Go to my_network directory and install the python packages required using the command below (numpy, networkx, gym, tensorflow, zmq)
 ```
 cd ./my_network/
 pip install -e .
 ```
 
-4. For training, run the script:
+5. For training, run the script:
 ```
 ./train.sh
 ```
 
-5. For testing the agent, run the script:
+6. For testing the agent, run the script:
 ```
 ./test.sh
 ```
 
-6. (Optional) For killing agents, use the script:
+7. (Optional) For killing agents, use the script:
 ```
 ./kill_agents.sh
 ```
