@@ -144,3 +144,27 @@ The training curves are described below. The cost represents the average delay p
 In the figure below, we can evaluate the model performance. We can observe that the DQN-Routing agent is capable of learning a ploicy proximal to a Shortest Path algorithm. In some of the scenarios evaluated, it can performs better than the shortest path algorithm.
 
 ![My Image](images/testing_curves.png)
+
+Contact
+============
+* Redha A. Alliche, Université Côte d’Azur, CNRS, I3S,  alliche@i3s.unice.fr
+* Ramon Aparicio-Pardo, Université Côte d’Azur, CNRS, I3S,  raparicio@i3s.unice.fr
+
+How to reference PRISMA?
+============
+Please use the following bibtex :
+```
+@INPROCEEDINGS{Alli2206:PRISMA,
+AUTHOR="Redha Abderrahmane Alliche and Tiago {Da Silva Barros} and Ramon
+Aparicio-Pardo and Lucile Sassatelli",
+TITLE="{PRISMA:} A Packet Routing Simulator for {Multi-Agent} Reinforcement
+Learning",
+BOOKTITLE="2022 IFIP Networking WKSHPS: NI: The 4th International Workshop on Network
+Intelligence (IFIP Networking 2022 WKSHPS NI)",
+ADDRESS="Catania, Italy",
+DAYS=12,
+MONTH=jun,
+YEAR=2022,
+}
+
+```
