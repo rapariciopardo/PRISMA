@@ -1,7 +1,7 @@
 PRISMA: A Packet Routing Simulator for Multi-Agent Reinforcement Learning
 ============
 
-PRISMA is a network simulation playground for developing and testing Multi-Agent Reinforcement Learning (MARL) solutions for dynamic packet routing (DPR). This framework is based on the OpenAI Gym toolkit and the Ns3 simulator.
+PRISMA is a network simulation playground for developing and testing Multi-Agent Reinforcement Learning (MARL) solutions for dynamic packet routing (DPR). This framework is based on the OpenAI Gym toolkit and the ns-3 simulator.
 
 The [OpenAI Gym](https://gym.openai.com/) is a toolkit for RL widely used in research. The network simulator [ns–3](https://www.nsnam.org/) is a standard library, which may provide useful simulation tools. It generates discrete events and provide several protocol implementations.
 
@@ -16,7 +16,7 @@ The main contributions of this framework:
 Installation
 ============
 
-If you don't have the Nse-gym alrady installed
+If you don't have the ns3-gym alrady installed
 
 1. If the submodule was not yet initialized, initialize them.
 ```
@@ -24,7 +24,7 @@ git submodule init
 git submodule update
 ```
 
-2. Run the script install.sh . It will install the NS3 requirements (minimal requirements for C++, ZMQ and Protocol Buffers libs. For more information, see https://www.nsnam.org/wiki/Installation). Moreover, it will compile the messages.proto file for python. 
+2. Run the script install.sh . It will install the ns-3 requirements (minimal requirements for C++, ZMQ and Protocol Buffers libs. For more information, see https://www.nsnam.org/wiki/Installation). Moreover, it will compile the messages.proto file for python. 
 
 The usage of sudo may be required.
 ```
