@@ -35,6 +35,8 @@ def save_model(actors, path, t, num_episodes, root="saved_models/"):
     #     os.mkdir(root)
     # if(path in os.listdir(root)):
     #     shutil.rmtree(root + path)
+    if(not os.path.exists(root)):
+        os.mkdir(root)
     if not(path in os.listdir(root)):
         os.mkdir(root + path)
     path = path.rstrip('/') + '/'
