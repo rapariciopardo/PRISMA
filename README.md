@@ -37,23 +37,23 @@ sudo sh install.sh
 
 4. Go to my_network directory and install the python packages required using the command below (numpy, networkx, gym, tensorflow, zmq)
 ```
-cd ./my_network/
-pip install -e .
+cd ./prisma/
+pip install .
 ```
 
 5. For training, run the script:
 ```
-./train.sh
+bash train.sh
 ```
 
 6. For testing the agent, run the script:
 ```
-./test.sh
+bash test.sh
 ```
 
 7. (Optional) For killing agents, use the script:
 ```
-./kill_agents.sh
+bash kill_agents.sh
 ```
 
 Usage guide
