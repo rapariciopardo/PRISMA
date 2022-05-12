@@ -322,10 +322,8 @@ int main (int argc, char *argv[])
       for(int i=0;i<n_nodes;i++){
         smallSignalingSize[i] = 64 + 8;
       }
-    }
-    
+    }  
   }
-
   NS_LOG_UNCOND("Creating link between switch nodes");
   
   for(int i=0;i<n_nodes;i++)
@@ -571,7 +569,7 @@ int main (int argc, char *argv[])
     Address anyAddress;
     anyAddress = InetSocketAddress (Ipv4Address::GetAny (), sinkPortUDP);
     PacketSinkHelper packetSinkHelper ("ns3::UdpSocketFactory", anyAddress);
-    ApplicationContainer sinkApps = packetSinkHelper.Install (nodes_switch.Get (i));
+    ApplicationContainer sinkApps = packetSinkHelper.Install (nodes_traffic.Get (i));
     sinkApps.Start (Seconds (SinkStartTime));
     sinkApps.Stop (Seconds (SinkStopTime));
 
