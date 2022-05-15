@@ -18,8 +18,8 @@ import random
 import networkx as nx
 import os
 import datetime
+import csv
 from tensorboard.plugins.hparams import api as hp
-import multiprocessing
 from source.agent import Agent
 from source.utils import save_model
 import subprocess, signal
@@ -77,6 +77,7 @@ def arguments_parser():
     group1.add_argument('--train', type=int, help='If 1, train the model.Else, test it', default=1)
     group1.add_argument('--max_nb_arrived_pkts', type=int, help='If < 0, stops the episode at the provided number of arrived packets', default=-1)
     group1.add_argument('--ns3_sim_path', type=str, help='Path to the ns3-gym simulator folder', default="../ns3-gym/")
+    group1.add_argument('--signalingSim', type=int, help='Allows the signaling in NS3 Simulation', default=0)
     
     group4 = parser.add_argument_group('Network parameters')
     group4.add_argument('--load_factor', type=float, help='scale of the traffic matrix', default=1)
@@ -96,7 +97,7 @@ def arguments_parser():
     group2.add_argument('--logging_timestep', type=int, help='Time delay (in real time) between each logging in seconds', default=15)
     
     group3 = parser.add_argument_group('DRL Agent arguments')
-    group3.add_argument('--agent_type', choices=["dqn_buffer", "dqn_routing", "sp", "opt"], type=str, help='The type of the agent. Can be dqn_buffer, dqn_routing, sp or opt', default="dqn_buffer")
+    group3.add_argument('--agent_type', choices=["dqn_buffer", "dqn_routing", "dqn_buffer_fp", "sp", "opt"], type=str, help='The type of the agent. Can be dqn_buffer, dqn_routing, dqn_buffer_fp, sp or opt', default="dqn_buffer")
     group3.add_argument('--signaling_type', type=str, choices=["NN", "target", "ideal"], help='Type of the signaling. Can be "NN" for sending neighbors NN and (r,s\') tuple, "target" for sending only the target value and "ideal" for no signalisation (used when training)', default="ideal")
     group3.add_argument('--lr', type=float, help='Learning rate (used when training)', default=1e-4)
     group3.add_argument('--batch_size', type=int, help='Size of a batch (used when training)', default=512)
@@ -108,9 +109,9 @@ def arguments_parser():
     group3.add_argument('--save_models', type=int, help='if True, store the models at the end of the training', default=0)
     group3.add_argument('--training_trigger_type', type=str, choices=["event", "time"], help='Type of the training trigger, can be "event" (for event based) or "time" (for time based) (used when training)', default="time")
     group3.add_argument('--training_step', type=float, help='Number of steps or seconds to train (used when training)', default=0.05)
-    group3.add_argument('--sync_step', type=float, help='Number of seconds to sync NN if signaling_type is "NN". if -1, then compute it to have control/data of 10% (used when training)', default=-1)
+    group3.add_argument('--sync_step', type=float, help='Number of seconds to sync NN if signaling_type is "NN". if -1, then compute it to have control/data of 10% (used when training)', default=1.0)
     group3.add_argument('--sync_ratio', type=float, help=' control/data ratio for computing the sync step automatically (used when training and sync step <0)', default=0.1)
-    group3.add_argument('--replay_buffer_max_size', type=int, help='Max size of the replay buffers (used when training)', default=10000)
+    group3.add_argument('--replay_buffer_max_size', type=int, help='Max size of the replay buffers (used when training)', default=50000)
 
     group5 = parser.add_argument_group('Other parameters')
     group5.add_argument('--start_tensorboard', type=int, help='if True, starts a tensorboard server to keep track of simulation progress', default=0)
@@ -297,25 +298,31 @@ def run_ns3(params):
     os.chdir(params["ns3_sim_path"])
     
     ## run ns3 configure
+    configure_command = './waf -d optimized configure'
     os.system('./waf -d optimized configure')
-    # os.system('./waf configure')
 
     ## run NS3 simulator
     ns3_params_format = ('prisma --simSeed={} --openGymPort={} --simTime={} --AvgPacketSize={} '
                         '--LinkDelay={} --LinkRate={} --MaxBufferLength={} --load_factor={} '
-                        '--adj_mat_file_name={} --node_coordinates_file_name={} --node_intensity_file_name={}'.format( params["seed"],
-                                                                                                                        params["basePort"],
-                                                                                                                        str(params["simTime"]),
-                                                                                                                        params["packet_size"],
-                                                                                                                        params["link_delay"],
-                                                                                                                        str(params["link_cap"]) + "bps",
-                                                                                                                        str(params["max_out_buffer_size"]) + "p",
-                                                                                                                        params["load_factor"],
-                                                                                                                        params["adjacency_matrix_path"],
-                                                                                                                        params["node_coordinates_path"],
-                                                                                                                       params["traffic_matrix_path"]))
+                        '--adj_mat_file_name={} --node_coordinates_file_name={} --node_intensity_file_name={}'
+                        ' --signaling={} --AgentType={} --signalingType={} --syncStep={}'.format( params["seed"],
+                                                                                                  params["basePort"],
+                                                                                                  str(params["simTime"]),
+                                                                                                  params["packet_size"],
+                                                                                                  params["link_delay"],
+                                                                                                  str(params["link_cap"]) + "bps",
+                                                                                                  str(params["max_out_buffer_size"]) + "p",
+                                                                                                  params["load_factor"],
+                                                                                                  params["adjacency_matrix_path"],
+                                                                                                  params["node_coordinates_path"],
+                                                                                                  params["traffic_matrix_path"],
+                                                                                                  bool(params["signalingSim"]),
+                                                                                                  params["agent_type"],
+                                                                                                  params["signaling_type"],
+                                                                                                  params["sync_step"]
+                                                                                                  ))
     run_ns3_command = shlex.split(f'./waf --run "{ns3_params_format}"')
-    subprocess.Popen(run_ns3_command)
+    subprocess.Popen(run_ns3_command ,stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
     os.chdir(current_folder_path)
 
 def main():
@@ -326,13 +333,29 @@ def main():
     # params["METRICS"] = ["avg_delay", "loss_ratio", "reward"]
 
     ## compute the loss penalty
-    params["loss_penalty"] = ((((params["max_out_buffer_size"] + 1)*params["packet_size"]*8)/params["link_cap"]))*1 #params["numNodes"]
+    params["loss_penalty"] = ((((params["max_out_buffer_size"] + 1)*params["packet_size"]*8)/params["link_cap"])) #params["numNodes"]
 
     ## fix the seed
     tf.random.set_seed(params["seed"])
     np.random.seed(params["seed"])
     random.seed(params["seed"])
 
+    ## test results file name
+    test_results_file_name = f'{params["logs_parent_folder"]}/tests_/{params["agent_type"]}_{params["signaling_type"]}_{params["signalingSim"]}_fixed_sync{int(1000*params["sync_step"])}ms_ratio_{int(100*params["sync_ratio"])}_load_{int(100*params["load_factor"])}.txt'
+    
+    if params["train"] == 1:
+        if params["session_name"] in os.listdir(params["logs_parent_folder"] + "/saved_models/"):
+                print(f'The couple {params["seed"]} {params["traffic_matrix_index"]} already exists in : {params["logs_parent_folder"] + "/saved_models/" + params["session_name"]}')
+                return 1
+         
+    else:
+        if test_results_file_name.split("/")[-1] in os.listdir("/".join(test_results_file_name.split("/")[:-1])):
+            ## check if the couple seed traff mat idx is already in the file
+            if [params["traffic_matrix_index"], params["seed"]] in np.atleast_2d(np.genfromtxt(test_results_file_name, delimiter=",", dtype=int))[:, 2:4].tolist():
+                print(f'The couple {params["seed"]} {params["traffic_matrix_index"]} already exists in the {test_results_file_name}')
+                return 1
+                        
+        
     ## Setup writer for the global stats
     summary_writer_parent = tf.summary.create_file_writer(logdir=params["logs_folder"] )
     summary_writer_session = tf.summary.create_file_writer(logdir=params["global_stats_path"] )
@@ -354,16 +377,18 @@ def main():
         tf.summary.experimental.write_raw_pb(
                 custom_plots().SerializeToString(), step=0
             )
-
+    print("running ns-3")
     ## run ns3 simulator
     run_ns3(params)
-
+    
     ## setup the agents (fix the static variables)
     Agent.init_static_vars(params)
 
     ## run the agents threads
+    agent_instances = []
     for index in range(params["numNodes"]):
         agent_instance = Agent(index, agent_type=params["agent_type"], train=params["train"])
+        agent_instances.append(agent_instance)
         th1 = threading.Thread(target=agent_instance.run_forwarder, args=())
         th1.start()
         if params["train"]:
@@ -374,13 +399,12 @@ def main():
     if params["start_tensorboard"]:
         args = shlex.split(f'python3 -m tensorboard.main --logdir={params["logs_folder"]} --port={params["tensorboard_port"]}')
         subprocess.Popen(args)
-    
     sleep(1)
-
+    
+    print(params)
     ## wait until simulation complete and update info about the env at each timestep
     while threading.active_count() > params["numNodes"] * (1+ params["train"]):
         sleep(params["logging_timestep"])
-
         stats_writer(summary_writer_session, summary_writer_nb_arrived_pkts, summary_writer_nb_lost_pkts, summary_writer_nb_new_pkts)
 
 
@@ -395,29 +419,36 @@ def main():
             Delay_ideal = {np.array(Agent.delays_ideal).mean()}
             Delay_real = {np.array(Agent.delays_real).mean()}
             Reward = {np.array(Agent.rewards).mean()}
+
             """)
     if Agent.total_arrived_pkts:
         print(f"Average delay per arrived packets = {Agent.total_e2e_delay/(Agent.total_arrived_pkts*1000)}")
-    if params["train"] == 0:
-        import csv    
-        fields_loss_rate=[params["agent_type"],params["signaling_type"], params["traffic_matrix_path"][-5], params['load_factor'],Agent.total_lost_pkts/Agent.total_new_rcv_pkts] 
-        with open('res_new_loss_rate', 'a') as f: 
+        
+    if params["train"] == 0:   
+        fields_stats=[params["agent_type"],
+                          params["signaling_type"], 
+                          params["traffic_matrix_index"], 
+                          params["seed"],
+                          params["sync_step"],
+                          Agent.total_lost_pkts/Agent.total_new_rcv_pkts,
+                          np.array(Agent.delays_ideal).mean(),
+                          ((Agent.total_lost_pkts * Agent.loss_penalty) + np.array(Agent.delays_ideal).sum())/(Agent.total_lost_pkts + Agent.total_arrived_pkts),
+                          Agent.total_rewards_with_loss/Agent.total_new_rcv_pkts,
+                          Agent.total_rewards_with_loss
+                        ]
+                          
+        
+        with open(test_results_file_name, 'a') as f: 
             writer = csv.writer(f) 
-            writer.writerow(fields_loss_rate) 
+            writer.writerow(fields_stats) 
     
-        fields_delay=[params["agent_type"],params["signaling_type"], params["traffic_matrix_path"][-5], params['load_factor'], np.array(Agent.delays_ideal).mean()] 
-        with open('res_new_delay', 'a') as f: 
-            writer = csv.writer(f) 
-            writer.writerow(fields_delay) 
-    
-        fields_rw=[params["agent_type"],params["signaling_type"], params["traffic_matrix_path"][-5], params['load_factor'], np.array(Agent.rewards).mean()] 
-        with open('res_new_rw', 'a') as f: 
-            writer = csv.writer(f) 
-            writer.writerow(fields_rw) 
 
     ## save models        
     if params["save_models"]:
         save_model(Agent.agents, params["session_name"], 1, 1, root=params["logs_parent_folder"] + "/saved_models/")
+        if params["agent_type"] == "dqn_buffer_fp":
+            for item in agent_instances:
+                np.savetxt(f'{params["logs_parent_folder"].rstrip("/")}/saved_models/{params["session_name"]}/node_{item.index}_final_params.txt',  [item.update_eps.numpy().item(), item.gradient_step_idx])
     
     ## saving the transition array
     #for node_idx in range(Agent.numNodes):
@@ -431,6 +462,7 @@ if __name__ == '__main__':
     import traceback
     os.setpgrp()
     try:
+        print("starting process group")
         start_time = time()
         main()
         print("Elapsed time = ", str(datetime.timedelta(seconds= time() - start_time)))

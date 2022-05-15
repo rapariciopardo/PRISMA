@@ -44,6 +44,9 @@ build/
 *_pb2.py
 *_pb3.py
 prisma/examples/*/results/*
+prisma/examples/*/saved_models/*
+prisma/examples/*/test_/*
+prisma/examples/*/test/*
 prisma/examples/*/pre_trained_models/*
 prisma/scripts/figures/*
 prisma/scripts/logs/*

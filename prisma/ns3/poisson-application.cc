@@ -152,7 +152,6 @@ PoissonGeneratorApplication::DoDispose (void)
 void PoissonGeneratorApplication::StartApplication () // Called at time specified by Start
 {
   NS_LOG_FUNCTION (this);
-
   // Create the socket if not already
   if (!m_socket)
     {

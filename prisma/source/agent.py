@@ -11,7 +11,7 @@ from ns3gym import ns3env
 from source.learner import DQN_AGENT
 from source.utils import save_model, load_model, LinearSchedule, convert_bps_to_data_rate, optimal_routing_decision
 from source.replay_buffer import ReplayBuffer
-from source.models import DQN_buffer_model, DQN_routing_model
+from source.models import DQN_buffer_model, DQN_routing_model, DQN_buffer_FP_model
 import threading
 import operator
 import copy 
@@ -125,6 +125,7 @@ class Agent():
         cl.link_delay = 0.00#params_dict["link_delay"]
         cl.link_cap = params_dict["link_cap"]
         cl.packet_size = params_dict["packet_size"]
+        cl.signalingSim = params_dict["signalingSim"]
         cl.currIt = 0
         cl.total_new_rcv_pkts=0
         cl.total_arrived_pkts=0
@@ -152,11 +153,11 @@ class Agent():
         train (bool): if true, train the agent. Valid only for agent_type = dqn 
         """
         ### compute the port number
-        if agent_type not in ("dqn_buffer", "dqn_routing", "sp", "opt"):
-            raise('Unknown agent type, please choose from : ("dqn_buffer", "dqn_routing", "sp", "opt")')
+        if agent_type not in ("dqn_buffer", "dqn_routing", "dqn_buffer_fp", "sp", "opt"):
+            raise('Unknown agent type, please choose from : ("dqn_buffer", "dqn_routing", "dqn_buffer_fp", "sp", "opt")')
 
         self.agent_type = agent_type
-        if agent_type in ("dqn_buffer", "dqn_routing"):
+        if agent_type in ("dqn_buffer", "dqn_routing", "dqn_buffer_fp"):
             self.train = train
         else:
             self.train = False
@@ -214,15 +215,34 @@ class Agent():
                 gamma=Agent.gamma,
                 neighbors_degrees=[len(list(Agent.G.neighbors(x))) for x in self.neighbors]
             )
+        elif self.agent_type == "dqn_buffer_fp":
+            ## declare the DQN buffer model
+            Agent.agents[self.index] = DQN_AGENT(
+                q_func=DQN_buffer_FP_model,
+                # observation_shape=self.env.observation_space.shape,
+                observation_shape=(self.env.observation_space.shape[0] + 2,),
+                num_actions=self.env.action_space.n,
+                num_nodes=Agent.numNodes,
+                input_size_splits = [1,
+                                    self.env.action_space.n,
+                                    2,
+                                    ],
+                lr=Agent.lr,
+                gamma=Agent.gamma,
+                neighbors_degrees=[len(list(Agent.G.neighbors(x))) for x in self.neighbors]
+            )
         elif self.agent_type == "opt":
             Agent.agents[self.index] = optimal_routing_decision
-        else:
+        elif self.agent_type == "sp":
             Agent.agents[self.index] = nx.shortest_path
+        else:
+            raise ValueError("Unknown agent type")
 
         ## compute big signaling delay
-        if self.agent_type in ("dqn_buffer", "dqn_routing"):
+        if self.agent_type in ("dqn_buffer", "dqn_routing", "dqn_buffer_fp"):
             self.nn_size = np.sum([np.prod(x.shape) for x in Agent.agents[self.index].q_network.trainable_weights])*32
             self.big_signaling_delay = (self.nn_size/ Agent.link_cap) + Agent.link_delay
+            # print("node:", self.index, "big signaling delay: ", self.big_signaling_delay)
         
         ### compute small signaling delay
         if Agent.signaling_type == "NN":
@@ -233,19 +253,7 @@ class Agent():
         elif Agent.signaling_type == "target":
             self.small_signaling_pkt_size = 64 + 8  # header + target (float)
             self.small_signaling_delay = (self.small_signaling_pkt_size / Agent.link_cap) + Agent.link_delay
-            self._sync_all() # intialize target networks
-
-        ## load the models
-        if Agent.load_path is not None and self.agent_type in ("dqn_buffer", "dqn_routing"):
-            loaded_models = load_model(Agent.load_path, self.index)
-            if loaded_models is not None:
-                Agent.agents[self.index].q_network.set_weights(loaded_models[self.index].get_weights())
-                print("Restoring from {}".format(Agent.load_path))
-
-        # Create the schedule for exploration.
-        self.exploration = LinearSchedule(schedule_timesteps=int(Agent.iterationNum),
-                                    initial_p=Agent.exploration_initial_eps,
-                                    final_p=Agent.exploration_final_eps)
+            # self._sync_all() # intialize target networks
 
         ## env trackers definition
         self.episode_mean_td_error = []
@@ -255,6 +263,26 @@ class Agent():
         self.last_sync_time = 0
         self.last_training_step = 0
         self.gradient_step_idx = 0
+        self.update_eps = 0
+        self.sync_counter = -1
+        
+        ## load the models
+        if Agent.load_path is not None and self.agent_type in ("dqn_buffer", "dqn_routing", "dqn_buffer_fp"):
+            loaded_models = load_model(Agent.load_path, self.index)
+            if loaded_models is not None:
+                Agent.agents[self.index].q_network.set_weights(loaded_models[self.index].get_weights())
+                print("Restoring from {}".format(Agent.load_path))
+                if self.agent_type == "dqn_buffer_fp" and not self.train:
+                    temp = np.loadtxt(f'{"/".join(Agent.load_path.split("/")[:-1])}/node_{self.index}_final_params.txt')
+                    print(temp)
+                    self.update_eps = tf.constant(temp[0], dtype=np.float32)
+                    self.gradient_step_idx = temp[1]
+
+        # Create the schedule for exploration.
+        self.exploration = LinearSchedule(schedule_timesteps=int(Agent.iterationNum),
+                                    initial_p=Agent.exploration_initial_eps,
+                                    final_p=Agent.exploration_final_eps)
+
 
         ## define the log file for td error and exploration value
         self.summary_writer_td_error = tf.summary.create_file_writer(logdir=f'{Agent.logs_folder}/td_error/node_{self.index}')
@@ -272,7 +300,7 @@ class Agent():
         Args :
             obs (list): observation list
         """
-        if self.agent_type in("dqn_buffer", "dqn_routing"):
+        if self.agent_type in("dqn_buffer", "dqn_routing","dqn_buffer_fp",):
             ### Take action using the NN
             action = Agent.agents[self.index].step(np.array([obs]), self.train, self.update_eps).numpy().item()
         elif self.agent_type == "sp":
@@ -287,13 +315,16 @@ class Agent():
         Do an env step
         """
         ## schedule the exploration
-        self.update_eps = tf.constant(self.exploration.value(self.stepIdx))
+        if self.train:
+            self.update_eps = tf.constant(self.exploration.value(self.stepIdx))
         
         ## take the action
-        if self.obs[0] == self.index or self.stepIdx < 1: # pkt arrived to dst or it is a train step, ignore the action
+        if self.obs[0] == self.index or self.stepIdx < 1 or self.signaling: # pkt arrived to dst or it is a train step, ignore the action
             self.action = 0
         else:
             self.action = self._take_action(self.obs)
+            # print(Agent.curr_time, self.index, self.obs, Agent.upcoming_events, self.action)
+            # print("-"*11)
             ## check if the pkt is lost
             if self.obs[self.action + 1] >= Agent.max_out_buffer_size or self.action == -1:
                 Agent.total_lost_pkts += 1
@@ -301,11 +332,13 @@ class Agent():
                 Agent.total_rewards_with_loss += rew
                 Agent.rewards.append(rew)
                 if self.train:
-                    next_hop_degree = list(Agent.G.neighbors(self.neighbors[self.action]))
+                    next_hop_degree = len(list(Agent.G.neighbors(self.neighbors[self.action])))
+                    if self.agent_type == "dqn_buffer_fp":
+                        next_hop_degree += 2 
                     Agent.replay_buffer[self.index].add(np.array(self.obs, dtype=float).squeeze(),
                                         self.action, 
                                         rew,
-                                        np.array([self.obs[0]] + [0]*len(next_hop_degree), dtype=float).squeeze(), 
+                                        np.array([self.obs[0]] + [0]*next_hop_degree, dtype=float).squeeze(), 
                                         True)
                 if  self.action == -1:
                     self.action =Agent.numNodes
@@ -323,44 +356,59 @@ class Agent():
         ### Apply the action
         return self.env.step(self.action)
 
-    def _sync(self, neighbor_num, neighbor_idx):
+    def _sync_current(self, neighbor_idx, with_temp=False):
         """
-        Sync this node neighbor target neural network
+        Sync this node neighbor target neural network with the upcoming target nn
+
+        Args:
+            neighbor_idx (int): neighbor index for this node
+        """
+        #print(Agent.agents[neighbor_num])
+        Agent.agents[self.index].sync_neighbor_target_q_network(neighbor_idx, with_temp=with_temp)
+
+    def _sync_upcoming(self, neighbor_num, neighbor_idx):
+        """
+        Sync this node neighbor upcoming target neural network with the neighbor nn
 
         Args:
             neighbor_num (int): neighbor number
             neighbor_idx (int): neighbor index for this node
         """
-        #print("aqui2")
         #print(Agent.agents[neighbor_num])
-        Agent.agents[self.index].sync_neighbor_target_q_network(Agent.agents[neighbor_num], neighbor_idx)
+        Agent.agents[self.index].sync_neighbor_upcoming_target_q_network(Agent.agents[neighbor_num], neighbor_idx)
 
-    def _sync_all(self):
+    def _sync_all(self, update_upcoming=False):
         """
         Sync this node all neighbors neural networks.
         If signaling type is target, sync the node target NN.
+        
+        Args:
+            upcoming (bool): if True, update the upcoming nn with neighbor nn, else, update target with upcoming
         """
         if self.signaling_type == "target":
             Agent.agents[self.index].update_target()
         else:
-            #print("aqui2")
-            for indx, neighbor in enumerate(self.neighbors): 
-                self._sync(neighbor, indx)
+            if update_upcoming:
+                for indx, neighbor in enumerate(self.neighbors): 
+                    self._sync_upcoming(neighbor, indx)
+                    if Agent.signaling_type == "NN" and Agent.signalingSim == 0: ## programm the big signaling pkts
+                        # print("program a sync from %s to %s  idx %s at %s, arrived at %s" % (self.index, neighbor, indx,  Agent.curr_time, Agent.curr_time + self.big_signaling_delay))
+                        self._push_upcoming_event(self.index, {"time": Agent.curr_time + self.big_signaling_delay,
+                                                         "neighbor_idx": indx})
+            else:
+                for indx, neighbor in enumerate(self.neighbors): 
+                    self._sync_current(indx)
 
     def _check_sync(self):
         """
         Check the time to sync the NN depending on the signaling mode
         """
         ### Sync target NN
-        if Agent.signaling_type in ("ideal", "target"):
-            if Agent.curr_time > (self.last_sync_time + self.sync_step):
-                self._sync_all()
-                self.last_sync_time = Agent.curr_time
-                
-        elif Agent.signaling_type == "NN":
-            #print("aqui")
-            if Agent.curr_time > (self.last_sync_time + self.big_signaling_delay + self.sync_step):
-                self._sync_all()
+        if Agent.curr_time > (self.last_sync_time + self.sync_step):
+                self._sync_all(update_upcoming=True)
+                self.sync_counter += 1
+                if Agent.signaling_type in ("ideal"):
+                    self._sync_all(update_upcoming=False)
                 self.last_sync_time = Agent.curr_time
 
     def _compute_sync_step(self, ratio=0.1):
@@ -385,30 +433,75 @@ class Agent():
         sync_step = (self.nn_size) /((data_load_per_s * ratio)- control_load_per_s)
         print(f"Sync step computed automatically : {sync_step} seconds")
         return sync_step
+    
+    def _push_upcoming_event(self, node, info):
+        """Put the info in the upcoming event queue
 
+        Args:
+            node (int): node index
+            info (dict): info to store as event
+        """
+        Agent.upcoming_events[node].append(info)
+        Agent.upcoming_events[node].sort(key=operator.itemgetter("time"))
+        
     def _get_upcoming_events(self):
         """
-        Go through the upcoming event list and check whether of signaling pkt arrived, then add it to replay buffer
+        Go through the upcoming event list and check whether of signaling pkt arrived, then add it to replay buffer if small signaling or update target if big signaling
         """
         if Agent.signaling_type == "NN":
-            for element in Agent.upcoming_events[self.index]:
-                if element["time"] > Agent.curr_time:
+            while len(Agent.upcoming_events[self.index]) > 0:
+                if Agent.upcoming_events[self.index][0]["time"]> Agent.curr_time:
                     break
-                Agent.replay_buffer[self.index].add(element["obs"],
-                                                element["action"], 
-                                                element["reward"],
-                                                element["new_obs"], 
-                                                element["flag"])
+                element = Agent.upcoming_events[self.index].pop(0)
+                if "obs" in element.keys():
+                    ## treat small signaling 
+                    Agent.replay_buffer[self.index].add(element["obs"],
+                                                    element["action"], 
+                                                    element["reward"],
+                                                    element["new_obs"], 
+                                                    element["flag"])
+                else:
+                    ## treat big signaling
+                    # print("receive sync event to %s to %s at %s" % (self.index, element["neighbor_idx"], element["time"]))
+                    self._sync_current(element["neighbor_idx"])
+                    
         elif Agent.signaling_type == "target":
-            for element in Agent.upcoming_events[self.index]:
-                if element["time"] > Agent.curr_time:
+            while len(Agent.upcoming_events[self.index]) > 0:
+                if Agent.upcoming_events[self.index][0]["time"]> Agent.curr_time:
                     break
+                element = Agent.upcoming_events[self.index].pop(0)
                 Agent.replay_buffer[self.index].add(element["obs"],
                                                 element["action"], 
                                                 element["target"],
                                                 element["new_obs"], 
                                                 element["flag"])
 
+
+    def _get_upcoming_events_real(self, signaling_pkt_id=None, ):
+        """
+        Go through the upcoming event list and check whether of signaling pkt arrived, then add it to replay buffer if small signaling or update target if big signaling
+        """
+        for idx, element in enumerate(Agent.upcoming_events[self.index]):
+            if Agent.signaling_type == "NN":
+                if element["pkt_id"] == signaling_pkt_id:
+                    Agent.replay_buffer[self.index].add(element["obs"],
+                                element["action"], 
+                                element["reward"],
+                                element["new_obs"], 
+                                element["flag"])
+                    Agent.upcoming_events[self.index].pop(idx)
+                    break
+                        
+            elif Agent.signaling_type == "target":
+                if element["pkt_id"] == signaling_pkt_id:
+                    Agent.replay_buffer[self.index].add(element["obs"],
+                                                    element["action"], 
+                                                    element["target"],
+                                                    element["new_obs"], 
+                                                    element["flag"])
+                    Agent.upcoming_events[self.index].pop(idx)
+                    break
+                        
     def _train(self):
         """
         Do a training step
@@ -477,7 +570,8 @@ class Agent():
                     ## check if episode is done
                     if self.done and self.obs[0] == -1:
                         break
-                    
+                    if self.agent_type == "dqn_buffer_fp":
+                        self.obs = list(self.obs) + [self.update_eps.numpy().item(), self.gradient_step_idx]
                     ## Increment the simulation and episode counters
                     self.stepIdx += 1
                     Agent.currIt += 1
@@ -485,8 +579,28 @@ class Agent():
                     ## info treatments
                     tokens = self.info.split(",")
                     delay_time = float(tokens[0].split('=')[-1])
+                    pkt_size = float(tokens[3].split('=')[-1])
                     Agent.curr_time = float(tokens[4].split('=')[-1])
                     self.pkt_id = float(tokens[5].split('=')[-1])
+                    self.signaling = float(tokens[6].split('=')[-1])
+                    
+                    if(self.signaling != 0):
+                        ## treat signaling 
+                        if pkt_size == 512:
+                            NodeIdSignaled = int(tokens[7].split('=')[-1])
+                            NNIndex = int(tokens[8].split('=')[-1])
+                            segIndex = int(tokens[9].split('=')[-1])
+                            if segIndex == 69: ## NN signaling complete
+                                # print(f"sync {self.index} with neighbor {self.neighbors.index(NodeIdSignaled)}")
+                                if NNIndex ==self.sync_counter - 1:
+                                    self._sync_current(self.neighbors.index(NodeIdSignaled), with_temp=True)
+                                else:
+                                    self._sync_current(self.neighbors.index(NodeIdSignaled))
+                        else:
+                            # print("small signaling", self.index, self.pkt_id,  Agent.upcoming_events[self.index])
+                            self._get_upcoming_events_real(self.pkt_id)
+                        
+                        continue
 
                     if self.pkt_id not in Agent.pkt_tracking_dict.keys(): ## check if the packet is a new arrival
                         self.count_new_pkts += 1
@@ -516,16 +630,16 @@ class Agent():
                         Agent.pkt_tracking_dict[int(self.pkt_id)]["delays_ideal"].append(hop_time_ideal)
                         Agent.pkt_tracking_dict[int(self.pkt_id)]["delays_real"].append(hop_time_real)                  
       
-                        curr_node_to_save= int(states_info["node"])
-                        Agent.lock_info_array[curr_node_to_save].append([int(states_info["src"]),
-                                                                   int(states_info["dst"]),
-                                                                   curr_node_to_save,
-                                                                   list(Agent.G.neighbors(curr_node_to_save))[states_info["action"]],
-                                                                   hop_time_ideal,
-                                                                   hop_time_real,
-                                                                   states_info["obs"],
-                                                                   states_info["action"]
-                                                                        ])
+                        # curr_node_to_save= int(states_info["node"])
+                        # Agent.lock_info_array[curr_node_to_save].append([int(states_info["src"]),
+                        #                                            int(states_info["dst"]),
+                        #                                            curr_node_to_save,
+                        #                                            list(Agent.G.neighbors(curr_node_to_save))[states_info["action"]],
+                        #                                            hop_time_ideal,
+                        #                                            hop_time_real,
+                        #                                            states_info["obs"],
+                        #                                            states_info["action"]
+                        #                                                 ])
                         
                         
                         if Agent.signaling_type == "ideal":
@@ -535,28 +649,29 @@ class Agent():
                                                                         np.array(self.obs, dtype=float).squeeze(), 
                                                                         self.done)
                         elif Agent.signaling_type == "NN":
-                            self.upcoming_events[int(states_info["node"])].append({ "time": Agent.curr_time + self.small_signaling_delay,
-                                                                                    "obs" : np.array(states_info["obs"], dtype=float).squeeze(),
-                                                                                    "action": states_info["action"], 
-                                                                                    "reward": hop_time_ideal,
-                                                                                    "new_obs": np.array(self.obs, dtype=float).squeeze(), 
-                                                                                    "flag": self.done
-                                                                                    })
-                            self.upcoming_events[int(states_info["node"])].sort(key=operator.itemgetter('time'))
+                            self._push_upcoming_event(int(states_info["node"]), { "time": Agent.curr_time + self.small_signaling_delay,
+                                                                                        "obs" : np.array(states_info["obs"], dtype=float).squeeze(),
+                                                                                        "action": states_info["action"], 
+                                                                                        "reward": hop_time_ideal,
+                                                                                        "new_obs": np.array(self.obs, dtype=float).squeeze(), 
+                                                                                        "flag": self.done,
+                                                                                        "pkt_id": self.pkt_id,
+                                                                                        })
 
                         elif Agent.signaling_type == "target":
                             ## compute the target value
                             filtered_index = np.where(np.array(list(Agent.G.neighbors(self.index)))!=int(states_info["node"]))[0] # filter the net interface from where the pkt comes 
                             target = Agent.agents[self.index].get_target_value(np.array([hop_time_ideal]), np.array([self.obs]), np.array([self.done]), filtered_index)
                             # target = hop_time_ideal + Agent.gamma * (1- int(self.done)) * tf.reduce_min(Agent.agents[self.index].q_network(np.array([self.obs], dtype=float)), 1)
-                            self.upcoming_events[int(states_info["node"])].append({ "time": Agent.curr_time + self.small_signaling_delay,
-                                                        "obs" : np.array(states_info["obs"], dtype=float).squeeze(),
-                                                        "action": states_info["action"], 
-                                                        "target": target.numpy().item(),
-                                                        "new_obs": np.array(self.obs, dtype=float).squeeze(), 
-                                                        "flag": self.done
-                                                        })
-                            self.upcoming_events[int(states_info["node"])].sort(key=operator.itemgetter("time"))
+                            
+                            self._push_upcoming_event(int(states_info["node"]), {   "time": Agent.curr_time + self.small_signaling_delay,
+                                                                                    "obs" : np.array(states_info["obs"], dtype=float).squeeze(),
+                                                                                    "action": states_info["action"], 
+                                                                                    "target": target.numpy().item(),
+                                                                                    "new_obs": np.array(self.obs, dtype=float).squeeze(), 
+                                                                                    "flag": self.done,
+                                                                                    "pkt_id": self.pkt_id,
+                                                                                    })
                         
                         if self.done: ## if the packet arrived to destination  
                             self.count_arrived_packets += 1
@@ -594,7 +709,7 @@ class Agent():
         # print("***index :", self.index, "Done", "stepIdx =", self.stepIdx, "arrived pkts =", self.count_arrived_packets,  "new received pkts", self.count_new_pkts, "gradient steps", self.gradient_step_idx)
         return True
 
-    def run_trainer(self, train_type="event"):
+    def run_trainer(self, train_type="time"):
         """
             train the agent at training_step depending on the train type.
             Args :
@@ -605,7 +720,7 @@ class Agent():
             while True :
                 time.sleep(np.random.uniform(0.1, 0.7))
                 ## check if there are signaling pkts arrived
-                if Agent.signaling_type in ("NN", "target"):
+                if Agent.signaling_type in ("NN", "target") and Agent.signalingSim == 0:
                     self._get_upcoming_events()
                 if self.stepIdx > (self.last_training_step + Agent.training_step) and len(Agent.replay_buffer[self.index])> Agent.batch_size:
                     self._check_sync()
@@ -614,10 +729,10 @@ class Agent():
             while True :
                 time.sleep(np.random.uniform(0.1, 0.7))
                 ## check if there are signaling pkts arrived if signaling type NN
-                if Agent.signaling_type in ("NN", "target"):
+                if Agent.signaling_type in ("NN", "target") and Agent.signalingSim == 0:
                     self._get_upcoming_events()
+                ## check if it is time to syncronize nn
+                self._check_sync()
                 ## check if it is time to train
                 if Agent.curr_time > (self.last_training_time + Agent.training_step) and len(Agent.replay_buffer[self.index])> Agent.batch_size:
-                    #print(len(Agent.replay_buffer[self.index]))
-                    self._check_sync()
                     self._train()

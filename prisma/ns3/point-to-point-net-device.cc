@@ -18,6 +18,7 @@
 
 #include "ns3/log.h"
 #include "ns3/queue.h"
+
 #include "ns3/simulator.h"
 #include "ns3/mac48-address.h"
 #include "ns3/llc-snap-header.h"
@@ -337,7 +338,6 @@ PointToPointNetDevice::Receive (Ptr<Packet> packet)
 {
   NS_LOG_FUNCTION (this << packet);
   uint16_t protocol = 0;
-
   if (m_receiveErrorModel && m_receiveErrorModel->IsCorrupt (packet) ) 
     {
       // 
@@ -514,8 +514,8 @@ PointToPointNetDevice::Send (
   uint16_t protocolNumber)
 {
   NS_LOG_FUNCTION (this << packet << dest << protocolNumber);
-  NS_LOG_LOGIC ("p=" << packet << ", dest=" << &dest);
-  NS_LOG_LOGIC ("UID is " << packet->GetUid ());
+  //NS_LOG_UNCOND ("p=" << packet << ", dest=" << &dest);
+  //NS_LOG_UNCOND ("UID is " << packet->GetUid ());
 
   //
   // If IsLinkUp() is false it means there is no channel to send any packet 
@@ -538,21 +538,25 @@ PointToPointNetDevice::Send (
   //
   // We should enqueue and dequeue the packet to hit the tracing hooks.
   //
-  if (m_queue->Enqueue (packet))
-    {
-      //
-      // If the channel is ready for transition we send the packet right now
-      // 
-      if (m_txMachineState == READY)
-        {
-          packet = m_queue->Dequeue ();
-          m_snifferTrace (packet);
-          m_promiscSnifferTrace (packet);
-          bool ret = TransmitStart (packet);
-          return ret;
-        }
-      return true;
-    }
+  bool enq = m_queue->Enqueue (packet);
+  
+  if (enq)
+  {
+    //
+    // If the channel is ready for transition we send the packet right now
+    // 
+    if (m_txMachineState == READY)
+      {
+        packet = m_queue->Dequeue ();
+        m_snifferTrace (packet);
+        m_promiscSnifferTrace (packet);
+        bool ret = TransmitStart (packet);
+        return ret;
+      }
+    return true;
+  }
+
+  
 
   // Enqueue may fail (overflow)
 
