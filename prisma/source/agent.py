@@ -84,6 +84,8 @@ class Agent():
     load_path = None
     ## log folder
     logs_folder = "./outputs"
+    ## signaling counter
+    signaling_overhead_counter = 0
     
     @classmethod
     def init_static_vars(cl, params_dict):
@@ -386,7 +388,13 @@ class Agent():
             upcoming (bool): if True, update the upcoming nn with neighbor nn, else, update target with upcoming
         """
         if self.signaling_type == "target":
+            # if self.index ==0:
+            #     print("sync update at", self.gradient_step_idx, len(Agent.replay_buffer[self.index]), self.index, Agent.curr_time, Agent.agents[self.index].q_network(np.array([[1, 0, 0, 0]])),  Agent.agents[self.index].target_q_network(np.array([[1, 0, 0, 0]])))
+                
             Agent.agents[self.index].update_target()
+            # if self.index ==0:
+            #     print("sync update at", self.index, Agent.curr_time, Agent.agents[self.index].q_network(np.array([[1, 0, 0, 0]])),  Agent.agents[self.index].target_q_network(np.array([[1, 0, 0, 0]])))
+                
         else:
             if update_upcoming:
                 for indx, neighbor in enumerate(self.neighbors): 
@@ -395,6 +403,8 @@ class Agent():
                         # print("program a sync from %s to %s  idx %s at %s, arrived at %s" % (self.index, neighbor, indx,  Agent.curr_time, Agent.curr_time + self.big_signaling_delay))
                         self._push_upcoming_event(self.index, {"time": Agent.curr_time + self.big_signaling_delay,
                                                          "neighbor_idx": indx})
+                        Agent.signaling_overhead_counter += self.nn_size
+                        
             else:
                 for indx, neighbor in enumerate(self.neighbors): 
                     self._sync_current(indx)
@@ -558,150 +568,152 @@ class Agent():
     def run_forwarder(self):
         """ Run an episode simulation
         """
-        try:
+        while True:
+            self.obs = self.env.reset()
+            self.stepIdx = 0
             while True:
-                self.obs = self.env.reset()
-                self.stepIdx = 0
-                while True:
-                    if(not self.env.connected):
-                        break
-                    self.obs, _, self.done, self.info = self._forward()
+                if(not self.env.connected):
+                    break
+                self.obs, _, self.done, self.info = self._forward()
+                
+                ## check if episode is done
+                if self.done and self.obs[0] == -1:
+                    break
+                if self.agent_type == "dqn_buffer_fp":
+                    self.obs = list(self.obs) + [self.update_eps.numpy().item(), self.gradient_step_idx]
+                ## Increment the simulation and episode counters
+                self.stepIdx += 1
+                Agent.currIt += 1
+
+                ## info treatments
+                tokens = self.info.split(",")
+                delay_time = float(tokens[0].split('=')[-1])
+                pkt_size = float(tokens[3].split('=')[-1])
+                Agent.curr_time = float(tokens[4].split('=')[-1])
+                self.pkt_id = float(tokens[5].split('=')[-1])
+                self.signaling = float(tokens[6].split('=')[-1])
+                
+                if(self.signaling != 0):
+                    ## treat signaling 
+                    if pkt_size == 512:
+                        NodeIdSignaled = int(tokens[7].split('=')[-1])
+                        NNIndex = int(tokens[8].split('=')[-1])
+                        segIndex = int(tokens[9].split('=')[-1])
+                        if segIndex == 69: ## NN signaling complete
+                            # print(f"sync {self.index} with neighbor {self.neighbors.index(NodeIdSignaled)}")
+                            if NNIndex ==self.sync_counter - 1:
+                                self._sync_current(self.neighbors.index(NodeIdSignaled), with_temp=True)
+                            else:
+                                self._sync_current(self.neighbors.index(NodeIdSignaled))
+                    else:
+                        # print("small signaling", self.index, self.pkt_id,  Agent.upcoming_events[self.index])
+                        self._get_upcoming_events_real(self.pkt_id)
                     
-                    ## check if episode is done
-                    if self.done and self.obs[0] == -1:
-                        break
-                    if self.agent_type == "dqn_buffer_fp":
-                        self.obs = list(self.obs) + [self.update_eps.numpy().item(), self.gradient_step_idx]
-                    ## Increment the simulation and episode counters
-                    self.stepIdx += 1
-                    Agent.currIt += 1
+                    continue
 
-                    ## info treatments
-                    tokens = self.info.split(",")
-                    delay_time = float(tokens[0].split('=')[-1])
-                    pkt_size = float(tokens[3].split('=')[-1])
-                    Agent.curr_time = float(tokens[4].split('=')[-1])
-                    self.pkt_id = float(tokens[5].split('=')[-1])
-                    self.signaling = float(tokens[6].split('=')[-1])
+                if self.pkt_id not in Agent.pkt_tracking_dict.keys(): ## check if the packet is a new arrival
+                    self.count_new_pkts += 1
+                    Agent.total_new_rcv_pkts += 1
+                    ## add to tracked pkts
+                    Agent.pkt_tracking_dict[int(self.pkt_id)]= {"src": self.index,
+                                                                "node": self.index,
+                                                                "dst": int(self.obs[0]),
+                                                                "hops": [self.index],
+                                                                "delays_ideal": [],
+                                                                "delays_real": [],
+                                                                "start_time": Agent.curr_time,
+                                                                "tag": None}
+                else: ## if the packet is not new in the network
+                    states_info = Agent.temp_obs.pop(self.pkt_id)
+                    hop_time_real =  Agent.curr_time - states_info["time"]
+                    hop_time_ideal = ((states_info["obs"][states_info["action"] + 1] +1 ) * Agent.packet_size * 8 / Agent.link_cap) + Agent.link_delay
+                    Agent.total_rewards_with_loss += hop_time_real
+                    ## add to tracked pkts
+                    Agent.pkt_tracking_dict[int(self.pkt_id)]["hops"].append(self.index)                        
+                    Agent.pkt_tracking_dict[int(self.pkt_id)]["node"] = self.index
                     
-                    if(self.signaling != 0):
-                        ## treat signaling 
-                        if pkt_size == 512:
-                            NodeIdSignaled = int(tokens[7].split('=')[-1])
-                            NNIndex = int(tokens[8].split('=')[-1])
-                            segIndex = int(tokens[9].split('=')[-1])
-                            if segIndex == 69: ## NN signaling complete
-                                # print(f"sync {self.index} with neighbor {self.neighbors.index(NodeIdSignaled)}")
-                                if NNIndex ==self.sync_counter - 1:
-                                    self._sync_current(self.neighbors.index(NodeIdSignaled), with_temp=True)
-                                else:
-                                    self._sync_current(self.neighbors.index(NodeIdSignaled))
-                        else:
-                            # print("small signaling", self.index, self.pkt_id,  Agent.upcoming_events[self.index])
-                            self._get_upcoming_events_real(self.pkt_id)
-                        
-                        continue
-
-                    if self.pkt_id not in Agent.pkt_tracking_dict.keys(): ## check if the packet is a new arrival
-                        self.count_new_pkts += 1
-                        Agent.total_new_rcv_pkts += 1
-                        ## add to tracked pkts
-                        Agent.pkt_tracking_dict[int(self.pkt_id)]= {"src": self.index,
-                                                                    "node": self.index,
-                                                                    "dst": int(self.obs[0]),
-                                                                    "hops": [self.index],
-                                                                    "delays_ideal": [],
-                                                                    "delays_real": [],
-                                                                    "start_time": Agent.curr_time,
-                                                                    "tag": None}
-                    else: ## if the packet is not new in the network
-                        states_info = Agent.temp_obs.pop(self.pkt_id)
-                        hop_time_real =  Agent.curr_time - states_info["time"]
-                        hop_time_ideal = ((states_info["obs"][states_info["action"] + 1] +1 ) * Agent.packet_size * 8 / Agent.link_cap) + Agent.link_delay
-                        Agent.total_rewards_with_loss += hop_time_real
-                        ## add to tracked pkts
-                        Agent.pkt_tracking_dict[int(self.pkt_id)]["hops"].append(self.index)                        
-                        Agent.pkt_tracking_dict[int(self.pkt_id)]["node"] = self.index
-                        
-                        ## saving state info
-                        states_info["hop_time_real"] = hop_time_real
-                        states_info["hop_time_ideal"] = hop_time_ideal
-                        Agent.rewards.append(hop_time_ideal)
-                        Agent.pkt_tracking_dict[int(self.pkt_id)]["delays_ideal"].append(hop_time_ideal)
-                        Agent.pkt_tracking_dict[int(self.pkt_id)]["delays_real"].append(hop_time_real)                  
-      
-                        # curr_node_to_save= int(states_info["node"])
-                        # Agent.lock_info_array[curr_node_to_save].append([int(states_info["src"]),
-                        #                                            int(states_info["dst"]),
-                        #                                            curr_node_to_save,
-                        #                                            list(Agent.G.neighbors(curr_node_to_save))[states_info["action"]],
-                        #                                            hop_time_ideal,
-                        #                                            hop_time_real,
-                        #                                            states_info["obs"],
-                        #                                            states_info["action"]
-                        #                                                 ])
-                        
-                        
-                        if Agent.signaling_type == "ideal":
-                            Agent.replay_buffer[int(states_info["node"])].add(np.array(states_info["obs"], dtype=float).squeeze(),
-                                                                        states_info["action"], 
-                                                                        hop_time_ideal,
-                                                                        np.array(self.obs, dtype=float).squeeze(), 
-                                                                        self.done)
-                        elif Agent.signaling_type == "NN":
-                            self._push_upcoming_event(int(states_info["node"]), { "time": Agent.curr_time + self.small_signaling_delay,
-                                                                                        "obs" : np.array(states_info["obs"], dtype=float).squeeze(),
-                                                                                        "action": states_info["action"], 
-                                                                                        "reward": hop_time_ideal,
-                                                                                        "new_obs": np.array(self.obs, dtype=float).squeeze(), 
-                                                                                        "flag": self.done,
-                                                                                        "pkt_id": self.pkt_id,
-                                                                                        })
-
-                        elif Agent.signaling_type == "target":
-                            ## compute the target value
-                            filtered_index = np.where(np.array(list(Agent.G.neighbors(self.index)))!=int(states_info["node"]))[0] # filter the net interface from where the pkt comes 
-                            target = Agent.agents[self.index].get_target_value(np.array([hop_time_ideal]), np.array([self.obs]), np.array([self.done]), filtered_index)
-                            # target = hop_time_ideal + Agent.gamma * (1- int(self.done)) * tf.reduce_min(Agent.agents[self.index].q_network(np.array([self.obs], dtype=float)), 1)
-                            
-                            self._push_upcoming_event(int(states_info["node"]), {   "time": Agent.curr_time + self.small_signaling_delay,
+                    ## saving state info
+                    states_info["hop_time_real"] = hop_time_real
+                    states_info["hop_time_ideal"] = hop_time_ideal
+                    Agent.rewards.append(hop_time_real)
+                    Agent.pkt_tracking_dict[int(self.pkt_id)]["delays_ideal"].append(hop_time_ideal)
+                    Agent.pkt_tracking_dict[int(self.pkt_id)]["delays_real"].append(hop_time_real)                  
+    
+                    # curr_node_to_save= int(states_info["node"])
+                    # Agent.lock_info_array[curr_node_to_save].append([int(states_info["src"]),
+                    #                                            int(states_info["dst"]),
+                    #                                            curr_node_to_save,
+                    #                                            list(Agent.G.neighbors(curr_node_to_save))[states_info["action"]],
+                    #                                            hop_time_ideal,
+                    #                                            hop_time_real,
+                    #                                            states_info["obs"],
+                    #                                            states_info["action"]
+                    #                                                 ])
+                    
+                    
+                    if Agent.signaling_type == "ideal":
+                        Agent.replay_buffer[int(states_info["node"])].add(np.array(states_info["obs"], dtype=float).squeeze(),
+                                                                    states_info["action"], 
+                                                                    hop_time_real,
+                                                                    np.array(self.obs, dtype=float).squeeze(), 
+                                                                    self.done)
+                    elif Agent.signaling_type == "NN":
+                        self._push_upcoming_event(int(states_info["node"]), { "time": Agent.curr_time + self.small_signaling_delay,
                                                                                     "obs" : np.array(states_info["obs"], dtype=float).squeeze(),
                                                                                     "action": states_info["action"], 
-                                                                                    "target": target.numpy().item(),
+                                                                                    "reward": hop_time_real,
                                                                                     "new_obs": np.array(self.obs, dtype=float).squeeze(), 
                                                                                     "flag": self.done,
                                                                                     "pkt_id": self.pkt_id,
                                                                                     })
-                        
-                        if self.done: ## if the packet arrived to destination  
-                            self.count_arrived_packets += 1
-                            Agent.total_arrived_pkts += 1
-                            # Agent.total_e2e_delay += delay_time
-                            hops =  len(Agent.pkt_tracking_dict[int(self.pkt_id)]["hops"]) - 1
-                            # Agent.total_e2e_delay += Agent.curr_time - Agent.pkt_tracking_dict[int(self.pkt_id)]["start_time"]
-                            Agent.total_hops += hops
-                            Agent.total_e2e_delay += delay_time
-                            
-                            Agent.delays_ideal.append(sum(Agent.pkt_tracking_dict[int(self.pkt_id)]["delays_ideal"]))
-                            Agent.delays_real.append(sum(Agent.pkt_tracking_dict[int(self.pkt_id)]["delays_real"]))
-                            
-                            Agent.delays.append(delay_time)
-                            Agent.info_debug.append([Agent.pkt_tracking_dict[int(self.pkt_id)]["src"], Agent.pkt_tracking_dict[int(self.pkt_id)]["dst"], Agent.pkt_tracking_dict[int(self.pkt_id)]["hops"], len(Agent.pkt_tracking_dict[int(self.pkt_id)]["hops"])-1, delay_time])
-                            Agent.total_hops += hops
-                            Agent.nb_hops.append(hops)
-                            if(len(Agent.nb_hops)>50):
-                                Agent.nb_hops = Agent.nb_hops[-50:]
-                            if(len(Agent.delays)>50):
-                                Agent.delays = Agent.delays[-50:]
-                            Agent.pkt_tracking_dict.pop(int(self.pkt_id))
-                            if Agent.max_nb_arrived_pkts > 0 and Agent.max_nb_arrived_pkts <= Agent.total_arrived_pkts:
-                                print("Done by max number of arrived pkts")
-                                break
-                break
+                        Agent.signaling_overhead_counter += self.small_signaling_pkt_size
 
-        except KeyboardInterrupt:
-            print("index :", self.index, "Ctrl-C -> Exit")
-            self.env.close()
+                    elif Agent.signaling_type == "target":
+                        ## compute the target value
+                        filtered_index = np.where(np.array(list(Agent.G.neighbors(self.index)))!=int(states_info["node"]))[0] # filter the net interface from where the pkt comes 
+                        target = Agent.agents[self.index].get_target_value(np.array([hop_time_real]), np.array([self.obs]), np.array([self.done]), filtered_index)
+                        # target = hop_time_ideal + Agent.gamma * (1- int(self.done)) * tf.reduce_min(Agent.agents[self.index].q_network(np.array([self.obs], dtype=float)), 1)
+                        
+                        self._push_upcoming_event(int(states_info["node"]), {   "time": Agent.curr_time + self.small_signaling_delay,
+                                                                                "obs" : np.array(states_info["obs"], dtype=float).squeeze(),
+                                                                                "action": states_info["action"], 
+                                                                                "target": target.numpy().item(),
+                                                                                "new_obs": np.array(self.obs, dtype=float).squeeze(), 
+                                                                                "flag": self.done,
+                                                                                "pkt_id": self.pkt_id,
+                                                                                })
+                        Agent.signaling_overhead_counter += self.small_signaling_pkt_size
+
+                    if self.done: ## if the packet arrived to destination  
+                        self.count_arrived_packets += 1
+                        Agent.total_arrived_pkts += 1
+                        # Agent.total_e2e_delay += delay_time
+                        hops =  len(Agent.pkt_tracking_dict[int(self.pkt_id)]["hops"]) - 1
+                        # Agent.total_e2e_delay += Agent.curr_time - Agent.pkt_tracking_dict[int(self.pkt_id)]["start_time"]
+                        Agent.total_hops += hops
+                        Agent.total_e2e_delay += delay_time
+                        
+                        Agent.delays_ideal.append(sum(Agent.pkt_tracking_dict[int(self.pkt_id)]["delays_ideal"]))
+                        Agent.delays_real.append(sum(Agent.pkt_tracking_dict[int(self.pkt_id)]["delays_real"]))
+                        
+                        Agent.delays.append(delay_time)
+                        Agent.info_debug.append([Agent.pkt_tracking_dict[int(self.pkt_id)]["src"],
+                                                    Agent.pkt_tracking_dict[int(self.pkt_id)]["dst"],
+                                                    Agent.pkt_tracking_dict[int(self.pkt_id)]["hops"],
+                                                    len(Agent.pkt_tracking_dict[int(self.pkt_id)]["hops"])-1,
+                                                    delay_time])
+                        Agent.total_hops += hops
+                        Agent.nb_hops.append(hops)
+                        if(len(Agent.nb_hops)>50):
+                            Agent.nb_hops = Agent.nb_hops[-50:]
+                        if(len(Agent.delays)>50):
+                            Agent.delays = Agent.delays[-50:]
+                        Agent.pkt_tracking_dict.pop(int(self.pkt_id))
+                        if Agent.max_nb_arrived_pkts > 0 and Agent.max_nb_arrived_pkts <= Agent.total_arrived_pkts:
+                            print("Done by max number of arrived pkts")
+                            break
+            break
+
         if(not os.path.exists("logs/")):
             os.mkdir("logs")
         np.savetxt("logs/log_dict_"+Agent.sessionName+".txt", np.asarray(Agent.info_debug, dtype='object'), fmt='%s')
@@ -722,7 +734,7 @@ class Agent():
                 ## check if there are signaling pkts arrived
                 if Agent.signaling_type in ("NN", "target") and Agent.signalingSim == 0:
                     self._get_upcoming_events()
-                if self.stepIdx > (self.last_training_step + Agent.training_step) and len(Agent.replay_buffer[self.index])> Agent.batch_size:
+                if self.stepIdx > (self.last_training_step + Agent.training_step) and len(Agent.replay_buffer[self.index])>= Agent.batch_size:
                     self._check_sync()
                     self._train()
         elif train_type == "time":
@@ -734,5 +746,5 @@ class Agent():
                 ## check if it is time to syncronize nn
                 self._check_sync()
                 ## check if it is time to train
-                if Agent.curr_time > (self.last_training_time + Agent.training_step) and len(Agent.replay_buffer[self.index])> Agent.batch_size:
+                if Agent.curr_time > (self.last_training_time + Agent.training_step) and len(Agent.replay_buffer[self.index])>= Agent.batch_size:
                     self._train()

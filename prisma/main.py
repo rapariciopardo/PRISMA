@@ -299,7 +299,7 @@ def run_ns3(params):
     
     ## run ns3 configure
     configure_command = './waf -d optimized configure'
-    os.system('./waf -d optimized configure')
+    os.system('./waf configure')
 
     ## run NS3 simulator
     ns3_params_format = ('prisma --simSeed={} --openGymPort={} --simTime={} --AvgPacketSize={} '
@@ -322,7 +322,7 @@ def run_ns3(params):
                                                                                                   params["sync_step"]
                                                                                                   ))
     run_ns3_command = shlex.split(f'./waf --run "{ns3_params_format}"')
-    subprocess.Popen(run_ns3_command ,stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+    subprocess.Popen(run_ns3_command, stdin=subprocess.PIPE)
     os.chdir(current_folder_path)
 
 def main():
@@ -333,7 +333,7 @@ def main():
     # params["METRICS"] = ["avg_delay", "loss_ratio", "reward"]
 
     ## compute the loss penalty
-    params["loss_penalty"] = ((((params["max_out_buffer_size"] + 1)*params["packet_size"]*8)/params["link_cap"])) #params["numNodes"]
+    params["loss_penalty"] = ((((params["max_out_buffer_size"] + 1)*params["packet_size"]*8)/params["link_cap"])) *params["numNodes"]
 
     ## fix the seed
     tf.random.set_seed(params["seed"])
@@ -341,8 +341,9 @@ def main():
     random.seed(params["seed"])
 
     ## test results file name
-    test_results_file_name = f'{params["logs_parent_folder"]}/tests_/{params["agent_type"]}_{params["signaling_type"]}_{params["signalingSim"]}_fixed_sync{int(1000*params["sync_step"])}ms_ratio_{int(100*params["sync_ratio"])}_load_{int(100*params["load_factor"])}.txt'
-    
+    test_results_file_name = f'{params["logs_parent_folder"]}/tests_3/{params["agent_type"]}_{params["signaling_type"]}_{params["signalingSim"]}_fixed_sync{int(1000*params["sync_step"])}ms_ratio_{int(100*params["sync_ratio"])}_load_{int(100*params["load_factor"])}.txt'
+    train_results_file_name = f'{params["logs_parent_folder"]}/train_3/{params["agent_type"]}_{params["signaling_type"]}_{params["signalingSim"]}_fixed_sync{int(1000*params["sync_step"])}ms_ratio_{int(100*params["sync_ratio"])}_load_{int(100*params["load_factor"])}.txt'
+    print(test_results_file_name)
     if params["train"] == 1:
         if params["session_name"] in os.listdir(params["logs_parent_folder"] + "/saved_models/"):
                 print(f'The couple {params["seed"]} {params["traffic_matrix_index"]} already exists in : {params["logs_parent_folder"] + "/saved_models/" + params["session_name"]}')
@@ -355,7 +356,8 @@ def main():
                 print(f'The couple {params["seed"]} {params["traffic_matrix_index"]} already exists in the {test_results_file_name}')
                 return 1
                         
-        
+    if params["train"] == 0:
+        params["signalingSim"] = 0
     ## Setup writer for the global stats
     summary_writer_parent = tf.summary.create_file_writer(logdir=params["logs_folder"] )
     summary_writer_session = tf.summary.create_file_writer(logdir=params["global_stats_path"] )
@@ -418,27 +420,36 @@ def main():
             Loss ratio = {Agent.total_lost_pkts/Agent.total_new_rcv_pkts}
             Delay_ideal = {np.array(Agent.delays_ideal).mean()}
             Delay_real = {np.array(Agent.delays_real).mean()}
+            total cost = {Agent.total_rewards_with_loss}
+            theoretical cost = {((Agent.total_lost_pkts * Agent.loss_penalty) + np.array(Agent.delays_ideal).sum())/(Agent.total_lost_pkts + Agent.total_arrived_pkts)}
+            Avg cost = {Agent.total_rewards_with_loss/Agent.total_new_rcv_pkts}
             Reward = {np.array(Agent.rewards).mean()}
 
             """)
     if Agent.total_arrived_pkts:
         print(f"Average delay per arrived packets = {Agent.total_e2e_delay/(Agent.total_arrived_pkts*1000)}")
         
-    if params["train"] == 0:   
-        fields_stats=[params["agent_type"],
-                          params["signaling_type"], 
-                          params["traffic_matrix_index"], 
-                          params["seed"],
-                          params["sync_step"],
-                          Agent.total_lost_pkts/Agent.total_new_rcv_pkts,
-                          np.array(Agent.delays_ideal).mean(),
-                          ((Agent.total_lost_pkts * Agent.loss_penalty) + np.array(Agent.delays_ideal).sum())/(Agent.total_lost_pkts + Agent.total_arrived_pkts),
-                          Agent.total_rewards_with_loss/Agent.total_new_rcv_pkts,
-                          Agent.total_rewards_with_loss
-                        ]
+    fields_stats=[params["agent_type"],
+                        params["signaling_type"], 
+                        params["traffic_matrix_index"], 
+                        params["seed"],
+                        params["replay_buffer_max_size"],
+                        params["sync_step"],
+                        Agent.total_lost_pkts/Agent.total_new_rcv_pkts,
+                        np.array(Agent.delays_ideal).mean(),
+                        ((Agent.total_lost_pkts * Agent.loss_penalty) + np.array(Agent.delays_ideal).sum())/(Agent.total_lost_pkts + Agent.total_arrived_pkts),
+                        Agent.total_rewards_with_loss/Agent.total_new_rcv_pkts,
+                        Agent.total_rewards_with_loss,
+                        Agent.signaling_overhead_counter
+                    ]
                           
         
+    if params["train"] == 0:   
         with open(test_results_file_name, 'a') as f: 
+            writer = csv.writer(f) 
+            writer.writerow(fields_stats) 
+    else:   
+        with open(train_results_file_name, 'a') as f: 
             writer = csv.writer(f) 
             writer.writerow(fields_stats) 
     
@@ -466,7 +477,7 @@ if __name__ == '__main__':
         start_time = time()
         main()
         print("Elapsed time = ", str(datetime.timedelta(seconds= time() - start_time)))
-    except Exception as e:
+    except:
         traceback.print_exc()
     finally:
         os.killpg(0, signal.SIGKILL)
