@@ -220,7 +220,7 @@ int main (int argc, char *argv[])
   double AppStartTime   = 0.0001;
   double AppStopTime    = simTime; // - 0.2;
 
-  AvgPacketSize = AvgPacketSize - 30; // remove the header length 8 20 18
+  AvgPacketSize = AvgPacketSize; // remove the header length 8 20 18
   
     
   RngSeedManager::SetSeed (simSeed);
@@ -316,11 +316,11 @@ int main (int argc, char *argv[])
   } else{
     if(signalingType=="NN"){
       for(int i=0;i<n_nodes;i++){
-        smallSignalingSize[i] = 64 + 8 + (8 * (nodes_degree[i]+1));
+        smallSignalingSize[i] = 8 + (8 * (nodes_degree[i]+1));
       }
     } else if(signalingType=="target"){
       for(int i=0;i<n_nodes;i++){
-        smallSignalingSize[i] = 64 + 8;
+        smallSignalingSize[i] = 16;
       }
     }  
   }

@@ -34,6 +34,7 @@ class Agent():
     agents = {}
     currIt = 0
     total_new_rcv_pkts=0
+    total_data_size=0
     total_arrived_pkts=0
     total_rewards=0
     total_lost_pkts=0
@@ -64,7 +65,7 @@ class Agent():
     simArgs={}
     debug=0
     iterationNum = 1000
-    max_out_buffer_size = 30
+    max_out_buffer_size = 600
     loss_penalty = 0
     max_nb_arrived_pkts = -1
     ## starting port number
@@ -85,8 +86,12 @@ class Agent():
     ## log folder
     logs_folder = "./outputs"
     ## signaling counter
-    signaling_overhead_counter = 0
-    
+    small_signaling_overhead_counter= 0
+    small_signaling_pkt_counter =0    
+    big_signaling_overhead_counter= 0
+    big_signaling_pkt_counter =0
+
+    nb_transitions = 0
     @classmethod
     def init_static_vars(cl, params_dict):
         """Takes the parameters of the simulation from a dict and assign it values to the static vars
@@ -130,6 +135,7 @@ class Agent():
         cl.signalingSim = params_dict["signalingSim"]
         cl.currIt = 0
         cl.total_new_rcv_pkts=0
+        cl.total_data_size=0
         cl.total_arrived_pkts=0
         cl.total_e2e_delay=0
         cl.total_lost_pkts=0
@@ -244,7 +250,7 @@ class Agent():
         if self.agent_type in ("dqn_buffer", "dqn_routing", "dqn_buffer_fp"):
             self.nn_size = np.sum([np.prod(x.shape) for x in Agent.agents[self.index].q_network.trainable_weights])*32
             self.big_signaling_delay = (self.nn_size/ Agent.link_cap) + Agent.link_delay
-            # print("node:", self.index, "big signaling delay: ", self.big_signaling_delay)
+            print("node:", self.index, "big signaling delay: ", self.big_signaling_delay, self.nn_size)
         
         ### compute small signaling delay
         if Agent.signaling_type == "NN":
@@ -253,7 +259,7 @@ class Agent():
             if self.sync_step < 0:
                 self.sync_step = self._compute_sync_step(ratio=Agent.sync_ratio)
         elif Agent.signaling_type == "target":
-            self.small_signaling_pkt_size = 64 + 8  # header + target (float)
+            self.small_signaling_pkt_size = 64 + 8  +8 # header + target (float)
             self.small_signaling_delay = (self.small_signaling_pkt_size / Agent.link_cap) + Agent.link_delay
             # self._sync_all() # intialize target networks
 
@@ -328,7 +334,9 @@ class Agent():
             # print(Agent.curr_time, self.index, self.obs, Agent.upcoming_events, self.action)
             # print("-"*11)
             ## check if the pkt is lost
-            if self.obs[self.action + 1] >= Agent.max_out_buffer_size or self.action == -1:
+            #print("INFO PYTHON ", self.obs[self.action + 1] + (542), Agent.max_out_buffer_size)
+            if (self.obs[self.action + 1] + (542)) > Agent.max_out_buffer_size or self.action == -1:
+                #print(self.pkt_id, self.index, "lost")
                 Agent.total_lost_pkts += 1
                 rew = self._get_reward()
                 Agent.total_rewards_with_loss += rew
@@ -403,7 +411,8 @@ class Agent():
                         # print("program a sync from %s to %s  idx %s at %s, arrived at %s" % (self.index, neighbor, indx,  Agent.curr_time, Agent.curr_time + self.big_signaling_delay))
                         self._push_upcoming_event(self.index, {"time": Agent.curr_time + self.big_signaling_delay,
                                                          "neighbor_idx": indx})
-                        Agent.signaling_overhead_counter += self.nn_size
+                        Agent.big_signaling_overhead_counter += self.nn_size
+                        Agent.big_signaling_pkt_counter += 1
                         
             else:
                 for indx, neighbor in enumerate(self.neighbors): 
@@ -592,7 +601,8 @@ class Agent():
                 Agent.curr_time = float(tokens[4].split('=')[-1])
                 self.pkt_id = float(tokens[5].split('=')[-1])
                 self.signaling = float(tokens[6].split('=')[-1])
-                
+                self.obs_nb = np.array((tokens[10].split('=')[-1]).split(';')[:-1], dtype=int).tolist()
+                # print(self.obs_nb, self.obs)
                 if(self.signaling != 0):
                     ## treat signaling 
                     if pkt_size == 512:
@@ -605,15 +615,21 @@ class Agent():
                                 self._sync_current(self.neighbors.index(NodeIdSignaled), with_temp=True)
                             else:
                                 self._sync_current(self.neighbors.index(NodeIdSignaled))
+                        Agent.big_signaling_overhead_counter += pkt_size
+                        Agent.big_signaling_pkt_counter += 1
                     else:
                         # print("small signaling", self.index, self.pkt_id,  Agent.upcoming_events[self.index])
                         self._get_upcoming_events_real(self.pkt_id)
-                    
+                        Agent.small_signaling_overhead_counter += pkt_size
+                        Agent.small_signaling_pkt_counter += 1
+                    # print("signaling pkt we skip", self.index, self.signaling, tokens)
                     continue
-
+                Agent.nb_transitions += 1
                 if self.pkt_id not in Agent.pkt_tracking_dict.keys(): ## check if the packet is a new arrival
                     self.count_new_pkts += 1
                     Agent.total_new_rcv_pkts += 1
+                    Agent.total_data_size += pkt_size
+                    # print("new pkt we add", self.index, tokens)
                     ## add to tracked pkts
                     Agent.pkt_tracking_dict[int(self.pkt_id)]= {"src": self.index,
                                                                 "node": self.index,
@@ -666,7 +682,9 @@ class Agent():
                                                                                     "flag": self.done,
                                                                                     "pkt_id": self.pkt_id,
                                                                                     })
-                        Agent.signaling_overhead_counter += self.small_signaling_pkt_size
+                        if Agent.signalingSim == 0 and self.train:
+                            Agent.small_signaling_overhead_counter += self.small_signaling_pkt_size
+                            Agent.small_signaling_pkt_counter += 1
 
                     elif Agent.signaling_type == "target":
                         ## compute the target value
@@ -682,8 +700,9 @@ class Agent():
                                                                                 "flag": self.done,
                                                                                 "pkt_id": self.pkt_id,
                                                                                 })
-                        Agent.signaling_overhead_counter += self.small_signaling_pkt_size
-
+                        if Agent.signalingSim == 0 and self.train:
+                            Agent.small_signaling_overhead_counter += self.small_signaling_pkt_size
+                            Agent.small_signaling_pkt_counter += 1
                     if self.done: ## if the packet arrived to destination  
                         self.count_arrived_packets += 1
                         Agent.total_arrived_pkts += 1
@@ -717,6 +736,9 @@ class Agent():
         if(not os.path.exists("logs/")):
             os.mkdir("logs")
         np.savetxt("logs/log_dict_"+Agent.sessionName+".txt", np.asarray(Agent.info_debug, dtype='object'), fmt='%s')
+        #f.open(f"replay_buffer_samples/{self.index}", "wb")
+        #print("saving replay buffer")
+        #Agent.replay_buffer[self.index].save(f"replay_buffer_samples/{self.index}")
         self.env.ns3ZmqBridge.send_close_command()
         # print("***index :", self.index, "Done", "stepIdx =", self.stepIdx, "arrived pkts =", self.count_arrived_packets,  "new received pkts", self.count_new_pkts, "gradient steps", self.gradient_step_idx)
         return True
@@ -734,7 +756,7 @@ class Agent():
                 ## check if there are signaling pkts arrived
                 if Agent.signaling_type in ("NN", "target") and Agent.signalingSim == 0:
                     self._get_upcoming_events()
-                if self.stepIdx > (self.last_training_step + Agent.training_step) and len(Agent.replay_buffer[self.index])>= Agent.batch_size:
+                if self.stepIdx > (self.last_training_step + Agent.training_step) and Agent.replay_buffer[self.index].total_samples>= Agent.batch_size:
                     self._check_sync()
                     self._train()
         elif train_type == "time":
@@ -746,5 +768,5 @@ class Agent():
                 ## check if it is time to syncronize nn
                 self._check_sync()
                 ## check if it is time to train
-                if Agent.curr_time > (self.last_training_time + Agent.training_step) and len(Agent.replay_buffer[self.index])>= Agent.batch_size:
+                if Agent.curr_time > (self.last_training_time + Agent.training_step) and Agent.replay_buffer[self.index].total_samples>= Agent.batch_size:
                     self._train()

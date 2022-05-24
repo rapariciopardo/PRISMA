@@ -311,12 +311,12 @@ def run_ns3(params):
                                                                                                   params["packet_size"],
                                                                                                   params["link_delay"],
                                                                                                   str(params["link_cap"]) + "bps",
-                                                                                                  str(params["max_out_buffer_size"]) + "p",
+                                                                                                  str(params["max_out_buffer_size"]) + "B",
                                                                                                   params["load_factor"],
                                                                                                   params["adjacency_matrix_path"],
                                                                                                   params["node_coordinates_path"],
                                                                                                   params["traffic_matrix_path"],
-                                                                                                  bool(params["signalingSim"]),
+                                                                                                  bool(params["signalingSim"]*params["train"]),
                                                                                                   params["agent_type"],
                                                                                                   params["signaling_type"],
                                                                                                   params["sync_step"]
@@ -333,7 +333,8 @@ def main():
     # params["METRICS"] = ["avg_delay", "loss_ratio", "reward"]
 
     ## compute the loss penalty
-    params["loss_penalty"] = ((((params["max_out_buffer_size"] + 1)*params["packet_size"]*8)/params["link_cap"])) *params["numNodes"]
+    # params["loss_penalty"] = ((((params["max_out_buffer_size"] + 1)*params["packet_size"]*8)/params["link_cap"])) *params["numNodes"]
+    params["loss_penalty"] = ((params["max_out_buffer_size"] + 512+30)/params["link_cap"]) *params["numNodes"]
 
     ## fix the seed
     tf.random.set_seed(params["seed"])
@@ -341,8 +342,8 @@ def main():
     random.seed(params["seed"])
 
     ## test results file name
-    test_results_file_name = f'{params["logs_parent_folder"]}/tests_3/{params["agent_type"]}_{params["signaling_type"]}_{params["signalingSim"]}_fixed_sync{int(1000*params["sync_step"])}ms_ratio_{int(100*params["sync_ratio"])}_load_{int(100*params["load_factor"])}.txt'
-    train_results_file_name = f'{params["logs_parent_folder"]}/train_3/{params["agent_type"]}_{params["signaling_type"]}_{params["signalingSim"]}_fixed_sync{int(1000*params["sync_step"])}ms_ratio_{int(100*params["sync_ratio"])}_load_{int(100*params["load_factor"])}.txt'
+    test_results_file_name = f'{params["logs_parent_folder"]}/tests_7/{params["agent_type"]}_{params["signaling_type"]}_{params["signalingSim"]}_fixed_rb_{params["replay_buffer_max_size"]}_sync{int(1000*params["sync_step"])}ms_ratio_{int(100*params["sync_ratio"])}_load_{int(100*params["load_factor"])}.txt'
+    train_results_file_name = f'{params["logs_parent_folder"]}/train_7/{params["agent_type"]}_{params["signaling_type"]}_{params["signalingSim"]}_fixed_rb_{params["replay_buffer_max_size"]}_sync{int(1000*params["sync_step"])}ms_ratio_{int(100*params["sync_ratio"])}_load_{int(100*params["load_factor"])}.txt'
     print(test_results_file_name)
     if params["train"] == 1:
         if params["session_name"] in os.listdir(params["logs_parent_folder"] + "/saved_models/"):
@@ -356,8 +357,8 @@ def main():
                 print(f'The couple {params["seed"]} {params["traffic_matrix_index"]} already exists in the {test_results_file_name}')
                 return 1
                         
-    if params["train"] == 0:
-        params["signalingSim"] = 0
+    # if params["train"] == 0:
+    #     params["signalingSim"] = 0
     ## Setup writer for the global stats
     summary_writer_parent = tf.summary.create_file_writer(logdir=params["logs_folder"] )
     summary_writer_session = tf.summary.create_file_writer(logdir=params["global_stats_path"] )
@@ -411,7 +412,8 @@ def main():
 
 
     print(f""" Summary of the episode :
-            Total number of Transitions = {Agent.currIt}, 
+            Total number of Iterations = {Agent.currIt},
+            Total number of Transitions = {Agent.nb_transitions},
             Simulation time = {Agent.curr_time},
             Total e2e delay = {Agent.total_e2e_delay}, 
             Total number of packets = {Agent.total_new_rcv_pkts}, 
@@ -423,7 +425,11 @@ def main():
             total cost = {Agent.total_rewards_with_loss}
             theoretical cost = {((Agent.total_lost_pkts * Agent.loss_penalty) + np.array(Agent.delays_ideal).sum())/(Agent.total_lost_pkts + Agent.total_arrived_pkts)}
             Avg cost = {Agent.total_rewards_with_loss/Agent.total_new_rcv_pkts}
-            Reward = {np.array(Agent.rewards).mean()}
+            Reward = {np.array(Agent.rewards).mean()} 
+            Signaling overhead = {Agent.small_signaling_overhead_counter + Agent.big_signaling_overhead_counter}
+            small nb Signaling pkts = {Agent.small_signaling_overhead_counter}
+            big nb Signaling pkts ideal = {Agent.big_signaling_overhead_counter}
+            Data pkts size = {Agent.total_data_size}
 
             """)
     if Agent.total_arrived_pkts:
@@ -440,7 +446,14 @@ def main():
                         ((Agent.total_lost_pkts * Agent.loss_penalty) + np.array(Agent.delays_ideal).sum())/(Agent.total_lost_pkts + Agent.total_arrived_pkts),
                         Agent.total_rewards_with_loss/Agent.total_new_rcv_pkts,
                         Agent.total_rewards_with_loss,
-                        Agent.signaling_overhead_counter
+                        Agent.small_signaling_overhead_counter + Agent.big_signaling_overhead_counter,
+                        Agent.small_signaling_overhead_counter,
+                        Agent.big_signaling_overhead_counter,
+                        Agent.total_new_rcv_pkts,
+                        Agent.total_arrived_pkts,
+                        Agent.total_lost_pkts,
+                        Agent.total_data_size,
+                        Agent.nb_transitions
                     ]
                           
         
