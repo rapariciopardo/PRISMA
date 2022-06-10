@@ -1,0 +1,107 @@
+2.5
+1000
+0
+dqn_buffer
+NN
+0
+1000
+1
+abilene
+Linux tiago-Inspiron-5480 5.13.0-41-generic #46~20.04.1-Ubuntu SMP Wed Apr 20 13:16:21 UTC 2022 x86_64 x86_64 x86_64 GNU/Linux
+ter 24 mai 2022 19:07:33 CEST
+[0mSetting top to                           :[0m [32m/home/tiago/Documents/NetSim/ns3-gym[0m 
+[0mSetting out to                           :[0m [32m/home/tiago/Documents/NetSim/ns3-gym/build[0m 
+[0mChecking for 'gcc' (C compiler)          :[0m [32m/usr/bin/gcc[0m 
+[0mChecking for cc version                  :[0m [32m9.4.0[0m 
+[0mChecking for 'g++' (C++ compiler)        :[0m [32m/usr/bin/g++[0m 
+[0mChecking for compilation flag -Wl,--soname=foo support :[0m [32mok[0m 
+[0mChecking for compilation flag -std=c++11 support       :[0m [32mok[0m 
+[0mChecking for program 'python'                          :[0m [32m/usr/bin/python[0m 
+[0mChecking for python version >= 2.3                     :[0m [32m2.7.18[0m 
+[0mpython-config                                          :[0m [33mnot found[0m 
+[0mChecking for library python2.7 in LIBDIR               :[0m [33mnot found[0m 
+[0mChecking for library python2.7 in python_LIBPL         :[0m [33mnot found[0m 
+[0mChecking for library python2.7 in $prefix/libs         :[0m [33mnot found[0m 
+[0mChecking for library python2.7m in LIBDIR              :[0m [33mnot found[0m 
+[0mChecking for library python2.7m in python_LIBPL        :[0m [33mnot found[0m 
+[0mChecking for library python2.7m in $prefix/libs        :[0m [33mnot found[0m 
+[0mChecking for library python27 in LIBDIR                :[0m [33mnot found[0m 
+[0mChecking for library python27 in python_LIBPL          :[0m [33mnot found[0m 
+[0mChecking for library python27 in $prefix/libs          :[0m [33mnot found[0m 
+[0mChecking for header Python.h                           :[0m [33mDistutils not installed? Broken python installation? Get python-config now![0m 
+[0mChecking boost includes                                :[0m [32mheaders not found, please provide a --boost-includes argument (see help)[0m 
+[0mChecking boost includes                                :[0m [32mheaders not found, please provide a --boost-includes argument (see help)[0m 
+[0mChecking for click location                            :[0m [33mnot found[0m 
+[0mChecking for program 'pkg-config'                      :[0m [32m/usr/bin/pkg-config[0m 
+[0mChecking for 'gtk+-3.0'                                :[0m [33mnot found[0m 
+[0mChecking for 'libxml-2.0'                              :[0m [32myes[0m 
+[0mchecking for uint128_t                                 :[0m [33mnot found[0m 
+[0mchecking for __uint128_t                               :[0m [32myes[0m 
+[0mChecking high precision implementation                 :[0m [32m128-bit integer (default)[0m 
+[0mChecking for header stdint.h                           :[0m [32myes[0m 
+[0mChecking for header inttypes.h                         :[0m [32myes[0m 
+[0mChecking for header sys/inttypes.h                     :[0m [33mnot found[0m 
+[0mChecking for header sys/types.h                        :[0m [32myes[0m 
+[0mChecking for header sys/stat.h                         :[0m [32myes[0m 
+[0mChecking for header dirent.h                           :[0m [32myes[0m 
+[0mChecking for header stdlib.h                           :[0m [32myes[0m 
+[0mChecking for header signal.h                           :[0m [32myes[0m 
+[0mChecking for header pthread.h                          :[0m [32myes[0m 
+[0mChecking for header stdint.h                           :[0m [32myes[0m 
+[0mChecking for header inttypes.h                         :[0m [32myes[0m 
+[0mChecking for header sys/inttypes.h                     :[0m [33mnot found[0m 
+[0mChecking for library rt                                :[0m [32myes[0m 
+[0mChecking for header sys/ioctl.h                        :[0m [32myes[0m 
+[0mChecking for header net/if.h                           :[0m [32myes[0m 
+[0mChecking for header net/ethernet.h                     :[0m [32myes[0m 
+[0mChecking for header linux/if_tun.h                     :[0m [32myes[0m 
+[0mChecking for header netpacket/packet.h                 :[0m [32myes[0m 
+[0mChecking for NSC location                              :[0m [33mnot found[0m 
+[0mChecking for library zmq                               :[0m [32myes[0m 
+[0mChecking for library protobuf                          :[0m [32myes[0m 
+[0mChecking for program 'protoc'                          :[0m [32m/usr/bin/protoc[0m 
+[0mChecking for protoc version                            :[0m [32m3.6.1[0m 
+[0mBuild ns3gym Protobuf C++ messages                     :[0m [32mDone[0m 
+[0mBuild ns3gym Protobuf Python messages                  :[0m [32mDone[0m 
+[0mChecking for 'sqlite3'                                 :[0m [33mnot found[0m 
+[0mChecking for header linux/if_tun.h                     :[0m [32myes[0m 
+[0mChecking for program 'sudo'                            :[0m [32m/usr/bin/sudo[0m 
+[0mChecking for program 'valgrind'                        :[0m [33mnot found[0m 
+[0mChecking for 'gsl'                                     :[0m [33mnot found[0m 
+[0mpython-config                                          :[0m [33mnot found[0m 
+[0mChecking for compilation flag -fstrict-aliasing support :[0m [32mok[0m 
+[0mChecking for compilation flag -fstrict-aliasing support :[0m [32mok[0m 
+[0mChecking for compilation flag -Wstrict-aliasing support :[0m [32mok[0m 
+[0mChecking for compilation flag -Wstrict-aliasing support :[0m [32mok[0m 
+[0mChecking for program 'doxygen'                          :[0m [33mnot found[0m 
+---- Summary of optional NS-3 features:
+Build profile                 : [32mdebug[0m
+Build directory               : [32m[0m
+BRITE Integration             : [01;31mnot enabled (BRITE not enabled (see option --with-brite))[0m
+DES Metrics event collection  : [01;31mnot enabled (defaults to disabled)[0m
+Emulation FdNetDevice         : [32menabled[0m
+Examples                      : [01;31mnot enabled (defaults to disabled)[0m
+File descriptor NetDevice     : [32menabled[0m
+GNU Scientific Library (GSL)  : [01;31mnot enabled (GSL not found)[0m
+Gcrypt library                : [01;31mnot enabled (libgcrypt not found: you can use libgcrypt-config to find its location.)[0m
+GtkConfigStore                : [01;31mnot enabled (library 'gtk+-3.0 >= 3.0' not found)[0m
+MPI Support                   : [01;31mnot enabled (option --enable-mpi not selected)[0m
+NS-3 Click Integration        : [01;31mnot enabled (nsclick not enabled (see option --with-nsclick))[0m
+NS-3 OpenFlow Integration     : [01;31mnot enabled (Required boost libraries not found)[0m
+Network Simulation Cradle     : [01;31mnot enabled (NSC not found (see option --with-nsc))[0m
+PlanetLab FdNetDevice         : [01;31mnot enabled (PlanetLab operating system not detected (see option --force-planetlab))[0m
+PyViz visualizer              : [01;31mnot enabled (Python Bindings are needed but not enabled)[0m
+Python Bindings               : [01;31mnot enabled (Python library or headers missing)[0m
+Real Time Simulator           : [32menabled[0m
+SQlite stats data output      : [01;31mnot enabled (library 'sqlite3' not found)[0m
+Tap Bridge                    : [32menabled[0m
+Tap FdNetDevice               : [32menabled[0m
+Tests                         : [01;31mnot enabled (defaults to disabled)[0m
+Threading Primitives          : [32menabled[0m
+Use sudo to set suid bit      : [01;31mnot enabled (option --enable-sudo not selected)[0m
+XmlIo                         : [32menabled[0m
+'configure' finished successfully (1.541s)
+Waf: Entering directory `/home/tiago/Documents/NetSim/ns3-gym/build'
+Waf: Leaving directory `/home/tiago/Documents/NetSim/ns3-gym/build'
+Build commands will be stored in build/compile_commands.json
+'build' finished successfully (20.815s)

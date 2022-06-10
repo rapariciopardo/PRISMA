@@ -8,13 +8,15 @@ echo $6 # real signaling or not
 echo $7 # rb size
 echo $8 # increment
 echo $9 # topology
-module load singularity/3.5.2
+#module load singularity/3.5.2
 uname -a
 echo $(date)
 SYNC=$(echo $1/0.5 | bc)
 res0=$((${SYNC/.*} - 1))
 
-singularity exec --nv prisma_latest.sif python3 main.py \
+cd prisma
+
+python3 main.py \
 	--seed=$2 \
 	--simTime=60 \
 	--basePort=$(((4444+$2)+(1000*$3)+($res0*15)+($6*20)+($8*1000))) \
@@ -69,7 +71,7 @@ for j in ${array[@]}
 	res1=${FLOAT/.*}
 	echo $res1
 
-	singularity exec --nv prisma_latest.sif python3 main.py \
+	python3 main.py \
 		--simTime=20 \
 		--basePort=$(((4444 + $2)+(1000*$3)+($res0 * 15)+($8*1000))) \
 		--train=0 \
