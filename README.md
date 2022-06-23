@@ -159,8 +159,7 @@ AUTHOR="Redha Abderrahmane Alliche and Tiago {Da Silva Barros} and Ramon
 Aparicio-Pardo and Lucile Sassatelli",
 TITLE="{PRISMA:} A Packet Routing Simulator for {Multi-Agent} Reinforcement
 Learning",
-BOOKTITLE="2022 IFIP Networking WKSHPS: NI: The 4th International Workshop on Network
-Intelligence (IFIP Networking 2022 WKSHPS NI)",
+BOOKTITLE="4th Intl Workshop on Network Intelligence collcated with IFIP Networking 2022",
 ADDRESS="Catania, Italy",
 DAYS=12,
 MONTH=jun,
