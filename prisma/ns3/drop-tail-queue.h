@@ -100,17 +100,17 @@ DropTailQueue<Item>::Enqueue (Ptr<Item> item)
 {
   NS_LOG_FUNCTION (this << item);
 
-  MyTag tag;
-  item->PeekPacketTag(tag);
+  //MyTag tag;
+  //item->PeekPacketTag(tag);
   //NS_LOG_UNCOND(item->ToString());  
-  if(tag.GetSimpleValue()==0x01 or tag.GetSimpleValue()==0x02){
-    NS_LOG_LOGIC("PRIOR");
-    return DoEnqueue (Tail (), item);
-  }
-  else{
-    NS_LOG_LOGIC("NORMAL");
-    return DoEnqueue (Tail (), item);
-  }
+  //if(tag.GetSimpleValue()==0x01 or tag.GetSimpleValue()==0x02){
+  //  NS_LOG_LOGIC("PRIOR");
+  //  return DoEnqueue (Tail (), item);
+  //}
+  //else{
+  //  NS_LOG_LOGIC("NORMAL");
+  return DoEnqueue (Tail (), item);
+  //}
  
 }
 

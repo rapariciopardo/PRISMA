@@ -237,7 +237,6 @@ bool
 PointToPointNetDevice::TransmitStart (Ptr<Packet> p)
 {
   NS_LOG_FUNCTION (this << p);
-  NS_LOG_LOGIC ("UID is " << p->GetUid () << ")");
 
   //
   // This function is called to start the process of transmitting a packet.
@@ -521,6 +520,8 @@ PointToPointNetDevice::Send (
   // If IsLinkUp() is false it means there is no channel to send any packet 
   // over so we just hit the drop trace on the packet and return an error.
   //
+    
+
   if (IsLinkUp () == false)
     {
       m_macTxDropTrace (packet);
@@ -539,6 +540,7 @@ PointToPointNetDevice::Send (
   // We should enqueue and dequeue the packet to hit the tracing hooks.
   //
   bool enq = m_queue->Enqueue (packet);
+
   
   if (enq)
   {

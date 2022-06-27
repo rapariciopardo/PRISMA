@@ -39,6 +39,7 @@
 #include "ns3/network-module.h"
 #include "ns3/internet-module.h"
 #include "point-to-point-net-device.h"
+#include "ospf-tag.h"
 #include <vector>
 
 namespace ns3 {
@@ -103,6 +104,11 @@ private:
   std::vector<uint32_t> m_obs_shape;
   int m_packetsSent;
   Ptr<NetDevice> m_recvDev;
+  vector<bool> m_lsaSeen;
+  
+  
+  OSPFTag m_lsaTag;
+  bool m_ospfSignaling;
 
   uint32_t m_fwdDev_idx;  // Last net device selected to forward the packet (last action)
   uint32_t m_lastEvDev_idx;  // Last net device triggering an event 

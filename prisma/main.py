@@ -302,7 +302,7 @@ def run_ns3(params):
     ## run ns3 configure
     configure_command = './waf -d optimized configure'
     os.system('./waf configure')
-
+    print(params['agent_type'])
     ## run NS3 simulator
     ns3_params_format = ('prisma --simSeed={} --openGymPort={} --simTime={} --AvgPacketSize={} '
                         '--LinkDelay={} --LinkRate={} --MaxBufferLength={} --load_factor={} '
@@ -318,7 +318,7 @@ def run_ns3(params):
                                                                                                   params["adjacency_matrix_path"],
                                                                                                   params["node_coordinates_path"],
                                                                                                   params["traffic_matrix_path"],
-                                                                                                  bool(params["signalingSim"]*params["train"]),
+                                                                                                  bool(params["signalingSim"]),
                                                                                                   params["agent_type"],
                                                                                                   params["signaling_type"],
                                                                                                   params["sync_step"]
@@ -412,28 +412,28 @@ def main():
         sleep(params["logging_timestep"])
         stats_writer(summary_writer_session, summary_writer_nb_arrived_pkts, summary_writer_nb_lost_pkts, summary_writer_nb_new_pkts)
 
-
-    print(f""" Summary of the episode :
-            Total number of Iterations = {Agent.currIt},
-            Total number of Transitions = {Agent.nb_transitions},
-            Simulation time = {Agent.curr_time},
-            Total e2e delay = {Agent.total_e2e_delay}, 
-            Total number of packets = {Agent.total_new_rcv_pkts}, 
-            Number of arrived packets = {Agent.total_arrived_pkts},
-            Number of lost packets = {Agent.total_lost_pkts},
-            Loss ratio = {Agent.total_lost_pkts/Agent.total_new_rcv_pkts}
-            Delay_ideal = {np.array(Agent.delays_ideal).mean()}
-            Delay_real = {np.array(Agent.delays_real).mean()}
-            total cost = {Agent.total_rewards_with_loss}
-            theoretical cost = {((Agent.total_lost_pkts * Agent.loss_penalty) + np.array(Agent.delays_ideal).sum())/(Agent.total_lost_pkts + Agent.total_arrived_pkts)}
-            Avg cost = {Agent.total_rewards_with_loss/Agent.total_new_rcv_pkts}
-            Reward = {np.array(Agent.rewards).mean()} 
-            Signaling overhead = {Agent.small_signaling_overhead_counter + Agent.big_signaling_overhead_counter}
-            small nb Signaling pkts = {Agent.small_signaling_overhead_counter}
-            big nb Signaling pkts ideal = {Agent.big_signaling_overhead_counter}
-            Data pkts size = {Agent.total_data_size}
-
-            """)
+    print(f"Signaling overhead = {Agent.small_signaling_overhead_counter}")
+    #print(f""" Summary of the episode :
+    #        Total number of Iterations = {Agent.currIt},
+    #        Total number of Transitions = {Agent.nb_transitions},
+    #        Simulation time = {Agent.curr_time},
+    #        Total e2e delay = {Agent.total_e2e_delay}, 
+    #        Total number of packets = {Agent.total_new_rcv_pkts}, 
+    #        Number of arrived packets = {Agent.total_arrived_pkts},
+    #        Number of lost packets = {Agent.total_lost_pkts},
+    #        Loss ratio = {Agent.total_lost_pkts/Agent.total_new_rcv_pkts}
+    #        Delay_ideal = {np.array(Agent.delays_ideal).mean()}
+    #        Delay_real = {np.array(Agent.delays_real).mean()}
+    #        total cost = {Agent.total_rewards_with_loss}
+    #        theoretical cost = {((Agent.total_lost_pkts * Agent.loss_penalty) + np.array(Agent.delays_ideal).sum())/(Agent.total_lost_pkts + Agent.total_arrived_pkts)}
+    #        Avg cost = {Agent.total_rewards_with_loss/Agent.total_new_rcv_pkts}
+    #        Reward = {np.array(Agent.rewards).mean()} 
+    #        Signaling overhead = {Agent.small_signaling_overhead_counter + Agent.big_signaling_overhead_counter}
+    #        small nb Signaling pkts = {Agent.small_signaling_overhead_counter}
+    #        big nb Signaling pkts ideal = {Agent.big_signaling_overhead_counter}
+    #        Data pkts size = {Agent.total_data_size}
+    #
+    #        """)
     if Agent.total_arrived_pkts:
         print(f"Average delay per arrived packets = {Agent.total_e2e_delay/(Agent.total_arrived_pkts*1000)}")
         
@@ -459,10 +459,11 @@ def main():
                     ]
                           
         
-    if params["train"] == 0:   
-        with open(test_results_file_name, 'a') as f: 
-            writer = csv.writer(f) 
-            writer.writerow(fields_stats) 
+    if params["train"] == 0:
+        pass   
+        #with open(test_results_file_name, 'a') as f: 
+        #    writer = csv.writer(f) 
+        #    writer.writerow(fields_stats) 
     else:   
         with open(train_results_file_name, 'a') as f: 
             writer = csv.writer(f) 

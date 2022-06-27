@@ -59,6 +59,7 @@
 #include "poisson-app-helper.h"
 #include "big-signaling-app-helper.h"
 #include "big-signaling-application.h"
+#include "ospf-signaling-app-helper.h"
 #include "tcp-application.h"
 #include "ns3/global-route-manager.h"
 #include "ns3/mobility-module.h"
@@ -68,6 +69,10 @@
 #include "ns3/stats-module.h"
 #include "ns3/opengym-module.h"
 #include "packet-routing-gym.h"
+//#include "ns3/ipv4-list-routing-helper.h"
+//#include "ipv4-ospf-routing-helper.h"
+#include "ipv4-ospf-routing.h"
+#include "conf-loader.h"
 
 
 using namespace std;
@@ -86,6 +91,7 @@ vector<vector<std::string>> readIntensityFile(std::string intensity_file_name);
 void printCoordinateArray (const char* description, vector<vector<double> > coord_array);
 void printMatrix (const char* description, vector<vector<bool> > array);
 void ScheduleNextTrainStep(Ptr<PacketRoutingEnv> openGym);
+void ScheduleHelloMessages(Ipv4OSPFRouting* ospf);
 void RestoreLinkRate(NetDeviceContainer *ptp, u_int32_t idx1, u_int32_t idx2) {
   NS_LOG_UNCOND("tempo: "<<Simulator::Now());
   NS_LOG_UNCOND(idx1<<"     "<<idx2<< "    aqui    ");
@@ -211,6 +217,8 @@ int main (int argc, char *argv[])
   NS_LOG_UNCOND("--MaxBufferLength: " << MaxBufferLength);
   NS_LOG_UNCOND("--load_factor: " << load_factor);
   NS_LOG_UNCOND("--linkFailureTime: "<<linkFailureTime);
+  NS_LOG_UNCOND("--Signaling: "<<activateSignaling);
+  NS_LOG_UNCOND("--agentType: "<< agentType);
 
   
   
@@ -312,7 +320,6 @@ int main (int argc, char *argv[])
   double smallSignalingSize[n_nodes] = {0.0};
   double bigSignalingSize = 36000;
   if(agentType=="sp" || agentType=="opt" || signalingType=="ideal"){
-    activateSignaling = false;
   } else{
     if(signalingType=="NN"){
       for(int i=0;i<n_nodes;i++){
@@ -381,6 +388,7 @@ int main (int argc, char *argv[])
   for(size_t i=0;i<link_devs.size();i++){
     NS_LOG_UNCOND(get<0>(link_devs[i]) << "     " << get<1>(link_devs[i])<<"    "<<switch_nd.Get(get<0>(link_devs[i]))->GetNode()->GetId()<<"     "<<switch_nd.Get(get<1>(link_devs[i]))->GetNode()->GetId());
   }
+
   InternetStackHelper internet;
   internet.Install(nodes_traffic);
   internet.Install(nodes_switch);
@@ -472,9 +480,10 @@ int main (int argc, char *argv[])
   Ipv4AddressHelper address;
   address.SetBase ("10.2.2.0", "255.255.255.0");
   Ipv4InterfaceContainer interfaces = address.Assign (traffic_nd);
-
+  int interface = 0;
   for (int i = 0; i < n_nodes; i++)
     {
+      interface = 0;
       for (int j = 0; j < n_nodes; j++)
         {
           if (i != j)
@@ -497,18 +506,18 @@ int main (int argc, char *argv[])
               Ipv4Address ip_addr = ipv4_int_addr.GetLocal ();
               sinkAddress = InetSocketAddress (ip_addr, sinkPortUDP);
               
-              PoissonAppHelper poisson  ("ns3::UdpSocketFactory",sinkAddress);
-              poisson.SetAverageRate (DataRate(round(DataRate(Traff_Matrix[i][j]).GetBitRate()*load_factor)), AvgPacketSize);
-              poisson.SetUpdatable(updatable_nodes[i], updateTrafficRateTime);
-              ApplicationContainer apps = poisson.Install (nodes_traffic.Get (i));
+              //PoissonAppHelper poisson  ("ns3::UdpSocketFactory",sinkAddress);
+              //poisson.SetAverageRate (DataRate(round(DataRate(Traff_Matrix[i][j]).GetBitRate()*load_factor)), AvgPacketSize);
+              //poisson.SetUpdatable(updatable_nodes[i], updateTrafficRateTime);
+              //ApplicationContainer apps = poisson.Install (nodes_traffic.Get (i));
+              //
+              //apps.Start (Seconds (AppStartTime + 5.0 + rn));
+              //apps.Stop (Seconds (AppStopTime));
               
-              apps.Start (Seconds (AppStartTime + rn));
-              apps.Stop (Seconds (AppStopTime));
+            //NS_LOG_UNCOND("teste "<< Adj_Matrix[i][j]<<"   "<< activateSignaling);
               
-              
-              
-              
-            if (Adj_Matrix[i][j] == 1 && activateSignaling && signalingType=="NN"){
+            if (Adj_Matrix[i][j] == 1 && activateSignaling){
+                interface++;
                 countLinks++;
                 
                 NodeContainer nodes_test;
@@ -531,15 +540,24 @@ int main (int argc, char *argv[])
                 address.SetBase (ip_str.c_str(), "255.255.255.0");
                 Ipv4InterfaceContainer interfaces = address.Assign (test_nd);
                 sinkAddress = InetSocketAddress (interfaces.GetAddress (1), sinkPort);
-                
-                BigSignalingAppHelper sign ("ns3::UdpSocketFactory",sinkAddress);
-                sign.SetAverageStep (syncStep, bigSignalingSize);
-                NS_LOG_UNCOND(i);
-                sign.SetSourceDest(i+1, j+1);
-                ApplicationContainer apps = sign.Install (nodes_test.Get (0));  // traffic sources are installed on all nodes
-                apps.Start (Seconds (AppStartTime + rn*3));
-                apps.Stop (Seconds (AppStopTime));
-                
+                if(signalingType=="NN"){
+                  BigSignalingAppHelper sign ("ns3::UdpSocketFactory",sinkAddress);
+                  sign.SetAverageStep (syncStep, bigSignalingSize);
+                  sign.SetSourceDest(i+1, j+1);
+                  ApplicationContainer apps = sign.Install (nodes_test.Get (0));  // traffic sources are installed on all nodes
+                  apps.Start (Seconds (AppStartTime + 5.0 ));
+                  apps.Stop (Seconds (AppStopTime));
+                }
+
+                if(agentType=="sp"){
+                  OspfSignalingAppHelper ospf_sign ("ns3::UdpSocketFactory",sinkAddress);
+                  ospf_sign.SetAverageStep (syncStep, bigSignalingSize);
+                  ospf_sign.SetSourceDestInterface(i+1, j+1, interface);
+                  ospf_sign.SetNNeighbors(nodes_degree[i]);
+                  ApplicationContainer ospf_apps = ospf_sign.Install (nodes_test.Get (0));  // traffic sources are installed on all nodes
+                  ospf_apps.Start (Seconds (AppStartTime + rn*3));
+                  ospf_apps.Stop (Seconds (AppStopTime));
+                }
               }
           
               
@@ -822,6 +840,12 @@ void ScheduleNextTrainStep(Ptr<PacketRoutingEnv> openGym)
   // Simulator::Schedule (Seconds(envStepTime), &ScheduleNextTrainStep, envStepTime, openGym);
   openGym->NotifyTrainStep(openGym);
 }
+
+void ScheduleHelloMessages(Ipv4OSPFRouting* ospf){
+  NS_LOG_UNCOND("Here");
+  ospf->sendHelloAll();
+}
+
 
 
 // ---------- End of Function Definitions ------------------------------------

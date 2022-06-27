@@ -38,6 +38,7 @@
 #include "ns3/csma-net-device.h"
 #include "ns3/csma-module.h"
 #include "my-tag.h"
+#include "ospf-tag.h"
 
 //#include "ns3/wifi-module.h"
 #include "ns3/node-list.h"
@@ -87,6 +88,10 @@ PacketRoutingEnv::PacketRoutingEnv (Ptr<Node> node, uint32_t numberOfNodes, uint
   is_trainStep_flag = 0;
   m_activateSignaling = activateSignaling;
   m_signPacketSize = signPacketSize;
+  for(uint32_t i=0;i<m_n_nodes;i++){
+    m_lsaSeen.push_back(false);
+  }
+  m_lsaSeen[m_node->GetId()] = true;
   //m_rxPktNum = 0;
 }
 
@@ -324,6 +329,19 @@ PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
       //NS_LOG_UNCOND("Packet arrived to destination");
       m_fwdDev_idx = 0;
     }
+
+    if(m_ospfSignaling){
+      for(uint32_t i = 1;i<m_node->GetNDevices()-1;i++){
+        Ptr<Packet> pckt = Create<Packet> (30);
+        Ipv4Header ip_head;
+        UdpHeader udp_head;
+        pckt->AddHeader(udp_head);
+        pckt->AddHeader(ip_head);
+        pckt->AddPacketTag(m_lsaTag);
+        Ptr<PointToPointNetDevice> dev = DynamicCast<PointToPointNetDevice>(m_node->GetDevice(i));
+        if(dev->GetIfIndex()!=m_recvDev->GetIfIndex()) dev->Send(pckt, m_destAddr, 0x800);
+      } 
+    }
   
     //NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", MyExecuteActions: " << m_fwdDev_idx << "mdevices " << m_node->GetNDevices());
     if (m_fwdDev_idx < m_node->GetNDevices()-1 && m_signaling==0){
@@ -392,67 +410,77 @@ PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
 void
 PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netDev, NetDeviceContainer* nd, Ptr<const Packet> packet)
 {
+  //NS_LOG_UNCOND(packet->ToString());
+  
   // define is train step flag
   entity->is_trainStep_flag = 0;
+  entity->m_signaling = 0;
+  entity->m_ospfSignaling = false;
 
+
+  //define headers
   PppHeader ppp_head;
   Ipv4Header ip_head;
   UdpHeader udp_head;
   
-  Ptr<Packet> p = packet->Copy();
 
-  //NS_LOG_UNCOND("-------------------------------------------------------------");
-  //NS_LOG_UNCOND("Node "<<entity->m_node->GetId());
+  Ptr<Packet> p;
+  p = packet->Copy();
+  
+  OSPFTag tagOspf;
+  p->PeekPacketTag(tagOspf);
 
-  Ptr<Packet> packetTag;
-  packetTag = p->Copy();
+  if(tagOspf.getType()==1){
+    entity->m_signaling = 1;
+    NS_LOG_UNCOND("HELLO MESSAGE");
+  }
+  if(tagOspf.getType()==2){
+    NS_LOG_UNCOND("Node: "<<entity->m_node->GetId()<<"   LSA Node Id: "<<tagOspf.getLSANode());
+    std::cout << "LSA's received: ";
+    for(bool i:entity->m_lsaSeen)
+      std::cout<< i <<" ";
+    std::cout<<'\n';
+    if(!entity->m_lsaSeen[tagOspf.getLSANode()]){
+      entity->m_ospfSignaling = true;
+      entity->m_lsaSeen[tagOspf.getLSANode()] = true;
+      entity->m_lsaTag = tagOspf;
+    }
+    entity->m_signaling = 1;
+    
+    NS_LOG_UNCOND("LSA MESSAGE");
+  }
 
   MyTag tagCopy;
-  packetTag->PeekPacketTag(tagCopy);
-  //NS_LOG_UNCOND(uint32_t(tagCopy.GetSimpleValue()));
-  //NS_LOG_UNCOND(packetTag->ToString());
-  entity->m_signaling = 0;
+  p->PeekPacketTag(tagCopy);
+
   if(tagCopy.GetSimpleValue()==0x02){
     entity->m_signaling=1;
-    //NS_LOG_UNCOND("GET ID VALUE "<<uint32_t(tagCopy.GetIdValue()));
     entity->m_pcktIdSign = tagCopy.GetIdValue();
+    //NS_LOG_UNCOND("BIG SIGNALING");
   }
+
   if(tagCopy.GetSimpleValue()==0x01){
-    //NS_LOG_UNCOND("AQUI........");
-    //NS_LOG_UNCOND(p->ToString());
     entity->m_signaling=1;
     entity->m_NNIndex = tagCopy.GetNNIndex();
     entity->m_segIndex = tagCopy.GetSegIndex();
     entity->m_nodeIdSign = tagCopy.GetNodeId();
-    //NS_LOG_UNCOND(tagCopy.GetNNIndex());
-    //NS_LOG_UNCOND(tagCopy.GetSegIndex());
-    //NS_LOG_UNCOND(tagCopy.GetNodeId());
   }
-  //if(p->GetSize()<50){
-  //  NS_LOG_UNCOND("AQUI");
-  //  return ;
-  //}
-
+  
 
 
   //Remove Header
   p->RemoveHeader(ppp_head);
   entity->m_pckt = p->Copy();
-  //NS_LOG_UNCOND("SIZE "<<p->GetSize());
-  //if (p->GetSize()==72) return ;
   
   p->RemoveHeader(ip_head);
   p->RemoveHeader(udp_head);
+  
   if(ip_head.GetProtocol()==0x06){
-    //NS_LOG_UNCOND("TCP");
-    //NS_LOG_UNCOND(Simulator::Now().GetMilliSeconds());
     return ;
   }
 
   if(ip_head.GetProtocol()==0x06){
     NS_LOG_UNCOND("TCP");
-    //NS_LOG_UNCOND(Simulator::Now().GetMilliSeconds());
-    //return ;
   }
 
 

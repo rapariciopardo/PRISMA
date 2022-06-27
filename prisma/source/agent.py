@@ -656,7 +656,7 @@ class Agent():
                         Agent.big_signaling_overhead_counter += pkt_size
                         Agent.big_signaling_pkt_counter += 1
                     else:
-                        # print("small signaling", self.index, self.pkt_id,  Agent.upcoming_events[self.index])
+                        print("small signaling", self.index, self.pkt_id,  Agent.upcoming_events[self.index], pkt_size)
                         self._get_upcoming_events_real(self.pkt_id)
                         Agent.small_signaling_overhead_counter += pkt_size
                         Agent.small_signaling_pkt_counter += 1
