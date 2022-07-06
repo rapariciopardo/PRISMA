@@ -73,6 +73,7 @@ class Agent():
     ## net topology
     G = None
     numNodes = 0
+    maxNumNodes = 0
     ## learning params
     lr = 1e-3
     batch_size = 128
@@ -99,6 +100,7 @@ class Agent():
         """
         cl.G = params_dict["G"]
         cl.numNodes = params_dict["numNodes"]
+        cl.maxNumNodes = params_dict["maxNumNodes"]
         cl.stepTime = params_dict["stepTime"]
         cl.startSim = params_dict["startSim"]
         cl.seed = params_dict["seed"]
@@ -119,7 +121,7 @@ class Agent():
         cl.replay_buffer_max_size = params_dict["replay_buffer_max_size"]
         cl.traffic_matrix_path = params_dict["traffic_matrix_path"]
         cl.packet_size = params_dict["packet_size"]
-        cl.envs = cl.numNodes * [None]
+        cl.envs = cl.maxNumNodes * [None]
         cl.agents = {i: None for i in range(cl.numNodes)}
         cl.prioritizedReplayBuffer = params_dict["prioritizedReplayBuffer"]
         if cl.prioritizedReplayBuffer:
@@ -653,6 +655,7 @@ class Agent():
                                 self._sync_current(self.neighbors.index(NodeIdSignaled), with_temp=True)
                             else:
                                 self._sync_current(self.neighbors.index(NodeIdSignaled))
+                        #print("here")
                         Agent.big_signaling_overhead_counter += pkt_size
                         Agent.big_signaling_pkt_counter += 1
                     else:

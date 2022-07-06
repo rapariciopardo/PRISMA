@@ -52,6 +52,7 @@
 #include "ns3/udp-socket-factory.h"
 #include "ns3/string.h"
 #include "ns3/pointer.h"
+#include "my-tag.h"
 
 namespace ns3 {
 
@@ -73,6 +74,10 @@ PoissonGeneratorApplication::GetTypeId (void)
     .AddAttribute ("AvgPacketSize", "The average size of packets sent",
                    UintegerValue (512),
                    MakeUintegerAccessor (&PoissonGeneratorApplication::m_pktSizeMean),
+                   MakeUintegerChecker<uint32_t> (1))
+    .AddAttribute ("Dest", "dest",
+                   UintegerValue (1),
+                   MakeUintegerAccessor (&PoissonGeneratorApplication::m_dest),
                    MakeUintegerChecker<uint32_t> (1))
     .AddAttribute ("Updatable", "The Traffic Rate of node is updatable",
                    BooleanValue(false),
@@ -152,6 +157,7 @@ PoissonGeneratorApplication::DoDispose (void)
 void PoissonGeneratorApplication::StartApplication () // Called at time specified by Start
 {
   NS_LOG_FUNCTION (this);
+
   // Create the socket if not already
   if (!m_socket)
     {
@@ -282,11 +288,17 @@ void PoissonGeneratorApplication::SendPacket ()
 
   NS_ASSERT (m_sendEvent.IsExpired ());
   Ptr<Packet> packet = Create<Packet> (m_pktSize);
+  MyTag tag;
+  tag.SetSimpleValue(0);
+  tag.SetFinalDestination(m_dest-1);
+  tag.SetStartTime(Simulator::Now().GetMilliSeconds());
+  packet->AddPacketTag(tag);
   m_txTrace (packet);
-  std::string start_time = std::to_string(Simulator::Now().GetMilliSeconds());
+  //std::string start_time = std::to_string(Simulator::Now().GetMilliSeconds());
   //NS_LOG_UNCOND("START: "<<start_time<<"   SIZE: "<<m_pktSize);
-  const uint8_t* start_int = reinterpret_cast<const uint8_t*>(&start_time[0]);
-  m_socket->Send(start_int, m_pktSize, 0);
+  //const uint8_t* start_int = reinterpret_cast<const uint8_t*>(&start_time[0]);
+  NS_LOG_UNCOND("Socket sending...");
+  m_socket->Send(packet);
   m_totBytes += m_pktSize;
   Address localAddress;
   m_socket->GetSockName (localAddress);
@@ -312,7 +324,7 @@ void PoissonGeneratorApplication::SendPacket ()
       m_txTraceWithAddresses (packet, localAddress, Inet6SocketAddress::ConvertFrom(m_peer));
     }
   m_lastStartTime = Simulator::Now ();
-  ScheduleNextTx ();
+  //ScheduleNextTx ();
 }
 
 

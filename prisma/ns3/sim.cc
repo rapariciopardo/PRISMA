@@ -50,11 +50,12 @@
 #include "ns3/core-module.h"
 #include "ns3/network-module.h"
 #include "ns3/internet-module.h"
-//#include "ns3/point-to-point-module.h"
 #include "point-to-point-helper.h"
 #include "point-to-point-net-device.h"
 #include "ns3/traffic-control-helper.h" 
 #include "ns3/applications-module.h"
+#include "ns3/virtual-net-device.h"
+
 
 #include "poisson-app-helper.h"
 #include "big-signaling-app-helper.h"
@@ -69,8 +70,6 @@
 #include "ns3/stats-module.h"
 #include "ns3/opengym-module.h"
 #include "packet-routing-gym.h"
-//#include "ns3/ipv4-list-routing-helper.h"
-//#include "ipv4-ospf-routing-helper.h"
 #include "ipv4-ospf-routing.h"
 #include "conf-loader.h"
 
@@ -113,27 +112,6 @@ void countPackets(int n_nodes, NetDeviceContainer* nd, std::string path, Ptr<con
   Ptr<Packet> p = packet->Copy();
 
   NS_LOG_UNCOND(p->ToString());
-  //NS_LOG_UNCOND(InetSocketAddress::ConvertFrom(dest).GetIpv4 ());
-  
-  //Ipv4Address dest_addr = InetSocketAddress::ConvertFrom(dest).GetIpv4();
-
-  //Destination and Src
-
-  //for(uint32_t i = 0;i<nd->GetN();i++){
-  //  Ptr<NetDevice> dev = nd->Get(i);
-  //  Ptr<Node> n = dev->GetNode();
-  //  Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();
-  //  Ipv4InterfaceAddress ipv4_int_addr = ipv4->GetAddress (1, 0);
-  //  Ipv4Address ip_addr = ipv4_int_addr.GetLocal ();
-  // 
-  // 
-  //  if(ip_addr == dest_addr){
-  //    int d = dev->GetNode()->GetId()-n_nodes;
-  //    counter_send[d] += 1;
-  //  }  
-  //}
-  
-  
 }
 
 
@@ -171,6 +149,7 @@ int main (int argc, char *argv[])
   uint32_t AvgPacketSize = 512 ; //—> If you want to change the by-default 512 packet size
 
   std::string adj_mat_file_name ("scratch/prisma/examples/abilene/adjacency_matrix.txt");
+  std::string overlay_mat_file_name ("scratch/prisma/examples/abilene/overlay_matrix.txt");
   std::string node_coordinates_file_name ("scratch/prisma/examples/abilene/node_coordinates.txt");
   std::string node_intensity_file_name("scratch/prisma/examples/abilene/node_intensity.txt");
 
@@ -183,6 +162,7 @@ int main (int argc, char *argv[])
   cmd.AddValue ("eventBasedEnv", "Whether steps should be event or time based. Default: true", eventBasedEnv);
   cmd.AddValue ("simTime", "Simulation time in seconds. Default: 30s", simTime);
   cmd.AddValue ("adj_mat_file_name", "Adjacency matrix file path. Default: scratch/prisma/adjacency_matrix.txt", adj_mat_file_name);
+  cmd.AddValue ("overlay_mat_file_name", "Adjacency matrix file path. Default: scratch/prisma/overlay_matrix.txt", overlay_mat_file_name); 
   cmd.AddValue ("node_coordinates_file_name", "Node coordinates file path. Default: scratch/prisma/node_coordinates.txt", node_coordinates_file_name);
   cmd.AddValue ("node_intensity_file_name", "Node intensity (traffic matrix) file path. Default: scratch/prisma/node_intensity.txt", node_intensity_file_name);
   cmd.AddValue ("AvgPacketSize", "Packet size. Default: 512", AvgPacketSize);
@@ -228,20 +208,16 @@ int main (int argc, char *argv[])
   double AppStartTime   = 0.0001;
   double AppStopTime    = simTime; // - 0.2;
 
+  NS_LOG_UNCOND("START/STOP TIME"<<AppStartTime<<"   "<<AppStopTime);
+
   AvgPacketSize = AvgPacketSize; // remove the header length 8 20 18
+
   
     
   RngSeedManager::SetSeed (simSeed);
   RngSeedManager::SetRun (simSeed);
   
-  // LogComponentEnable ("GenericTopologyCreation", LOG_LEVEL_INFO);
   LogComponentEnable ("GenericTopologyCreation", LOG_NONE );
-
-  //std::string AppPacketRate ("40Kbps");
-  // std::string AppPacketRate ("500Kbps");
-  // Config::SetDefault  ("ns3::OnOffApplication::PacketSize",StringValue ("512"));
-  // Config::SetDefault ("ns3::OnOffApplication::DataRate",  StringValue (AppPacketRate));
-
 
 
 
@@ -260,6 +236,11 @@ int main (int argc, char *argv[])
 
   vector<vector<bool> > Adj_Matrix;
   Adj_Matrix = readNxNMatrix (adj_mat_file_name);
+
+  vector<vector<bool> > OverlayAdj_Matrix;
+  OverlayAdj_Matrix = readNxNMatrix (overlay_mat_file_name);
+
+
 
   // Optionally display 2-dimensional adjacency matrix (Adj_Matrix) array
   // printMatrix (adj_mat_file_name.c_str (),Adj_Matrix);
@@ -287,9 +268,15 @@ int main (int argc, char *argv[])
     }
 
   // ---------- End of Read Node Coordinates File ----------------------------
+  // ---------- Setting overlay network---------------------------------------
+
+
+  
+  // ---------- End of Setting overlay network---------------------------------------
 
   // ---------- Network Setup ------------------------------------------------
 
+  //Create Node Containers
   NS_LOG_INFO ("Create Nodes.");
 
   NodeContainer nodes_switch;
@@ -298,6 +285,7 @@ int main (int argc, char *argv[])
   NodeContainer nodes_traffic;   // Declare nodes objects
   nodes_traffic.Create (n_nodes);
 
+  //Create Net Devices
   NS_LOG_INFO ("Create P2P Link Attributes.");
 
   NetDeviceContainer traffic_nd;
@@ -315,10 +303,14 @@ int main (int argc, char *argv[])
               } 
           }
       }
+  //Creating the IP Stack Helpers
+  InternetStackHelper internet;
+  internet.Install(nodes_traffic);
+  internet.Install(nodes_switch);
 
   //Parameters of signaling
   double smallSignalingSize[n_nodes] = {0.0};
-  double bigSignalingSize = 36000;
+  //double bigSignalingSize = 36000;
   if(agentType=="sp" || agentType=="opt" || signalingType=="ideal"){
   } else{
     if(signalingType=="NN"){
@@ -331,6 +323,8 @@ int main (int argc, char *argv[])
       }
     }  
   }
+
+  //Creating the links
   NS_LOG_UNCOND("Creating link between switch nodes");
   
   for(int i=0;i<n_nodes;i++)
@@ -347,7 +341,6 @@ int main (int argc, char *argv[])
     switch_nd.Add(n_devs.Get(1));
   }
 
-/////////////////////////////////////////////////////////////////
   vector<tuple<int, int>> link_devs;
   Ptr<NetDevice> nds_switch [n_nodes][n_nodes];
   for (size_t i = 0; i < Adj_Matrix.size (); i++)
@@ -369,31 +362,44 @@ int main (int argc, char *argv[])
                 nds_switch[i][j] = n_devs.Get(0);
                 nds_switch[j][i] = n_devs.Get(1);
                 link_devs.push_back(make_tuple(switch_nd.GetN()-1, switch_nd.GetN()-2));
-
-                //  NS_LOG_UNCOND("Creating the prio queue disc");
-                // TrafficControlHelper tch;
-                // uint16_t handle = tch.SetRootQueueDisc ("ns3::PrioQueueDisc");
-                // tch.AddInternalQueues (handle, 2, "ns3::DropTailQueue", "MaxSize", StringValue (MaxBufferLength));
-                // QueueDiscContainer qdiscs = tch.Install (n_devs);
-                //NS_LOG_UNCOND ("matrix element [" << i << "][" << j << "] is 1");
-                // NS_LOG_UNCOND(n_devs.Get(0)->GetAddress()<<"     "<<n_devs.Get(1)->GetAddress());
-                
-              }
-            else
-              {
-                //NS_LOG_UNCOND ("matrix element [" << i << "][" << j << "] is 0");
               }
           }
       }
   for(size_t i=0;i<link_devs.size();i++){
     NS_LOG_UNCOND(get<0>(link_devs[i]) << "     " << get<1>(link_devs[i])<<"    "<<switch_nd.Get(get<0>(link_devs[i]))->GetNode()->GetId()<<"     "<<switch_nd.Get(get<1>(link_devs[i]))->GetNode()->GetId());
+    NS_LOG_UNCOND(switch_nd.Get(get<0>(link_devs[i]))->GetIfIndex());
   }
 
-  InternetStackHelper internet;
-  internet.Install(nodes_traffic);
-  internet.Install(nodes_switch);
 
-/////////////////////////////////////////////////////////////////////
+  //Adding Ipv4 Address to the Net Devices
+  Ipv4AddressHelper address;
+  address.SetBase ("10.2.2.0", "255.255.255.0");
+  Ipv4InterfaceContainer interfaces_traffic = address.Assign (traffic_nd);
+
+  address.SetBase ("10.1.1.0", "255.255.255.0");
+  Ipv4InterfaceContainer interfaces_switch = address.Assign (switch_nd);
+
+  // Create the overlay links
+  vector<int> overlayNodes;
+  vector<int> overlayNeighbors[n_nodes];
+  bool overlayNodesChecker[n_nodes] = {0};
+  for(int i=0;i<n_nodes;i++){
+    for(int j=i;j<n_nodes;j++){
+      if(OverlayAdj_Matrix[i][j]==1){
+        if(overlayNodesChecker[i]==0){
+          overlayNodes.push_back(i);
+          overlayNodesChecker[i] = 1;
+        }
+        if(overlayNodesChecker[j]==0){
+          overlayNodes.push_back(j);
+          overlayNodesChecker[j] = 1;
+        }
+        overlayNeighbors[i].push_back(j);
+        overlayNeighbors[j].push_back(i);
+      }
+    }
+  }
+
   // OpenGym Env
   NS_LOG_INFO ("Setting up OpemGym Envs for each node.");
   
@@ -402,51 +408,48 @@ int main (int argc, char *argv[])
   
   uint64_t linkRateValue= DataRate(LinkRate).GetBitRate();
   
-  for (int i = 0; i < n_nodes; i++)
-    {
-  
-      Ptr<Node> n = nodes_switch.Get (i); // ref node
-      //nodeOpenGymPort = openGymPort + i;
-      Ptr<OpenGymInterface> openGymInterface = CreateObject<OpenGymInterface> (openGymPort + i);
-       Ptr<PacketRoutingEnv> packetRoutingEnv;
-      if (eventBasedEnv){
-        packetRoutingEnv = CreateObject<PacketRoutingEnv> (n, n_nodes, linkRateValue, activateSignaling, smallSignalingSize[i]); // event-driven step
-      } else {
-        packetRoutingEnv = CreateObject<PacketRoutingEnv> (Seconds(envStepTime), n); // time-driven step
-      }
-      packetRoutingEnv->SetOpenGymInterface(openGymInterface);
-  
-      myOpenGymInterfaces.push_back (openGymInterface);
-      packetRoutingEnvs.push_back (packetRoutingEnv);
-    }  
-/////////////////////////////////
-  
-
-  if(perturbations==true){
-    random_shuffle(begin(link_devs), end(link_devs));
-    if(nblinksFailed>int(link_devs.size())) nblinksFailed = int(link_devs.size());
-    for(int i=0;i<nblinksFailed;i++){
-      Simulator::Schedule(Seconds(linkFailureTime), &ModifyLinkRate, &switch_nd, get<0>(link_devs[i]), get<1>(link_devs[i]), linkFailureDuration);
-    }
-    //Simulator::Schedule(Seconds(2.0), &ModifyLinkRate, &traffic_nd, DataRate("0.001Kbps"));
-  }
-  
-////////////////////////////////////////////////////////////////
-
-  NS_LOG_UNCOND("Size switch_nd :"<<switch_nd.GetN());
-  for(uint32_t i=0;i<switch_nd.GetN();i++)
+  for (size_t i = 0; i < overlayNodes.size(); i++)
   {
-    Ptr<NetDevice> dev_switch =DynamicCast<NetDevice> (switch_nd.Get(i)); 
-    // NS_LOG_UNCOND(dev_switch->GetNode()->GetId()<<"     "<< dev_switch->GetNode()->GetNDevices()<<"    "<<dev_switch->GetAddress()<<"    ");
-    dev_switch->TraceConnectWithoutContext("MacRx", MakeBoundCallback(&PacketRoutingEnv::NotifyPktRcv, packetRoutingEnvs[dev_switch->GetNode()->GetId()], dev_switch, &traffic_nd));
+    NS_LOG_UNCOND("Node: "<<overlayNodes[i]);
+    for(int neighbor : overlayNeighbors[overlayNodes[i]]){
+      NS_LOG_UNCOND(neighbor);
+    }
     
-  }
+    Ptr<Node> n = nodes_switch.Get (overlayNodes[i]); // ref node
+    //nodeOpenGymPort = openGymPort + i;
+    Ptr<OpenGymInterface> openGymInterface = CreateObject<OpenGymInterface> (openGymPort + overlayNodes[i]);
+     Ptr<PacketRoutingEnv> packetRoutingEnv;
+    if (eventBasedEnv){
+      packetRoutingEnv = CreateObject<PacketRoutingEnv> (n, n_nodes, linkRateValue, activateSignaling, smallSignalingSize[overlayNodes[i]], overlayNeighbors[overlayNodes[i]]); // event-driven step
+    } else {
+      packetRoutingEnv = CreateObject<PacketRoutingEnv> (Seconds(envStepTime), n); // time-driven step
+    }
+    packetRoutingEnv->SetOpenGymInterface(openGymInterface);
+    for(size_t j = 1;j<nodes_switch.Get(overlayNodes[i])->GetNDevices();j++){
+      Ptr<NetDevice> dev_switch =DynamicCast<NetDevice> (nodes_switch.Get(overlayNodes[i])->GetDevice(j)); 
+      NS_LOG_UNCOND(dev_switch->GetNode()->GetId()<<"     "<<j);
+      dev_switch->TraceConnectWithoutContext("MacRx", MakeBoundCallback(&PacketRoutingEnv::NotifyPktRcv, packetRoutingEnv, dev_switch, &traffic_nd));
+    }
+    
+    myOpenGymInterfaces.push_back (openGymInterface);
+    packetRoutingEnvs.push_back (packetRoutingEnv);
+
+    
+      
+  }  
+
+  //NS_LOG_UNCOND("Size switch_nd :"<<switch_nd.GetN());
+  //for(size_t i=0;i<switch_nd.GetN();i++)
+  //{
+  //  
+  //  
+  //}
 
 
   ///////////////////////////////////////////////////////////
 
       
-  NS_LOG_INFO ("Create Links Between Nodes & Connecting OpenGym entity to event sources.");
+  NS_LOG_UNCOND ("Create Links Between Nodes & Connecting OpenGym entity to event sources.");
   //NetDeviceContainer list_p2pNetDevs = NetDeviceContainer();
   
   
@@ -455,38 +458,27 @@ int main (int argc, char *argv[])
   NS_LOG_INFO ("Number of links in the adjacency matrix is: " << linkCount);
   //NS_LOG_INFO ("Number of all nodes is: " << nodes_switch.GetN ());
 
-  NS_LOG_INFO ("Initialize Global Routing.");
+  
+
  
 
   // ---------- Create n*(n-1) CBR Flows -------------------------------------
 
-  vector<bool> updatable_nodes;
-  for(int i=0;i<n_nodes;i++){
-    if(i<nbNodesUpdated && perturbations==true){
-      updatable_nodes.push_back(true);
-    } else{
-      updatable_nodes.push_back(false);
-    }
-  }
-  random_shuffle(begin(updatable_nodes), end(updatable_nodes));
+  
   NS_LOG_INFO ("Setup CBR Traffic Sources.");
 
   
   
   
-  int countLinks = 0;
-  uint16_t sinkPort = 9;
   uint16_t sinkPortUDP = 11;
-  Ipv4AddressHelper address;
-  address.SetBase ("10.2.2.0", "255.255.255.0");
-  Ipv4InterfaceContainer interfaces = address.Assign (traffic_nd);
-  int interface = 0;
+  
+  //int interface = 0;
   for (int i = 0; i < n_nodes; i++)
     {
-      interface = 0;
+      //interface = 0;
       for (int j = 0; j < n_nodes; j++)
         {
-          if (i != j)
+          if (i != j && i==0 && j==5)
             {
   
               // We needed to generate a random number (rn) to be used to eliminate
@@ -497,69 +489,25 @@ int main (int argc, char *argv[])
               Ptr<UniformRandomVariable> x = CreateObject<UniformRandomVariable> ();
               x->SetAttribute ("Min", DoubleValue (0));
               x->SetAttribute ("Max", DoubleValue (1));
-              double rn = x->GetValue ();
+              
 
               Address sinkAddress;
-              Ptr<Node> n = nodes_traffic.Get (j);
-              Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();
-              Ipv4InterfaceAddress ipv4_int_addr = ipv4->GetAddress (1, 0);
-              Ipv4Address ip_addr = ipv4_int_addr.GetLocal ();
-              sinkAddress = InetSocketAddress (ip_addr, sinkPortUDP);
+              //Ptr<Node> n = nodes_traffic.Get (j);
+              //Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();
+              //Ipv4InterfaceAddress ipv4_int_addr = ipv4->GetAddress (1, 0);
+              //Ipv4Address ip_addr = ipv4_int_addr.GetLocal ();
+              Ipv4Address ip_test("10.1.1.1");
+              NS_LOG_UNCOND(ip_test);
+              sinkAddress = InetSocketAddress (ip_test, sinkPortUDP);
               
-              //PoissonAppHelper poisson  ("ns3::UdpSocketFactory",sinkAddress);
-              //poisson.SetAverageRate (DataRate(round(DataRate(Traff_Matrix[i][j]).GetBitRate()*load_factor)), AvgPacketSize);
-              //poisson.SetUpdatable(updatable_nodes[i], updateTrafficRateTime);
-              //ApplicationContainer apps = poisson.Install (nodes_traffic.Get (i));
-              //
-              //apps.Start (Seconds (AppStartTime + 5.0 + rn));
-              //apps.Stop (Seconds (AppStopTime));
-              
-            //NS_LOG_UNCOND("teste "<< Adj_Matrix[i][j]<<"   "<< activateSignaling);
-              
-            if (Adj_Matrix[i][j] == 1 && activateSignaling){
-                interface++;
-                countLinks++;
-                
-                NodeContainer nodes_test;
-                nodes_test.Add(nodes_switch.Get(i));
-                nodes_test.Add(nodes_switch.Get(j));
-
-
-                NetDeviceContainer test_nd;
-                test_nd.Add(nds_switch[i][j]);
-                test_nd.Add(nds_switch[j][i]);
-
-
-
-
-
-                
-                Address sinkAddress;
-                Ipv4AddressHelper address;
-                std::string ip_str = "10.1."+std::to_string(countLinks)+".0";
-                address.SetBase (ip_str.c_str(), "255.255.255.0");
-                Ipv4InterfaceContainer interfaces = address.Assign (test_nd);
-                sinkAddress = InetSocketAddress (interfaces.GetAddress (1), sinkPort);
-                if(signalingType=="NN"){
-                  BigSignalingAppHelper sign ("ns3::UdpSocketFactory",sinkAddress);
-                  sign.SetAverageStep (syncStep, bigSignalingSize);
-                  sign.SetSourceDest(i+1, j+1);
-                  ApplicationContainer apps = sign.Install (nodes_test.Get (0));  // traffic sources are installed on all nodes
-                  apps.Start (Seconds (AppStartTime + 5.0 ));
-                  apps.Stop (Seconds (AppStopTime));
-                }
-
-                if(agentType=="sp"){
-                  OspfSignalingAppHelper ospf_sign ("ns3::UdpSocketFactory",sinkAddress);
-                  ospf_sign.SetAverageStep (syncStep, bigSignalingSize);
-                  ospf_sign.SetSourceDestInterface(i+1, j+1, interface);
-                  ospf_sign.SetNNeighbors(nodes_degree[i]);
-                  ApplicationContainer ospf_apps = ospf_sign.Install (nodes_test.Get (0));  // traffic sources are installed on all nodes
-                  ospf_apps.Start (Seconds (AppStartTime + rn*3));
-                  ospf_apps.Stop (Seconds (AppStopTime));
-                }
-              }
-          
+              double rn = x->GetValue ();
+              PoissonAppHelper poisson  ("ns3::UdpSocketFactory",sinkAddress);
+              poisson.SetAverageRate (DataRate(round(DataRate(Traff_Matrix[i][j]).GetBitRate()*load_factor)), AvgPacketSize);
+              poisson.SetUpdatable(false, updateTrafficRateTime);
+              poisson.SetDestination(uint32_t (j+1));
+              ApplicationContainer apps = poisson.Install (nodes_traffic.Get (i));
+              apps.Start (Seconds (AppStartTime + rn));
+              apps.Stop (Seconds (AppStopTime));            
               
             }
         }
@@ -573,15 +521,15 @@ int main (int argc, char *argv[])
 
   NS_LOG_INFO ("Setup Packet Sinks.");
 
-  for (int i=0;i<n_nodes;i++){
-    Address anyAddress;
-    anyAddress = InetSocketAddress (Ipv4Address::GetAny (), sinkPort);
-    PacketSinkHelper packetSinkHelper ("ns3::UdpSocketFactory", anyAddress);
-    ApplicationContainer sinkApps = packetSinkHelper.Install (nodes_switch.Get (i));
-    sinkApps.Start (Seconds (SinkStartTime));
-    sinkApps.Stop (Seconds (SinkStopTime));
-
-  }
+  //for (int i=0;i<n_nodes;i++){
+  //  Address anyAddress;
+  //  anyAddress = InetSocketAddress (Ipv4Address::GetAny (), sinkPort);
+  //  PacketSinkHelper packetSinkHelper ("ns3::UdpSocketFactory", anyAddress);
+  //  ApplicationContainer sinkApps = packetSinkHelper.Install (nodes_switch.Get (i));
+  //  sinkApps.Start (Seconds (SinkStartTime));
+  //  sinkApps.Stop (Seconds (SinkStopTime));
+  //
+  //}
 
   for (int i=0;i<n_nodes;i++){
     Address anyAddress;
@@ -593,20 +541,23 @@ int main (int argc, char *argv[])
 
   }
 
+  NS_LOG_UNCOND ("Initialize Global Routing.");
+  Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
   
   
+
   // ---------- End of Create n*(n-1) CBR Flows ------------------------------
 
 
   // ---------- Simulation Monitoring ----------------------------------------
   NS_LOG_UNCOND("Configuration of time based alert");
-  for(int i=0;i<n_nodes;i++)
+  for(int i=0;i<int(packetRoutingEnvs.size());i++)
   {
     Simulator::Schedule (Seconds(0.0), &ScheduleNextTrainStep, packetRoutingEnvs[i]);
+    NS_LOG_UNCOND(i);
   }
   NS_LOG_INFO ("Configure Tracing.");
   
-
   
   NS_LOG_INFO ("Run Simulation.");
   NS_LOG_UNCOND ("Simulation start");
@@ -616,9 +567,9 @@ int main (int argc, char *argv[])
   // flowmon->SerializeToXmlFile (flow_name.c_str(), true, true);
   NS_LOG_UNCOND ("Simulation stop");
   NS_LOG_UNCOND("Sent Packets: "<< counter_send);
-  for (int i = 0; i < n_nodes; i++)
+  for (size_t i = 0; i < myOpenGymInterfaces.size(); i++)
   {
-    // NS_LOG_UNCOND("" << i);
+    NS_LOG_UNCOND("flags" << i);
     packetRoutingEnvs[i]->is_trainStep_flag = 1;
     myOpenGymInterfaces[i]->NotifySimulationEnd();
   }

@@ -105,4 +105,9 @@ PoissonAppHelper::SetUpdatable(bool updatable, double updateTrafficRateTime){
   m_factory.Set ("UpdateTrafficRateTime", DoubleValue(updateTrafficRateTime));
 }
 
+void
+PoissonAppHelper::SetDestination(uint32_t dest){
+  m_factory.Set ("Dest", UintegerValue(dest));
+}
+
 } // namespace ns3

@@ -1,5 +1,5 @@
 array=(
-0.6
+0.4
 #0.8
 #1.0
 #1.2
@@ -16,7 +16,7 @@ for j in ${array[@]}
 	res1=${FLOAT/.*}
 	echo $res1
 	python3 main.py \
-		--simTime=15 \
+		--simTime=60 \
 		--basePort=3000 \
 		--train=0 \
 		--seed=100 \
@@ -24,7 +24,7 @@ for j in ${array[@]}
 		--session_name="test_sp_load_$res1" \
 		--link_delay="0ms" \
 		--signaling_type="ideal" \
-		--signalingSim=1 \
+		--signalingSim=0 \
 		--logs_parent_folder=examples/abilene/ \
 		--traffic_matrix_index=0 \
 		--adjacency_matrix_path=examples/abilene/adjacency_matrix.txt \

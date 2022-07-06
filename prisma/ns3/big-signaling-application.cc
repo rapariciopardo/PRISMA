@@ -269,7 +269,7 @@ void BigSignalingGeneratorApplication::SendPacket ()
   packet->AddPacketTag(tag);
   m_txTrace (packet);
   std::string start_time = std::to_string(Simulator::Now().GetMilliSeconds());
-  //NS_LOG_UNCOND("START: "<<start_time<<"   SIZE: "<<m_pktSize);
+  NS_LOG_UNCOND("START: "<<start_time<<"   SIZE: "<<m_pktSize);
   //NS_LOG_UNCOND("SRC: "<<m_src<<"    DEST: "<<m_dest);
   //const uint8_t* start_int = reinterpret_cast<const uint8_t*>(&start_time[0]);
   //Ptr<Packet> pcopy = packet->Copy();

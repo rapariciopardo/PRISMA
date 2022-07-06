@@ -59,25 +59,54 @@ MyTag::GetInstanceTypeId (void) const
 uint32_t 
 MyTag::GetSerializedSize (void) const
 {
-  return 22;
+  uint32_t ret = 5;
+  if(m_simpleValue==0){
+    ret += 8;
+  }
+  else if(m_simpleValue==1){
+    ret += 12;
+  }
+  else if(m_simpleValue==2){
+    ret += 8;
+  }
+  return ret;
 }
 void 
 MyTag::Serialize (TagBuffer i) const
 {
   i.WriteU8 (m_simpleValue);
-  i.WriteU64 (m_pktId);
-  i.WriteU32 (m_segIndex);
-  i.WriteU32 (m_NNIndex);
-  i.WriteU32 (m_nodeId);
+  i.WriteU32(m_finalDestination);
+  if(m_simpleValue==0){
+    i.WriteU64 (m_startTime);
+  }
+  else if(m_simpleValue==1){
+    i.WriteU32 (m_segIndex);
+    i.WriteU32 (m_NNIndex);
+    i.WriteU32 (m_nodeId);
+  }
+  else if(m_simpleValue==2){
+    i.WriteU64 (m_pktId);
+  }
+  
+  
 }
 void 
 MyTag::Deserialize (TagBuffer i)
 {
   m_simpleValue = i.ReadU8 ();
-  m_pktId = i.ReadU64 ();
-  m_segIndex = i.ReadU32 ();
-  m_NNIndex = i.ReadU32 ();
-  m_nodeId = i.ReadU32 ();
+  m_finalDestination = i.ReadU32 ();
+  if(m_simpleValue==0){
+    m_startTime=i.ReadU64 ();
+  }
+  else if(m_simpleValue==1){
+    m_segIndex=i.ReadU32 ();
+    m_NNIndex=i.ReadU32 ();
+    m_nodeId=i.ReadU32 ();
+  }
+  else if(m_simpleValue==2){
+    m_pktId=i.ReadU64 ();
+  }
+ 
 }
 void 
 MyTag::Print (std::ostream &os) const
@@ -133,4 +162,24 @@ uint32_t
 MyTag::GetNodeId (void) const
 {
   return m_nodeId;
+}
+void
+MyTag::SetStartTime (uint64_t value)
+{
+  m_nodeId = value;
+}
+uint64_t 
+MyTag::GetStartTime (void) const
+{
+  return m_nodeId;
+}
+void
+MyTag::SetFinalDestination (uint32_t value)
+{
+  m_finalDestination = value;
+}
+uint32_t 
+MyTag::GetFinalDestination (void) const
+{
+  return m_finalDestination;
 }

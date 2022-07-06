@@ -57,7 +57,7 @@ class PacketRoutingEnv : public OpenGymEnv
 {
 public:
   PacketRoutingEnv ();
-  PacketRoutingEnv (Ptr<Node> node, uint32_t numberOfNodes, uint64_t linkRateValue, bool activateSignaling, double signPacketSize);
+  PacketRoutingEnv (Ptr<Node> node, uint32_t numberOfNodes, uint64_t linkRateValue, bool activateSignaling, double signPacketSize, vector<int> overlayNeighbors);
   PacketRoutingEnv (Time stepTime, Ptr<Node> node);
   virtual ~PacketRoutingEnv ();
   static TypeId GetTypeId (void);
@@ -92,9 +92,13 @@ private:
   Ptr<Node> m_node;
   uint32_t m_dest;
   uint32_t m_src;
+  vector<int> m_overlayNeighbors;
   static uint32_t m_n_nodes;
   Address m_srcAddr;
   Address m_destAddr;
+  UdpHeader m_udpHeader;
+  Ipv4Header m_ipHeader;
+
   Ptr<Packet> m_pckt;
   uint16_t m_lengthType = 2054;
   uint32_t m_size;

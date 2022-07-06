@@ -82,6 +82,7 @@ def arguments_parser():
     group4 = parser.add_argument_group('Network parameters')
     group4.add_argument('--load_factor', type=float, help='scale of the traffic matrix', default=1)
     group4.add_argument('--adjacency_matrix_path', type=str, help='Path to the adjacency matrix', default="examples/abilene/adjacency_matrix.txt")
+    group4.add_argument('--overlay_matrix_path', type=str, help='Path to the adjacency matrix', default="examples/abilene/overlay_matrix.txt")
     group4.add_argument('--traffic_matrix_root_path', type=str, help='Path to the traffic matrix folder', default="examples/abilene/traffic_matrices/")
     group4.add_argument('--traffic_matrix_index', type=int, help='Index of the traffic matrix', default=0)
     group4.add_argument('--node_coordinates_path', type=str, help='Path to the nodes coordinates', default="examples/abilene/node_coordinates.txt")
@@ -136,6 +137,7 @@ def arguments_parser():
     #if params["save_models"]:
     #    params["save_models"] = os.path.abspath(params["save_models"])
     params["adjacency_matrix_path"] = os.path.abspath(params["adjacency_matrix_path"])
+    params["overlay_matrix_path"] = os.path.abspath(params["overlay_matrix_path"])
     params["traffic_matrix_path"] = os.path.abspath(f'{params["traffic_matrix_root_path"].rstrip("/")}/node_intensity_normalized_{params["traffic_matrix_index"]}.txt')
     params["node_coordinates_path"] = os.path.abspath(params["node_coordinates_path"])
     params["ns3_sim_path"] = os.path.abspath(params["ns3_sim_path"])
@@ -144,8 +146,10 @@ def arguments_parser():
     G=nx.DiGraph(nx.empty_graph())
     for i, element in enumerate(np.loadtxt(open(params["node_coordinates_path"]))):
         G.add_node(i,pos=tuple(element))
-    G = nx.from_numpy_matrix(np.loadtxt(open(params["adjacency_matrix_path"])), parallel_edges=False, create_using=G)
-
+    G = nx.from_numpy_matrix(np.loadtxt(open(params["overlay_matrix_path"])), parallel_edges=False, create_using=G)
+    params["maxNumNodes"] = G.number_of_nodes()
+    remove_list = [node for node,degree in dict(G.degree()).items() if degree < 1]
+    G.remove_nodes_from(remove_list)
     params["numNodes"] = G.number_of_nodes()
     params["G"] = G
     params["logs_parent_folder"] = params["logs_parent_folder"].rstrip("/")
@@ -306,7 +310,7 @@ def run_ns3(params):
     ## run NS3 simulator
     ns3_params_format = ('prisma --simSeed={} --openGymPort={} --simTime={} --AvgPacketSize={} '
                         '--LinkDelay={} --LinkRate={} --MaxBufferLength={} --load_factor={} '
-                        '--adj_mat_file_name={} --node_coordinates_file_name={} --node_intensity_file_name={}'
+                        '--adj_mat_file_name={} --overlay_mat_file_name={} --node_coordinates_file_name={} --node_intensity_file_name={}'
                         ' --signaling={} --AgentType={} --signalingType={} --syncStep={}'.format( params["seed"],
                                                                                                   params["basePort"],
                                                                                                   str(params["simTime"]),
@@ -316,6 +320,7 @@ def run_ns3(params):
                                                                                                   str(params["max_out_buffer_size"]) + "B",
                                                                                                   params["load_factor"],
                                                                                                   params["adjacency_matrix_path"],
+                                                                                                  params["overlay_matrix_path"],
                                                                                                   params["node_coordinates_path"],
                                                                                                   params["traffic_matrix_path"],
                                                                                                   bool(params["signalingSim"]),
@@ -391,7 +396,8 @@ def main():
 
     ## run the agents threads
     agent_instances = []
-    for index in range(params["numNodes"]):
+    for index in params["G"].nodes(): #range(params["numNodes"]):
+        print("Index", index)
         agent_instance = Agent(index, agent_type=params["agent_type"], train=params["train"])
         agent_instances.append(agent_instance)
         th1 = threading.Thread(target=agent_instance.run_forwarder, args=())
@@ -413,27 +419,27 @@ def main():
         stats_writer(summary_writer_session, summary_writer_nb_arrived_pkts, summary_writer_nb_lost_pkts, summary_writer_nb_new_pkts)
 
     print(f"Signaling overhead = {Agent.small_signaling_overhead_counter}")
-    #print(f""" Summary of the episode :
-    #        Total number of Iterations = {Agent.currIt},
-    #        Total number of Transitions = {Agent.nb_transitions},
-    #        Simulation time = {Agent.curr_time},
-    #        Total e2e delay = {Agent.total_e2e_delay}, 
-    #        Total number of packets = {Agent.total_new_rcv_pkts}, 
-    #        Number of arrived packets = {Agent.total_arrived_pkts},
-    #        Number of lost packets = {Agent.total_lost_pkts},
-    #        Loss ratio = {Agent.total_lost_pkts/Agent.total_new_rcv_pkts}
-    #        Delay_ideal = {np.array(Agent.delays_ideal).mean()}
-    #        Delay_real = {np.array(Agent.delays_real).mean()}
-    #        total cost = {Agent.total_rewards_with_loss}
-    #        theoretical cost = {((Agent.total_lost_pkts * Agent.loss_penalty) + np.array(Agent.delays_ideal).sum())/(Agent.total_lost_pkts + Agent.total_arrived_pkts)}
-    #        Avg cost = {Agent.total_rewards_with_loss/Agent.total_new_rcv_pkts}
-    #        Reward = {np.array(Agent.rewards).mean()} 
-    #        Signaling overhead = {Agent.small_signaling_overhead_counter + Agent.big_signaling_overhead_counter}
-    #        small nb Signaling pkts = {Agent.small_signaling_overhead_counter}
-    #        big nb Signaling pkts ideal = {Agent.big_signaling_overhead_counter}
-    #        Data pkts size = {Agent.total_data_size}
-    #
-    #        """)
+    print(f""" Summary of the episode :
+            Total number of Iterations = {Agent.currIt},
+            Total number of Transitions = {Agent.nb_transitions},
+            Simulation time = {Agent.curr_time},
+            Total e2e delay = {Agent.total_e2e_delay}, 
+            Total number of packets = {Agent.total_new_rcv_pkts}, 
+            Number of arrived packets = {Agent.total_arrived_pkts},
+            Number of lost packets = {Agent.total_lost_pkts},
+            Loss ratio = {Agent.total_lost_pkts/Agent.total_new_rcv_pkts}
+            Delay_ideal = {np.array(Agent.delays_ideal).mean()}
+            Delay_real = {np.array(Agent.delays_real).mean()}
+            total cost = {Agent.total_rewards_with_loss}
+            theoretical cost = {((Agent.total_lost_pkts * Agent.loss_penalty) + np.array(Agent.delays_ideal).sum())/(Agent.total_lost_pkts + Agent.total_arrived_pkts)}
+            Avg cost = {Agent.total_rewards_with_loss/Agent.total_new_rcv_pkts}
+            Reward = {np.array(Agent.rewards).mean()} 
+            Signaling overhead = {Agent.small_signaling_overhead_counter + Agent.big_signaling_overhead_counter}
+            small nb Signaling pkts = {Agent.small_signaling_overhead_counter}
+            big nb Signaling pkts ideal = {Agent.big_signaling_overhead_counter}
+            Data pkts size = {Agent.total_data_size}
+    
+            """)
     if Agent.total_arrived_pkts:
         print(f"Average delay per arrived packets = {Agent.total_e2e_delay/(Agent.total_arrived_pkts*1000)}")
         

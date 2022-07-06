@@ -232,7 +232,7 @@ void OspfSignalingGeneratorApplication::StartSending ()
   //NS_LOG_UNCOND("NET DEVICE "<<m_socket->GetBoundNetDevice()->GetNode()->GetId());
   //ScheduleNextTx ();  // Schedule the send packet event
   Simulator::Schedule(Seconds(0.0), &OspfSignalingGeneratorApplication::sendHelloMessage, this);
-  //Simulator::Schedule(Seconds(0.0), &OspfSignalingGeneratorApplication::sendLSAMessage, this);
+  Simulator::Schedule(Seconds(5.0), &OspfSignalingGeneratorApplication::sendLSAMessage, this);
 }
 
 // Private helpers
@@ -271,7 +271,7 @@ void OspfSignalingGeneratorApplication::sendHelloMessage(){
   tag.setNode((uint16_t)(m_src-1));
   packet->AddPacketTag(tag);
   m_socket->Send(packet);
-  Simulator::Schedule(Seconds(0.1), &OspfSignalingGeneratorApplication::sendLSAMessage, this);
+  Simulator::Schedule(Seconds(10.0), &OspfSignalingGeneratorApplication::sendLSAMessage, this);
   //NS_LOG_UNCOND(ret);
   
 }

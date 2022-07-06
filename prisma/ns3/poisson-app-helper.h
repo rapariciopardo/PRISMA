@@ -84,6 +84,8 @@ public:
 
   void SetUpdatable(bool updatable, double updateTrafficRateTime);
 
+  void SetDestination(uint32_t dest);
+
   /**
    * Install an ns3::PoissonGeneratorApplication on each node of the input container
    * configured with all the attributes set with SetAttribute.

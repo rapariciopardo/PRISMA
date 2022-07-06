@@ -336,6 +336,8 @@ void
 PointToPointNetDevice::Receive (Ptr<Packet> packet)
 {
   NS_LOG_FUNCTION (this << packet);
+  //NS_LOG_UNCOND("Node:"<<m_node->GetId());
+  //NS_LOG_UNCOND(packet->ToString());
   uint16_t protocol = 0;
   if (m_receiveErrorModel && m_receiveErrorModel->IsCorrupt (packet) ) 
     {
@@ -513,6 +515,10 @@ PointToPointNetDevice::Send (
   uint16_t protocolNumber)
 {
   NS_LOG_FUNCTION (this << packet << dest << protocolNumber);
+  //if(m_node->GetId()<=10){
+  //NS_LOG_UNCOND ("Node: "<<m_node->GetId()<<"    IF: "<<m_ifIndex);
+  //NS_LOG_UNCOND ("UID is " << packet->GetUid ());
+  //}
   //NS_LOG_UNCOND ("p=" << packet << ", dest=" << &dest);
   //NS_LOG_UNCOND ("UID is " << packet->GetUid ());
 
