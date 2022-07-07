@@ -263,6 +263,8 @@ void BigSignalingGeneratorApplication::SendPacket ()
   Ptr<Packet> packet = Create<Packet> (m_segSize);
   MyTag tag;
   tag.SetSimpleValue(0x01);
+  tag.SetFinalDestination(m_dest-1);
+  tag.SetLastHop(m_src-1);
   tag.SetSegIndex(m_segIndex);
   tag.SetNNIndex(m_NNIndex);
   tag.SetNodeId(m_src-1);
@@ -303,7 +305,7 @@ void BigSignalingGeneratorApplication::SendPacket ()
       m_txTraceWithAddresses (packet, localAddress, Inet6SocketAddress::ConvertFrom(m_peer));
     }
   m_lastStartTime = Simulator::Now ();
-  ScheduleNextTx ();
+  //ScheduleNextTx ();
 }
 
 

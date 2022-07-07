@@ -270,9 +270,7 @@ PacketRoutingEnv::GetExtraInfo()
       myInfo += std::to_string(m_pcktIdSign);
     }
 
-    if(m_signaling==1){
-      NS_LOG_UNCOND("SIGNALING");
-    }
+    
     myInfo += ", Signaling =";
     myInfo += std::to_string(m_signaling);
 
@@ -429,6 +427,7 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
   // define is train step flag
   //int test;
   //std::cin>>test;
+  NS_LOG_UNCOND("..............................................................");
   NS_LOG_UNCOND("SimTime: "<<Simulator::Now().GetMilliSeconds());
   NS_LOG_UNCOND("Node: "<<entity->m_node->GetId()<<"    ND: "<<netDev->GetIfIndex());
   entity->is_trainStep_flag = 0;
@@ -484,6 +483,7 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
     entity->m_nodeIdSign = tagCopy.GetNodeId();
     NS_LOG_UNCOND("BIG SIGNALING");
   }
+  NS_LOG_UNCOND("..............................................................");
   
 
 

@@ -311,7 +311,7 @@ int main (int argc, char *argv[])
 
   //Parameters of signaling
   double smallSignalingSize[n_nodes] = {0.0};
-  //double bigSignalingSize = 36000;
+  double bigSignalingSize = 36000;
   
   if(signalingType=="ideal"){
     NS_LOG_UNCOND("SMALL SIGNALING");
@@ -472,7 +472,7 @@ int main (int argc, char *argv[])
       //interface = 0;
       for (int j = 0; j < n_nodes; j++)
         {
-          if (i != j && i==0 && j==5)
+          if (i != j && i==0 && j==1)
             {
   
               // We needed to generate a random number (rn) to be used to eliminate
@@ -486,13 +486,10 @@ int main (int argc, char *argv[])
               
 
               Address sinkAddress;
-              //Ptr<Node> n = nodes_traffic.Get (j);
-              //Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();
-              //Ipv4InterfaceAddress ipv4_int_addr = ipv4->GetAddress (1, 0);
-              //Ipv4Address ip_addr = ipv4_int_addr.GetLocal ();
-              Ipv4Address ip_test("10.1.1.1");
-              NS_LOG_UNCOND(ip_test);
-              sinkAddress = InetSocketAddress (ip_test, sinkPortUDP);
+              string string_ip_dest= "10.1.1."+std::to_string(i+1);
+              Ipv4Address ip_dest(string_ip_dest.c_str());
+              NS_LOG_UNCOND(ip_dest);
+              sinkAddress = InetSocketAddress (ip_dest, sinkPortUDP);
               
               double rn = x->GetValue ();
               PoissonAppHelper poisson  ("ns3::UdpSocketFactory",sinkAddress);
@@ -501,7 +498,22 @@ int main (int argc, char *argv[])
               poisson.SetDestination(uint32_t (j+1));
               ApplicationContainer apps = poisson.Install (nodes_traffic.Get (i));
               apps.Start (Seconds (AppStartTime + rn));
-              apps.Stop (Seconds (AppStopTime));            
+              apps.Stop (Seconds (AppStopTime));
+
+              if(activateSignaling && OverlayAdj_Matrix[i][j]==1 && signalingType=="ideal"){
+                NS_LOG_UNCOND("BIG SIGNALING");
+                string string_ip_bigSignaling= "10.2.2."+std::to_string(j+1);
+                Ipv4Address ip_big_signaling(string_ip_bigSignaling.c_str());
+                NS_LOG_UNCOND(ip_big_signaling);
+                sinkAddress = InetSocketAddress (ip_big_signaling, sinkPortUDP);
+
+                BigSignalingAppHelper sign ("ns3::UdpSocketFactory",sinkAddress); 
+                sign.SetAverageStep (syncStep, bigSignalingSize); 
+                sign.SetSourceDest(i+1, j+1); 
+                ApplicationContainer apps = sign.Install (nodes_traffic.Get (i));  // traffic sources are installed on all nodes 
+                apps.Start (Seconds (AppStartTime + 5.0 )); 
+                apps.Stop (Seconds (AppStopTime)); 
+              }            
               
             }
         }
