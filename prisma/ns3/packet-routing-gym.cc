@@ -323,9 +323,6 @@ PacketRoutingEnv::GetExtraInfo()
 bool
 PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
 {
-  if(m_node->GetId()==1){
-    
-  }
   
   NS_LOG_FUNCTION (this);
   //NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", MyExecuteActions: " << action );
@@ -346,11 +343,47 @@ PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
         if(dev->GetIfIndex()!=m_recvDev->GetIfIndex()) dev->Send(pckt, m_destAddr, 0x800);
       } 
     }
-  
-    //NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", MyExecuteActions: " << m_fwdDev_idx << "mdevices " << m_node->GetNDevices());
+    if(m_signaling==0 && m_activateSignaling && m_lastHop!=1000){
+      
+      MyTag tagSmallSignaling;
+      Ptr<Packet> smallSignalingPckt = Create<Packet> (m_signPacketSize);
+      tagSmallSignaling.SetSimpleValue(0x02);
+      tagSmallSignaling.SetFinalDestination(m_lastHop);
+      tagSmallSignaling.SetLastHop(m_src);
+      uint64_t id = m_pckt->GetUid();
+      //NS_LOG_UNCOND("SIGN "<<uint32_t(id));
+      tagSmallSignaling.SetIdValue(id);
+      smallSignalingPckt->AddPacketTag(tagSmallSignaling);
+      UdpHeader udp_head;
+      smallSignalingPckt->AddHeader(udp_head);
+      Ipv4Header ip_head;
+      string string_ip_src= "10.2.2."+std::to_string(m_node->GetId()+1);
+      Ipv4Address ip_src(string_ip_src.c_str());
+      ip_head.SetSource(ip_src);
+      string string_ip_dest= "10.2.2."+std::to_string(m_lastHop+1);
+      Ipv4Address ip_dest(string_ip_dest.c_str());
+      ip_head.SetDestination(ip_dest);
+      smallSignalingPckt->AddHeader(ip_head);
+      
+      NS_LOG_UNCOND("---------------------------------------------------");
+      NS_LOG_UNCOND("Sending signaling "<<m_signPacketSize);
+      NS_LOG_UNCOND(smallSignalingPckt->ToString());
+      NS_LOG_UNCOND("---------------------------------------------------");
+      
+      m_recvDev->Send(smallSignalingPckt, m_destAddr, 0x800);
+
+    }
+
     if(m_isGameOver){
-      m_fwdDev_idx = 1;
+      NS_LOG_UNCOND("FINAL DESTINATION!");
     } else if (m_fwdDev_idx < m_node->GetNDevices()-2 && m_signaling==0){
+      MyTag sendingTag;
+      m_pckt->PeekPacketTag(sendingTag);
+      sendingTag.SetLastHop(m_node->GetId());
+      m_pckt->ReplacePacketTag(sendingTag);
+
+
+
       m_pckt->AddHeader(m_udpHeader);
       if(m_node->GetId()==1 && m_fwdDev_idx==4) m_fwdDev_idx = 3;
       string string_ip= "10.2.2."+std::to_string(m_overlayNeighbors[m_fwdDev_idx]+1);
@@ -363,34 +396,13 @@ PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
       Ptr<Ipv4RoutingProtocol> routing = ipv4->GetRoutingProtocol( );
       Ptr<Ipv4Route> route = routing->RouteOutput (m_pckt, m_ipHeader, 0, sockerr);
       Ptr<PointToPointNetDevice> dev = DynamicCast<PointToPointNetDevice>(route->GetOutputDevice());
+      NS_LOG_UNCOND("---------------------------------------------------");
       NS_LOG_UNCOND("SENDING FROM NODE "<<dev->GetNode()->GetId()<<"    ND "<<dev->GetIfIndex());
+      NS_LOG_UNCOND("---------------------------------------------------");
       dev->Send(m_pckt, m_destAddr, 0x0800);
 
 
-      if(m_activateSignaling){
-        //NS_LOG_UNCOND("Sending "<<m_signPacketSize);
-        Ptr<Packet> pckt = Create<Packet> (m_signPacketSize);
-        Ipv4Header ip_head;
-        UdpHeader udp_head;
-        pckt->AddHeader(udp_head);
-        pckt->AddHeader(ip_head);
-        MyTag tagSmallSignaling;
-        tagSmallSignaling.SetSimpleValue(0x02);
-        uint64_t id = m_pckt->GetUid();
-        //NS_LOG_UNCOND("SIGN "<<uint32_t(id));
-        tagSmallSignaling.SetIdValue(id);
-        pckt->AddPacketTag(tagSmallSignaling);
-
-
-        //arrived = m_recvDev->Send(pckt, m_destAddr, 0x800);
-        //if (arrived == 1){
-        //    //NS_LOG_UNCOND ("Packet Successfully delivered");
-        //}
-        //else{
-        //    //NS_LOG_UNCOND ("Packet Lost");
-        //}
       
-      }
 
       //p2p_netDev = DynamicCast<PointToPointNetDevice> (m_recvDev);
       //queue = p2p_netDev->GetQueue ();
@@ -451,20 +463,18 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
 
   MyTag tagCopy;
   p->PeekPacketTag(tagCopy);
-  uint8_t tagValue = tagCopy.GetSimpleValue();
   entity->m_dest = tagCopy.GetFinalDestination();
   entity->m_src = entity->m_node->GetId();
-
+  entity->m_lastHop = tagCopy.GetLastHop();
   NS_LOG_UNCOND("Destination: "<< entity->m_dest);
+  NS_LOG_UNCOND("Last Hop: "<<entity->m_lastHop);
   NS_LOG_UNCOND(p->ToString());
-  if(tagValue!=0){
-    NS_LOG_UNCOND(p->ToString());
-  }
+  
 
   if(tagCopy.GetSimpleValue()==uint8_t(0x02)){
     entity->m_signaling=1;
     entity->m_pcktIdSign = tagCopy.GetIdValue();
-    NS_LOG_UNCOND("BIG SIGNALING");
+    NS_LOG_UNCOND("SMALL SIGNALING");
   }
 
   if(tagCopy.GetSimpleValue()==0x01){
@@ -472,7 +482,7 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
     entity->m_NNIndex = tagCopy.GetNNIndex();
     entity->m_segIndex = tagCopy.GetSegIndex();
     entity->m_nodeIdSign = tagCopy.GetNodeId();
-    NS_LOG_UNCOND("SMALL SIGNALING");
+    NS_LOG_UNCOND("BIG SIGNALING");
   }
   
 

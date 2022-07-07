@@ -30,10 +30,13 @@ public:
   uint64_t GetStartTime (void) const;
   void SetFinalDestination (uint32_t value);
   uint32_t GetFinalDestination (void) const;
+  void SetLastHop (uint32_t value);
+  uint32_t GetLastHop (void) const;
 private:
   uint8_t m_simpleValue;
   uint64_t m_startTime;
   uint32_t m_finalDestination;
+  uint32_t m_lastHop;
   uint64_t m_pktId;
   uint32_t m_segIndex;
   uint32_t m_NNIndex;

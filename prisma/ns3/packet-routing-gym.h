@@ -92,6 +92,7 @@ private:
   Ptr<Node> m_node;
   uint32_t m_dest;
   uint32_t m_src;
+  uint32_t m_lastHop;
   vector<int> m_overlayNeighbors;
   static uint32_t m_n_nodes;
   Address m_srcAddr;

@@ -291,6 +291,7 @@ void PoissonGeneratorApplication::SendPacket ()
   MyTag tag;
   tag.SetSimpleValue(0);
   tag.SetFinalDestination(m_dest-1);
+  tag.SetLastHop(1000);
   tag.SetStartTime(Simulator::Now().GetMilliSeconds());
   packet->AddPacketTag(tag);
   m_txTrace (packet);

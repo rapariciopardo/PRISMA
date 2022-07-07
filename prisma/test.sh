@@ -24,7 +24,7 @@ for j in ${array[@]}
 		--session_name="test_sp_load_$res1" \
 		--link_delay="0ms" \
 		--signaling_type="ideal" \
-		--signalingSim=0 \
+		--signalingSim=1 \
 		--logs_parent_folder=examples/abilene/ \
 		--traffic_matrix_index=0 \
 		--adjacency_matrix_path=examples/abilene/adjacency_matrix.txt \

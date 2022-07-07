@@ -199,6 +199,7 @@ int main (int argc, char *argv[])
   NS_LOG_UNCOND("--linkFailureTime: "<<linkFailureTime);
   NS_LOG_UNCOND("--Signaling: "<<activateSignaling);
   NS_LOG_UNCOND("--agentType: "<< agentType);
+  NS_LOG_UNCOND("--SignalingType: "<<signalingType);
 
   
   
@@ -311,18 +312,17 @@ int main (int argc, char *argv[])
   //Parameters of signaling
   double smallSignalingSize[n_nodes] = {0.0};
   //double bigSignalingSize = 36000;
-  if(agentType=="sp" || agentType=="opt" || signalingType=="ideal"){
-  } else{
-    if(signalingType=="NN"){
-      for(int i=0;i<n_nodes;i++){
-        smallSignalingSize[i] = 8 + (8 * (nodes_degree[i]+1));
-      }
-    } else if(signalingType=="target"){
-      for(int i=0;i<n_nodes;i++){
-        smallSignalingSize[i] = 16;
-      }
-    }  
-  }
+  
+  if(signalingType=="ideal"){
+    NS_LOG_UNCOND("SMALL SIGNALING");
+    for(int i=0;i<n_nodes;i++){
+      smallSignalingSize[i] = 8 + (8 * (nodes_degree[i]+1));
+    }
+  } else if(signalingType=="target"){
+    for(int i=0;i<n_nodes;i++){
+      smallSignalingSize[i] = 16;
+    }
+  }  
 
   //Creating the links
   NS_LOG_UNCOND("Creating link between switch nodes");
@@ -438,13 +438,7 @@ int main (int argc, char *argv[])
       
   }  
 
-  //NS_LOG_UNCOND("Size switch_nd :"<<switch_nd.GetN());
-  //for(size_t i=0;i<switch_nd.GetN();i++)
-  //{
-  //  
-  //  
-  //}
-
+  
 
   ///////////////////////////////////////////////////////////
 

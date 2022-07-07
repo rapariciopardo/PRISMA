@@ -59,7 +59,7 @@ MyTag::GetInstanceTypeId (void) const
 uint32_t 
 MyTag::GetSerializedSize (void) const
 {
-  uint32_t ret = 5;
+  uint32_t ret = 9;
   if(m_simpleValue==0){
     ret += 8;
   }
@@ -76,6 +76,7 @@ MyTag::Serialize (TagBuffer i) const
 {
   i.WriteU8 (m_simpleValue);
   i.WriteU32(m_finalDestination);
+  i.WriteU32 (m_lastHop);
   if(m_simpleValue==0){
     i.WriteU64 (m_startTime);
   }
@@ -95,6 +96,7 @@ MyTag::Deserialize (TagBuffer i)
 {
   m_simpleValue = i.ReadU8 ();
   m_finalDestination = i.ReadU32 ();
+  m_lastHop = i.ReadU32 ();
   if(m_simpleValue==0){
     m_startTime=i.ReadU64 ();
   }
@@ -182,4 +184,14 @@ uint32_t
 MyTag::GetFinalDestination (void) const
 {
   return m_finalDestination;
+}
+void
+MyTag::SetLastHop (uint32_t value)
+{
+  m_lastHop = value;
+}
+uint32_t 
+MyTag::GetLastHop (void) const
+{
+  return m_lastHop;
 }
