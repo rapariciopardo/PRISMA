@@ -122,16 +122,14 @@ class Agent():
         cl.traffic_matrix_path = params_dict["traffic_matrix_path"]
         cl.packet_size = params_dict["packet_size"]
         cl.envs = cl.maxNumNodes * [None]
-        cl.agents = {i: None for i in range(cl.numNodes)}
-        cl.prioritizedReplayBuffer = params_dict["prioritizedReplayBuffer"]
+        cl.agents = {i: None for i in range(cl.maxNumNodes)}
+        cl.upcoming_events = [[] for n in range(cl.maxNumNodes)]
         if cl.prioritizedReplayBuffer:
-            cl.replay_buffer = [PrioritizedReplayBuffer(cl.replay_buffer_max_size, 1, len(list(cl.G.neighbors(n))), n) for n in range(cl.numNodes)]
+            cl.replay_buffer = [PrioritizedReplayBuffer(cl.replay_buffer_max_size, 1, len(list(cl.G.neighbors(n))), n) for n in range(cl.maxNumNodes)]
         else:
             cl.replay_buffer = [ReplayBuffer(cl.replay_buffer_max_size) for n in range(cl.numNodes)]
-            
-        cl.upcoming_events = [[] for n in range(cl.numNodes)]
         ## transition array to be saved for each node
-        cl.lock_info_array = [[] for n in range(cl.numNodes)]
+        cl.lock_info_array = [[] for n in range(cl.maxNumNodes)]
         cl.basePort = params_dict["basePort"]
         cl.load_path = params_dict["load_path"]
         cl.logs_folder = params_dict["logs_folder"]
@@ -659,7 +657,7 @@ class Agent():
                         Agent.big_signaling_overhead_counter += pkt_size
                         Agent.big_signaling_pkt_counter += 1
                     else:
-                        print("small signaling", self.index, self.pkt_id,  Agent.upcoming_events[self.index], pkt_size)
+                        #print("small signaling", self.index, self.pkt_id,  Agent.upcoming_events[self.index], pkt_size)
                         self._get_upcoming_events_real(self.pkt_id)
                         Agent.small_signaling_overhead_counter += pkt_size
                         Agent.small_signaling_pkt_counter += 1
@@ -683,7 +681,7 @@ class Agent():
                 else: ## if the packet is not new in the network
                     states_info = Agent.temp_obs.pop(self.pkt_id)
                     hop_time_real =  Agent.curr_time - states_info["time"]
-                    hop_time_ideal = ((states_info["obs"][states_info["action"] + 1] +1 ) * Agent.packet_size * 8 / Agent.link_cap) + Agent.link_delay
+                    hop_time_ideal = ((states_info["obs"][states_info["action"] + 1] + 512 ) * 8 / Agent.link_cap) + Agent.link_delay
                     Agent.total_rewards_with_loss += hop_time_real
                     ## add to tracked pkts
                     Agent.pkt_tracking_dict[int(self.pkt_id)]["hops"].append(self.index)                        

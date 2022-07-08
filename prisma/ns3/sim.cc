@@ -110,7 +110,6 @@ int counter_send[100]= {0};
 void countPackets(int n_nodes, NetDeviceContainer* nd, std::string path, Ptr<const Packet> packet, const Address &src, const Address &dest){
 
   Ptr<Packet> p = packet->Copy();
-
   NS_LOG_UNCOND(p->ToString());
 }
 
@@ -243,6 +242,7 @@ int main (int argc, char *argv[])
 
 
 
+
   // Optionally display 2-dimensional adjacency matrix (Adj_Matrix) array
   // printMatrix (adj_mat_file_name.c_str (),Adj_Matrix);
 
@@ -312,8 +312,10 @@ int main (int argc, char *argv[])
   //Parameters of signaling
   double smallSignalingSize[n_nodes] = {0.0};
   double bigSignalingSize = 36000;
-  
-  if(signalingType=="ideal"){
+  if(agentType=="sp" || agentType=="opt" || signalingType=="ideal"){
+    activateSignaling=false;
+  }
+  if(signalingType=="NN"){
     NS_LOG_UNCOND("SMALL SIGNALING");
     for(int i=0;i<n_nodes;i++){
       smallSignalingSize[i] = 8 + (8 * (nodes_degree[i]+1));
@@ -400,6 +402,23 @@ int main (int argc, char *argv[])
     }
   }
 
+  //Create The Overlay Mask Traffic rate
+  float OverlayMaskTrafficRate[n_nodes][n_nodes];
+
+  for(int i=0;i<n_nodes;i++){
+    for(int j=0;j<n_nodes;j++){
+
+      if(overlayNodesChecker[i] && overlayNodesChecker[j] && i!=j){
+        OverlayMaskTrafficRate[i][j] = 1.0;
+      } else{
+        OverlayMaskTrafficRate[i][j] =0.0;
+      }
+      std::cout<<OverlayMaskTrafficRate[i][j]<<" ";
+    }
+    std::cout<<std::endl;
+  }
+  NS_LOG_UNCOND(OverlayMaskTrafficRate);
+
   // OpenGym Env
   NS_LOG_INFO ("Setting up OpemGym Envs for each node.");
   
@@ -472,7 +491,7 @@ int main (int argc, char *argv[])
       //interface = 0;
       for (int j = 0; j < n_nodes; j++)
         {
-          if (i != j && i==0 && j==1)
+          if (i != j)
             {
   
               // We needed to generate a random number (rn) to be used to eliminate
@@ -494,13 +513,14 @@ int main (int argc, char *argv[])
               double rn = x->GetValue ();
               PoissonAppHelper poisson  ("ns3::UdpSocketFactory",sinkAddress);
               poisson.SetAverageRate (DataRate(round(DataRate(Traff_Matrix[i][j]).GetBitRate()*load_factor)), AvgPacketSize);
+              poisson.SetTrafficValableProbability(OverlayMaskTrafficRate[i][j]);
               poisson.SetUpdatable(false, updateTrafficRateTime);
               poisson.SetDestination(uint32_t (j+1));
               ApplicationContainer apps = poisson.Install (nodes_traffic.Get (i));
               apps.Start (Seconds (AppStartTime + rn));
               apps.Stop (Seconds (AppStopTime));
 
-              if(activateSignaling && OverlayAdj_Matrix[i][j]==1 && signalingType=="ideal"){
+              if(activateSignaling && OverlayAdj_Matrix[i][j]==1 && signalingType=="NN"){
                 NS_LOG_UNCOND("BIG SIGNALING");
                 string string_ip_bigSignaling= "10.2.2."+std::to_string(j+1);
                 Ipv4Address ip_big_signaling(string_ip_bigSignaling.c_str());
@@ -511,7 +531,7 @@ int main (int argc, char *argv[])
                 sign.SetAverageStep (syncStep, bigSignalingSize); 
                 sign.SetSourceDest(i+1, j+1); 
                 ApplicationContainer apps = sign.Install (nodes_traffic.Get (i));  // traffic sources are installed on all nodes 
-                apps.Start (Seconds (AppStartTime + 5.0 )); 
+                apps.Start (Seconds (AppStartTime )); 
                 apps.Stop (Seconds (AppStopTime)); 
               }            
               

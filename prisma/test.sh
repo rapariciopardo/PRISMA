@@ -16,14 +16,14 @@ for j in ${array[@]}
 	res1=${FLOAT/.*}
 	echo $res1
 	python3 main.py \
-		--simTime=60 \
+		--simTime=15 \
 		--basePort=3000 \
-		--train=0 \
+		--train=1 \
 		--seed=100 \
-		--agent_type="sp" \
+		--agent_type="dqn_buffer" \
 		--session_name="test_sp_load_$res1" \
 		--link_delay="0ms" \
-		--signaling_type="ideal" \
+		--signaling_type="target" \
 		--signalingSim=1 \
 		--logs_parent_folder=examples/abilene/ \
 		--traffic_matrix_index=0 \

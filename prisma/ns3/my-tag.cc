@@ -28,26 +28,6 @@ MyTag::GetTypeId (void)
                    EmptyAttributeValue (),
                    MakeUintegerAccessor (&MyTag::GetSimpleValue),
                    MakeUintegerChecker<uint8_t> ())
-    .AddAttribute ("IdValue",
-                   "A simple Id value",
-                   EmptyAttributeValue (),
-                   MakeUintegerAccessor (&MyTag::GetIdValue),
-                   MakeUintegerChecker<uint64_t> ())
-    .AddAttribute ("SegIndex",
-                   "Seg Index",
-                   EmptyAttributeValue (),
-                   MakeUintegerAccessor (&MyTag::GetSegIndex),
-                   MakeUintegerChecker<uint32_t> ())
-    .AddAttribute ("NNIndex",
-                   "NN Index",
-                   EmptyAttributeValue (),
-                   MakeUintegerAccessor (&MyTag::GetNNIndex),
-                   MakeUintegerChecker<uint32_t> ())
-    .AddAttribute ("NodeId",
-                   "Node Id",
-                   EmptyAttributeValue (),
-                   MakeUintegerAccessor (&MyTag::GetNodeId),
-                   MakeUintegerChecker<uint32_t> ())
   ;
   return tid;
 }
@@ -61,7 +41,7 @@ MyTag::GetSerializedSize (void) const
 {
   uint32_t ret = 9;
   if(m_simpleValue==0){
-    ret += 8;
+    ret += 9;
   }
   else if(m_simpleValue==1){
     ret += 12;
@@ -79,6 +59,7 @@ MyTag::Serialize (TagBuffer i) const
   i.WriteU32 (m_lastHop);
   if(m_simpleValue==0){
     i.WriteU64 (m_startTime);
+    i.WriteU8 (m_trafficValable);
   }
   else if(m_simpleValue==1){
     i.WriteU32 (m_segIndex);
@@ -99,6 +80,7 @@ MyTag::Deserialize (TagBuffer i)
   m_lastHop = i.ReadU32 ();
   if(m_simpleValue==0){
     m_startTime=i.ReadU64 ();
+    m_trafficValable =i.ReadU8 ();
   }
   else if(m_simpleValue==1){
     m_segIndex=i.ReadU32 ();
@@ -168,12 +150,12 @@ MyTag::GetNodeId (void) const
 void
 MyTag::SetStartTime (uint64_t value)
 {
-  m_nodeId = value;
+  m_startTime = value;
 }
 uint64_t 
 MyTag::GetStartTime (void) const
 {
-  return m_nodeId;
+  return m_startTime;
 }
 void
 MyTag::SetFinalDestination (uint32_t value)
@@ -194,4 +176,14 @@ uint32_t
 MyTag::GetLastHop (void) const
 {
   return m_lastHop;
+}
+void 
+MyTag::SetTrafficValable (uint8_t value)
+{
+  m_trafficValable = value;
+}
+uint8_t 
+MyTag::GetTrafficValable (void) const
+{
+  return m_trafficValable;
 }

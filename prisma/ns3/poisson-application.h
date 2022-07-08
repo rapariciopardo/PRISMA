@@ -129,6 +129,7 @@ private:
   TypeId          m_tid;          //!< Type of the socket used
   bool            m_updatable;
   float           m_updateTrafficRateTime;
+  float           m_trafficValableProbability;
 
   /// Traced Callback: transmitted packets.
   TracedCallback<Ptr<const Packet> > m_txTrace;

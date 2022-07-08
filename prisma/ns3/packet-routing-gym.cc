@@ -146,8 +146,7 @@ Ptr<OpenGymSpace>
 PacketRoutingEnv::GetActionSpace()
 {
   NS_LOG_FUNCTION (this);
-  uint32_t num_devs = m_node->GetNDevices();
-  Ptr<OpenGymDiscreteSpace> space = CreateObject<OpenGymDiscreteSpace> (num_devs-2); // first dev is not p2p
+  Ptr<OpenGymDiscreteSpace> space = CreateObject<OpenGymDiscreteSpace> (m_overlayNeighbors.size()); // first dev is not p2p
   NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", GetActionSpace: " << space);
   return space;
 }
@@ -156,10 +155,9 @@ Ptr<OpenGymSpace>
 PacketRoutingEnv::GetObservationSpace()
 {
   NS_LOG_FUNCTION (this);
-  uint32_t num_devs = m_node->GetNDevices() -1;
   uint32_t low = 0;
   uint32_t high = 100000; // max buffer size --> to change depending on actual value (access to defaul sim param)
-  m_obs_shape = {num_devs,}; // Destination Node + (num_devs - 1) interfaces for other nodes
+  m_obs_shape = {uint32_t(1)+uint32_t(m_overlayNeighbors.size()),}; // Destination Node + (num_devs - 1) interfaces for other nodes
   std::string dtype = TypeNameGet<uint32_t> ();
   Ptr<OpenGymBoxSpace> space = CreateObject<OpenGymBoxSpace> (low, high, m_obs_shape, dtype);
   NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", GetObservationSpace: " << space);
@@ -201,8 +199,6 @@ PacketRoutingEnv::GetQueueLengthInBytes(Ptr<Node> node, uint32_t netDev_idx)
 Ptr<OpenGymDataContainer>
 PacketRoutingEnv::GetObservation()
 {
-
-  uint32_t num_devs = m_node->GetNDevices();
   Ptr<OpenGymBoxContainer<int32_t> > box = CreateObject<OpenGymBoxContainer<int32_t> >(m_obs_shape);
   if (is_trainStep_flag==0){
     box->AddValue(m_dest);
@@ -211,15 +207,25 @@ PacketRoutingEnv::GetObservation()
     int32_t train_reward = -1;
     box->AddValue(train_reward);
   }
-  for (uint32_t i=2 ; i<num_devs; i++){
-    Ptr<NetDevice> netDev = m_node->GetDevice (i);
+  Ptr<Ipv4> ipv4 = m_node->GetObject<Ipv4>();
+  ns3::Socket::SocketErrno sockerr;
+  Ptr<Ipv4RoutingProtocol> routing = ipv4->GetRoutingProtocol( );
+  Ptr<Packet> packet_test = Create<Packet>(20);
+  
+  for (size_t i=0 ; i<m_overlayNeighbors.size(); i++){
+    string string_ip= "10.2.2."+std::to_string(m_overlayNeighbors[i]+1);
+    Ipv4Address ip_test(string_ip.c_str());
+    m_ipHeader.SetDestination(ip_test);
+    packet_test->AddHeader(m_ipHeader);
+    Ptr<Ipv4Route> route = routing->RouteOutput (packet_test, m_ipHeader, 0, sockerr);
+    Ptr<PointToPointNetDevice> dev = DynamicCast<PointToPointNetDevice>(route->GetOutputDevice());
     // uint32_t value = GetQueueLength (m_node, i);
-    uint32_t value = GetQueueLengthInBytes (m_node, i);
+    uint32_t value = GetQueueLengthInBytes (m_node, dev->GetIfIndex());
     
     box->AddValue(value);
   }
 
-  //NS_LOG_UNCOND ( "Node: " << m_node->GetId() << ", MyGetObservation: " << box);
+  if(m_signaling==0) NS_LOG_UNCOND ( "Node: " << m_node->GetId() << ", MyGetObservation: " << box);
   return box;
 }
 
@@ -284,7 +290,6 @@ PacketRoutingEnv::GetExtraInfo()
     myInfo += std::to_string(m_segIndex);
     
     myInfo += ", nbPktsObs =";
-    uint32_t num_devs = m_node->GetNDevices();
     Ptr<OpenGymBoxContainer<int32_t> > box = CreateObject<OpenGymBoxContainer<int32_t> >(m_obs_shape);
     if (is_trainStep_flag==0){
       myInfo += std::to_string(m_dest);
@@ -295,15 +300,25 @@ PacketRoutingEnv::GetExtraInfo()
       myInfo += std::to_string(train_reward);
       myInfo += ";";
     }
-    for (uint32_t i=2 ; i<num_devs; i++){
-      Ptr<NetDevice> netDev = m_node->GetDevice (i);
-      uint32_t value = GetQueueLength (m_node, i);
+
+    Ptr<Ipv4> ipv4 = m_node->GetObject<Ipv4>();
+    ns3::Socket::SocketErrno sockerr;
+    Ptr<Ipv4RoutingProtocol> routing = ipv4->GetRoutingProtocol( );
+    Ptr<Packet> packet_test = Create<Packet>(20);
+
+    for (size_t i=0 ; i<m_overlayNeighbors.size(); i++){
+      string string_ip= "10.2.2."+std::to_string(m_overlayNeighbors[i]+1);
+      Ipv4Address ip_test(string_ip.c_str());
+      m_ipHeader.SetDestination(ip_test);
+      packet_test->AddHeader(m_ipHeader);
+      Ptr<Ipv4Route> route = routing->RouteOutput (packet_test, m_ipHeader, 0, sockerr);
+      Ptr<PointToPointNetDevice> dev = DynamicCast<PointToPointNetDevice>(route->GetOutputDevice());
+      uint32_t value = GetQueueLength (m_node, dev->GetIfIndex());
       // uint32_t value = GetQueueLengthInBytes (m_node, i);
       
       myInfo += std::to_string(value);
       myInfo += ";";
     }
-    
       return myInfo;
   }
   return "";
@@ -342,7 +357,7 @@ PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
       } 
     }
     if(m_signaling==0 && m_activateSignaling && m_lastHop!=1000){
-      
+      NS_LOG_UNCOND("SEND SMALL SIGNALING");
       MyTag tagSmallSignaling;
       Ptr<Packet> smallSignalingPckt = Create<Packet> (m_signPacketSize);
       tagSmallSignaling.SetSimpleValue(0x02);
@@ -363,17 +378,12 @@ PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
       ip_head.SetDestination(ip_dest);
       smallSignalingPckt->AddHeader(ip_head);
       
-      NS_LOG_UNCOND("---------------------------------------------------");
-      NS_LOG_UNCOND("Sending signaling "<<m_signPacketSize);
-      NS_LOG_UNCOND(smallSignalingPckt->ToString());
-      NS_LOG_UNCOND("---------------------------------------------------");
-      
       m_recvDev->Send(smallSignalingPckt, m_destAddr, 0x800);
 
     }
 
     if(m_isGameOver){
-      NS_LOG_UNCOND("FINAL DESTINATION!");
+      //NS_LOG_UNCOND("FINAL DESTINATION!");
     } else if (m_fwdDev_idx < m_node->GetNDevices()-2 && m_signaling==0){
       MyTag sendingTag;
       m_pckt->PeekPacketTag(sendingTag);
@@ -383,7 +393,6 @@ PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
 
 
       m_pckt->AddHeader(m_udpHeader);
-      if(m_node->GetId()==1 && m_fwdDev_idx==4) m_fwdDev_idx = 3;
       string string_ip= "10.2.2."+std::to_string(m_overlayNeighbors[m_fwdDev_idx]+1);
       Ipv4Address ip_dest(string_ip.c_str());
       m_ipHeader.SetDestination(ip_dest);
@@ -394,9 +403,9 @@ PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
       Ptr<Ipv4RoutingProtocol> routing = ipv4->GetRoutingProtocol( );
       Ptr<Ipv4Route> route = routing->RouteOutput (m_pckt, m_ipHeader, 0, sockerr);
       Ptr<PointToPointNetDevice> dev = DynamicCast<PointToPointNetDevice>(route->GetOutputDevice());
-      NS_LOG_UNCOND("---------------------------------------------------");
-      NS_LOG_UNCOND("SENDING FROM NODE "<<dev->GetNode()->GetId()<<"    ND "<<dev->GetIfIndex());
-      NS_LOG_UNCOND("---------------------------------------------------");
+      //NS_LOG_UNCOND("---------------------------------------------------");
+      //NS_LOG_UNCOND("SENDING FROM NODE "<<dev->GetNode()->GetId()<<"    ND "<<dev->GetIfIndex());
+      //NS_LOG_UNCOND("---------------------------------------------------");
       dev->Send(m_pckt, m_destAddr, 0x0800);
 
 
@@ -483,6 +492,13 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
     entity->m_nodeIdSign = tagCopy.GetNodeId();
     NS_LOG_UNCOND("BIG SIGNALING");
   }
+
+  if(tagCopy.GetSimpleValue()==0x00){
+    if(tagCopy.GetTrafficValable()==0){
+      return ;
+    }
+    NS_LOG_UNCOND("DATA PACKET");
+  }
   NS_LOG_UNCOND("..............................................................");
   
 
@@ -518,6 +534,10 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
   entity->m_lengthType = ppp_head.GetProtocol();
   entity->m_packetsSent = 0;
   entity->m_recvDev = netDev;
+
+  if(entity->m_signaling && entity->m_node->GetId() != entity->m_dest){
+    return ;
+  }
   
   
   entity->Notify();

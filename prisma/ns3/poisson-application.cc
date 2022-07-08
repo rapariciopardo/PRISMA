@@ -87,6 +87,10 @@ PoissonGeneratorApplication::GetTypeId (void)
                    DoubleValue(10.0),
                    MakeDoubleAccessor (&PoissonGeneratorApplication::m_updateTrafficRateTime),
                    MakeDoubleChecker<double>())
+    .AddAttribute ("TrafficValableProbability", "The probability the traffic is valable",
+                   DoubleValue(1.0),
+                   MakeDoubleAccessor (&PoissonGeneratorApplication::m_trafficValableProbability),
+                   MakeDoubleChecker<double>())
     .AddAttribute ("Remote", "The address of the destination",
                    AddressValue (),
                    MakeAddressAccessor (&PoissonGeneratorApplication::m_peer),
@@ -231,7 +235,6 @@ void PoissonGeneratorApplication::UpdateAvgTrafficRate(){
   //int min = 100; //in bitsPerSec
   //int max = 1000; //in bitsPerSec
   //m_avgRate = DataRate (m_avgRate.GetBitRate() + min + rand() % (( max + 1 ) - min));
-  NS_LOG_UNCOND("RATE: "<<m_avgRate.GetBitRate());
   Simulator::Schedule(Seconds(m_updateTrafficRateTime), &PoissonGeneratorApplication::UpdateAvgTrafficRate, this);
 }
 
@@ -265,14 +268,9 @@ void PoissonGeneratorApplication::ScheduleNextTx ()
       uint32_t bits = m_pktSize * 8;
       Ptr<ExponentialRandomVariable> iat = CreateObject<ExponentialRandomVariable> ();
       iat->SetAttribute ("Mean", DoubleValue (bits/static_cast<double>(m_avgRate.GetBitRate ())));
-      //iat->SetAttribute ("Bound", DoubleValue (static_cast<double>(m_avgRate.GetBitRate ())*5)); 
-      //double rate_value = iat->GetValue();
-      //if(rate_value < static_cast<double>(m_avgRate.GetBitRate ())*0.2) rate_value = rate_value<static_cast<double>(m_avgRate.GetBitRate ())*0.2;
-      //if(rate_value > static_cast<double>(m_avgRate.GetBitRate ())*5) rate_value = rate_value<static_cast<double>(m_avgRate.GetBitRate ())*5;
       double delay = iat->GetValue(); // bits/ static_cast<double>(m_avgRate.GetBitRate ());
       //NS_LOG_UNCOND("DELAY:     "<<delay);
       Time nextTime (Seconds (delay)); // Time till next packet
-      //NS_LOG_LOGIC ("nextTime = " << nextTime);
       m_sendEvent = Simulator::Schedule (nextTime,
                                          &PoissonGeneratorApplication::SendPacket, this);
     }
@@ -292,13 +290,19 @@ void PoissonGeneratorApplication::SendPacket ()
   tag.SetSimpleValue(0);
   tag.SetFinalDestination(m_dest-1);
   tag.SetLastHop(1000);
-  tag.SetStartTime(Simulator::Now().GetMilliSeconds());
+  tag.SetStartTime(uint64_t(Simulator::Now().GetMilliSeconds()));
+  Ptr<UniformRandomVariable> x = CreateObject<UniformRandomVariable> ();
+  x->SetAttribute ("Min", DoubleValue (0.0));
+  x->SetAttribute ("Max", DoubleValue (1.0));
+  double value = x->GetValue ();
+  if(value<m_trafficValableProbability){
+    tag.SetTrafficValable(1);
+  }
+  else {
+    tag.SetTrafficValable(0);
+  }
   packet->AddPacketTag(tag);
   m_txTrace (packet);
-  //std::string start_time = std::to_string(Simulator::Now().GetMilliSeconds());
-  //NS_LOG_UNCOND("START: "<<start_time<<"   SIZE: "<<m_pktSize);
-  //const uint8_t* start_int = reinterpret_cast<const uint8_t*>(&start_time[0]);
-  NS_LOG_UNCOND("Socket sending...");
   m_socket->Send(packet);
   m_totBytes += m_pktSize;
   Address localAddress;
@@ -325,7 +329,7 @@ void PoissonGeneratorApplication::SendPacket ()
       m_txTraceWithAddresses (packet, localAddress, Inet6SocketAddress::ConvertFrom(m_peer));
     }
   m_lastStartTime = Simulator::Now ();
-  //ScheduleNextTx ();
+  ScheduleNextTx ();
 }
 
 

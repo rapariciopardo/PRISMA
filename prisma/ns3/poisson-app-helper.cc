@@ -109,5 +109,11 @@ void
 PoissonAppHelper::SetDestination(uint32_t dest){
   m_factory.Set ("Dest", UintegerValue(dest));
 }
+void
+PoissonAppHelper::SetTrafficValableProbability(double trafficValableProbability){
+  m_factory.Set ("TrafficValableProbability", DoubleValue(trafficValableProbability));
+}
+
+
 
 } // namespace ns3

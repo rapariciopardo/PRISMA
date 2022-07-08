@@ -82,6 +82,8 @@ public:
    */
   void SetAverageRate (DataRate dataRate, uint32_t packetSize = 512);
 
+  void SetTrafficValableProbability(double trafficValableProbability);
+
   void SetUpdatable(bool updatable, double updateTrafficRateTime);
 
   void SetDestination(uint32_t dest);

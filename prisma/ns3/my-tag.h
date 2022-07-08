@@ -32,9 +32,12 @@ public:
   uint32_t GetFinalDestination (void) const;
   void SetLastHop (uint32_t value);
   uint32_t GetLastHop (void) const;
+  void SetTrafficValable (uint8_t value);
+  uint8_t GetTrafficValable (void) const;
 private:
   uint8_t m_simpleValue;
   uint64_t m_startTime;
+  uint8_t m_trafficValable;
   uint32_t m_finalDestination;
   uint32_t m_lastHop;
   uint64_t m_pktId;

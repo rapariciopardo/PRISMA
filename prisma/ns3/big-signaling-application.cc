@@ -305,7 +305,7 @@ void BigSignalingGeneratorApplication::SendPacket ()
       m_txTraceWithAddresses (packet, localAddress, Inet6SocketAddress::ConvertFrom(m_peer));
     }
   m_lastStartTime = Simulator::Now ();
-  //ScheduleNextTx ();
+  ScheduleNextTx ();
 }
 
 
