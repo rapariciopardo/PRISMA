@@ -288,6 +288,7 @@ void PoissonGeneratorApplication::SendPacket ()
   Ptr<Packet> packet = Create<Packet> (m_pktSize);
   MyTag tag;
   tag.SetSimpleValue(0);
+  
   tag.SetFinalDestination(m_dest-1);
   tag.SetLastHop(1000);
   tag.SetStartTime(uint64_t(Simulator::Now().GetMilliSeconds()));
@@ -297,12 +298,14 @@ void PoissonGeneratorApplication::SendPacket ()
   double value = x->GetValue ();
   if(value<m_trafficValableProbability){
     tag.SetTrafficValable(1);
+    //NS_LOG_UNCOND("Sending to "<<m_dest-1);
   }
   else {
     tag.SetTrafficValable(0);
   }
   packet->AddPacketTag(tag);
   m_txTrace (packet);
+  m_socket->SetIpTtl(255);
   m_socket->Send(packet);
   m_totBytes += m_pktSize;
   Address localAddress;

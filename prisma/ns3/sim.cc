@@ -507,13 +507,13 @@ int main (int argc, char *argv[])
               Address sinkAddress;
               string string_ip_dest= "10.1.1."+std::to_string(i+1);
               Ipv4Address ip_dest(string_ip_dest.c_str());
-              NS_LOG_UNCOND(ip_dest);
               sinkAddress = InetSocketAddress (ip_dest, sinkPortUDP);
               
               double rn = x->GetValue ();
               PoissonAppHelper poisson  ("ns3::UdpSocketFactory",sinkAddress);
               poisson.SetAverageRate (DataRate(round(DataRate(Traff_Matrix[i][j]).GetBitRate()*load_factor)), AvgPacketSize);
               poisson.SetTrafficValableProbability(OverlayMaskTrafficRate[i][j]);
+              //NS_LOG_UNCOND(i<<"   "<<j<<"     "<<OverlayMaskTrafficRate[i][j]);
               poisson.SetUpdatable(false, updateTrafficRateTime);
               poisson.SetDestination(uint32_t (j+1));
               ApplicationContainer apps = poisson.Install (nodes_traffic.Get (i));

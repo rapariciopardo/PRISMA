@@ -12,7 +12,7 @@ __license__ = "GPL"
 __email__ = "alliche,raparicio,sassatelli@i3s.unice.fr, tiago.da-silva-barros@inria.fr"
 
 
-def save_model(actors, path, t, num_episodes, root="saved_models/"):
+def save_model(actors, overlay_nodes, path, t, num_episodes, root="saved_models/"):
     """
     Save the DQN model for each node into a folder.
 
@@ -40,7 +40,7 @@ def save_model(actors, path, t, num_episodes, root="saved_models/"):
         os.mkdir(root + path)
     path = path.rstrip('/') + '/'
     folder_name = root + path + f"iteration{t}_episode{num_episodes}"
-    for i in range(len(actors)):
+    for i in overlay_nodes:
         actors[i].q_network.save(f"{folder_name}/node{i}")
 
 

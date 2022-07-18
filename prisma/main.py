@@ -304,7 +304,7 @@ def run_ns3(params):
     os.chdir(params["ns3_sim_path"])
     
     ## run ns3 configure
-    configure_command = './waf -d optimized configure'
+    #configure_command = './waf -d optimized configure'
     os.system('./waf configure')
     print(params['agent_type'])
     ## run NS3 simulator

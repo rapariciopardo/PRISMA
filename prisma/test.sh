@@ -16,21 +16,21 @@ for j in ${array[@]}
 	res1=${FLOAT/.*}
 	echo $res1
 	python3 main.py \
-		--simTime=15 \
+		--simTime=30 \
 		--basePort=3000 \
 		--train=1 \
 		--seed=100 \
 		--agent_type="dqn_buffer" \
-		--session_name="test_sp_load_$res1" \
+		--session_name="test_tiago_load_$res1" \
 		--link_delay="0ms" \
-		--signaling_type="target" \
+		--signaling_type="NN" \
 		--signalingSim=1 \
 		--logs_parent_folder=examples/abilene/ \
 		--traffic_matrix_index=0 \
 		--adjacency_matrix_path=examples/abilene/adjacency_matrix.txt \
 		--node_coordinates_path=examples/abilene/node_coordinates.txt \
 		--max_out_buffer_size=16260 \
-		--save_models=0 \
+		--save_models=1 \
 		--start_tensorboard=0 \
 		--load_factor=$j
 done

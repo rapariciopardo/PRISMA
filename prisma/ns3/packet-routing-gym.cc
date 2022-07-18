@@ -225,7 +225,7 @@ PacketRoutingEnv::GetObservation()
     box->AddValue(value);
   }
 
-  if(m_signaling==0) NS_LOG_UNCOND ( "Node: " << m_node->GetId() << ", MyGetObservation: " << box);
+  //if(m_signaling==0) NS_LOG_UNCOND ( "Node: " << m_node->GetId() << ", MyGetObservation: " << box);
   return box;
 }
 
@@ -357,7 +357,9 @@ PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
       } 
     }
     if(m_signaling==0 && m_activateSignaling && m_lastHop!=1000){
-      NS_LOG_UNCOND("SEND SMALL SIGNALING");
+      //if(m_node->GetId()==7 && m_lastHop==10){
+      //  NS_LOG_UNCOND("SEND SMALL SIGNALING "<<m_signPacketSize);
+      //}
       MyTag tagSmallSignaling;
       Ptr<Packet> smallSignalingPckt = Create<Packet> (m_signPacketSize);
       tagSmallSignaling.SetSimpleValue(0x02);
@@ -376,8 +378,8 @@ PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
       string string_ip_dest= "10.2.2."+std::to_string(m_lastHop+1);
       Ipv4Address ip_dest(string_ip_dest.c_str());
       ip_head.SetDestination(ip_dest);
+      ip_head.SetPayloadSize(m_signPacketSize+udp_head.GetSerializedSize());
       smallSignalingPckt->AddHeader(ip_head);
-      
       m_recvDev->Send(smallSignalingPckt, m_destAddr, 0x800);
 
     }
@@ -436,9 +438,7 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
   // define is train step flag
   //int test;
   //std::cin>>test;
-  NS_LOG_UNCOND("..............................................................");
-  NS_LOG_UNCOND("SimTime: "<<Simulator::Now().GetMilliSeconds());
-  NS_LOG_UNCOND("Node: "<<entity->m_node->GetId()<<"    ND: "<<netDev->GetIfIndex());
+  
   entity->is_trainStep_flag = 0;
   entity->m_signaling = 0;
   entity->m_ospfSignaling = false;
@@ -474,15 +474,28 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
   entity->m_dest = tagCopy.GetFinalDestination();
   entity->m_src = entity->m_node->GetId();
   entity->m_lastHop = tagCopy.GetLastHop();
-  NS_LOG_UNCOND("Destination: "<< entity->m_dest);
-  NS_LOG_UNCOND("Last Hop: "<<entity->m_lastHop);
-  NS_LOG_UNCOND(p->ToString());
+  if(tagCopy.GetSimpleValue()==0x00){
+    if(tagCopy.GetTrafficValable()==0){
+      return ;
+    }
+  }
+
+  if(false){//((entity->m_node->GetId()==7 && entity->m_lastHop==10) || entity->m_dest>entity->m_n_nodes){
+    NS_LOG_UNCOND("..............................................................");
+    NS_LOG_UNCOND("SimTime: "<<Simulator::Now().GetMilliSeconds());
+    NS_LOG_UNCOND("Node: "<<entity->m_node->GetId()<<"    ND: "<<netDev->GetIfIndex());
+    NS_LOG_UNCOND("Destination: "<< entity->m_dest);
+    NS_LOG_UNCOND("Last Hop: "<<entity->m_lastHop);
+    NS_LOG_UNCOND("TAG: "<<uint32_t(tagCopy.GetSimpleValue()));
+    NS_LOG_UNCOND(p->ToString());
+    if(tagCopy.GetSimpleValue()==1) NS_LOG_UNCOND("BIG SIGNALING");
+  }
   
 
   if(tagCopy.GetSimpleValue()==uint8_t(0x02)){
     entity->m_signaling=1;
     entity->m_pcktIdSign = tagCopy.GetIdValue();
-    NS_LOG_UNCOND("SMALL SIGNALING");
+    //NS_LOG_UNCOND("SMALL SIGNALING");
   }
 
   if(tagCopy.GetSimpleValue()==0x01){
@@ -490,16 +503,12 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
     entity->m_NNIndex = tagCopy.GetNNIndex();
     entity->m_segIndex = tagCopy.GetSegIndex();
     entity->m_nodeIdSign = tagCopy.GetNodeId();
-    NS_LOG_UNCOND("BIG SIGNALING");
+    //NS_LOG_UNCOND("BIG SIGNALING");
   }
 
-  if(tagCopy.GetSimpleValue()==0x00){
-    if(tagCopy.GetTrafficValable()==0){
-      return ;
-    }
-    NS_LOG_UNCOND("DATA PACKET");
-  }
-  NS_LOG_UNCOND("..............................................................");
+
+  
+  //NS_LOG_UNCOND("..............................................................");
   
 
 

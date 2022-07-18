@@ -271,19 +271,11 @@ void BigSignalingGeneratorApplication::SendPacket ()
   packet->AddPacketTag(tag);
   m_txTrace (packet);
   std::string start_time = std::to_string(Simulator::Now().GetMilliSeconds());
-  NS_LOG_UNCOND("START: "<<start_time<<"   SIZE: "<<m_pktSize);
-  //NS_LOG_UNCOND("SRC: "<<m_src<<"    DEST: "<<m_dest);
-  //const uint8_t* start_int = reinterpret_cast<const uint8_t*>(&start_time[0]);
-  //Ptr<Packet> pcopy = packet->Copy();
-  //MyTag tagcopy;
-  //pcopy->PrintByteTags(std::cout);
-  //NS_LOG_UNCOND(int(tagcopy.GetSimpleValue()));
+  m_socket->SetIpTtl(255);
   m_socket->Send(packet);
-  //NS_LOG_UNCOND("res = "<<res );
   m_totBytes += m_pktSize;
   Address localAddress;
   m_socket->GetSockName (localAddress);
-  //NS_LOG_UNCOND("BIT RATE-------------------------------"<<m_avgRate<<"    "<<InetSocketAddress::ConvertFrom(m_peer).GetIpv4 ());
   if (InetSocketAddress::IsMatchingType (m_peer))
     {
       NS_LOG_INFO ("At time " << Simulator::Now ().GetSeconds ()
