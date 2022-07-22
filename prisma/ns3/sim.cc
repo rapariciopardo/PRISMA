@@ -144,6 +144,7 @@ int main (int argc, char *argv[])
   double load_factor = 0.01; // scaling applied to the traffic matrix
   std::string MaxBufferLength ("30p");
   std::string LinkRate ("500Kbps");
+  std::string BadLinkRate ("500Kbps");
   std::string LinkDelay ("2ms");
   uint32_t AvgPacketSize = 512 ; //—> If you want to change the by-default 512 packet size
 
@@ -354,8 +355,8 @@ int main (int argc, char *argv[])
               {
                 PointToPointHelper p2p;
 
-
-                p2p.SetDeviceAttribute ("DataRate", DataRateValue (LinkRate));
+                if(i==2 && j==4) p2p.SetDeviceAttribute ("DataRate", DataRateValue (BadLinkRate));
+                else p2p.SetDeviceAttribute ("DataRate", DataRateValue (LinkRate));
                 p2p.SetChannelAttribute ("Delay", StringValue (LinkDelay));
                 p2p.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue (MaxBufferLength));    
                 NetDeviceContainer n_devs = p2p.Install(NodeContainer(nodes_switch.Get(i), nodes_switch.Get(j)));
@@ -511,7 +512,7 @@ int main (int argc, char *argv[])
               
               double rn = x->GetValue ();
               PoissonAppHelper poisson  ("ns3::UdpSocketFactory",sinkAddress);
-              poisson.SetAverageRate (DataRate(round(DataRate(Traff_Matrix[i][j]).GetBitRate()*load_factor)), AvgPacketSize);
+              poisson.SetAverageRate (DataRate(ceil(DataRate(Traff_Matrix[i][j]).GetBitRate()*load_factor)), AvgPacketSize);
               poisson.SetTrafficValableProbability(OverlayMaskTrafficRate[i][j]);
               //NS_LOG_UNCOND(i<<"   "<<j<<"     "<<OverlayMaskTrafficRate[i][j]);
               poisson.SetUpdatable(false, updateTrafficRateTime);
