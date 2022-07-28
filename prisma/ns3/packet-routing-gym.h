@@ -59,6 +59,7 @@ public:
   PacketRoutingEnv ();
   PacketRoutingEnv (Ptr<Node> node, uint32_t numberOfNodes, uint64_t linkRateValue, bool activateSignaling, double signPacketSize, vector<int> overlayNeighbors);
   PacketRoutingEnv (Time stepTime, Ptr<Node> node);
+  void setOverlayConfig(vector<int> overlayNeighbors, bool activateOverlaySignaling, uint32_t nPacketsOverlaySignaling);
   virtual ~PacketRoutingEnv ();
   static TypeId GetTypeId (void);
   virtual void DoDispose ();
@@ -84,6 +85,7 @@ private:
   void ScheduleNextStateRead();
   uint32_t GetQueueLength(Ptr<Node> node, uint32_t netDev_idx);
   uint32_t GetQueueLengthInBytes(Ptr<Node> node, uint32_t netDev_idx);
+  void sendOverlaySignalingUpdate(uint8_t type);
 
   //bool SetCw(Ptr<Node> node, uint32_t cwMinValue=0, uint32_t cwMaxValue=0);
 
@@ -127,6 +129,12 @@ private:
   uint32_t m_NNIndex;
   uint32_t m_segIndex;
   int m_signaling;
+
+  bool m_activateOverlaySignaling; 
+  vector<uint32_t> m_countRecvPackets;
+  vector<uint64_t> m_tunnelsDelay;
+  int m_overlayRecvIndex;
+  uint32_t m_nPacketsOverlaySignaling;
 
 
   

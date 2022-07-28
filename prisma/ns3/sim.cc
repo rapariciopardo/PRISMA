@@ -153,6 +153,8 @@ int main (int argc, char *argv[])
   std::string node_coordinates_file_name ("scratch/prisma/examples/abilene/node_coordinates.txt");
   std::string node_intensity_file_name("scratch/prisma/examples/abilene/node_intensity.txt");
 
+  bool activateOverlaySignaling = true;
+  uint32_t nPacketsOverlaySignaling = 100;
   
   CommandLine cmd;
   // required parameters for OpenGym interface
@@ -182,6 +184,8 @@ int main (int argc, char *argv[])
   cmd.AddValue ("AgentType", "Agent Type", agentType);
   cmd.AddValue ("signalingType", "Signaling Type", signalingType);
   cmd.AddValue ("syncStep", "synchronization Step (in seconds)", syncStep);
+  cmd.AddValue ("activateOverlaySignaling", "activate Overlay Signaling", activateOverlaySignaling);
+  cmd.AddValue ("nPacketsOverlaySignaling", "nb of packets for triggering overlay signaling", nPacketsOverlaySignaling);
   cmd.Parse (argc, argv);
     
   NS_LOG_UNCOND("Ns3Env parameters:");
@@ -445,6 +449,7 @@ int main (int argc, char *argv[])
       packetRoutingEnv = CreateObject<PacketRoutingEnv> (Seconds(envStepTime), n); // time-driven step
     }
     packetRoutingEnv->SetOpenGymInterface(openGymInterface);
+    packetRoutingEnv->setOverlayConfig(overlayNeighbors[overlayNodes[i]], activateOverlaySignaling, nPacketsOverlaySignaling);
     for(size_t j = 1;j<nodes_switch.Get(overlayNodes[i])->GetNDevices();j++){
       Ptr<NetDevice> dev_switch =DynamicCast<NetDevice> (nodes_switch.Get(overlayNodes[i])->GetDevice(j)); 
       NS_LOG_UNCOND(dev_switch->GetNode()->GetId()<<"     "<<j);
