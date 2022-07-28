@@ -94,6 +94,11 @@ PacketRoutingEnv::PacketRoutingEnv (Ptr<Node> node, uint32_t numberOfNodes, uint
   }
   m_lsaSeen[m_node->GetId()] = true;
   //m_rxPktNum = 0;
+  //for(size_t i=2;i<m_node->GetNDevices();i++){
+  //  m_node->GetDevice(i)->TraceConnectWithoutContext("MacTxDrop", MakeBoundCallback(&PacketRoutingEnv::dropPacket, this));
+  //}
+  m_packetsDropped = 0;
+  m_packetsDelivered = 0;
 }
 
 PacketRoutingEnv::PacketRoutingEnv (Time stepTime, Ptr<Node> node)
@@ -195,6 +200,10 @@ PacketRoutingEnv::GetQueueLength(Ptr<Node> node, uint32_t netDev_idx)
   uint32_t backlog = (int) queue->GetNPackets();
   return backlog;
 }
+void
+PacketRoutingEnv::dropPacket(Ptr<PacketRoutingEnv> entity){
+  entity->m_packetsDropped += 1;
+}
 uint32_t
 PacketRoutingEnv::GetQueueLengthInBytes(Ptr<Node> node, uint32_t netDev_idx)
 {
@@ -209,6 +218,8 @@ Ptr<OpenGymDataContainer>
 PacketRoutingEnv::GetObservation()
 {
   Ptr<OpenGymBoxContainer<int32_t> > box = CreateObject<OpenGymBoxContainer<int32_t> >(m_obs_shape);
+  
+  //Adding destination to obs
   if (is_trainStep_flag==0){
     box->AddValue(m_dest);
   }
@@ -216,12 +227,15 @@ PacketRoutingEnv::GetObservation()
     int32_t train_reward = -1;
     box->AddValue(train_reward);
   }
+
+  //Preparing the config
   Ptr<Ipv4> ipv4 = m_node->GetObject<Ipv4>();
   ns3::Socket::SocketErrno sockerr;
   Ptr<Ipv4RoutingProtocol> routing = ipv4->GetRoutingProtocol( );
   Ptr<Packet> packet_test = Create<Packet>(20);
   
   for (size_t i=0 ; i<m_overlayNeighbors.size(); i++){
+    //Getting the queue sizes. (OLD VERSION)
     string string_ip= "10.2.2."+std::to_string(m_overlayNeighbors[i]+1);
     Ipv4Address ip_test(string_ip.c_str());
     m_ipHeader.SetDestination(ip_test);
@@ -230,12 +244,14 @@ PacketRoutingEnv::GetObservation()
     Ptr<PointToPointNetDevice> dev = DynamicCast<PointToPointNetDevice>(route->GetOutputDevice());
     // uint32_t value = GetQueueLength (m_node, i);
     uint32_t value = GetQueueLengthInBytes (m_node, dev->GetIfIndex());
+    //NS_LOG_UNCOND("Node: "<<m_node->GetId()<<"   Value: "<<value);
+
+    //Getting the tunnels delays (NEW VERSION)
     value = m_tunnelsDelay[i];
     
     box->AddValue(value);
   }
 
-  //if(m_signaling==0) NS_LOG_UNCOND ( "Node: " << m_node->GetId() << ", MyGetObservation: " << box);
   return box;
 }
 
@@ -323,13 +339,20 @@ PacketRoutingEnv::GetExtraInfo()
       packet_test->AddHeader(m_ipHeader);
       Ptr<Ipv4Route> route = routing->RouteOutput (packet_test, m_ipHeader, 0, sockerr);
       Ptr<PointToPointNetDevice> dev = DynamicCast<PointToPointNetDevice>(route->GetOutputDevice());
-      uint32_t value = GetQueueLength (m_node, dev->GetIfIndex());
-      // uint32_t value = GetQueueLengthInBytes (m_node, i);
+      //uint32_t value = GetQueueLength (m_node, dev->GetIfIndex());
+      uint32_t value = GetQueueLengthInBytes (m_node, dev->GetIfIndex());
       
       myInfo += std::to_string(value);
       myInfo += ";";
     }
-      return myInfo;
+
+    myInfo += ", Packets dropped =";
+    myInfo += std::to_string(m_packetsDropped);
+
+    myInfo += ", Packets delivered =";
+    myInfo += std::to_string(m_packetsDelivered);
+    
+    return myInfo;
   }
   return "";
   // myInfo += ", Is train step =";
@@ -345,23 +368,31 @@ PacketRoutingEnv::GetExtraInfo()
 
 void
 PacketRoutingEnv::sendOverlaySignalingUpdate(uint8_t type){
+  //Define Tag
   MyTag tagSmallSignaling;
+
+  //Define packet size
   double packetSize;
   if(type==2) packetSize=m_signPacketSize;
   if(type==3) packetSize = 8;
+
+  //Define Packet
   Ptr<Packet> smallSignalingPckt = Create<Packet> (packetSize);
   tagSmallSignaling.SetSimpleValue(type);
   tagSmallSignaling.SetFinalDestination(m_lastHop);
   tagSmallSignaling.SetLastHop(m_src);
+
+  //Depending of the type, add info the tag
   if(type==2){
     uint64_t id = m_pckt->GetUid();
-    //NS_LOG_UNCOND("SIGN "<<uint32_t(id));
     tagSmallSignaling.SetIdValue(id);
   }
   else if(type==3){
     tagSmallSignaling.SetStartTime(uint64_t(Simulator::Now().GetMilliSeconds()));
   }
   smallSignalingPckt->AddPacketTag(tagSmallSignaling);
+
+  //Adding headers
   UdpHeader udp_head;
   smallSignalingPckt->AddHeader(udp_head);
   Ipv4Header ip_head;
@@ -374,6 +405,8 @@ PacketRoutingEnv::sendOverlaySignalingUpdate(uint8_t type){
   if(type==2) ip_head.SetPayloadSize(m_signPacketSize+udp_head.GetSerializedSize());
   if(type==3) ip_head.SetPayloadSize(8+udp_head.GetSerializedSize());
   smallSignalingPckt->AddHeader(ip_head);
+
+  //Send the sign packet
   m_recvDev->Send(smallSignalingPckt, m_destAddr, 0x800);
 
 
@@ -382,35 +415,36 @@ PacketRoutingEnv::sendOverlaySignalingUpdate(uint8_t type){
 bool
 PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
 {
-  
-  NS_LOG_FUNCTION (this);
-  //NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", MyExecuteActions: " << action );
-
   if (is_trainStep_flag==0){
+    
+    //Get discrete action
     Ptr<OpenGymDiscreteContainer> discrete = DynamicCast<OpenGymDiscreteContainer>(action);
     m_fwdDev_idx = discrete->GetValue();
+    
+    //Checking for OSPF (NOT USED)
+    
+    //if(m_ospfSignaling){
+    //  for(uint32_t i = 2;i<m_node->GetNDevices();i++){
+    //    Ptr<Packet> pckt = Create<Packet> (30);
+    //    Ipv4Header ip_head;
+    //    UdpHeader udp_head;
+    //    pckt->AddHeader(udp_head);
+    //    pckt->AddHeader(ip_head);
+    //    pckt->AddPacketTag(m_lsaTag);
+    //    Ptr<PointToPointNetDevice> dev = DynamicCast<PointToPointNetDevice>(m_node->GetDevice(i));
+    //    if(dev->GetIfIndex()!=m_recvDev->GetIfIndex()) dev->Send(pckt, m_destAddr, 0x800);
+    //  } 
+    //}
 
-    if(m_ospfSignaling){
-      for(uint32_t i = 2;i<m_node->GetNDevices();i++){
-        Ptr<Packet> pckt = Create<Packet> (30);
-        Ipv4Header ip_head;
-        UdpHeader udp_head;
-        pckt->AddHeader(udp_head);
-        pckt->AddHeader(ip_head);
-        pckt->AddPacketTag(m_lsaTag);
-        Ptr<PointToPointNetDevice> dev = DynamicCast<PointToPointNetDevice>(m_node->GetDevice(i));
-        if(dev->GetIfIndex()!=m_recvDev->GetIfIndex()) dev->Send(pckt, m_destAddr, 0x800);
-      } 
-    }
+    //For Data Packets which are not in source
     if(m_signaling==0 && m_activateSignaling && m_lastHop!=1000){
-      //if(m_node->GetId()==7 && m_lastHop==10){
-      //  NS_LOG_UNCOND("SEND SMALL SIGNALING "<<m_signPacketSize);
-      //}
-      
+      //if the limit is reached, send the overlay signaling
       if(m_countRecvPackets[m_overlayRecvIndex] >=m_nPacketsOverlaySignaling && m_activateOverlaySignaling){
         m_countRecvPackets[m_overlayRecvIndex] = 0;
         sendOverlaySignalingUpdate(uint8_t(3));
       }
+
+      //send small signaling
       sendOverlaySignalingUpdate(uint8_t(2));
     
     }
@@ -418,28 +452,36 @@ PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
     if(m_isGameOver){
       //NS_LOG_UNCOND("FINAL DESTINATION!");
     } else if (m_fwdDev_idx < m_overlayNeighbors.size() && m_signaling==0){
+      //Replace the updated tag
       MyTag sendingTag;
       m_pckt->PeekPacketTag(sendingTag);
       sendingTag.SetLastHop(m_node->GetId());
       m_pckt->ReplacePacketTag(sendingTag);
 
-
-
+      //Adding Headers
       m_pckt->AddHeader(m_udpHeader);
       string string_ip= "10.2.2."+std::to_string(m_overlayNeighbors[m_fwdDev_idx]+1);
       Ipv4Address ip_dest(string_ip.c_str());
       m_ipHeader.SetDestination(ip_dest);
       m_pckt->AddHeader(m_ipHeader);
 
+      //Discovering the output buffer based on the routing table
+      //(map between overlay tunnel and netDevice)
       Ptr<Ipv4> ipv4 = m_node->GetObject<Ipv4>();
       ns3::Socket::SocketErrno sockerr;
       Ptr<Ipv4RoutingProtocol> routing = ipv4->GetRoutingProtocol( );
       Ptr<Ipv4Route> route = routing->RouteOutput (m_pckt, m_ipHeader, 0, sockerr);
       Ptr<PointToPointNetDevice> dev = DynamicCast<PointToPointNetDevice>(route->GetOutputDevice());
-      dev->Send(m_pckt, m_destAddr, 0x0800);
+      
+      //Send and verify if the Packet was dropped
+      bool ret = dev->Send(m_pckt, m_destAddr, 0x0800);
+      if(ret==false){
+        NS_LOG_UNCOND("Packet Dropped");
+        m_packetsDropped++;
+      }
     }
     else{
-      //NS_LOG_UNCOND ("Packet Rejected");
+      //NS_LOG_UNCOND ("Not valid");
     }
     
   }
@@ -452,48 +494,54 @@ PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
 
 void
 PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netDev, NetDeviceContainer* nd, Ptr<const Packet> packet)
-{
-  //NS_LOG_UNCOND(packet->ToString());
-  
+{  
   // define is train step flag
-  //int test;
-  //std::cin>>test;
-  
   entity->is_trainStep_flag = 0;
+
+  //define if the packet is for signaling
   entity->m_signaling = 0;
+
+  // define if the paccket is for OSPF (Not used)
   entity->m_ospfSignaling = false;
 
 
-  //define headers
+  //define 2-layer Header
   PppHeader ppp_head;
   
-
+  //Define the packet
   Ptr<Packet> p;
   p = packet->Copy();
   
-  OSPFTag tagOspf;
-  p->PeekPacketTag(tagOspf);
+  //OSPF Analysis (Not used)
+  
+  //OSPFTag tagOspf;
+  //p->PeekPacketTag(tagOspf);
+  //
+  //if(tagOspf.getType()==1){
+  //  entity->m_signaling = 1;
+  //  NS_LOG_UNCOND("HELLO MESSAGE");
+  //}
+  //if(tagOspf.getType()==2){
+  //  if(!entity->m_lsaSeen[tagOspf.getLSANode()]){
+  //    entity->m_ospfSignaling = true;
+  //    entity->m_lsaSeen[tagOspf.getLSANode()] = true;
+  //    entity->m_lsaTag = tagOspf;
+  //  }
+  //  entity->m_signaling = 1;
+  //  
+  //  //NS_LOG_UNCOND("LSA MESSAGE");
+  //}
 
-  if(tagOspf.getType()==1){
-    entity->m_signaling = 1;
-    NS_LOG_UNCOND("HELLO MESSAGE");
-  }
-  if(tagOspf.getType()==2){
-    if(!entity->m_lsaSeen[tagOspf.getLSANode()]){
-      entity->m_ospfSignaling = true;
-      entity->m_lsaSeen[tagOspf.getLSANode()] = true;
-      entity->m_lsaTag = tagOspf;
-    }
-    entity->m_signaling = 1;
-    
-    //NS_LOG_UNCOND("LSA MESSAGE");
-  }
-
+  //Packet TAG
   MyTag tagCopy;
   p->PeekPacketTag(tagCopy);
+
+  //Get Destination, source and last Hop
   entity->m_dest = tagCopy.GetFinalDestination();
   entity->m_src = entity->m_node->GetId();
   entity->m_lastHop = tagCopy.GetLastHop();
+  
+  //Get Overlay Tunnel Index
   auto it = std::find(entity->m_overlayNeighbors.begin(), entity->m_overlayNeighbors.end(), entity->m_lastHop);
   if (it != entity->m_overlayNeighbors.end())
   {
@@ -504,14 +552,47 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
     NS_LOG_UNCOND("ERRRRRRRRR "<<entity->m_lastHop<<"    tag: "<<uint32_t(tagCopy.GetSimpleValue()));
     NS_LOG_UNCOND("Node: "<<entity->m_node->GetId());
   }
+
+  //Receiving Packets and treating them according to its type
+
+  // Type: 0 ----- Data Packets
   if(tagCopy.GetSimpleValue()==0x00){
     if(tagCopy.GetTrafficValable()==0){
       return ;
     }
-    entity->m_countRecvPackets[entity->m_overlayRecvIndex] += 1;
+    if(entity->m_lastHop!=1000){
+      entity->m_countRecvPackets[entity->m_overlayRecvIndex] += 1;
+
+      if(entity->m_dest == entity->m_node->GetId()){
+        //NS_LOG_UNCOND("Packet Delivered");
+        entity->m_packetsDelivered++;
+      }
+    }
   }
 
-  if(false){//((entity->m_node->GetId()==7 && entity->m_lastHop==10) || entity->m_dest>entity->m_n_nodes){
+  
+  // Type: 3 ----- Overlay Signaling Packets
+  if(tagCopy.GetSimpleValue()==3){
+    entity->m_signaling=1;
+    entity->m_tunnelsDelay[entity->m_overlayRecvIndex] = Simulator::Now().GetMilliSeconds() - tagCopy.GetStartTime(); 
+  }
+
+  // Type 2: ---- Small Signaling Packets
+  if(tagCopy.GetSimpleValue()==uint8_t(0x02)){
+    entity->m_signaling=1;
+    entity->m_pcktIdSign = tagCopy.GetIdValue();
+  }
+
+  // Type 1: ----- Big Signaling Packets
+  if(tagCopy.GetSimpleValue()==0x01){
+    entity->m_signaling=1;
+    entity->m_NNIndex = tagCopy.GetNNIndex();
+    entity->m_segIndex = tagCopy.GetSegIndex();
+    entity->m_nodeIdSign = tagCopy.GetNodeId();
+  }
+  
+  //Printing INFO
+  if(false){
     NS_LOG_UNCOND("..............................................................");
     NS_LOG_UNCOND("SimTime: "<<Simulator::Now().GetMilliSeconds());
     NS_LOG_UNCOND("Node: "<<entity->m_node->GetId()<<"    ND: "<<netDev->GetIfIndex());
@@ -521,53 +602,23 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
     NS_LOG_UNCOND(p->ToString());
     if(tagCopy.GetSimpleValue()==1) NS_LOG_UNCOND("BIG SIGNALING");
   }
-  
-  if(tagCopy.GetSimpleValue()==3){
-    entity->m_signaling=1;
-    entity->m_tunnelsDelay[entity->m_overlayRecvIndex] = Simulator::Now().GetMilliSeconds() - tagCopy.GetStartTime(); 
-  }
 
-  if(tagCopy.GetSimpleValue()==uint8_t(0x02)){
-    entity->m_signaling=1;
-    entity->m_pcktIdSign = tagCopy.GetIdValue();
-    //NS_LOG_UNCOND("SMALL SIGNALING");
-  }
-
-  if(tagCopy.GetSimpleValue()==0x01){
-    entity->m_signaling=1;
-    entity->m_NNIndex = tagCopy.GetNNIndex();
-    entity->m_segIndex = tagCopy.GetSegIndex();
-    entity->m_nodeIdSign = tagCopy.GetNodeId();
-    //NS_LOG_UNCOND("BIG SIGNALING");
-  }
-
-
-
-
-  
-  //NS_LOG_UNCOND("..............................................................");
-  
-
-
-  //Remove Header
+  //Remove Headers
   p->RemoveHeader(ppp_head);  
   p->RemoveHeader(entity->m_ipHeader);
   p->RemoveHeader(entity->m_udpHeader);
   entity->m_pckt = p->Copy();
 
-  if(entity->m_ipHeader.GetProtocol()==0x06){
-    return ;
-  }
-
+  //Discarding if it is not UDP
   if(entity->m_ipHeader.GetProtocol()!=17){
     return ;
   }
 
 
-  //Get Size
+  //Get Packet Size
   entity->m_size = p->GetSize();
   
-  // Get start Time
+  // Get Start Time
   if(tagCopy.GetSimpleValue()==0){
     entity->m_packetStart = uint32_t(tagCopy.GetStartTime());
   }
@@ -576,20 +627,21 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
   
   
 
-  //Destination and Src
+  //Broadcast Destination Address
   entity->m_destAddr = Mac48Address ("ff:ff:ff:ff:ff:ff");
 
 
-  
+  //Other Information
   entity->m_lengthType = ppp_head.GetProtocol();
   entity->m_packetsSent = 0;
   entity->m_recvDev = netDev;
 
+  //Discarding if it is Big Signaling in source
   if(entity->m_signaling && entity->m_node->GetId() != entity->m_dest){
     return ;
   }
   
-  
+  //Notify
   entity->Notify();
 }
 

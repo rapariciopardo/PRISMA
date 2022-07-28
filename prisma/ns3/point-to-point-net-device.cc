@@ -29,6 +29,8 @@
 #include "point-to-point-net-device.h"
 #include "ns3/point-to-point-channel.h"
 #include "ns3/ppp-header.h"
+#include "my-tag.h"
+
 
 namespace ns3 {
 
@@ -336,8 +338,7 @@ void
 PointToPointNetDevice::Receive (Ptr<Packet> packet)
 {
   NS_LOG_FUNCTION (this << packet);
-  //NS_LOG_UNCOND("Node:"<<m_node->GetId());
-  //NS_LOG_UNCOND(packet->ToString());
+  //if(m_node->GetId()!=0) NS_LOG_UNCOND("RECEIVE "<<m_node->GetId()<<"   "<<packet->ToString());
   uint16_t protocol = 0;
   if (m_receiveErrorModel && m_receiveErrorModel->IsCorrupt (packet) ) 
     {
@@ -519,7 +520,7 @@ PointToPointNetDevice::Send (
   //NS_LOG_UNCOND ("Node: "<<m_node->GetId()<<"    IF: "<<m_ifIndex);
   //NS_LOG_UNCOND ("UID is " << packet->GetUid ());
   //}
-  //NS_LOG_UNCOND ("p=" << packet << ", dest=" << &dest);
+  //NS_LOG_UNCOND ("p=" << packet->ToString() << ", dest=" << &dest);
   //NS_LOG_UNCOND ("UID is " << packet->GetUid ());
 
   //
@@ -545,7 +546,11 @@ PointToPointNetDevice::Send (
   //
   // We should enqueue and dequeue the packet to hit the tracing hooks.
   //
+  
   bool enq = m_queue->Enqueue (packet);
+  MyTag tagcopy;
+  packet->PeekPacketTag(tagcopy);
+  
 
   
   if (enq)

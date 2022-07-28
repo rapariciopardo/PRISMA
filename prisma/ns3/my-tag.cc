@@ -49,6 +49,9 @@ MyTag::GetSerializedSize (void) const
   else if(m_simpleValue==2){
     ret += 8;
   }
+  else if (m_simpleValue==3){
+    ret += 8;
+  }
   return ret;
 }
 void 
@@ -68,6 +71,9 @@ MyTag::Serialize (TagBuffer i) const
   }
   else if(m_simpleValue==2){
     i.WriteU64 (m_pktId);
+  }
+  else if(m_simpleValue==3){
+    i.WriteU64 (m_startTime);
   }
   
   
@@ -89,6 +95,9 @@ MyTag::Deserialize (TagBuffer i)
   }
   else if(m_simpleValue==2){
     m_pktId=i.ReadU64 ();
+  }
+  else if(m_simpleValue==3){
+    m_startTime=i.ReadU64 ();
   }
  
 }

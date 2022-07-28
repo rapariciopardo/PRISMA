@@ -71,6 +71,7 @@ public:
   float GetReward();
   std::string GetExtraInfo();
   bool ExecuteActions(Ptr<OpenGymDataContainer> action);
+  static void dropPacket(Ptr<PacketRoutingEnv> entity);
   static std::vector<uint32_t> m_rxPkts;
 
   // the function has to be static to work with MakeBoundCallback
@@ -135,6 +136,9 @@ private:
   vector<uint64_t> m_tunnelsDelay;
   int m_overlayRecvIndex;
   uint32_t m_nPacketsOverlaySignaling;
+
+  uint32_t m_packetsDropped;
+  uint32_t m_packetsDelivered;
 
 
   

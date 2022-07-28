@@ -355,7 +355,7 @@ class Agent():
             # print("-"*11)
             ## check if the pkt is lost
             #print("INFO PYTHON ", self.obs[self.action + 1] + (542), Agent.max_out_buffer_size)
-            if (self.obs[self.action + 1] + (542)) > Agent.max_out_buffer_size or self.action == -1:
+            if (self.obs_nb[self.action + 1] + (542)) > Agent.max_out_buffer_size or self.action == -1:
                 #print(self.pkt_id, self.index, "lost")
                 Agent.total_lost_pkts += 1
                 rew = self._get_reward()
@@ -640,7 +640,7 @@ class Agent():
                 self.pkt_id = float(tokens[5].split('=')[-1])
                 self.signaling = float(tokens[6].split('=')[-1])
                 self.obs_nb = np.array((tokens[10].split('=')[-1]).split(';')[:-1], dtype=int).tolist()
-                # print(self.obs_nb, self.obs)
+                #print(self.obs_nb, self.obs)
                 if(self.signaling != 0):
                     ## treat signaling 
                     if pkt_size == 512:
