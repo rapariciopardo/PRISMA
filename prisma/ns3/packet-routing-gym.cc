@@ -51,6 +51,24 @@
 
 namespace ns3 {
 uint32_t PacketRoutingEnv::m_n_nodes;
+int PacketRoutingEnv::m_packetsDeliveredGlobal;
+int PacketRoutingEnv::m_packetsInjectedGlobal;
+int PacketRoutingEnv::m_packetsDroppedGlobal;
+std::vector<int> PacketRoutingEnv::m_end2endDelay;
+std::vector<float> PacketRoutingEnv::m_cost;
+
+template<typename T>
+double getAverage(std::vector<T> const& v) {
+  if (v.empty()) {
+    return 0;
+  }
+
+  double sum = 0.0;
+  for (const T &i: v) {
+    sum += (double)i;
+  }
+  return sum / v.size();
+}
 
 
 NS_LOG_COMPONENT_DEFINE ("PacketRoutingEnv");
@@ -126,6 +144,19 @@ PacketRoutingEnv::setOverlayConfig(vector<int> overlayNeighbors, bool activateOv
     m_tunnelsDelay.push_back(0);
   }
 }
+
+void
+PacketRoutingEnv::setNetDevicesContainer(NetDeviceContainer* nd){
+  for(size_t i =0; i < nd->GetN();i++){
+    nd->Get(i)->TraceConnectWithoutContext("MacTxDrop", MakeBoundCallback(&dropPacket, this));
+  }
+}
+
+void
+PacketRoutingEnv::setLossPenalty(double lossPenalty){
+  m_loss_penalty = lossPenalty;
+}
+
 void
 PacketRoutingEnv::ScheduleNextStateRead ()
 {
@@ -201,8 +232,15 @@ PacketRoutingEnv::GetQueueLength(Ptr<Node> node, uint32_t netDev_idx)
   return backlog;
 }
 void
-PacketRoutingEnv::dropPacket(Ptr<PacketRoutingEnv> entity){
-  entity->m_packetsDropped += 1;
+PacketRoutingEnv::dropPacket(Ptr<PacketRoutingEnv> entity, Ptr<const Packet> packet){
+  MyTag tagCopy;
+  packet->PeekPacketTag(tagCopy);
+  if(tagCopy.GetSimpleValue()==0){
+    m_cost.push_back(entity->m_loss_penalty);
+    m_packetsDroppedGlobal += 1;
+    //NS_LOG_UNCOND("Packet dropped here "<<m_packetsDroppedGlobal);
+    //NS_LOG_UNCOND("Penalty: "<<entity->m_loss_penalty);
+  }  
 }
 uint32_t
 PacketRoutingEnv::GetQueueLengthInBytes(Ptr<Node> node, uint32_t netDev_idx)
@@ -347,10 +385,21 @@ PacketRoutingEnv::GetExtraInfo()
     }
 
     myInfo += ", Packets dropped =";
-    myInfo += std::to_string(m_packetsDropped);
+    myInfo += std::to_string(m_packetsDroppedGlobal);
 
     myInfo += ", Packets delivered =";
-    myInfo += std::to_string(m_packetsDelivered);
+    myInfo += std::to_string(m_packetsDeliveredGlobal);
+
+    myInfo += ", Packets injected =";
+    myInfo += std::to_string(m_packetsInjectedGlobal);
+
+    myInfo += ", End to End Delay =";
+    myInfo += std::to_string(getAverage(m_end2endDelay)); 
+
+    myInfo += ",Cost =";
+    myInfo += std::to_string(getAverage(m_cost)); 
+
+    //NS_LOG_UNCOND(myInfo);
     
     return myInfo;
   }
@@ -404,6 +453,7 @@ PacketRoutingEnv::sendOverlaySignalingUpdate(uint8_t type){
   ip_head.SetDestination(ip_dest);
   if(type==2) ip_head.SetPayloadSize(m_signPacketSize+udp_head.GetSerializedSize());
   if(type==3) ip_head.SetPayloadSize(8+udp_head.GetSerializedSize());
+  ip_head.SetProtocol(17);
   smallSignalingPckt->AddHeader(ip_head);
 
   //Send the sign packet
@@ -476,7 +526,7 @@ PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
       //Send and verify if the Packet was dropped
       bool ret = dev->Send(m_pckt, m_destAddr, 0x0800);
       if(ret==false){
-        NS_LOG_UNCOND("Packet Dropped");
+        //NS_LOG_UNCOND("Packet Dropped");
         m_packetsDropped++;
       }
     }
@@ -495,6 +545,7 @@ PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
 void
 PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netDev, NetDeviceContainer* nd, Ptr<const Packet> packet)
 {  
+  
   // define is train step flag
   entity->is_trainStep_flag = 0;
 
@@ -532,6 +583,19 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
   //  //NS_LOG_UNCOND("LSA MESSAGE");
   //}
 
+  //Remove Headers
+  p->RemoveHeader(ppp_head);  
+  p->RemoveHeader(entity->m_ipHeader);
+  p->RemoveHeader(entity->m_udpHeader);
+  entity->m_pckt = p->Copy();
+
+  //Discarding if it is not UDP
+  if(entity->m_ipHeader.GetProtocol()!=17){
+    return ;
+  }
+
+  
+
   //Packet TAG
   MyTag tagCopy;
   p->PeekPacketTag(tagCopy);
@@ -549,6 +613,7 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
   }
   else if(entity->m_lastHop !=1000 && tagCopy.GetSimpleValue()!=1)
   {
+    NS_LOG_UNCOND(p->ToString());
     NS_LOG_UNCOND("ERRRRRRRRR "<<entity->m_lastHop<<"    tag: "<<uint32_t(tagCopy.GetSimpleValue()));
     NS_LOG_UNCOND("Node: "<<entity->m_node->GetId());
   }
@@ -560,13 +625,22 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
     if(tagCopy.GetTrafficValable()==0){
       return ;
     }
+    entity->m_packetStart = uint32_t(tagCopy.GetStartTime());
     if(entity->m_lastHop!=1000){
       entity->m_countRecvPackets[entity->m_overlayRecvIndex] += 1;
 
       if(entity->m_dest == entity->m_node->GetId()){
         //NS_LOG_UNCOND("Packet Delivered");
-        entity->m_packetsDelivered++;
+        m_packetsDeliveredGlobal += 1;
+        m_end2endDelay.push_back(Simulator::Now().GetMilliSeconds()- entity->m_packetStart);
+        m_cost.push_back(Simulator::Now().GetMilliSeconds()- entity->m_packetStart);
+        //NS_LOG_UNCOND("Times: "<<Simulator::Now().GetMilliSeconds()<<"   "<<entity->m_packetStart);
+        //NS_LOG_UNCOND("Packets Delivered here "<<m_packetsDeliveredGlobal<<"    "<<m_end2endDelay.back()<<"   "<<getAverage(m_end2endDelay)<<"   "<<getAverage(m_cost));
       }
+    }
+    else{
+      m_packetsInjectedGlobal += 1;
+      //NS_LOG_UNCOND("Packets Injected here "<<m_packetsInjectedGlobal);
     }
   }
 
@@ -590,11 +664,17 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
     entity->m_segIndex = tagCopy.GetSegIndex();
     entity->m_nodeIdSign = tagCopy.GetNodeId();
   }
+
+  //Discarding if it is Big Signaling in source
+  if(entity->m_signaling && entity->m_node->GetId() != entity->m_dest){
+    return ;
+  }
   
   //Printing INFO
   if(false){
     NS_LOG_UNCOND("..............................................................");
     NS_LOG_UNCOND("SimTime: "<<Simulator::Now().GetMilliSeconds());
+    NS_LOG_UNCOND("Uid: "<<p->GetUid());
     NS_LOG_UNCOND("Node: "<<entity->m_node->GetId()<<"    ND: "<<netDev->GetIfIndex());
     NS_LOG_UNCOND("Destination: "<< entity->m_dest);
     NS_LOG_UNCOND("Last Hop: "<<entity->m_lastHop);
@@ -603,25 +683,16 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
     if(tagCopy.GetSimpleValue()==1) NS_LOG_UNCOND("BIG SIGNALING");
   }
 
-  //Remove Headers
-  p->RemoveHeader(ppp_head);  
-  p->RemoveHeader(entity->m_ipHeader);
-  p->RemoveHeader(entity->m_udpHeader);
-  entity->m_pckt = p->Copy();
-
-  //Discarding if it is not UDP
-  if(entity->m_ipHeader.GetProtocol()!=17){
-    return ;
-  }
+  
 
 
   //Get Packet Size
   entity->m_size = p->GetSize();
   
   // Get Start Time
-  if(tagCopy.GetSimpleValue()==0){
-    entity->m_packetStart = uint32_t(tagCopy.GetStartTime());
-  }
+  //if(tagCopy.GetSimpleValue()==0){
+  //  
+  //}
   
 
   
@@ -636,10 +707,7 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
   entity->m_packetsSent = 0;
   entity->m_recvDev = netDev;
 
-  //Discarding if it is Big Signaling in source
-  if(entity->m_signaling && entity->m_node->GetId() != entity->m_dest){
-    return ;
-  }
+ 
   
   //Notify
   entity->Notify();

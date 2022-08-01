@@ -115,6 +115,8 @@ void countPackets(int n_nodes, NetDeviceContainer* nd, std::string path, Ptr<con
 
 
 
+
+
 NS_LOG_COMPONENT_DEFINE ("GenericTopologyCreation");
 
 int main (int argc, char *argv[])
@@ -154,7 +156,9 @@ int main (int argc, char *argv[])
   std::string node_intensity_file_name("scratch/prisma/examples/abilene/node_intensity.txt");
 
   bool activateOverlaySignaling = true;
-  uint32_t nPacketsOverlaySignaling = 100;
+  uint32_t nPacketsOverlaySignaling = 10;
+
+  double lossPenalty = 0.0;
   
   CommandLine cmd;
   // required parameters for OpenGym interface
@@ -186,6 +190,7 @@ int main (int argc, char *argv[])
   cmd.AddValue ("syncStep", "synchronization Step (in seconds)", syncStep);
   cmd.AddValue ("activateOverlaySignaling", "activate Overlay Signaling", activateOverlaySignaling);
   cmd.AddValue ("nPacketsOverlaySignaling", "nb of packets for triggering overlay signaling", nPacketsOverlaySignaling);
+  cmd.AddValue ("lossPenalty", "Packet Loss Penalty", lossPenalty);
   cmd.Parse (argc, argv);
     
   NS_LOG_UNCOND("Ns3Env parameters:");
@@ -204,6 +209,7 @@ int main (int argc, char *argv[])
   NS_LOG_UNCOND("--Signaling: "<<activateSignaling);
   NS_LOG_UNCOND("--agentType: "<< agentType);
   NS_LOG_UNCOND("--SignalingType: "<<signalingType);
+  NS_LOG_UNCOND("--lossPenalty: "<<lossPenalty);
 
   
   
@@ -245,6 +251,9 @@ int main (int argc, char *argv[])
   vector<vector<bool> > OverlayAdj_Matrix;
   OverlayAdj_Matrix = readNxNMatrix (overlay_mat_file_name);
 
+  //int n_packetsDropped = 0;
+  //int n_packetsInjected = 0;
+  //int n_packetsDelivered = 0;
 
 
 
@@ -339,8 +348,8 @@ int main (int argc, char *argv[])
     PointToPointHelper p2p;
     DataRate data_rate(LinkRate);
 
-    p2p.SetDeviceAttribute ("DataRate", DataRateValue (10000*data_rate.GetBitRate()*nodes_degree[i]));
-    p2p.SetChannelAttribute ("Delay", StringValue (LinkDelay));
+    p2p.SetDeviceAttribute ("DataRate", DataRateValue (100000*data_rate.GetBitRate()*nodes_degree[i]));
+    p2p.SetChannelAttribute ("Delay", StringValue ("0ms"));
     p2p.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("500p"));    
     NetDeviceContainer n_devs = p2p.Install (NodeContainer (nodes_traffic.Get(i), nodes_switch.Get(i)));
     dev_links.push_back(n_devs);
@@ -376,6 +385,7 @@ int main (int argc, char *argv[])
     NS_LOG_UNCOND(get<0>(link_devs[i]) << "     " << get<1>(link_devs[i])<<"    "<<switch_nd.Get(get<0>(link_devs[i]))->GetNode()->GetId()<<"     "<<switch_nd.Get(get<1>(link_devs[i]))->GetNode()->GetId());
     NS_LOG_UNCOND(switch_nd.Get(get<0>(link_devs[i]))->GetIfIndex());
   }
+  
 
 
   //Adding Ipv4 Address to the Net Devices
@@ -450,6 +460,8 @@ int main (int argc, char *argv[])
     }
     packetRoutingEnv->SetOpenGymInterface(openGymInterface);
     packetRoutingEnv->setOverlayConfig(overlayNeighbors[overlayNodes[i]], activateOverlaySignaling, nPacketsOverlaySignaling);
+    packetRoutingEnv->setLossPenalty(lossPenalty);
+    if(i==0) packetRoutingEnv->setNetDevicesContainer(&switch_nd);
     for(size_t j = 1;j<nodes_switch.Get(overlayNodes[i])->GetNDevices();j++){
       Ptr<NetDevice> dev_switch =DynamicCast<NetDevice> (nodes_switch.Get(overlayNodes[i])->GetDevice(j)); 
       NS_LOG_UNCOND(dev_switch->GetNode()->GetId()<<"     "<<j);

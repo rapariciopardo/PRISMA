@@ -33,6 +33,11 @@ class Agent():
     envs=[]
     agents = {}
     currIt = 0
+    sim_injected_packets=0
+    sim_dropped_packets = 0
+    sim_delivered_packets = 0
+    sim_e2e_delay = 0.0
+    sim_cost = 0.0
     total_new_rcv_pkts=0
     total_data_size=0
     total_arrived_pkts=0
@@ -139,6 +144,11 @@ class Agent():
         cl.packet_size = params_dict["packet_size"]
         cl.signalingSim = params_dict["signalingSim"]
         cl.currIt = 0
+        cl.sim_injected_packets=0
+        cl.sim_dropped_packets = 0
+        cl.sim_delivered_packets = 0
+        cl.sim_e2e_delay = 0.0
+        cl.sim_cost = 0.0
         cl.total_new_rcv_pkts=0
         cl.total_data_size=0
         cl.total_arrived_pkts=0
@@ -512,6 +522,7 @@ class Agent():
                                                     element["reward"],
                                                     element["new_obs"], 
                                                     element["flag"])
+                    print(self.index, Agent.replay_buffer[self.index].sample(1))
                 else:
                     ## treat big signaling
                     # print("receive sync event to %s to %s at %s" % (self.index, element["neighbor_idx"], element["time"]))
@@ -541,6 +552,7 @@ class Agent():
                                 element["reward"],
                                 element["new_obs"], 
                                 element["flag"])
+                    #print(self.index, element)
                     Agent.upcoming_events[self.index].pop(idx)
                     break
                         
@@ -642,6 +654,7 @@ class Agent():
                 self.obs_nb = np.array((tokens[10].split('=')[-1]).split(';')[:-1], dtype=int).tolist()
                 #print(self.obs_nb, self.obs)
                 if(self.signaling != 0):
+                    #print("signaling")
                     ## treat signaling 
                     if pkt_size == 512:
                         NodeIdSignaled = int(tokens[7].split('=')[-1])
@@ -652,6 +665,7 @@ class Agent():
                             if NNIndex ==self.sync_counter - 1:
                                 self._sync_current(self.neighbors.index(NodeIdSignaled), with_temp=True)
                             else:
+                                #print(self.index, NodeIdSignaled)
                                 self._sync_current(self.neighbors.index(NodeIdSignaled))
                         #print("here")
                         Agent.big_signaling_overhead_counter += pkt_size
@@ -663,6 +677,11 @@ class Agent():
                         Agent.small_signaling_pkt_counter += 1
                     # print("signaling pkt we skip", self.index, self.signaling, tokens)
                     continue
+                Agent.sim_dropped_packets = float(tokens[11].split('=')[-1])
+                Agent.sim_delivered_packets = float(tokens[12].split('=')[-1])
+                Agent.sim_injected_packets = float(tokens[13].split('=')[-1])
+                Agent.sim_e2e_delay = float(tokens[14].split('=')[-1])
+                Agent.sim_cost = float(tokens[15].split('=')[-1])
                 Agent.nb_transitions += 1
                 if self.pkt_id not in Agent.pkt_tracking_dict.keys(): ## check if the packet is a new arrival
                     self.count_new_pkts += 1
@@ -777,8 +796,11 @@ class Agent():
             os.mkdir("logs")
         np.savetxt("logs/log_dict_"+Agent.sessionName+".txt", np.asarray(Agent.info_debug, dtype='object'), fmt='%s')
         #f.open(f"replay_buffer_samples/{self.index}", "wb")
-        #print("saving replay buffer")
-        #Agent.replay_buffer[self.index].save(f"replay_buffer_samples/{self.index}")
+        print("saving replay buffer")
+        try:
+            Agent.replay_buffer[self.index].save(f"replay_buffer_samples/{self.index}")
+        except:
+            print("error saving")
         self.env.ns3ZmqBridge.send_close_command()
         # print("***index :", self.index, "Done", "stepIdx =", self.stepIdx, "arrived pkts =", self.count_arrived_packets,  "new received pkts", self.count_new_pkts, "gradient steps", self.gradient_step_idx)
         return True

@@ -60,6 +60,8 @@ public:
   PacketRoutingEnv (Ptr<Node> node, uint32_t numberOfNodes, uint64_t linkRateValue, bool activateSignaling, double signPacketSize, vector<int> overlayNeighbors);
   PacketRoutingEnv (Time stepTime, Ptr<Node> node);
   void setOverlayConfig(vector<int> overlayNeighbors, bool activateOverlaySignaling, uint32_t nPacketsOverlaySignaling);
+  void setNetDevicesContainer(NetDeviceContainer* nd);
+  void setLossPenalty(double lossPenalty);
   virtual ~PacketRoutingEnv ();
   static TypeId GetTypeId (void);
   virtual void DoDispose ();
@@ -71,7 +73,7 @@ public:
   float GetReward();
   std::string GetExtraInfo();
   bool ExecuteActions(Ptr<OpenGymDataContainer> action);
-  static void dropPacket(Ptr<PacketRoutingEnv> entity);
+  static void dropPacket(Ptr<PacketRoutingEnv> entity, Ptr<const Packet> packet);
   static std::vector<uint32_t> m_rxPkts;
 
   // the function has to be static to work with MakeBoundCallback
@@ -139,6 +141,13 @@ private:
 
   uint32_t m_packetsDropped;
   uint32_t m_packetsDelivered;
+  static int m_packetsDeliveredGlobal;
+  static int m_packetsInjectedGlobal;
+  static int m_packetsDroppedGlobal;
+  static std::vector<int> m_end2endDelay;
+  static std::vector<float> m_cost;
+
+  double m_loss_penalty;
 
 
   

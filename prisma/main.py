@@ -311,7 +311,7 @@ def run_ns3(params):
     ns3_params_format = ('prisma --simSeed={} --openGymPort={} --simTime={} --AvgPacketSize={} '
                         '--LinkDelay={} --LinkRate={} --MaxBufferLength={} --load_factor={} '
                         '--adj_mat_file_name={} --overlay_mat_file_name={} --node_coordinates_file_name={} --node_intensity_file_name={}'
-                        ' --signaling={} --AgentType={} --signalingType={} --syncStep={}'.format( params["seed"],
+                        ' --signaling={} --AgentType={} --signalingType={} --syncStep={} --lossPenalty={}'.format( params["seed"],
                                                                                                   params["basePort"],
                                                                                                   str(params["simTime"]),
                                                                                                   params["packet_size"],
@@ -326,7 +326,8 @@ def run_ns3(params):
                                                                                                   bool(params["signalingSim"]),
                                                                                                   params["agent_type"],
                                                                                                   params["signaling_type"],
-                                                                                                  params["sync_step"]
+                                                                                                  params["sync_step"],
+                                                                                                  params["loss_penalty"]
                                                                                                   ))
     run_ns3_command = shlex.split(f'./waf --run "{ns3_params_format}"')
     subprocess.Popen(run_ns3_command, stdin=subprocess.PIPE)
@@ -341,7 +342,7 @@ def main():
 
     ## compute the loss penalty
     # params["loss_penalty"] = ((((params["max_out_buffer_size"] + 1)*params["packet_size"]*8)/params["link_cap"])) *params["numNodes"]
-    params["loss_penalty"] = ((((params["max_out_buffer_size"] + 512+30)*8)/params["link_cap"])+0.001)*params["numNodes"]
+    params["loss_penalty"] = ((((params["max_out_buffer_size"] + 512+30)*8)/params["link_cap"])+0.001)*params["maxNumNodes"]
 
     ## fix the seed
     tf.random.set_seed(params["seed"])
@@ -419,6 +420,14 @@ def main():
         stats_writer(summary_writer_session, summary_writer_nb_arrived_pkts, summary_writer_nb_lost_pkts, summary_writer_nb_new_pkts)
 
     print(f"Signaling overhead = {Agent.small_signaling_overhead_counter}")
+    print(f""" Summary of the Simulation:
+            Total number of packets = {Agent.sim_injected_packets}, 
+            Number of arrived packets = {Agent.sim_delivered_packets},
+            Number of lost packets = {Agent.sim_dropped_packets},
+            Delay_real = {Agent.sim_e2e_delay},
+            Cost = {Agent.sim_cost}
+            """)
+    
     print(f""" Summary of the episode :
             Total number of Iterations = {Agent.currIt},
             Total number of Transitions = {Agent.nb_transitions},
