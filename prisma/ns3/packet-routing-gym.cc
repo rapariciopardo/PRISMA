@@ -633,7 +633,7 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
         //NS_LOG_UNCOND("Packet Delivered");
         m_packetsDeliveredGlobal += 1;
         m_end2endDelay.push_back(Simulator::Now().GetMilliSeconds()- entity->m_packetStart);
-        m_cost.push_back(Simulator::Now().GetMilliSeconds()- entity->m_packetStart);
+        m_cost.push_back((Simulator::Now().GetMilliSeconds()- entity->m_packetStart)*0.001);
         //NS_LOG_UNCOND("Times: "<<Simulator::Now().GetMilliSeconds()<<"   "<<entity->m_packetStart);
         //NS_LOG_UNCOND("Packets Delivered here "<<m_packetsDeliveredGlobal<<"    "<<m_end2endDelay.back()<<"   "<<getAverage(m_end2endDelay)<<"   "<<getAverage(m_cost));
       }

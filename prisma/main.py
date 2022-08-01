@@ -232,14 +232,14 @@ def stats_writer(summary_writer_session, summary_writer_nb_arrived_pkts, summary
         summary_writer_nb_new_pkts: writer for nb new pkts
     """
     ## write the global stats
-    if Agent.total_new_rcv_pkts > 0:
-        loss_ratio = Agent.total_lost_pkts/Agent.total_new_rcv_pkts
+    if Agent.sim_injected_packets > 0:
+        loss_ratio = Agent.sim_dropped_packets/Agent.sim_injected_packets
     else:
         loss_ratio = -1
-    if Agent.total_arrived_pkts > 0:
-        avg_delay = Agent.total_e2e_delay/(Agent.total_arrived_pkts*1000)
-        avg_cost = Agent.total_rewards_with_loss/Agent.total_new_rcv_pkts
-        avg_hops = Agent.total_hops/Agent.total_arrived_pkts
+    if Agent.sim_delivered_packets > 0:
+        avg_delay = Agent.sim_e2e_delay/(Agent.sim_delivered_packets*1000)
+        avg_cost = Agent.sim_cost/Agent.total_new_rcv_pkts
+        avg_hops = Agent.total_hops/Agent.sim_delivered_packets
     else:
         avg_delay = -1
         avg_cost = -1
@@ -273,16 +273,16 @@ def stats_writer(summary_writer_session, summary_writer_nb_arrived_pkts, summary
         tf.summary.scalar('ma_delays_over_time', np.array(Agent.delays).mean(), step=int(Agent.curr_time*1e6))
 
     with summary_writer_nb_arrived_pkts.as_default():
-        tf.summary.scalar('pkts_over_iterations', Agent.total_arrived_pkts, step=Agent.currIt)
-        tf.summary.scalar('pkts_over_time', Agent.total_arrived_pkts, step=int(Agent.curr_time*1e6))
+        tf.summary.scalar('pkts_over_iterations', Agent.sim_delivered_packets, step=Agent.currIt)
+        tf.summary.scalar('pkts_over_time', Agent.sim_delivered_packets, step=int(Agent.curr_time*1e6))
 
     with summary_writer_nb_lost_pkts.as_default():
-        tf.summary.scalar('pkts_over_iterations', Agent.total_lost_pkts, step=Agent.currIt)
-        tf.summary.scalar('pkts_over_time', Agent.total_lost_pkts, step=int(Agent.curr_time*1e6))
+        tf.summary.scalar('pkts_over_iterations', Agent.sim_dropped_packets, step=Agent.currIt)
+        tf.summary.scalar('pkts_over_time', Agent.sim_dropped_packets, step=int(Agent.curr_time*1e6))
 
     with summary_writer_nb_new_pkts.as_default():
-        tf.summary.scalar('pkts_over_iterations', Agent.total_new_rcv_pkts, step=Agent.currIt)
-        tf.summary.scalar('pkts_over_time', Agent.total_new_rcv_pkts, step=int(Agent.curr_time*1e6))
+        tf.summary.scalar('pkts_over_iterations', Agent.sim_injected_packets, step=Agent.currIt)
+        tf.summary.scalar('pkts_over_time', Agent.sim_injected_packets, step=int(Agent.curr_time*1e6))
 
 def run_ns3(params):
     """

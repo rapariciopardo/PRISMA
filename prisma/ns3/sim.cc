@@ -156,7 +156,7 @@ int main (int argc, char *argv[])
   std::string node_intensity_file_name("scratch/prisma/examples/abilene/node_intensity.txt");
 
   bool activateOverlaySignaling = true;
-  uint32_t nPacketsOverlaySignaling = 10;
+  uint32_t nPacketsOverlaySignaling = 6;
 
   double lossPenalty = 0.0;
   
