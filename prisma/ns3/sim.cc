@@ -156,7 +156,7 @@ int main (int argc, char *argv[])
   std::string node_intensity_file_name("scratch/prisma/examples/abilene/node_intensity.txt");
 
   bool activateOverlaySignaling = true;
-  uint32_t nPacketsOverlaySignaling = 6;
+  uint32_t nPacketsOverlaySignaling = 2;
 
   double lossPenalty = 0.0;
   
@@ -461,7 +461,7 @@ int main (int argc, char *argv[])
     packetRoutingEnv->SetOpenGymInterface(openGymInterface);
     packetRoutingEnv->setOverlayConfig(overlayNeighbors[overlayNodes[i]], activateOverlaySignaling, nPacketsOverlaySignaling);
     packetRoutingEnv->setLossPenalty(lossPenalty);
-    if(i==0) packetRoutingEnv->setNetDevicesContainer(&switch_nd);
+    packetRoutingEnv->setNetDevicesContainer(&switch_nd);
     for(size_t j = 1;j<nodes_switch.Get(overlayNodes[i])->GetNDevices();j++){
       Ptr<NetDevice> dev_switch =DynamicCast<NetDevice> (nodes_switch.Get(overlayNodes[i])->GetDevice(j)); 
       NS_LOG_UNCOND(dev_switch->GetNode()->GetId()<<"     "<<j);

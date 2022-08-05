@@ -237,8 +237,8 @@ def stats_writer(summary_writer_session, summary_writer_nb_arrived_pkts, summary
     else:
         loss_ratio = -1
     if Agent.sim_delivered_packets > 0:
-        avg_delay = Agent.sim_e2e_delay/(Agent.sim_delivered_packets*1000)
-        avg_cost = Agent.sim_cost/Agent.total_new_rcv_pkts
+        avg_delay = Agent.sim_avg_e2e_delay/(Agent.sim_delivered_packets*1000)
+        avg_cost = Agent.sim_cost/(Agent.sim_delivered_packets+Agent.sim_dropped_packets)
         avg_hops = Agent.total_hops/Agent.sim_delivered_packets
     else:
         avg_delay = -1
@@ -262,8 +262,8 @@ def stats_writer(summary_writer_session, summary_writer_nb_arrived_pkts, summary
         tf.summary.scalar('ma_avg_hops_over_iterations', np.array(Agent.nb_hops).mean(), step=Agent.currIt)
         tf.summary.scalar('ma_avg_hops_over_time', np.array(Agent.nb_hops).mean(), step=int(Agent.curr_time*1e6))
         ## buffers occupation
-        tf.summary.scalar('nb_buffered_pkts_over_time', Agent.total_new_rcv_pkts-(Agent.total_arrived_pkts + Agent.total_lost_pkts), step=int(Agent.curr_time*1e6))
-        tf.summary.scalar('nb_buffered_pkts_over_iterations', Agent.total_new_rcv_pkts-(Agent.total_arrived_pkts + Agent.total_lost_pkts), step=Agent.currIt)
+        tf.summary.scalar('nb_buffered_pkts_over_time', Agent.sim_buffered_packets, step=int(Agent.curr_time*1e6))
+        tf.summary.scalar('nb_buffered_pkts_over_iterations', Agent.sim_buffered_packets, step=Agent.currIt)
         ## avg cost and avg delay
         tf.summary.scalar('avg_cost_over_iterations', avg_cost, step=Agent.currIt)
         tf.summary.scalar('avg_cost_over_time', avg_cost, step=int(Agent.curr_time*1e6))
@@ -424,7 +424,7 @@ def main():
             Total number of packets = {Agent.sim_injected_packets}, 
             Number of arrived packets = {Agent.sim_delivered_packets},
             Number of lost packets = {Agent.sim_dropped_packets},
-            Delay_real = {Agent.sim_e2e_delay},
+            Delay_real = {Agent.sim_avg_e2e_delay},
             Cost = {Agent.sim_cost}
             """)
     
@@ -435,12 +435,12 @@ def main():
             Total e2e delay = {Agent.total_e2e_delay}, 
             Total number of packets = {Agent.total_new_rcv_pkts}, 
             Number of arrived packets = {Agent.total_arrived_pkts},
-            Number of lost packets = {Agent.total_lost_pkts},
-            Loss ratio = {Agent.total_lost_pkts/Agent.total_new_rcv_pkts}
+            Number of lost packets = {Agent.node_lost_pkts},
+            Loss ratio = {Agent.node_lost_pkts/Agent.total_new_rcv_pkts}
             Delay_ideal = {np.array(Agent.delays_ideal).mean()}
             Delay_real = {np.array(Agent.delays_real).mean()}
             total cost = {Agent.total_rewards_with_loss}
-            theoretical cost = {((Agent.total_lost_pkts * Agent.loss_penalty) + np.array(Agent.delays_ideal).sum())/(Agent.total_lost_pkts + Agent.total_arrived_pkts)}
+            theoretical cost = {((Agent.node_lost_pkts * Agent.loss_penalty) + np.array(Agent.delays_ideal).sum())/(Agent.node_lost_pkts + Agent.total_arrived_pkts)}
             Avg cost = {Agent.total_rewards_with_loss/Agent.total_new_rcv_pkts}
             Reward = {np.array(Agent.rewards).mean()} 
             Signaling overhead = {Agent.small_signaling_overhead_counter + Agent.big_signaling_overhead_counter}
@@ -458,9 +458,9 @@ def main():
                         params["seed"],
                         params["replay_buffer_max_size"],
                         params["sync_step"],
-                        Agent.total_lost_pkts/Agent.total_new_rcv_pkts,
-                        np.array(Agent.delays_real).mean(),
-                        ((Agent.total_lost_pkts * Agent.loss_penalty) + np.array(Agent.delays_real).sum())/(Agent.total_lost_pkts + Agent.total_arrived_pkts),
+                        Agent.node_lost_pkts/Agent.total_new_rcv_pkts,
+                        np.array(Agent.delays_ideal).mean(),
+                        ((Agent.node_lost_pkts * Agent.loss_penalty) + np.array(Agent.delays_ideal).sum())/(Agent.node_lost_pkts + Agent.total_arrived_pkts),
                         Agent.total_rewards_with_loss/Agent.total_new_rcv_pkts,
                         Agent.total_rewards_with_loss,
                         Agent.small_signaling_overhead_counter + Agent.big_signaling_overhead_counter,
@@ -468,7 +468,7 @@ def main():
                         Agent.big_signaling_overhead_counter,
                         Agent.total_new_rcv_pkts,
                         Agent.total_arrived_pkts,
-                        Agent.total_lost_pkts,
+                        Agent.node_lost_pkts,
                         Agent.total_data_size,
                         Agent.nb_transitions
                     ]

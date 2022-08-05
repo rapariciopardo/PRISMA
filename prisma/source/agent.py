@@ -36,13 +36,15 @@ class Agent():
     sim_injected_packets=0
     sim_dropped_packets = 0
     sim_delivered_packets = 0
-    sim_e2e_delay = 0.0
+    sim_buffered_packets = 0
+    sim_avg_e2e_delay = 0.0
+    sim_sum_e2e_delay = 0.0
     sim_cost = 0.0
     total_new_rcv_pkts=0
     total_data_size=0
     total_arrived_pkts=0
     total_rewards=0
-    total_lost_pkts=0
+    node_lost_pkts=0
     curr_time=0
     total_hops=0
     total_rewards_with_loss=0
@@ -147,13 +149,15 @@ class Agent():
         cl.sim_injected_packets=0
         cl.sim_dropped_packets = 0
         cl.sim_delivered_packets = 0
-        cl.sim_e2e_delay = 0.0
+        cl.sim_buffered_packets = 0
+        cl.sim_avg_e2e_delay = 0.0
+        cl.sim_sum_e2e_delay = 0.0
         cl.sim_cost = 0.0
         cl.total_new_rcv_pkts=0
         cl.total_data_size=0
         cl.total_arrived_pkts=0
         cl.total_e2e_delay=0
-        cl.total_lost_pkts=0
+        cl.node_lost_pkts=0
         cl.curr_time=0
         cl.total_hops=0
         cl.nb_hops=[]
@@ -367,7 +371,7 @@ class Agent():
             #print("INFO PYTHON ", self.obs[self.action + 1] + (542), Agent.max_out_buffer_size)
             if (self.obs_nb[self.action + 1] + (542)) > Agent.max_out_buffer_size or self.action == -1:
                 #print(self.pkt_id, self.index, "lost")
-                Agent.total_lost_pkts += 1
+                Agent.node_lost_pkts += 1
                 rew = self._get_reward()
                 Agent.total_rewards_with_loss += rew
                 Agent.rewards.append(rew)
@@ -677,11 +681,14 @@ class Agent():
                         Agent.small_signaling_pkt_counter += 1
                     # print("signaling pkt we skip", self.index, self.signaling, tokens)
                     continue
-                Agent.sim_dropped_packets = float(tokens[11].split('=')[-1])
+                Agent.sim_dropped_packets = float(tokens[11].split('=')[-1]) + Agent.node_lost_pkts
                 Agent.sim_delivered_packets = float(tokens[12].split('=')[-1])
                 Agent.sim_injected_packets = float(tokens[13].split('=')[-1])
-                Agent.sim_e2e_delay = float(tokens[14].split('=')[-1])
-                Agent.sim_cost = float(tokens[15].split('=')[-1])
+                Agent.sim_buffered_packets = Agent.sim_injected_packets - Agent.sim_delivered_packets - Agent.sim_dropped_packets #float(tokens[14].split('=')[-1])
+                Agent.sim_avg_e2e_delay =  float(tokens[15].split('=')[-1])
+                Agent.sim_sum_e2e_delay =  float(tokens[16].split('=')[-1])
+                Agent.sim_cost = (Agent.sim_avg_e2e_delay*0.001 + Agent.sim_dropped_packets*Agent.loss_penalty)
+                #print(Agent.sim_injected_packets, Agent.sim_delivered_packets, Agent.sim_buffered_packets, Agent.sim_dropped_packets, Agent.sim_avg_e2e_delay)
                 Agent.nb_transitions += 1
                 if self.pkt_id not in Agent.pkt_tracking_dict.keys(): ## check if the packet is a new arrival
                     self.count_new_pkts += 1

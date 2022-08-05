@@ -551,7 +551,6 @@ PointToPointNetDevice::Send (
   MyTag tagcopy;
   packet->PeekPacketTag(tagcopy);
   
-
   
   if (enq)
   {

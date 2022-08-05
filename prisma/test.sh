@@ -1,5 +1,5 @@
 array=(
-1.0
+1.5
 #0.8
 #1.0
 #1.2
@@ -16,13 +16,13 @@ for j in ${array[@]}
 	res1=${FLOAT/.*}
 	echo $res1
 	python3 main.py \
-		--simTime=300 \
-		--basePort=3000 \
+		--simTime=1 \
+		--basePort=6000 \
 		--train=1 \
 		--seed=100 \
 		--agent_type="dqn_buffer" \
-		--session_name="test_tiago_v33_0_5_v8_load_$res1" \
-		--signaling_type="NN" \
+		--session_name="test_tiago_v34_0_5_v3_load_$res1" \
+		--signaling_type="target" \
 		--signalingSim=1 \
 		--training_step=0.01 \
 		--batch_size=256 \
@@ -30,9 +30,9 @@ for j in ${array[@]}
 		--gamma=1.0 \
 		--exploration_final_eps=0.01 \
 		--exploration_initial_eps=1.0 \
-		--iterationNum=30000 \
+		--iterationNum=3000 \
 		--training_trigger_type="time" \
-		--save_models=1 \
+		--save_models=0 \
 		--start_tensorboard=0 \
 		--replay_buffer_max_size=15000 \
    		--link_delay="1ms" \

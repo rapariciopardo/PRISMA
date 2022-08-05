@@ -50,7 +50,10 @@ MyTag::GetSerializedSize (void) const
     ret += 8;
   }
   else if (m_simpleValue==3){
-    ret += 8;
+    ret += 12;
+  }
+  else if (m_simpleValue==4){
+    ret += 12;
   }
   return ret;
 }
@@ -74,6 +77,11 @@ MyTag::Serialize (TagBuffer i) const
   }
   else if(m_simpleValue==3){
     i.WriteU64 (m_startTime);
+    i.WriteU32 (m_overlayIndex);
+  }
+  else if(m_simpleValue==4){
+    i.WriteU64 (m_startTime);
+    i.WriteU32 (m_overlayIndex);
   }
   
   
@@ -98,6 +106,11 @@ MyTag::Deserialize (TagBuffer i)
   }
   else if(m_simpleValue==3){
     m_startTime=i.ReadU64 ();
+    m_overlayIndex=i.ReadU32 ();
+  }
+  else if(m_simpleValue==4){
+    m_startTime=i.ReadU64 ();
+    m_overlayIndex = i.ReadU32 ();
   }
  
 }
@@ -196,3 +209,14 @@ MyTag::GetTrafficValable (void) const
 {
   return m_trafficValable;
 }
+void 
+MyTag::SetOverlayIndex (uint32_t value)
+{
+  m_overlayIndex = value;
+}
+uint32_t 
+MyTag::GetOverlayIndex (void) const
+{
+  return m_overlayIndex;
+}
+

@@ -34,6 +34,8 @@ public:
   uint32_t GetLastHop (void) const;
   void SetTrafficValable (uint8_t value);
   uint8_t GetTrafficValable (void) const;
+  void SetOverlayIndex (uint32_t value);
+  uint32_t GetOverlayIndex (void) const;
 private:
   uint8_t m_simpleValue;
   uint64_t m_startTime;
@@ -43,7 +45,8 @@ private:
   uint64_t m_pktId;
   uint32_t m_segIndex;
   uint32_t m_NNIndex;
-  uint32_t m_nodeId;  
+  uint32_t m_nodeId;
+  uint32_t m_overlayIndex;  
 };
 }
 

@@ -70,6 +70,19 @@ double getAverage(std::vector<T> const& v) {
   return sum / v.size();
 }
 
+template<typename T>
+double getSum(std::vector<T> const& v) {
+  if (v.empty()) {
+    return 0;
+  }
+
+  double sum = 0.0;
+  for (const T &i: v) {
+    sum += (double)i;
+  }
+  return sum;
+}
+
 
 NS_LOG_COMPONENT_DEFINE ("PacketRoutingEnv");
 
@@ -140,15 +153,21 @@ PacketRoutingEnv::setOverlayConfig(vector<int> overlayNeighbors, bool activateOv
   m_activateOverlaySignaling = activateOverlaySignaling;
   m_nPacketsOverlaySignaling = nPacketsOverlaySignaling;
   for(size_t i=0;i<m_overlayNeighbors.size();i++){
-    m_countRecvPackets.push_back(0);
+    m_overlayIndex[i] = 0;
+    m_countSendPackets.push_back(0);
     m_tunnelsDelay.push_back(0);
+    StartingOverlay start;
+    start.index = 0;
+    start.start_time = 0;
+    m_starting_overlay_packets[i].push_back(start);
   }
 }
 
 void
 PacketRoutingEnv::setNetDevicesContainer(NetDeviceContainer* nd){
   for(size_t i =0; i < nd->GetN();i++){
-    nd->Get(i)->TraceConnectWithoutContext("MacTxDrop", MakeBoundCallback(&dropPacket, this));
+    if(m_node->GetId()==0) nd->Get(i)->TraceConnectWithoutContext("MacTxDrop", MakeBoundCallback(&dropPacket, this));
+    m_all_nds.Add(nd->Get(i));
   }
 }
 
@@ -206,6 +225,11 @@ PacketRoutingEnv::GetObservationSpace()
   std::string dtype = TypeNameGet<uint32_t> ();
   Ptr<OpenGymBoxSpace> space = CreateObject<OpenGymBoxSpace> (low, high, m_obs_shape, dtype);
   NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", GetObservationSpace: " << space);
+  for(size_t i = 0;i<m_overlayNeighbors.size();i++){
+    m_fwdDev_idx = i;
+    m_src = m_node->GetId();
+    sendOverlaySignalingUpdate(uint8_t(3));
+  }
   return space;
 }
 
@@ -230,6 +254,18 @@ PacketRoutingEnv::GetQueueLength(Ptr<Node> node, uint32_t netDev_idx)
   Ptr<Queue<Packet> > queue = p2p_netDev->GetQueue ();
   uint32_t backlog = (int) queue->GetNPackets();
   return backlog;
+}
+
+uint32_t
+PacketRoutingEnv::getNbPacketsBuffered(){
+  uint32_t sum = 0;
+  for(size_t i=0;i<m_all_nds.GetN();i++){
+    Ptr<NetDevice> netDev = m_all_nds.Get(i);
+    Ptr<PointToPointNetDevice> p2p_netDev = DynamicCast<PointToPointNetDevice> (netDev);
+    Ptr<Queue<Packet> > queue = p2p_netDev->GetQueue ();
+    sum += queue->GetNPackets();
+  }
+  return sum;
 }
 void
 PacketRoutingEnv::dropPacket(Ptr<PacketRoutingEnv> entity, Ptr<const Packet> packet){
@@ -280,12 +316,18 @@ PacketRoutingEnv::GetObservation()
     packet_test->AddHeader(m_ipHeader);
     Ptr<Ipv4Route> route = routing->RouteOutput (packet_test, m_ipHeader, 0, sockerr);
     Ptr<PointToPointNetDevice> dev = DynamicCast<PointToPointNetDevice>(route->GetOutputDevice());
-    // uint32_t value = GetQueueLength (m_node, i);
-    uint32_t value = GetQueueLengthInBytes (m_node, dev->GetIfIndex());
-    //NS_LOG_UNCOND("Node: "<<m_node->GetId()<<"   Value: "<<value);
-
-    //Getting the tunnels delays (NEW VERSION)
-    value = m_tunnelsDelay[i];
+    uint value;
+    if(m_activateOverlaySignaling==0){
+      //uint32_t value = GetQueueLength (m_node, i);
+      value = GetQueueLengthInBytes (m_node, dev->GetIfIndex());
+      //NS_LOG_UNCOND("Node: "<<m_node->GetId()<<"   Value: "<<value);
+    }
+    else{
+      //Getting the tunnels delays (NEW VERSION)
+      if(m_starting_overlay_packets[i].size()>=1) value = std::max(m_tunnelsDelay[i]*2, Simulator::Now().GetMilliSeconds() - m_starting_overlay_packets[i][0].start_time)/2.0;
+      else value = m_tunnelsDelay[i];
+    }
+    NS_LOG_UNCOND("Node: "<<m_node->GetId()<<"   i: "<<i<<"    value: "<<value);
     
     box->AddValue(value);
   }
@@ -316,22 +358,22 @@ PacketRoutingEnv::GetExtraInfo()
 {
   //NS_LOG_FUNCTION (this);
   if (is_trainStep_flag==0){
-    std::string myInfo = "End to End Delay=";
+    std::string myInfo = "End to End Delay="; //0
     myInfo += std::to_string(Simulator::Now().GetMilliSeconds()-m_packetStart);
 
-    myInfo += ", Packets sent =";
+    myInfo += ", Packets sent ="; //1
     myInfo += std::to_string(m_packetsSent);
     
-    myInfo += ", src Node =";
+    myInfo += ", src Node ="; //2
     myInfo += std::to_string(m_src);
 
-    myInfo += ", Packet Size=";
+    myInfo += ", Packet Size="; //3
     myInfo += std::to_string(m_size);
     
-    myInfo += ", Current sim time =";
+    myInfo += ", Current sim time ="; //4
     myInfo += std::to_string(Simulator::Now().GetSeconds());
     
-    myInfo += ", Pkt ID =";
+    myInfo += ", Pkt ID ="; //5
     if(m_signaling==0){
       myInfo += std::to_string(m_pckt->GetUid());
     }
@@ -341,19 +383,19 @@ PacketRoutingEnv::GetExtraInfo()
     }
 
     
-    myInfo += ", Signaling =";
+    myInfo += ", Signaling ="; //6
     myInfo += std::to_string(m_signaling);
 
-    myInfo += ", NodeIdSignaled =";
+    myInfo += ", NodeIdSignaled ="; //7
     myInfo += std::to_string(m_nodeIdSign);
 
-    myInfo += ", NNIndex =";
+    myInfo += ", NNIndex ="; //8
     myInfo += std::to_string(m_NNIndex);
 
-    myInfo += ", segIndex =";
+    myInfo += ", segIndex ="; //9
     myInfo += std::to_string(m_segIndex);
     
-    myInfo += ", nbPktsObs =";
+    myInfo += ", nbPktsObs ="; //10
     Ptr<OpenGymBoxContainer<int32_t> > box = CreateObject<OpenGymBoxContainer<int32_t> >(m_obs_shape);
     if (is_trainStep_flag==0){
       myInfo += std::to_string(m_dest);
@@ -384,20 +426,28 @@ PacketRoutingEnv::GetExtraInfo()
       myInfo += ";";
     }
 
-    myInfo += ", Packets dropped =";
+    myInfo += ", Packets dropped ="; //11
     myInfo += std::to_string(m_packetsDroppedGlobal);
 
-    myInfo += ", Packets delivered =";
+    myInfo += ", Packets delivered ="; //12
     myInfo += std::to_string(m_packetsDeliveredGlobal);
 
-    myInfo += ", Packets injected =";
+    myInfo += ", Packets injected ="; //13
     myInfo += std::to_string(m_packetsInjectedGlobal);
 
-    myInfo += ", End to End Delay =";
+    myInfo += ",Packets Buffered ="; //14
+    myInfo += std::to_string(getNbPacketsBuffered());
+
+    myInfo += ", Avg End to End Delay ="; //15
     myInfo += std::to_string(getAverage(m_end2endDelay)); 
 
-    myInfo += ",Cost =";
+    myInfo += ", Sum End to End Delay ="; //16
+    myInfo += std::to_string(getSum(m_end2endDelay)); 
+
+    myInfo += ",Cost ="; //17
     myInfo += std::to_string(getAverage(m_cost)); 
+
+   
 
     //NS_LOG_UNCOND(myInfo);
     
@@ -424,12 +474,18 @@ PacketRoutingEnv::sendOverlaySignalingUpdate(uint8_t type){
   double packetSize;
   if(type==2) packetSize=m_signPacketSize;
   if(type==3) packetSize = 8;
+  if(type==4) packetSize = 8;
 
   //Define Packet
   Ptr<Packet> smallSignalingPckt = Create<Packet> (packetSize);
   tagSmallSignaling.SetSimpleValue(type);
-  tagSmallSignaling.SetFinalDestination(m_lastHop);
+  if(type==2) tagSmallSignaling.SetFinalDestination(m_lastHop);
+  if(type==3) tagSmallSignaling.SetFinalDestination(m_overlayNeighbors[m_fwdDev_idx]);
+  if(type==4) tagSmallSignaling.SetFinalDestination(m_lastHop);
   tagSmallSignaling.SetLastHop(m_src);
+
+  if(type==3) tagSmallSignaling.SetOverlayIndex(m_overlayIndex[m_fwdDev_idx]);
+  if(type==4) tagSmallSignaling.SetOverlayIndex(m_recvOverlayIndex);
 
   //Depending of the type, add info the tag
   if(type==2){
@@ -438,6 +494,9 @@ PacketRoutingEnv::sendOverlaySignalingUpdate(uint8_t type){
   }
   else if(type==3){
     tagSmallSignaling.SetStartTime(uint64_t(Simulator::Now().GetMilliSeconds()));
+  }
+  if(type==4){
+    tagSmallSignaling.SetStartTime(uint64_t(Simulator::Now().GetMilliSeconds()) - m_timeStartOverlay);
   }
   smallSignalingPckt->AddPacketTag(tagSmallSignaling);
 
@@ -448,16 +507,28 @@ PacketRoutingEnv::sendOverlaySignalingUpdate(uint8_t type){
   string string_ip_src= "10.2.2."+std::to_string(m_node->GetId()+1);
   Ipv4Address ip_src(string_ip_src.c_str());
   ip_head.SetSource(ip_src);
-  string string_ip_dest= "10.2.2."+std::to_string(m_lastHop+1);
+  string string_ip_dest;
+  if(type==2) string_ip_dest= "10.2.2."+std::to_string(m_lastHop+1);
+  if(type==3) string_ip_dest= "10.2.2."+std::to_string(m_overlayNeighbors[m_fwdDev_idx]+1);
+  if(type==4) string_ip_dest= "10.2.2."+std::to_string(m_lastHop+1);
   Ipv4Address ip_dest(string_ip_dest.c_str());
   ip_head.SetDestination(ip_dest);
   if(type==2) ip_head.SetPayloadSize(m_signPacketSize+udp_head.GetSerializedSize());
   if(type==3) ip_head.SetPayloadSize(8+udp_head.GetSerializedSize());
+  if(type==4) ip_head.SetPayloadSize(8+udp_head.GetSerializedSize());
   ip_head.SetProtocol(17);
   smallSignalingPckt->AddHeader(ip_head);
 
   //Send the sign packet
-  m_recvDev->Send(smallSignalingPckt, m_destAddr, 0x800);
+  if(type==2 || type==4) m_recvDev->Send(smallSignalingPckt, m_destAddr, 0x800);
+  if(type==3){
+    Ptr<Ipv4> ipv4 = m_node->GetObject<Ipv4>();
+    ns3::Socket::SocketErrno sockerr;
+    Ptr<Ipv4RoutingProtocol> routing = ipv4->GetRoutingProtocol( );
+    Ptr<Ipv4Route> route = routing->RouteOutput (smallSignalingPckt, ip_head, 0, sockerr);
+    Ptr<PointToPointNetDevice> dev = DynamicCast<PointToPointNetDevice>(route->GetOutputDevice());
+    dev->Send(smallSignalingPckt, m_destAddr, 0x800);
+  }
 
 
 }
@@ -487,16 +558,21 @@ PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
     //}
 
     //For Data Packets which are not in source
-    if(m_signaling==0 && m_activateSignaling && m_lastHop!=1000){
+    if(m_signaling==0 && m_activateSignaling){
       //if the limit is reached, send the overlay signaling
-      if(m_countRecvPackets[m_overlayRecvIndex] >=m_nPacketsOverlaySignaling && m_activateOverlaySignaling){
-        m_countRecvPackets[m_overlayRecvIndex] = 0;
+      if(m_countSendPackets[m_fwdDev_idx] >=m_nPacketsOverlaySignaling && m_activateOverlaySignaling && m_node->GetId()!=m_dest){
+        m_countSendPackets[m_fwdDev_idx] = 0;
+        m_overlayIndex[m_fwdDev_idx] += 1;
+        StartingOverlay start;
+        start.index = m_overlayIndex[m_fwdDev_idx];
+        start.start_time=Simulator::Now().GetMilliSeconds();
+        m_starting_overlay_packets[m_fwdDev_idx].push_back(start);
         sendOverlaySignalingUpdate(uint8_t(3));
       }
-
-      //send small signaling
-      sendOverlaySignalingUpdate(uint8_t(2));
-    
+      if(m_lastHop!=1000){
+        //send small signaling
+        sendOverlaySignalingUpdate(uint8_t(2));
+      }
     }
 
     if(m_isGameOver){
@@ -524,11 +600,11 @@ PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
       Ptr<PointToPointNetDevice> dev = DynamicCast<PointToPointNetDevice>(route->GetOutputDevice());
       
       //Send and verify if the Packet was dropped
-      bool ret = dev->Send(m_pckt, m_destAddr, 0x0800);
-      if(ret==false){
-        //NS_LOG_UNCOND("Packet Dropped");
-        m_packetsDropped++;
-      }
+      dev->Send(m_pckt, m_destAddr, 0x0800);
+      m_countSendPackets[m_fwdDev_idx] += 1;
+
+
+
     }
     else{
       //NS_LOG_UNCOND ("Not valid");
@@ -605,6 +681,15 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
   entity->m_src = entity->m_node->GetId();
   entity->m_lastHop = tagCopy.GetLastHop();
   
+   //Broadcast Destination Address
+  entity->m_destAddr = Mac48Address ("ff:ff:ff:ff:ff:ff");
+
+
+  //Other Information
+  entity->m_lengthType = ppp_head.GetProtocol();
+  entity->m_packetsSent = 0;
+  entity->m_recvDev = netDev;
+  
   //Get Overlay Tunnel Index
   auto it = std::find(entity->m_overlayNeighbors.begin(), entity->m_overlayNeighbors.end(), entity->m_lastHop);
   if (it != entity->m_overlayNeighbors.end())
@@ -613,8 +698,8 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
   }
   else if(entity->m_lastHop !=1000 && tagCopy.GetSimpleValue()!=1)
   {
-    NS_LOG_UNCOND(p->ToString());
-    NS_LOG_UNCOND("ERRRRRRRRR "<<entity->m_lastHop<<"    tag: "<<uint32_t(tagCopy.GetSimpleValue()));
+    NS_LOG_UNCOND(packet->ToString());
+    NS_LOG_UNCOND("ERRRRRRRRR "<<entity->m_lastHop<<"    tag: "<<uint32_t(tagCopy.GetSimpleValue())<<"   UID: "<<packet->GetUid());
     NS_LOG_UNCOND("Node: "<<entity->m_node->GetId());
   }
 
@@ -627,8 +712,6 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
     }
     entity->m_packetStart = uint32_t(tagCopy.GetStartTime());
     if(entity->m_lastHop!=1000){
-      entity->m_countRecvPackets[entity->m_overlayRecvIndex] += 1;
-
       if(entity->m_dest == entity->m_node->GetId()){
         //NS_LOG_UNCOND("Packet Delivered");
         m_packetsDeliveredGlobal += 1;
@@ -643,12 +726,31 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
       //NS_LOG_UNCOND("Packets Injected here "<<m_packetsInjectedGlobal);
     }
   }
-
+  if(tagCopy.GetSimpleValue()==4){
+    entity->m_signaling=1;
+    entity->m_tunnelsDelay[entity->m_overlayRecvIndex] = tagCopy.GetStartTime();
+    auto it = entity->m_starting_overlay_packets[entity->m_overlayRecvIndex].begin();
+    while(it->index != tagCopy.GetOverlayIndex()){
+      it = entity->m_starting_overlay_packets[entity->m_overlayRecvIndex].erase(it);
+    }
+    it = entity->m_starting_overlay_packets[entity->m_overlayRecvIndex].erase(it);
+    //for(size_t i =0;i<entity->m_starting_overlay_packets[entity->m_overlayRecvIndex].size();i++){
+    //  //if(entity->m_starting_overlay_packets[entity->m_overlayRecvIndex][i].index==tagCopy.GetOverlayIndex()){
+    //  NS_LOG_UNCOND("HERE "<<i<<"   "<<entity->m_starting_overlay_packets[entity->m_overlayRecvIndex][i].index);
+    //    //entity->m_starting_overlay_packets[entity->m_overlayRecvIndex].erase(entity->m_starting_overlay_packets[entity->m_overlayRecvIndex].begin());
+    //    //break;
+    //  //}
+    //  //entity->m_starting_overlay_packets[entity->m_overlayRecvIndex].erase(entity->m_starting_overlay_packets[entity->m_overlayRecvIndex].begin());
+    //}
+  }
   
   // Type: 3 ----- Overlay Signaling Packets
   if(tagCopy.GetSimpleValue()==3){
     entity->m_signaling=1;
-    entity->m_tunnelsDelay[entity->m_overlayRecvIndex] = Simulator::Now().GetMilliSeconds() - tagCopy.GetStartTime(); 
+    entity->m_timeStartOverlay = tagCopy.GetStartTime();
+    entity->m_recvOverlayIndex = tagCopy.GetOverlayIndex();
+    entity->sendOverlaySignalingUpdate(uint8_t(4));
+    //entity->m_tunnelsDelay[entity->m_overlayRecvIndex] = Simulator::Now().GetMilliSeconds() - tagCopy.GetStartTime(); 
   }
 
   // Type 2: ---- Small Signaling Packets
@@ -671,7 +773,7 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
   }
   
   //Printing INFO
-  if(false){
+  if(false){//(tagCopy.GetSimpleValue()==0){
     NS_LOG_UNCOND("..............................................................");
     NS_LOG_UNCOND("SimTime: "<<Simulator::Now().GetMilliSeconds());
     NS_LOG_UNCOND("Uid: "<<p->GetUid());
@@ -683,6 +785,9 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
     if(tagCopy.GetSimpleValue()==1) NS_LOG_UNCOND("BIG SIGNALING");
   }
 
+  if(tagCopy.GetSimpleValue()==3 || tagCopy.GetSimpleValue()==4){
+    return ;
+  }
   
 
 
@@ -698,14 +803,7 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
   
   
 
-  //Broadcast Destination Address
-  entity->m_destAddr = Mac48Address ("ff:ff:ff:ff:ff:ff");
-
-
-  //Other Information
-  entity->m_lengthType = ppp_head.GetProtocol();
-  entity->m_packetsSent = 0;
-  entity->m_recvDev = netDev;
+ 
 
  
   

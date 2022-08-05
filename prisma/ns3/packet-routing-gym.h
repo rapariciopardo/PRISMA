@@ -49,6 +49,11 @@ class NetDevice;
 class PointToPointNetDevice;
 class NetDeviceContainer;
 
+struct StartingOverlay{
+  uint32_t index;
+  uint64_t start_time;
+};
+
 //class Packet;
 //class QueueBase;
 
@@ -88,6 +93,7 @@ private:
   void ScheduleNextStateRead();
   uint32_t GetQueueLength(Ptr<Node> node, uint32_t netDev_idx);
   uint32_t GetQueueLengthInBytes(Ptr<Node> node, uint32_t netDev_idx);
+  uint32_t getNbPacketsBuffered();
   void sendOverlaySignalingUpdate(uint8_t type);
 
   //bool SetCw(Ptr<Node> node, uint32_t cwMinValue=0, uint32_t cwMaxValue=0);
@@ -133,9 +139,12 @@ private:
   uint32_t m_segIndex;
   int m_signaling;
 
+  
   bool m_activateOverlaySignaling; 
-  vector<uint32_t> m_countRecvPackets;
+  vector<uint32_t> m_countSendPackets;
   vector<uint64_t> m_tunnelsDelay;
+  vector<StartingOverlay> m_starting_overlay_packets [4];
+  int m_overlayIndex [4];
   int m_overlayRecvIndex;
   uint32_t m_nPacketsOverlaySignaling;
 
@@ -148,6 +157,11 @@ private:
   static std::vector<float> m_cost;
 
   double m_loss_penalty;
+
+  NetDeviceContainer m_all_nds;
+
+  uint64_t m_timeStartOverlay;
+  uint32_t m_recvOverlayIndex;
 
 
   
