@@ -100,6 +100,7 @@ class Agent():
     small_signaling_pkt_counter =0    
     big_signaling_overhead_counter= 0
     big_signaling_pkt_counter =0
+    prioritizedReplayBuffer = None
 
     nb_transitions = 0
     @classmethod
@@ -115,6 +116,7 @@ class Agent():
         cl.startSim = params_dict["startSim"]
         cl.seed = params_dict["seed"]
         cl.iterationNum = params_dict["iterationNum"]
+        cl.prioritizedReplayBuffer=params_dict["prioritizedReplayBuffer"]
         cl.simArgs = {"--simTime": cl.iterationNum,
                     "--testArg": 123}
         cl.debug = 0
@@ -826,10 +828,10 @@ class Agent():
         np.savetxt("logs/log_dict_"+Agent.sessionName+".txt", np.asarray(Agent.info_debug, dtype='object'), fmt='%s')
         #f.open(f"replay_buffer_samples/{self.index}", "wb")
         print("saving replay buffer")
-        try:
-            Agent.replay_buffer[self.index].save(f"replay_buffer_samples/{self.index}")
-        except:
-            print("error saving")
+        #try:
+        #    Agent.replay_buffer[self.index].save(f"replay_buffer_samples/{self.index}")
+        #except:
+        #    print("error saving")
         self.env.ns3ZmqBridge.send_close_command()
         # print("***index :", self.index, "Done", "stepIdx =", self.stepIdx, "arrived pkts =", self.count_arrived_packets,  "new received pkts", self.count_new_pkts, "gradient steps", self.gradient_step_idx)
         return True

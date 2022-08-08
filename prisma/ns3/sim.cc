@@ -336,7 +336,7 @@ int main (int argc, char *argv[])
     }
   } else if(signalingType=="target"){
     for(int i=0;i<n_nodes;i++){
-      smallSignalingSize[i] = 16;
+      smallSignalingSize[i] = 24;
     }
   }  
 

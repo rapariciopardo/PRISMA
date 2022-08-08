@@ -78,6 +78,9 @@ def arguments_parser():
     group1.add_argument('--max_nb_arrived_pkts', type=int, help='If < 0, stops the episode at the provided number of arrived packets', default=-1)
     group1.add_argument('--ns3_sim_path', type=str, help='Path to the ns3-gym simulator folder', default="../ns3-gym/")
     group1.add_argument('--signalingSim', type=int, help='Allows the signaling in NS3 Simulation', default=0)
+    group1.add_argument('--activateOverlay', type=int, help='Allows the signaling in NS3 Simulation in Overlay', default=1)
+    group1.add_argument('--nPacketsOverlay', type=int, help='Allows the signaling in NS3 Simulation', default=10)
+
     
     group4 = parser.add_argument_group('Network parameters')
     group4.add_argument('--load_factor', type=float, help='scale of the traffic matrix', default=1)
@@ -101,7 +104,7 @@ def arguments_parser():
     group3.add_argument('--agent_type', choices=["dqn_buffer", "dqn_routing", "dqn_buffer_fp", "dqn_buffer_lite", "sp", "opt"], type=str, help='The type of the agent. Can be dqn_buffer, dqn_routing, dqn_buffer_fp, sp or opt', default="dqn_buffer")
     group3.add_argument('--signaling_type', type=str, choices=["NN", "target", "ideal"], help='Type of the signaling. Can be "NN" for sending neighbors NN and (r,s\') tuple, "target" for sending only the target value and "ideal" for no signalisation (used when training)', default="ideal")
     group3.add_argument('--lr', type=float, help='Learning rate (used when training)', default=1e-4)
-    group3.add_argument('--prioritizedReplayBuffer', type=int, help='if true, use prioritized replay buffer using the gradient step as weights (used when training)', default=0)
+    group3.add_argument('--prioritizedReplayBuffer', type=int, help='if true, use prioritized replay buffer using the gradient step as weights (used when training)', default=1)
     
     group3.add_argument('--batch_size', type=int, help='Size of a batch (used when training)', default=512)
     group3.add_argument('--gamma', type=float, help='Gamma ratio for RL (used when training)', default=1)
@@ -147,9 +150,10 @@ def arguments_parser():
     for i, element in enumerate(np.loadtxt(open(params["node_coordinates_path"]))):
         G.add_node(i,pos=tuple(element))
     G = nx.from_numpy_matrix(np.loadtxt(open(params["overlay_matrix_path"])), parallel_edges=False, create_using=G)
+    G_old = nx.DiGraph(G)
     params["maxNumNodes"] = G.number_of_nodes()
     remove_list = [node for node,degree in dict(G.degree()).items() if degree < 1]
-    params["oldG"] = G.copy()
+    params["oldG"] = G_old
     G.remove_nodes_from(remove_list)
     params["numNodes"] = G.number_of_nodes()
     params["G"] = G
@@ -312,7 +316,7 @@ def run_ns3(params):
     ns3_params_format = ('prisma --simSeed={} --openGymPort={} --simTime={} --AvgPacketSize={} '
                         '--LinkDelay={} --LinkRate={} --MaxBufferLength={} --load_factor={} '
                         '--adj_mat_file_name={} --overlay_mat_file_name={} --node_coordinates_file_name={} --node_intensity_file_name={}'
-                        ' --signaling={} --AgentType={} --signalingType={} --syncStep={} --lossPenalty={}'.format( params["seed"],
+                        ' --signaling={} --AgentType={} --signalingType={} --syncStep={} --lossPenalty={} --activateOverlaySignaling={} --nPacketsOverlaySignaling={} '.format( params["seed"],
                                                                                                   params["basePort"],
                                                                                                   str(params["simTime"]),
                                                                                                   params["packet_size"],
@@ -328,10 +332,12 @@ def run_ns3(params):
                                                                                                   params["agent_type"],
                                                                                                   params["signaling_type"],
                                                                                                   params["sync_step"],
-                                                                                                  params["loss_penalty"]
+                                                                                                  params["loss_penalty"],
+                                                                                                  bool(params["activateOverlay"]),
+                                                                                                  params["nPacketsOverlay"]
                                                                                                   ))
     run_ns3_command = shlex.split(f'./waf --run "{ns3_params_format}"')
-    subprocess.Popen(run_ns3_command, stdin=subprocess.PIPE)
+    subprocess.Popen(run_ns3_command)
     os.chdir(current_folder_path)
 
 def main():
@@ -380,6 +386,7 @@ def main():
         ## Adapt the dict to the hparams api
         dict_to_store = copy.deepcopy(params)
         dict_to_store["G"] = str(params["G"])
+        dict_to_store["oldG"] = str(params["oldG"])
         dict_to_store["load_path"] = str(params["load_path"])
         dict_to_store["simArgs"] = str(params["simArgs"])
         hp.hparams(dict_to_store)  # record the values used in this trial
@@ -489,7 +496,7 @@ def main():
 
     ## save models        
     if params["save_models"] and Agent.curr_time >= params["simTime"]-5:
-        save_model(Agent.agents, params["session_name"], 1, 1, root=params["logs_parent_folder"] + "/saved_models/")
+        save_model(Agent.agents, params["G"].nodes(), params["session_name"], 1, 1, root=params["logs_parent_folder"] + "/saved_models/")
         if params["agent_type"] == "dqn_buffer_fp":
             for item in agent_instances:
                 np.savetxt(f'{params["logs_parent_folder"].rstrip("/")}/saved_models/{params["session_name"]}/node_{item.index}_final_params.txt',  [item.update_eps.numpy().item(), item.gradient_step_idx])
