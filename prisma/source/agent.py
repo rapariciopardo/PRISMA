@@ -35,6 +35,7 @@ class Agent():
     currIt = 0
     sim_injected_packets=0
     sim_dropped_packets = 0
+    sim_test_dropped = 0
     sim_delivered_packets = 0
     sim_buffered_packets = 0
     sim_avg_e2e_delay = 0.0
@@ -148,6 +149,7 @@ class Agent():
         cl.currIt = 0
         cl.sim_injected_packets=0
         cl.sim_dropped_packets = 0
+        cl.sim_test_dropped = 0
         cl.sim_delivered_packets = 0
         cl.sim_buffered_packets = 0
         cl.sim_avg_e2e_delay = 0.0
@@ -369,7 +371,7 @@ class Agent():
             # print("-"*11)
             ## check if the pkt is lost
             #print("INFO PYTHON ", self.obs[self.action + 1] + (542), Agent.max_out_buffer_size)
-            if (self.obs_nb[self.action + 1] + (542)) > Agent.max_out_buffer_size or self.action == -1:
+            if False: #(self.obs_nb[self.action + 1] + (542)) > Agent.max_out_buffer_size or self.action == -1:
                 #print(self.pkt_id, self.index, "lost")
                 Agent.node_lost_pkts += 1
                 rew = self._get_reward()
@@ -409,6 +411,7 @@ class Agent():
                                                    "src" :Agent.pkt_tracking_dict[int(self.pkt_id)]["src"],
                                                    "dst" :Agent.pkt_tracking_dict[int(self.pkt_id)]["dst"],
                                                    }
+                #print(self.pkt_id, Agent.temp_obs[int(self.pkt_id)])
 
         ### Apply the action
         return self.env.step(self.action)
@@ -651,6 +654,21 @@ class Agent():
                 ## info treatments
                 tokens = self.info.split(",")
                 delay_time = float(tokens[0].split('=')[-1])
+                lost_packets = np.array((tokens[1].split('=')[-1]).split(';')[:-1], dtype=int).tolist()
+                for lost_packet_id in lost_packets:
+                    try:
+                        lost_packet_info = Agent.temp_obs.pop(lost_packet_id)
+                        next_hop_degree = len(list(Agent.G.neighbors(self.neighbors[lost_packet_info["action"]])))
+                        #print(lost_packet_id, lost_packet_info, next_hop_degree)
+                        rew = self._get_reward()
+                        Agent.replay_buffer[self.index].add(np.array(lost_packet_info["obs"], dtype=float).squeeze(),
+                                        lost_packet_info["action"], 
+                                        rew,
+                                        np.array([lost_packet_info["obs"][0]] + [0]*next_hop_degree, dtype=float).squeeze(), 
+                                        True)
+                    except:
+                        pass
+                #print(lost_packets)
                 pkt_size = float(tokens[3].split('=')[-1])
                 Agent.curr_time = float(tokens[4].split('=')[-1])
                 self.pkt_id = float(tokens[5].split('=')[-1])
@@ -705,6 +723,8 @@ class Agent():
                                                                 "start_time": Agent.curr_time,
                                                                 "tag": None}
                 else: ## if the packet is not new in the network
+                    
+
                     states_info = Agent.temp_obs.pop(self.pkt_id)
                     hop_time_real =  Agent.curr_time - states_info["time"]
                     hop_time_ideal = ((states_info["obs"][states_info["action"] + 1] + 512 ) * 8 / Agent.link_cap) + Agent.link_delay

@@ -1,5 +1,5 @@
 array=(
-1.5
+5.0
 #0.8
 #1.0
 #1.2
@@ -16,7 +16,7 @@ for j in ${array[@]}
 	res1=${FLOAT/.*}
 	echo $res1
 	python3 main.py \
-		--simTime=1 \
+		--simTime=10 \
 		--basePort=6000 \
 		--train=1 \
 		--seed=100 \

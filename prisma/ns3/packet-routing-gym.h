@@ -49,8 +49,13 @@ class NetDevice;
 class PointToPointNetDevice;
 class NetDeviceContainer;
 
-struct StartingOverlay{
+struct StartingOverlayPacket{
   uint32_t index;
+  uint64_t start_time;
+};
+
+struct StartingDataPacket{
+  uint64_t uid;
   uint64_t start_time;
 };
 
@@ -94,6 +99,7 @@ private:
   uint32_t GetQueueLength(Ptr<Node> node, uint32_t netDev_idx);
   uint32_t GetQueueLengthInBytes(Ptr<Node> node, uint32_t netDev_idx);
   uint32_t getNbPacketsBuffered();
+  std::string GetLostPackets();
   void sendOverlaySignalingUpdate(uint8_t type);
 
   //bool SetCw(Ptr<Node> node, uint32_t cwMinValue=0, uint32_t cwMaxValue=0);
@@ -118,7 +124,6 @@ private:
   uint32_t m_packetStart;
   bool m_isGameOver;
   std::vector<uint32_t> m_obs_shape;
-  int m_packetsSent;
   Ptr<NetDevice> m_recvDev;
   vector<bool> m_lsaSeen;
   
@@ -143,7 +148,7 @@ private:
   bool m_activateOverlaySignaling; 
   vector<uint32_t> m_countSendPackets;
   vector<uint64_t> m_tunnelsDelay;
-  vector<StartingOverlay> m_starting_overlay_packets [4];
+  vector<StartingOverlayPacket> m_starting_overlay_packets [4];
   int m_overlayIndex [4];
   int m_overlayRecvIndex;
   uint32_t m_nPacketsOverlaySignaling;
@@ -153,6 +158,7 @@ private:
   static int m_packetsDeliveredGlobal;
   static int m_packetsInjectedGlobal;
   static int m_packetsDroppedGlobal;
+  static int m_testPacketsDroppedGlobal;
   static std::vector<int> m_end2endDelay;
   static std::vector<float> m_cost;
 
@@ -162,6 +168,8 @@ private:
 
   uint64_t m_timeStartOverlay;
   uint32_t m_recvOverlayIndex;
+
+  vector<StartingDataPacket> m_packetsSent [4];
 
 
   

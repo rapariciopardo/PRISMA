@@ -424,6 +424,7 @@ def main():
             Total number of packets = {Agent.sim_injected_packets}, 
             Number of arrived packets = {Agent.sim_delivered_packets},
             Number of lost packets = {Agent.sim_dropped_packets},
+            Number Test Drooped = {Agent.sim_test_dropped},
             Delay_real = {Agent.sim_avg_e2e_delay},
             Cost = {Agent.sim_cost}
             """)

@@ -54,6 +54,7 @@ uint32_t PacketRoutingEnv::m_n_nodes;
 int PacketRoutingEnv::m_packetsDeliveredGlobal;
 int PacketRoutingEnv::m_packetsInjectedGlobal;
 int PacketRoutingEnv::m_packetsDroppedGlobal;
+int PacketRoutingEnv::m_testPacketsDroppedGlobal;
 std::vector<int> PacketRoutingEnv::m_end2endDelay;
 std::vector<float> PacketRoutingEnv::m_cost;
 
@@ -156,7 +157,7 @@ PacketRoutingEnv::setOverlayConfig(vector<int> overlayNeighbors, bool activateOv
     m_overlayIndex[i] = 0;
     m_countSendPackets.push_back(0);
     m_tunnelsDelay.push_back(0);
-    StartingOverlay start;
+    StartingOverlayPacket start;
     start.index = 0;
     start.start_time = 0;
     m_starting_overlay_packets[i].push_back(start);
@@ -327,7 +328,7 @@ PacketRoutingEnv::GetObservation()
       if(m_starting_overlay_packets[i].size()>=1) value = std::max(m_tunnelsDelay[i]*2, Simulator::Now().GetMilliSeconds() - m_starting_overlay_packets[i][0].start_time)/2.0;
       else value = m_tunnelsDelay[i];
     }
-    NS_LOG_UNCOND("Node: "<<m_node->GetId()<<"   i: "<<i<<"    value: "<<value);
+    //NS_LOG_UNCOND("Node: "<<m_node->GetId()<<"   i: "<<i<<"    value: "<<value);
     
     box->AddValue(value);
   }
@@ -354,6 +355,31 @@ PacketRoutingEnv::GetReward()
 }
 
 std::string
+PacketRoutingEnv::GetLostPackets(){
+  std::string lost_packets;
+  for(size_t j=0;j<m_overlayNeighbors.size();j++){
+    auto it = m_packetsSent[j].begin();
+    while(it != m_packetsSent[j].end()){
+      if(Simulator::Now().GetMilliSeconds() - it->start_time>= 100*m_tunnelsDelay[j]){
+        //NS_LOG_UNCOND("----------------------------------");
+        //NS_LOG_UNCOND("Start: "<<it->start_time<<"  Now: "<<Simulator::Now().GetMilliSeconds());
+        //NS_LOG_UNCOND("UID: "<<it->uid);
+        //NS_LOG_UNCOND("----------------------------------");
+        lost_packets +=std::to_string(it->uid);
+        lost_packets += ";";
+        it = m_packetsSent[j].erase(it);
+        m_testPacketsDroppedGlobal ++;
+      }
+      else{
+        it++;
+      }
+    }
+  }
+  //NS_LOG_UNCOND("LOST "<<loss);
+  return lost_packets;
+}
+
+std::string
 PacketRoutingEnv::GetExtraInfo()
 {
   //NS_LOG_FUNCTION (this);
@@ -361,8 +387,8 @@ PacketRoutingEnv::GetExtraInfo()
     std::string myInfo = "End to End Delay="; //0
     myInfo += std::to_string(Simulator::Now().GetMilliSeconds()-m_packetStart);
 
-    myInfo += ", Packets sent ="; //1
-    myInfo += std::to_string(m_packetsSent);
+    myInfo += ", Packets lost ="; //1
+    myInfo += GetLostPackets();
     
     myInfo += ", src Node ="; //2
     myInfo += std::to_string(m_src);
@@ -563,7 +589,7 @@ PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
       if(m_countSendPackets[m_fwdDev_idx] >=m_nPacketsOverlaySignaling && m_activateOverlaySignaling && m_node->GetId()!=m_dest){
         m_countSendPackets[m_fwdDev_idx] = 0;
         m_overlayIndex[m_fwdDev_idx] += 1;
-        StartingOverlay start;
+        StartingOverlayPacket start;
         start.index = m_overlayIndex[m_fwdDev_idx];
         start.start_time=Simulator::Now().GetMilliSeconds();
         m_starting_overlay_packets[m_fwdDev_idx].push_back(start);
@@ -600,6 +626,10 @@ PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
       Ptr<PointToPointNetDevice> dev = DynamicCast<PointToPointNetDevice>(route->GetOutputDevice());
       
       //Send and verify if the Packet was dropped
+      StartingDataPacket start;
+      start.uid = m_pckt->GetUid();
+      start.start_time = Simulator::Now().GetMilliSeconds();
+      m_packetsSent[m_fwdDev_idx].push_back(start);
       dev->Send(m_pckt, m_destAddr, 0x0800);
       m_countSendPackets[m_fwdDev_idx] += 1;
 
@@ -687,7 +717,6 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
 
   //Other Information
   entity->m_lengthType = ppp_head.GetProtocol();
-  entity->m_packetsSent = 0;
   entity->m_recvDev = netDev;
   
   //Get Overlay Tunnel Index
@@ -757,6 +786,20 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
   if(tagCopy.GetSimpleValue()==uint8_t(0x02)){
     entity->m_signaling=1;
     entity->m_pcktIdSign = tagCopy.GetIdValue();
+    //NS_LOG_UNCOND("aqui");
+    auto it = entity->m_packetsSent[entity->m_overlayRecvIndex].begin();
+    while (it->uid != entity->m_pcktIdSign && it != entity->m_packetsSent[entity->m_overlayRecvIndex].end())
+    {
+      it++;
+    }
+    if(it != entity->m_packetsSent[entity->m_overlayRecvIndex].end()) {
+      //NS_LOG_UNCOND("DATA PACKET "<<entity->m_pcktIdSign<<" ACKED");
+      it=entity->m_packetsSent[entity->m_overlayRecvIndex].erase(it);
+    }
+    else{
+      NS_LOG_UNCOND("ERR");
+    }
+    //NS_LOG_UNCOND("here");
   }
 
   // Type 1: ----- Big Signaling Packets
