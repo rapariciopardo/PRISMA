@@ -149,6 +149,7 @@ def arguments_parser():
     G = nx.from_numpy_matrix(np.loadtxt(open(params["overlay_matrix_path"])), parallel_edges=False, create_using=G)
     params["maxNumNodes"] = G.number_of_nodes()
     remove_list = [node for node,degree in dict(G.degree()).items() if degree < 1]
+    params["oldG"] = G.copy()
     G.remove_nodes_from(remove_list)
     params["numNodes"] = G.number_of_nodes()
     params["G"] = G

@@ -80,6 +80,7 @@ class Agent():
     basePort = 0
     ## net topology
     G = None
+    oldG = None
     numNodes = 0
     maxNumNodes = 0
     ## learning params
@@ -107,6 +108,7 @@ class Agent():
 
         """
         cl.G = params_dict["G"]
+        cl.oldG = params_dict["oldG"]
         cl.numNodes = params_dict["numNodes"]
         cl.maxNumNodes = params_dict["maxNumNodes"]
         cl.stepTime = params_dict["stepTime"]
@@ -133,9 +135,9 @@ class Agent():
         cl.agents = {i: None for i in range(cl.maxNumNodes)}
         cl.upcoming_events = [[] for n in range(cl.maxNumNodes)]
         if cl.prioritizedReplayBuffer:
-            cl.replay_buffer = [PrioritizedReplayBuffer(cl.replay_buffer_max_size, 1, len(list(cl.G.neighbors(n))), n) for n in range(cl.maxNumNodes)]
+            cl.replay_buffer = [PrioritizedReplayBuffer(cl.replay_buffer_max_size, 1, len(list(cl.oldG.neighbors(n))), n) for n in range(cl.maxNumNodes)]
         else:
-            cl.replay_buffer = [ReplayBuffer(cl.replay_buffer_max_size) for n in range(cl.numNodes)]
+            cl.replay_buffer = [ReplayBuffer(cl.replay_buffer_max_size) for n in range(cl.maxNumNodes)]
         ## transition array to be saved for each node
         cl.lock_info_array = [[] for n in range(cl.maxNumNodes)]
         cl.basePort = params_dict["basePort"]
