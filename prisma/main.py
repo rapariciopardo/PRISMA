@@ -97,7 +97,7 @@ def arguments_parser():
     group2.add_argument('--logging_timestep', type=int, help='Time delay (in real time) between each logging in seconds', default=15)
     
     group3 = parser.add_argument_group('DRL Agent arguments')
-    group3.add_argument('--agent_type', choices=["dqn_buffer", "dqn_routing", "dqn_buffer_fp", "sp", "opt"], type=str, help='The type of the agent. Can be dqn_buffer, dqn_routing, dqn_buffer_fp, sp or opt', default="dqn_buffer")
+    group3.add_argument('--agent_type', choices=["dqn_buffer", "dqn_routing", "dqn_buffer_fp", "dqn_buffer_lite", "sp", "opt"], type=str, help='The type of the agent. Can be dqn_buffer, dqn_routing, dqn_buffer_fp, sp or opt', default="dqn_buffer")
     group3.add_argument('--signaling_type', type=str, choices=["NN", "target", "ideal"], help='Type of the signaling. Can be "NN" for sending neighbors NN and (r,s\') tuple, "target" for sending only the target value and "ideal" for no signalisation (used when training)', default="ideal")
     group3.add_argument('--lr', type=float, help='Learning rate (used when training)', default=1e-4)
     group3.add_argument('--batch_size', type=int, help='Size of a batch (used when training)', default=512)
@@ -334,7 +334,7 @@ def main():
 
     ## compute the loss penalty
     # params["loss_penalty"] = ((((params["max_out_buffer_size"] + 1)*params["packet_size"]*8)/params["link_cap"])) *params["numNodes"]
-    params["loss_penalty"] = ((params["max_out_buffer_size"] + 512+30)/params["link_cap"]) *params["numNodes"]
+    params["loss_penalty"] = ((((params["max_out_buffer_size"] + 512+30)*8)/params["link_cap"])+0.001)*params["numNodes"]
 
     ## fix the seed
     tf.random.set_seed(params["seed"])
@@ -342,8 +342,8 @@ def main():
     random.seed(params["seed"])
 
     ## test results file name
-    test_results_file_name = f'{params["logs_parent_folder"]}/tests_7/{params["agent_type"]}_{params["signaling_type"]}_{params["signalingSim"]}_fixed_rb_{params["replay_buffer_max_size"]}_sync{int(1000*params["sync_step"])}ms_ratio_{int(100*params["sync_ratio"])}_load_{int(100*params["load_factor"])}.txt'
-    train_results_file_name = f'{params["logs_parent_folder"]}/train_7/{params["agent_type"]}_{params["signaling_type"]}_{params["signalingSim"]}_fixed_rb_{params["replay_buffer_max_size"]}_sync{int(1000*params["sync_step"])}ms_ratio_{int(100*params["sync_ratio"])}_load_{int(100*params["load_factor"])}.txt'
+    test_results_file_name = f'{params["logs_parent_folder"]}/_tests_final/prio_{params["agent_type"]}_{params["signaling_type"]}_{params["signalingSim"]}_fixed_rb_{params["replay_buffer_max_size"]}_sync{int(1000*params["sync_step"])}ms_ratio_{int(100*params["sync_ratio"])}_load_{int(100*params["load_factor"])}.txt'
+    train_results_file_name = f'{params["logs_parent_folder"]}/_train_final/prio_{params["agent_type"]}_{params["signaling_type"]}_{params["signalingSim"]}_fixed_rb_{params["replay_buffer_max_size"]}_sync{int(1000*params["sync_step"])}ms_ratio_{int(100*params["sync_ratio"])}_load_{int(100*params["load_factor"])}.txt'
     print(test_results_file_name)
     if params["train"] == 1:
         if params["session_name"] in os.listdir(params["logs_parent_folder"] + "/saved_models/"):
@@ -442,8 +442,8 @@ def main():
                         params["replay_buffer_max_size"],
                         params["sync_step"],
                         Agent.total_lost_pkts/Agent.total_new_rcv_pkts,
-                        np.array(Agent.delays_ideal).mean(),
-                        ((Agent.total_lost_pkts * Agent.loss_penalty) + np.array(Agent.delays_ideal).sum())/(Agent.total_lost_pkts + Agent.total_arrived_pkts),
+                        np.array(Agent.delays_real).mean(),
+                        ((Agent.total_lost_pkts * Agent.loss_penalty) + np.array(Agent.delays_real).sum())/(Agent.total_lost_pkts + Agent.total_arrived_pkts),
                         Agent.total_rewards_with_loss/Agent.total_new_rcv_pkts,
                         Agent.total_rewards_with_loss,
                         Agent.small_signaling_overhead_counter + Agent.big_signaling_overhead_counter,
@@ -468,12 +468,16 @@ def main():
     
 
     ## save models        
-    if params["save_models"]:
+    if params["save_models"] and Agent.curr_time >= params["simTime"]-5:
         save_model(Agent.agents, params["session_name"], 1, 1, root=params["logs_parent_folder"] + "/saved_models/")
         if params["agent_type"] == "dqn_buffer_fp":
             for item in agent_instances:
                 np.savetxt(f'{params["logs_parent_folder"].rstrip("/")}/saved_models/{params["session_name"]}/node_{item.index}_final_params.txt',  [item.update_eps.numpy().item(), item.gradient_step_idx])
     
+    
+    ## saving the replay buffers
+    # for i, rb in enumerate(Agent.replay_buffer):
+    #     rb.save(f"rb_savings/{i}.txt")
     ## saving the transition array
     #for node_idx in range(Agent.numNodes):
     #    if(not os.path.exists(f"lock_files/{params['session_name']}")):  

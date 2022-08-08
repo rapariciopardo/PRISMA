@@ -11,7 +11,7 @@ from ns3gym import ns3env
 from source.learner import DQN_AGENT
 from source.utils import save_model, load_model, LinearSchedule, convert_bps_to_data_rate, optimal_routing_decision
 from source.replay_buffer import ReplayBuffer
-from source.models import DQN_buffer_model, DQN_routing_model, DQN_buffer_FP_model
+from source.models import DQN_buffer_model, DQN_routing_model, DQN_buffer_FP_model, DQN_buffer_lite_model
 import threading
 import operator
 import copy 
@@ -161,11 +161,11 @@ class Agent():
         train (bool): if true, train the agent. Valid only for agent_type = dqn 
         """
         ### compute the port number
-        if agent_type not in ("dqn_buffer", "dqn_routing", "dqn_buffer_fp", "sp", "opt"):
-            raise('Unknown agent type, please choose from : ("dqn_buffer", "dqn_routing", "dqn_buffer_fp", "sp", "opt")')
+        if agent_type not in ("dqn_buffer", "dqn_buffer_lite", "dqn_routing", "dqn_buffer_fp", "sp", "opt"):
+            raise('Unknown agent type, please choose from : ("dqn_buffer", "dqn_buffer_lite", "dqn_routing", "dqn_buffer_fp", "sp", "opt")')
 
         self.agent_type = agent_type
-        if agent_type in ("dqn_buffer", "dqn_routing", "dqn_buffer_fp"):
+        if agent_type in ("dqn_buffer", "dqn_buffer_lite", "dqn_routing", "dqn_buffer_fp"):
             self.train = train
         else:
             self.train = False
@@ -197,6 +197,21 @@ class Agent():
             ## declare the DQN buffer model
             Agent.agents[self.index] = DQN_AGENT(
                 q_func=DQN_buffer_model,
+                # observation_shape=self.env.observation_space.shape,
+                observation_shape=self.env.observation_space.shape,
+                num_actions=self.env.action_space.n,
+                num_nodes=Agent.numNodes,
+                input_size_splits = [1,
+                                    self.env.action_space.n,
+                                    ],
+                lr=Agent.lr,
+                gamma=Agent.gamma,
+                neighbors_degrees=[len(list(Agent.G.neighbors(x))) for x in self.neighbors]
+            )
+        elif self.agent_type == "dqn_buffer_lite":
+            ## declare the DQN buffer model
+            Agent.agents[self.index] = DQN_AGENT(
+                q_func=DQN_buffer_lite_model,
                 # observation_shape=self.env.observation_space.shape,
                 observation_shape=self.env.observation_space.shape,
                 num_actions=self.env.action_space.n,
@@ -247,7 +262,7 @@ class Agent():
             raise ValueError("Unknown agent type")
 
         ## compute big signaling delay
-        if self.agent_type in ("dqn_buffer", "dqn_routing", "dqn_buffer_fp"):
+        if self.agent_type in ("dqn_buffer", "dqn_buffer_lite", "dqn_routing", "dqn_buffer_fp"):
             self.nn_size = np.sum([np.prod(x.shape) for x in Agent.agents[self.index].q_network.trainable_weights])*32
             self.big_signaling_delay = (self.nn_size/ Agent.link_cap) + Agent.link_delay
             print("node:", self.index, "big signaling delay: ", self.big_signaling_delay, self.nn_size)
@@ -275,7 +290,7 @@ class Agent():
         self.sync_counter = -1
         
         ## load the models
-        if Agent.load_path is not None and self.agent_type in ("dqn_buffer", "dqn_routing", "dqn_buffer_fp"):
+        if Agent.load_path is not None and self.agent_type in ("dqn_buffer", "dqn_buffer_lite", "dqn_routing", "dqn_buffer_fp"):
             loaded_models = load_model(Agent.load_path, self.index)
             if loaded_models is not None:
                 Agent.agents[self.index].q_network.set_weights(loaded_models[self.index].get_weights())
@@ -308,7 +323,7 @@ class Agent():
         Args :
             obs (list): observation list
         """
-        if self.agent_type in("dqn_buffer", "dqn_routing","dqn_buffer_fp",):
+        if self.agent_type in("dqn_buffer", "dqn_buffer_lite", "dqn_routing","dqn_buffer_fp",):
             ### Take action using the NN
             action = Agent.agents[self.index].step(np.array([obs]), self.train, self.update_eps).numpy().item()
         elif self.agent_type == "sp":
