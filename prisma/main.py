@@ -100,6 +100,8 @@ def arguments_parser():
     group3.add_argument('--agent_type', choices=["dqn_buffer", "dqn_routing", "dqn_buffer_fp", "dqn_buffer_lite", "sp", "opt"], type=str, help='The type of the agent. Can be dqn_buffer, dqn_routing, dqn_buffer_fp, sp or opt', default="dqn_buffer")
     group3.add_argument('--signaling_type', type=str, choices=["NN", "target", "ideal"], help='Type of the signaling. Can be "NN" for sending neighbors NN and (r,s\') tuple, "target" for sending only the target value and "ideal" for no signalisation (used when training)', default="ideal")
     group3.add_argument('--lr', type=float, help='Learning rate (used when training)', default=1e-4)
+    group3.add_argument('--prioritizedReplayBuffer', type=int, help='if true, use prioritized replay buffer using the gradient step as weights (used when training)', default=0)
+    
     group3.add_argument('--batch_size', type=int, help='Size of a batch (used when training)', default=512)
     group3.add_argument('--gamma', type=float, help='Gamma ratio for RL (used when training)', default=1)
     group3.add_argument('--iterationNum', type=int, help='Max iteration number for exploration (used when training)', default=3000)

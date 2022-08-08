@@ -10,7 +10,7 @@ import os
 from ns3gym import ns3env
 from source.learner import DQN_AGENT
 from source.utils import save_model, load_model, LinearSchedule, convert_bps_to_data_rate, optimal_routing_decision
-from source.replay_buffer import ReplayBuffer
+from source.replay_buffer import PrioritizedReplayBuffer, ReplayBuffer
 from source.models import DQN_buffer_model, DQN_routing_model, DQN_buffer_FP_model, DQN_buffer_lite_model
 import threading
 import operator
@@ -121,7 +121,12 @@ class Agent():
         cl.packet_size = params_dict["packet_size"]
         cl.envs = cl.numNodes * [None]
         cl.agents = {i: None for i in range(cl.numNodes)}
-        cl.replay_buffer = [ReplayBuffer(cl.replay_buffer_max_size) for n in range(cl.numNodes)]
+        cl.prioritizedReplayBuffer = params_dict["prioritizedReplayBuffer"]
+        if cl.prioritizedReplayBuffer:
+            cl.replay_buffer = [PrioritizedReplayBuffer(cl.replay_buffer_max_size, 1, len(list(cl.G.neighbors(n))), n) for n in range(cl.numNodes)]
+        else:
+            cl.replay_buffer = [ReplayBuffer(cl.replay_buffer_max_size) for n in range(cl.numNodes)]
+            
         cl.upcoming_events = [[] for n in range(cl.numNodes)]
         ## transition array to be saved for each node
         cl.lock_info_array = [[] for n in range(cl.numNodes)]
@@ -285,7 +290,7 @@ class Agent():
         self.last_training_time = 0
         self.last_sync_time = 0
         self.last_training_step = 0
-        self.gradient_step_idx = 0
+        self.gradient_step_idx = 1
         self.update_eps = 0
         self.sync_counter = -1
         
@@ -357,14 +362,27 @@ class Agent():
                 Agent.total_rewards_with_loss += rew
                 Agent.rewards.append(rew)
                 if self.train:
-                    next_hop_degree = len(list(Agent.G.neighbors(self.neighbors[self.action])))
+                    next_hop = self.neighbors[self.action]
+                    next_hop_degree = len(list(Agent.G.neighbors(next_hop)))
                     if self.agent_type == "dqn_buffer_fp":
-                        next_hop_degree += 2 
-                    Agent.replay_buffer[self.index].add(np.array(self.obs, dtype=float).squeeze(),
-                                        self.action, 
-                                        rew,
-                                        np.array([self.obs[0]] + [0]*next_hop_degree, dtype=float).squeeze(), 
-                                        True)
+                        next_hop_degree += 2
+                    if Agent.prioritizedReplayBuffer:
+                        Agent.replay_buffer[self.index].add(np.array(self.obs, dtype=float).squeeze(),
+                                            self.action, 
+                                            rew,
+                                            np.array([self.obs[0]] + [0]*next_hop_degree, dtype=float).squeeze(), 
+                                            True,
+                                            Agent.replay_buffer[self.index].latest_gradient_step[self.action])
+                    else:
+                        Agent.replay_buffer[self.index].add(np.array(self.obs, dtype=float).squeeze(),
+                        self.action, 
+                        rew,
+                        np.array([self.obs[0]] + [0]*next_hop_degree, dtype=float).squeeze(), 
+                        True)
+                    ## when the pkt is lost we only store the latest gradient step idx
+                    # Agent.replay_buffer[self.index].latest_gradient_step[next_hop] = max((Agent.agents[next_hop].gradient_step_idx, Agent.replay_buffer[self.index].latest_gradient_step[next_hop]))
+                    # Agent.replay_buffer[self.index].update_priorities(Agent.replay_buffer[self.index].neighbors_idx[self.action],
+                    #                                                   self.action)
                 if  self.action == -1:
                     self.action =Agent.numNodes
                 
@@ -373,7 +391,7 @@ class Agent():
                 Agent.temp_obs[int(self.pkt_id)]= {"node": self.index,
                                                    "obs": self.obs,
                                                    "action": self.action,
-                                                   "time": Agent.curr_time, 
+                                                   "time": Agent.curr_time,
                                                    "src" :Agent.pkt_tracking_dict[int(self.pkt_id)]["src"],
                                                    "dst" :Agent.pkt_tracking_dict[int(self.pkt_id)]["dst"],
                                                    }
@@ -532,7 +550,13 @@ class Agent():
                                                     element["action"], 
                                                     element["target"],
                                                     element["new_obs"], 
-                                                    element["flag"])
+                                                    element["flag"],
+                                                    element["gradient_step"])
+                    if Agent.prioritizedReplayBuffer:
+                        if element["gradient_step"] > Agent.replay_buffer[self.index].latest_gradient_step[element["action"]]:
+                            Agent.replay_buffer[self.index].latest_gradient_step[element["action"]] = element["gradient_step"] 
+                            Agent.replay_buffer[self.index].update_priorities(Agent.replay_buffer[self.index].neighbors_idx[element["action"]],
+                                                                            element["action"])
                     Agent.upcoming_events[self.index].pop(idx)
                     break
                         
@@ -547,9 +571,8 @@ class Agent():
         #     np.savetxt(f"savings/replay_buffer{self.index}.txt", np.array(Agent.replay_buffer[self.index]._storage, dtype=object)[indices], "%s")
         # print("train...", index)
         ## sample from the replay buffer
-        obses_t, actions_t, rewards_t, next_obses_t, dones_t = Agent.replay_buffer[self.index].sample(Agent.batch_size)
-        weights, _ = np.ones(Agent.batch_size, dtype=np.float32), None
-
+        obses_t, actions_t, rewards_t, next_obses_t, dones_t, weights = Agent.replay_buffer[self.index].sample(Agent.batch_size)
+        # weights, _ = np.ones(Agent.batch_size, dtype=np.float32), None
         if Agent.signaling_type == "target":
             targets_t = tf.constant(rewards_t, dtype=float)
             obses_t = tf.constant(obses_t)
@@ -572,7 +595,7 @@ class Agent():
             actions_t = tf.constant(actions_t[action_indices_all], shape=(Agent.batch_size))
             targets_t = tf.constant(tf.concat(targets_t, axis=0), shape=(Agent.batch_size))
         
-        weights = tf.constant(weights)
+        weights = tf.constant(weights, dtype=float)
 
         ### Make a gradient step
         td_errors = Agent.agents[self.index].train(obses_t, actions_t, targets_t, weights)    
@@ -711,6 +734,7 @@ class Agent():
                                                                                 "obs" : np.array(states_info["obs"], dtype=float).squeeze(),
                                                                                 "action": states_info["action"], 
                                                                                 "target": target.numpy().item(),
+                                                                                "gradient_step": self.gradient_step_idx,
                                                                                 "new_obs": np.array(self.obs, dtype=float).squeeze(), 
                                                                                 "flag": self.done,
                                                                                 "pkt_id": self.pkt_id,
