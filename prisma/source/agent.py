@@ -709,7 +709,7 @@ class Agent():
                 Agent.sim_buffered_packets = Agent.sim_injected_packets - Agent.sim_delivered_packets - Agent.sim_dropped_packets #float(tokens[14].split('=')[-1])
                 Agent.sim_avg_e2e_delay =  float(tokens[15].split('=')[-1])
                 Agent.sim_sum_e2e_delay =  float(tokens[16].split('=')[-1])
-                Agent.sim_cost = (Agent.sim_avg_e2e_delay*0.001 + Agent.sim_dropped_packets*Agent.loss_penalty)
+                Agent.sim_cost = float(tokens[17].split('=')[-1])
                 #print(Agent.sim_injected_packets, Agent.sim_delivered_packets, Agent.sim_buffered_packets, Agent.sim_dropped_packets, Agent.sim_avg_e2e_delay)
                 Agent.nb_transitions += 1
                 if self.pkt_id not in Agent.pkt_tracking_dict.keys(): ## check if the packet is a new arrival
@@ -798,6 +798,7 @@ class Agent():
                         Agent.total_arrived_pkts += 1
                         # Agent.total_e2e_delay += delay_time
                         hops =  len(Agent.pkt_tracking_dict[int(self.pkt_id)]["hops"]) - 1
+                        print(hops, Agent.total_hops)
                         # Agent.total_e2e_delay += Agent.curr_time - Agent.pkt_tracking_dict[int(self.pkt_id)]["start_time"]
                         Agent.total_hops += hops
                         Agent.total_e2e_delay += delay_time
@@ -811,7 +812,6 @@ class Agent():
                                                     Agent.pkt_tracking_dict[int(self.pkt_id)]["hops"],
                                                     len(Agent.pkt_tracking_dict[int(self.pkt_id)]["hops"])-1,
                                                     delay_time])
-                        Agent.total_hops += hops
                         Agent.nb_hops.append(hops)
                         if(len(Agent.nb_hops)>50):
                             Agent.nb_hops = Agent.nb_hops[-50:]

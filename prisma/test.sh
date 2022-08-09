@@ -1,5 +1,5 @@
 array=(
-1.5
+0.6
 #0.8
 #1.0
 #1.2
@@ -16,13 +16,13 @@ for j in ${array[@]}
 	res1=${FLOAT/.*}
 	echo $res1
 	python3 main.py \
-		--simTime=30 \
+		--simTime=15 \
 		--basePort=6000 \
-		--train=1 \
+		--train=0 \
 		--seed=100 \
-		--agent_type="dqn_buffer" \
-		--session_name="test_08_08_v3_load_$res1" \
-		--signaling_type="target" \
+		--agent_type="sp" \
+		--session_name="test_sp_09_08_v5_load_$res1" \
+		--signaling_type="ideal" \
 		--signalingSim=1 \
 		--training_step=0.01 \
 		--batch_size=256 \
@@ -32,13 +32,14 @@ for j in ${array[@]}
 		--exploration_initial_eps=1.0 \
 		--iterationNum=3000 \
 		--training_trigger_type="time" \
-		--save_models=1 \
+		--save_models=0 \
 		--start_tensorboard=0 \
 		--replay_buffer_max_size=15000 \
    		--link_delay="1ms" \
 		--load_factor=$j \
 		--logs_parent_folder=examples/abilene/ \
 		--traffic_matrix_index=5 \
+		--logging_timestep=1 \
 		--adjacency_matrix_path=examples/abilene/adjacency_matrix.txt \
 		--node_coordinates_path=examples/abilene/node_coordinates.txt \
 		--max_out_buffer_size=16260 \

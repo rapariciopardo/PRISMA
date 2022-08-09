@@ -497,6 +497,27 @@ int main (int argc, char *argv[])
 
   
   NS_LOG_INFO ("Setup CBR Traffic Sources.");
+  float sum_traffic_rate_mat = 0.0;
+  float sum_masked_traffic_rate_mat = 0.0;
+  int count_traffic_rate_mat = 0;
+  int count_masked_traffic_rate_mat = 0;
+
+  for(int i=0;i<n_nodes;i++){
+    for(int j = 0;j<n_nodes;j++){
+      if(i!=j){
+        sum_traffic_rate_mat += ceil(DataRate(Traff_Matrix[i][j]).GetBitRate());
+        count_traffic_rate_mat++;
+        if(OverlayMaskTrafficRate[i][j]==1.0){
+          sum_masked_traffic_rate_mat += ceil(DataRate(Traff_Matrix[i][j]).GetBitRate());
+          count_masked_traffic_rate_mat++;
+        } 
+      }
+    }
+  }
+  sum_traffic_rate_mat /= n_nodes;
+  sum_masked_traffic_rate_mat /= overlayNodes.size();
+  float factor_overlay = sum_traffic_rate_mat / sum_masked_traffic_rate_mat;
+  NS_LOG_UNCOND("FACTOR OVERLAY "<<sum_traffic_rate_mat<<"    "<<sum_masked_traffic_rate_mat<<"    "<<factor_overlay);
 
   
   
@@ -529,7 +550,7 @@ int main (int argc, char *argv[])
               
               double rn = x->GetValue ();
               PoissonAppHelper poisson  ("ns3::UdpSocketFactory",sinkAddress);
-              poisson.SetAverageRate (DataRate(ceil(DataRate(Traff_Matrix[i][j]).GetBitRate()*load_factor)), AvgPacketSize);
+              poisson.SetAverageRate (DataRate(ceil(DataRate(Traff_Matrix[i][j]).GetBitRate()*load_factor*factor_overlay)), AvgPacketSize);
               poisson.SetTrafficValableProbability(OverlayMaskTrafficRate[i][j]);
               //NS_LOG_UNCOND(i<<"   "<<j<<"     "<<OverlayMaskTrafficRate[i][j]);
               poisson.SetUpdatable(false, updateTrafficRateTime);
