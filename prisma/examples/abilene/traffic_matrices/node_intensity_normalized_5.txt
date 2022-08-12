@@ -1,4 +1,4 @@
-1bps 1bps 1bps 1bps 1bps 60.43Kbps 1bps 46.35Kbps 1bps 1bps 29.65Kbps
+1bps 1bps 1bps 1bps 1bps 60.43Kbps 1bps 59.35Kbps 1bps 1bps 29.65Kbps
 1bps 1bps 1bps 1bps 1bps 1bps 1bps 1bps 1bps 1bps 1bps
 1bps 1bps 1bps 1bps 1bps 1bps 1bps 1bps 1bps 1bps 1bps
 1bps 1bps 1bps 1bps 1bps 1bps 1bps 1bps 1bps 1bps 1bps

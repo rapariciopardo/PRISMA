@@ -132,6 +132,7 @@ private:
   bool m_ospfSignaling;
 
   uint32_t m_fwdDev_idx;  // Last net device selected to forward the packet (last action)
+  uint32_t m_fwdDev_idx_overlay;
   uint32_t m_lastEvDev_idx;  // Last net device triggering an event 
   uint32_t m_lastEvNode;  // Node where last net device triggering an event 
   uint32_t m_lastEvNumPktsInQueue; // Queue backlog of last event device
@@ -170,6 +171,7 @@ private:
   uint32_t m_recvOverlayIndex;
 
   vector<StartingDataPacket> m_packetsSent [4];
+  std::string m_lost_packets;
 
 
   

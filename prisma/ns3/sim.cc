@@ -272,6 +272,13 @@ int main (int argc, char *argv[])
   vector<vector<std::string>> Traff_Matrix;
   Traff_Matrix = readIntensityFile (node_intensity_file_name);
 
+  NS_LOG_UNCOND(node_intensity_file_name);
+
+
+
+  vector<vector<std::string>> oldTraff_Matrix;
+  oldTraff_Matrix = readIntensityFile ("/home/tiago/Documents/NetSim/prisma/examples/abilene/traffic_matrices/node_intensity_normalized_0.txt");
+
   
 
   int n_nodes = coord_array.size ();
@@ -350,7 +357,7 @@ int main (int argc, char *argv[])
 
     p2p.SetDeviceAttribute ("DataRate", DataRateValue (100000*data_rate.GetBitRate()*nodes_degree[i]));
     p2p.SetChannelAttribute ("Delay", StringValue ("0ms"));
-    p2p.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("500p"));    
+    p2p.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("1000p"));    
     NetDeviceContainer n_devs = p2p.Install (NodeContainer (nodes_traffic.Get(i), nodes_switch.Get(i)));
     dev_links.push_back(n_devs);
     traffic_nd.Add(n_devs.Get(0));
@@ -505,7 +512,7 @@ int main (int argc, char *argv[])
   for(int i=0;i<n_nodes;i++){
     for(int j = 0;j<n_nodes;j++){
       if(i!=j){
-        sum_traffic_rate_mat += ceil(DataRate(Traff_Matrix[i][j]).GetBitRate());
+        sum_traffic_rate_mat += ceil(DataRate(oldTraff_Matrix[i][j]).GetBitRate());
         count_traffic_rate_mat++;
         if(OverlayMaskTrafficRate[i][j]==1.0){
           sum_masked_traffic_rate_mat += ceil(DataRate(Traff_Matrix[i][j]).GetBitRate());
@@ -532,32 +539,30 @@ int main (int argc, char *argv[])
         {
           if (i != j)
             {
-  
               // We needed to generate a random number (rn) to be used to eliminate
               // the artificial congestion caused by sending the packets at the
               // same time. This rn is added to AppStartTime to have the sources
               // start at different time, however they will still send at the same rate.
-              
               Ptr<UniformRandomVariable> x = CreateObject<UniformRandomVariable> ();
               x->SetAttribute ("Min", DoubleValue (0));
               x->SetAttribute ("Max", DoubleValue (1));
-              
-
               Address sinkAddress;
               string string_ip_dest= "10.1.1."+std::to_string(i+1);
               Ipv4Address ip_dest(string_ip_dest.c_str());
               sinkAddress = InetSocketAddress (ip_dest, sinkPortUDP);
+              if(true){
+                double rn = x->GetValue ();
+                PoissonAppHelper poisson  ("ns3::UdpSocketFactory",sinkAddress);
+                poisson.SetAverageRate (DataRate(ceil(DataRate(Traff_Matrix[i][j]).GetBitRate()*load_factor)), AvgPacketSize);
+                poisson.SetTrafficValableProbability(OverlayMaskTrafficRate[i][j]);
+                //NS_LOG_UNCOND(i<<"   "<<j<<"     "<<OverlayMaskTrafficRate[i][j]);
+                poisson.SetUpdatable(false, updateTrafficRateTime);
+                poisson.SetDestination(uint32_t (j+1));
+                ApplicationContainer apps = poisson.Install (nodes_traffic.Get (i));
+                apps.Start (Seconds (AppStartTime + rn));
+                apps.Stop (Seconds (AppStopTime));
+              }
               
-              double rn = x->GetValue ();
-              PoissonAppHelper poisson  ("ns3::UdpSocketFactory",sinkAddress);
-              poisson.SetAverageRate (DataRate(ceil(DataRate(Traff_Matrix[i][j]).GetBitRate()*load_factor*factor_overlay)), AvgPacketSize);
-              poisson.SetTrafficValableProbability(OverlayMaskTrafficRate[i][j]);
-              //NS_LOG_UNCOND(i<<"   "<<j<<"     "<<OverlayMaskTrafficRate[i][j]);
-              poisson.SetUpdatable(false, updateTrafficRateTime);
-              poisson.SetDestination(uint32_t (j+1));
-              ApplicationContainer apps = poisson.Install (nodes_traffic.Get (i));
-              apps.Start (Seconds (AppStartTime + rn));
-              apps.Stop (Seconds (AppStopTime));
 
               if(activateSignaling && OverlayAdj_Matrix[i][j]==1 && signalingType=="NN"){
                 NS_LOG_UNCOND("BIG SIGNALING");

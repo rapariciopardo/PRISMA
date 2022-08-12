@@ -221,13 +221,13 @@ PacketRoutingEnv::GetObservationSpace()
 {
   NS_LOG_FUNCTION (this);
   uint32_t low = 0;
-  uint32_t high = 100000; // max buffer size --> to change depending on actual value (access to defaul sim param)
+  uint32_t high = 300; // max buffer size --> to change depending on actual value (access to defaul sim param)
   m_obs_shape = {uint32_t(1)+uint32_t(m_overlayNeighbors.size()),}; // Destination Node + (num_devs - 1) interfaces for other nodes
   std::string dtype = TypeNameGet<uint32_t> ();
   Ptr<OpenGymBoxSpace> space = CreateObject<OpenGymBoxSpace> (low, high, m_obs_shape, dtype);
   NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", GetObservationSpace: " << space);
   for(size_t i = 0;i<m_overlayNeighbors.size();i++){
-    m_fwdDev_idx = i;
+    m_fwdDev_idx_overlay = i;
     m_src = m_node->GetId();
     sendOverlaySignalingUpdate(uint8_t(3));
   }
@@ -275,7 +275,10 @@ PacketRoutingEnv::dropPacket(Ptr<PacketRoutingEnv> entity, Ptr<const Packet> pac
   if(tagCopy.GetSimpleValue()==0){
     m_cost.push_back(entity->m_loss_penalty);
     m_packetsDroppedGlobal += 1;
-    //NS_LOG_UNCOND("Packet dropped here "<<m_packetsDroppedGlobal);
+    entity->m_lost_packets +=std::to_string(packet->GetUid());
+    entity->m_lost_packets += ";";
+    NS_LOG_UNCOND("Packet dropped here "<<m_packetsDroppedGlobal);
+    NS_LOG_UNCOND(entity->m_lost_packets);
     //NS_LOG_UNCOND("Penalty: "<<entity->m_loss_penalty);
   }  
 }
@@ -332,6 +335,7 @@ PacketRoutingEnv::GetObservation()
     
     box->AddValue(value);
   }
+  //if(m_signaling==0) NS_LOG_UNCOND("here " <<box);
 
   return box;
 }
@@ -360,6 +364,7 @@ PacketRoutingEnv::GetLostPackets(){
   for(size_t j=0;j<m_overlayNeighbors.size();j++){
     auto it = m_packetsSent[j].begin();
     while(it != m_packetsSent[j].end()){
+      //NS_LOG_UNCOND(m_tunnelsDelay[j]);
       if(Simulator::Now().GetMilliSeconds() - it->start_time>= 100*m_tunnelsDelay[j]){
         //NS_LOG_UNCOND("----------------------------------");
         //NS_LOG_UNCOND("Start: "<<it->start_time<<"  Now: "<<Simulator::Now().GetMilliSeconds());
@@ -388,7 +393,9 @@ PacketRoutingEnv::GetExtraInfo()
     myInfo += std::to_string(Simulator::Now().GetMilliSeconds()-m_packetStart);
 
     myInfo += ", Packets lost ="; //1
-    myInfo += GetLostPackets();
+    myInfo += m_lost_packets;//GetLostPackets();
+    m_lost_packets = "";
+
     
     myInfo += ", src Node ="; //2
     myInfo += std::to_string(m_src);
@@ -506,11 +513,11 @@ PacketRoutingEnv::sendOverlaySignalingUpdate(uint8_t type){
   Ptr<Packet> smallSignalingPckt = Create<Packet> (packetSize);
   tagSmallSignaling.SetSimpleValue(type);
   if(type==2) tagSmallSignaling.SetFinalDestination(m_lastHop);
-  if(type==3) tagSmallSignaling.SetFinalDestination(m_overlayNeighbors[m_fwdDev_idx]);
+  if(type==3) tagSmallSignaling.SetFinalDestination(m_overlayNeighbors[m_fwdDev_idx_overlay]);
   if(type==4) tagSmallSignaling.SetFinalDestination(m_lastHop);
   tagSmallSignaling.SetLastHop(m_src);
 
-  if(type==3) tagSmallSignaling.SetOverlayIndex(m_overlayIndex[m_fwdDev_idx]);
+  if(type==3) tagSmallSignaling.SetOverlayIndex(m_overlayIndex[m_fwdDev_idx_overlay]);
   if(type==4) tagSmallSignaling.SetOverlayIndex(m_recvOverlayIndex);
 
   //Depending of the type, add info the tag
@@ -535,7 +542,7 @@ PacketRoutingEnv::sendOverlaySignalingUpdate(uint8_t type){
   ip_head.SetSource(ip_src);
   string string_ip_dest;
   if(type==2) string_ip_dest= "10.2.2."+std::to_string(m_lastHop+1);
-  if(type==3) string_ip_dest= "10.2.2."+std::to_string(m_overlayNeighbors[m_fwdDev_idx]+1);
+  if(type==3) string_ip_dest= "10.2.2."+std::to_string(m_overlayNeighbors[m_fwdDev_idx_overlay]+1);
   if(type==4) string_ip_dest= "10.2.2."+std::to_string(m_lastHop+1);
   Ipv4Address ip_dest(string_ip_dest.c_str());
   ip_head.SetDestination(ip_dest);
@@ -586,15 +593,19 @@ PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
     //For Data Packets which are not in source
     if(m_signaling==0 && m_activateSignaling){
       //if the limit is reached, send the overlay signaling
-      if(m_countSendPackets[m_fwdDev_idx] >=m_nPacketsOverlaySignaling && m_activateOverlaySignaling && m_node->GetId()!=m_dest){
-        m_countSendPackets[m_fwdDev_idx] = 0;
-        m_overlayIndex[m_fwdDev_idx] += 1;
-        StartingOverlayPacket start;
-        start.index = m_overlayIndex[m_fwdDev_idx];
-        start.start_time=Simulator::Now().GetMilliSeconds();
-        m_starting_overlay_packets[m_fwdDev_idx].push_back(start);
-        sendOverlaySignalingUpdate(uint8_t(3));
+      for(size_t i=0;i<m_overlayNeighbors.size();i++){
+        if(m_countSendPackets[i] >=m_nPacketsOverlaySignaling && m_activateOverlaySignaling){
+          m_countSendPackets[i] = 0;
+          m_overlayIndex[i] += 1;
+          StartingOverlayPacket start;
+          start.index = m_overlayIndex[i];
+          start.start_time=Simulator::Now().GetMilliSeconds();
+          m_starting_overlay_packets[i].push_back(start);
+          m_fwdDev_idx_overlay = i;
+          sendOverlaySignalingUpdate(uint8_t(3));
+        }
       }
+      
       if(m_lastHop!=1000){
         //send small signaling
         sendOverlaySignalingUpdate(uint8_t(2));
@@ -604,6 +615,7 @@ PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
     if(m_isGameOver){
       //NS_LOG_UNCOND("FINAL DESTINATION!");
     } else if (m_fwdDev_idx < m_overlayNeighbors.size() && m_signaling==0){
+      //NS_LOG_UNCOND(m_fwdDev_idx);
       //Replace the updated tag
       MyTag sendingTag;
       m_pckt->PeekPacketTag(sendingTag);
@@ -631,7 +643,10 @@ PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
       start.start_time = Simulator::Now().GetMilliSeconds();
       m_packetsSent[m_fwdDev_idx].push_back(start);
       dev->Send(m_pckt, m_destAddr, 0x0800);
-      m_countSendPackets[m_fwdDev_idx] += 1;
+      for(size_t i=0;i<m_overlayNeighbors.size();i++){
+        m_countSendPackets[i] += 1;
+      }
+      
 
 
 
@@ -797,7 +812,7 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
       it=entity->m_packetsSent[entity->m_overlayRecvIndex].erase(it);
     }
     else{
-      NS_LOG_UNCOND("ERR");
+      NS_LOG_UNCOND("ERR "<<entity->m_pcktIdSign);
     }
     //NS_LOG_UNCOND("here");
   }

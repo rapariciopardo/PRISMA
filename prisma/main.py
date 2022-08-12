@@ -79,7 +79,7 @@ def arguments_parser():
     group1.add_argument('--ns3_sim_path', type=str, help='Path to the ns3-gym simulator folder', default="../ns3-gym/")
     group1.add_argument('--signalingSim', type=int, help='Allows the signaling in NS3 Simulation', default=0)
     group1.add_argument('--activateOverlay', type=int, help='Allows the signaling in NS3 Simulation in Overlay', default=1)
-    group1.add_argument('--nPacketsOverlay', type=int, help='Allows the signaling in NS3 Simulation', default=10)
+    group1.add_argument('--nPacketsOverlay', type=int, help='Allows the signaling in NS3 Simulation', default=2)
 
     
     group4 = parser.add_argument_group('Network parameters')
@@ -98,7 +98,7 @@ def arguments_parser():
     group2 = parser.add_argument_group('Storing session logs arguments')
     group2.add_argument('--session_name', type=str, help='Name of the folder where to save the logs of the session', default=None)
     group2.add_argument('--logs_parent_folder', type=str, help='Name of the root folder where to save the logs of the sessions', default="examples/abilene/")
-    group2.add_argument('--logging_timestep', type=int, help='Time delay (in real time) between each logging in seconds', default=15)
+    group2.add_argument('--logging_timestep', type=int, help='Time delay (in real time) between each logging in seconds', default=5)
     
     group3 = parser.add_argument_group('DRL Agent arguments')
     group3.add_argument('--agent_type', choices=["dqn_buffer", "dqn_routing", "dqn_buffer_fp", "dqn_buffer_lite", "sp", "opt"], type=str, help='The type of the agent. Can be dqn_buffer, dqn_routing, dqn_buffer_fp, sp or opt', default="dqn_buffer")
@@ -482,17 +482,32 @@ def main():
                         Agent.total_data_size,
                         Agent.nb_transitions
                     ]
+    new_fields_stats=[params["agent_type"],
+                        params["signaling_type"], 
+                        params["traffic_matrix_index"], 
+                        params["seed"],
+                        params["replay_buffer_max_size"],
+                        params["sync_step"],
+                        params["load_factor"],
+                        Agent.sim_dropped_packets/Agent.sim_injected_packets,
+                        Agent.sim_injected_packets,
+                        Agent.sim_delivered_packets,
+                        Agent.sim_dropped_packets,
+                        Agent.sim_avg_e2e_delay,
+                        Agent.sim_cost,
+                        Agent.total_hops/Agent.sim_delivered_packets
+                        ]
                           
         
     if params["train"] == 0:
-        pass   
-        #with open(test_results_file_name, 'a') as f: 
-        #    writer = csv.writer(f) 
-        #    writer.writerow(fields_stats) 
+           
+        with open(test_results_file_name, 'a') as f: 
+            writer = csv.writer(f) 
+            writer.writerow(new_fields_stats) 
     else:   
         with open(train_results_file_name, 'a') as f: 
             writer = csv.writer(f) 
-            writer.writerow(fields_stats) 
+            writer.writerow(new_fields_stats) 
     
 
     ## save models        

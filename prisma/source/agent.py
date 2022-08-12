@@ -533,7 +533,7 @@ class Agent():
                                                     element["reward"],
                                                     element["new_obs"], 
                                                     element["flag"])
-                    print(self.index, Agent.replay_buffer[self.index].sample(1))
+                    #print(self.index, Agent.replay_buffer[self.index].sample(1))
                 else:
                     ## treat big signaling
                     # print("receive sync event to %s to %s at %s" % (self.index, element["neighbor_idx"], element["time"]))
@@ -621,7 +621,8 @@ class Agent():
         weights = tf.constant(weights, dtype=float)
 
         ### Make a gradient step
-        td_errors = Agent.agents[self.index].train(obses_t, actions_t, targets_t, weights)    
+        td_errors = Agent.agents[self.index].train(obses_t, actions_t, targets_t, weights)
+        print("Node", self.index, "td error: ", np.mean(td_errors**2))    
         self.episode_mean_td_error.append(np.mean(td_errors))
         # print(self.index, Agent.curr_time, self.gradient_step_idx, np.mean(td_errors))
         with self.summary_writer_td_error.as_default():
@@ -663,7 +664,7 @@ class Agent():
                     try:
                         lost_packet_info = Agent.temp_obs.pop(lost_packet_id)
                         next_hop_degree = len(list(Agent.G.neighbors(self.neighbors[lost_packet_info["action"]])))
-                        #print(lost_packet_id, lost_packet_info, next_hop_degree)
+                        print(lost_packet_id, lost_packet_info, next_hop_degree)
                         rew = self._get_reward()
                         Agent.replay_buffer[self.index].add(np.array(lost_packet_info["obs"], dtype=float).squeeze(),
                                         lost_packet_info["action"], 
@@ -687,7 +688,7 @@ class Agent():
                         NNIndex = int(tokens[8].split('=')[-1])
                         segIndex = int(tokens[9].split('=')[-1])
                         if segIndex == 69: ## NN signaling complete
-                            # print(f"sync {self.index} with neighbor {self.neighbors.index(NodeIdSignaled)}")
+                            #print(f"sync {self.index} with neighbor {self.neighbors.index(NodeIdSignaled)}")
                             if NNIndex ==self.sync_counter - 1:
                                 self._sync_current(self.neighbors.index(NodeIdSignaled), with_temp=True)
                             else:
@@ -798,7 +799,7 @@ class Agent():
                         Agent.total_arrived_pkts += 1
                         # Agent.total_e2e_delay += delay_time
                         hops =  len(Agent.pkt_tracking_dict[int(self.pkt_id)]["hops"]) - 1
-                        print(hops, Agent.total_hops)
+                        #print(hops, Agent.total_hops)
                         # Agent.total_e2e_delay += Agent.curr_time - Agent.pkt_tracking_dict[int(self.pkt_id)]["start_time"]
                         Agent.total_hops += hops
                         Agent.total_e2e_delay += delay_time
@@ -828,10 +829,9 @@ class Agent():
         np.savetxt("logs/log_dict_"+Agent.sessionName+".txt", np.asarray(Agent.info_debug, dtype='object'), fmt='%s')
         #f.open(f"replay_buffer_samples/{self.index}", "wb")
         print("saving replay buffer")
-        #try:
-        #    Agent.replay_buffer[self.index].save(f"replay_buffer_samples/{self.index}")
-        #except:
-        #    print("error saving")
+        
+        Agent.replay_buffer[self.index].save(f"replay_buffer_samples/{self.index}")
+        
         self.env.ns3ZmqBridge.send_close_command()
         # print("***index :", self.index, "Done", "stepIdx =", self.stepIdx, "arrived pkts =", self.count_arrived_packets,  "new received pkts", self.count_new_pkts, "gradient steps", self.gradient_step_idx)
         return True

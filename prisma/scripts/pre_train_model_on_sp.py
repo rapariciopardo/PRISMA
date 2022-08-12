@@ -10,7 +10,7 @@ from tensorflow import keras
 import numpy as np
 import networkx as nx
 import sys
-sys.path.insert(0, "source")
+sys.path.append('source')
 from models import DQN_buffer_model, DQN_buffer_FP_model
 
 if __name__ == '__main__':
@@ -20,22 +20,27 @@ if __name__ == '__main__':
     
     ### define the params
     size_of_data_per_dst = 1000 
-    topology_name = "geant"
-    buffer_max_length = 30
+    topology_name = "abilene"
+    buffer_max_length = 270
     ### load the topology graph
     G=nx.Graph()
     for i, element in enumerate(np.loadtxt(open(f"examples/{topology_name}/node_coordinates.txt"))):
         G.add_node(i,pos=tuple(element))
-    G = nx.from_numpy_matrix(np.loadtxt(open(f"examples/{topology_name}/adjacency_matrix.txt")), create_using=G)
+    G = nx.from_numpy_matrix(np.loadtxt(open(f"examples/{topology_name}/overlay_matrix.txt")), create_using=G)
+    remove_list = [node for node,degree in dict(G.degree()).items() if degree < 1]
+    G.remove_nodes_from(remove_list)
+
+    print(G.nodes())
+
     
     ### loop for nodes
     models = []
-    for node in range(G.number_of_nodes()):
+    for node in G.nodes():
     # for node in [6, 10]:
         number_of_neighbors = len(list(G.neighbors(node)))
         x_all = []
         y_all = []
-        for dst in range(G.number_of_nodes()):
+        for dst in G.nodes():
             if dst == node:
                 continue
             ### generate the random data for each destination
@@ -47,6 +52,7 @@ if __name__ == '__main__':
                                 axis=1)
             y_dst = []
             for interface_id, neighbor in enumerate(list(G.neighbors(node))):
+                #print(dst, node)
                 cost = len(nx.shortest_path(G, neighbor, dst)) -1
                 y_dst_neighbor = cost * np.ones((size_of_data_per_dst, 1), dtype=int)
                 if len(y_dst) == 0: 
@@ -72,6 +78,6 @@ if __name__ == '__main__':
                       )
         model.fit(x_all, y_all, batch_size=128, epochs=100)
         ### saving the model    
-        model.save(f"examples/{topology_name}/dqn_buffer_sp_init/node{node}")
+        model.save(f"examples/{topology_name}/dqn_buffer_sp_init_overlay/node{node}")
         print()
     raise(1)
