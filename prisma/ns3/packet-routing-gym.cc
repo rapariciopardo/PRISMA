@@ -153,9 +153,9 @@ PacketRoutingEnv::setOverlayConfig(vector<int> overlayNeighbors, bool activateOv
   m_overlayNeighbors = overlayNeighbors;
   m_activateOverlaySignaling = activateOverlaySignaling;
   m_nPacketsOverlaySignaling = nPacketsOverlaySignaling;
+  m_countSendPackets = 0;
   for(size_t i=0;i<m_overlayNeighbors.size();i++){
     m_overlayIndex[i] = 0;
-    m_countSendPackets.push_back(0);
     m_tunnelsDelay.push_back(0);
     StartingOverlayPacket start;
     start.index = 0;
@@ -170,6 +170,11 @@ PacketRoutingEnv::setNetDevicesContainer(NetDeviceContainer* nd){
     if(m_node->GetId()==0) nd->Get(i)->TraceConnectWithoutContext("MacTxDrop", MakeBoundCallback(&dropPacket, this));
     m_all_nds.Add(nd->Get(i));
   }
+}
+
+void
+PacketRoutingEnv::setTrainConfig(bool train){
+  m_train = train;
 }
 
 void
@@ -277,8 +282,8 @@ PacketRoutingEnv::dropPacket(Ptr<PacketRoutingEnv> entity, Ptr<const Packet> pac
     m_packetsDroppedGlobal += 1;
     entity->m_lost_packets +=std::to_string(packet->GetUid());
     entity->m_lost_packets += ";";
-    NS_LOG_UNCOND("Packet dropped here "<<m_packetsDroppedGlobal);
-    NS_LOG_UNCOND(entity->m_lost_packets);
+    //NS_LOG_UNCOND("Packet dropped here "<<m_packetsDroppedGlobal);
+    //NS_LOG_UNCOND(entity->m_lost_packets);
     //NS_LOG_UNCOND("Penalty: "<<entity->m_loss_penalty);
   }  
 }
@@ -393,7 +398,7 @@ PacketRoutingEnv::GetExtraInfo()
     myInfo += std::to_string(Simulator::Now().GetMilliSeconds()-m_packetStart);
 
     myInfo += ", Packets lost ="; //1
-    myInfo += m_lost_packets;//GetLostPackets();
+    myInfo += GetLostPackets();
     m_lost_packets = "";
 
     
@@ -593,9 +598,8 @@ PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
     //For Data Packets which are not in source
     if(m_signaling==0 && m_activateSignaling){
       //if the limit is reached, send the overlay signaling
-      for(size_t i=0;i<m_overlayNeighbors.size();i++){
-        if(m_countSendPackets[i] >=m_nPacketsOverlaySignaling && m_activateOverlaySignaling){
-          m_countSendPackets[i] = 0;
+      if(m_countSendPackets >=m_nPacketsOverlaySignaling && m_activateOverlaySignaling){
+        for(size_t i=0;i<m_overlayNeighbors.size();i++){
           m_overlayIndex[i] += 1;
           StartingOverlayPacket start;
           start.index = m_overlayIndex[i];
@@ -604,9 +608,10 @@ PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
           m_fwdDev_idx_overlay = i;
           sendOverlaySignalingUpdate(uint8_t(3));
         }
+        m_countSendPackets = 0;
       }
       
-      if(m_lastHop!=1000){
+      if(m_lastHop!=1000 && m_train){
         //send small signaling
         sendOverlaySignalingUpdate(uint8_t(2));
       }
@@ -643,13 +648,8 @@ PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
       start.start_time = Simulator::Now().GetMilliSeconds();
       m_packetsSent[m_fwdDev_idx].push_back(start);
       dev->Send(m_pckt, m_destAddr, 0x0800);
-      for(size_t i=0;i<m_overlayNeighbors.size();i++){
-        m_countSendPackets[i] += 1;
-      }
       
-
-
-
+      m_countSendPackets += 1;
     }
     else{
       //NS_LOG_UNCOND ("Not valid");
@@ -823,6 +823,7 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
     entity->m_NNIndex = tagCopy.GetNNIndex();
     entity->m_segIndex = tagCopy.GetSegIndex();
     entity->m_nodeIdSign = tagCopy.GetNodeId();
+    //NS_LOG_UNCOND(entity->m_NNIndex<<"   "<<entity->m_segIndex);
   }
 
   //Discarding if it is Big Signaling in source

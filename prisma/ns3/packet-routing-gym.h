@@ -71,6 +71,7 @@ public:
   PacketRoutingEnv (Time stepTime, Ptr<Node> node);
   void setOverlayConfig(vector<int> overlayNeighbors, bool activateOverlaySignaling, uint32_t nPacketsOverlaySignaling);
   void setNetDevicesContainer(NetDeviceContainer* nd);
+  void setTrainConfig(bool train);
   void setLossPenalty(double lossPenalty);
   virtual ~PacketRoutingEnv ();
   static TypeId GetTypeId (void);
@@ -146,8 +147,9 @@ private:
   int m_signaling;
 
   
-  bool m_activateOverlaySignaling; 
-  vector<uint32_t> m_countSendPackets;
+  bool m_activateOverlaySignaling;
+  bool m_train; 
+  uint32_t m_countSendPackets;
   vector<uint64_t> m_tunnelsDelay;
   vector<StartingOverlayPacket> m_starting_overlay_packets [4];
   int m_overlayIndex [4];

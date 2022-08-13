@@ -159,6 +159,8 @@ int main (int argc, char *argv[])
   uint32_t nPacketsOverlaySignaling = 2;
 
   double lossPenalty = 0.0;
+
+  bool train = false;
   
   CommandLine cmd;
   // required parameters for OpenGym interface
@@ -191,6 +193,7 @@ int main (int argc, char *argv[])
   cmd.AddValue ("activateOverlaySignaling", "activate Overlay Signaling", activateOverlaySignaling);
   cmd.AddValue ("nPacketsOverlaySignaling", "nb of packets for triggering overlay signaling", nPacketsOverlaySignaling);
   cmd.AddValue ("lossPenalty", "Packet Loss Penalty", lossPenalty);
+  cmd.AddValue ("train", "train", train);
   cmd.Parse (argc, argv);
     
   NS_LOG_UNCOND("Ns3Env parameters:");
@@ -332,7 +335,7 @@ int main (int argc, char *argv[])
 
   //Parameters of signaling
   double smallSignalingSize[n_nodes] = {0.0};
-  double bigSignalingSize = 36000;
+  double bigSignalingSize = 512;
   if(agentType=="sp" || agentType=="opt" || signalingType=="ideal"){
     activateSignaling=false;
   }
@@ -469,6 +472,7 @@ int main (int argc, char *argv[])
     packetRoutingEnv->setOverlayConfig(overlayNeighbors[overlayNodes[i]], activateOverlaySignaling, nPacketsOverlaySignaling);
     packetRoutingEnv->setLossPenalty(lossPenalty);
     packetRoutingEnv->setNetDevicesContainer(&switch_nd);
+    packetRoutingEnv->setTrainConfig(train);
     for(size_t j = 1;j<nodes_switch.Get(overlayNodes[i])->GetNDevices();j++){
       Ptr<NetDevice> dev_switch =DynamicCast<NetDevice> (nodes_switch.Get(overlayNodes[i])->GetDevice(j)); 
       NS_LOG_UNCOND(dev_switch->GetNode()->GetId()<<"     "<<j);
@@ -553,7 +557,7 @@ int main (int argc, char *argv[])
               if(true){
                 double rn = x->GetValue ();
                 PoissonAppHelper poisson  ("ns3::UdpSocketFactory",sinkAddress);
-                poisson.SetAverageRate (DataRate(ceil(DataRate(Traff_Matrix[i][j]).GetBitRate()*load_factor)), AvgPacketSize);
+                poisson.SetAverageRate (DataRate(ceil(DataRate(Traff_Matrix[i][j]).GetBitRate()*load_factor*factor_overlay)), AvgPacketSize);
                 poisson.SetTrafficValableProbability(OverlayMaskTrafficRate[i][j]);
                 //NS_LOG_UNCOND(i<<"   "<<j<<"     "<<OverlayMaskTrafficRate[i][j]);
                 poisson.SetUpdatable(false, updateTrafficRateTime);
@@ -564,7 +568,7 @@ int main (int argc, char *argv[])
               }
               
 
-              if(activateSignaling && OverlayAdj_Matrix[i][j]==1 && signalingType=="NN"){
+              if(train && activateSignaling && OverlayAdj_Matrix[i][j]==1 && signalingType=="NN"){
                 NS_LOG_UNCOND("BIG SIGNALING");
                 string string_ip_bigSignaling= "10.2.2."+std::to_string(j+1);
                 Ipv4Address ip_big_signaling(string_ip_bigSignaling.c_str());

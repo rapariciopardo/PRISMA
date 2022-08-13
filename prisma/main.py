@@ -315,27 +315,30 @@ def run_ns3(params):
     ## run NS3 simulator
     ns3_params_format = ('prisma --simSeed={} --openGymPort={} --simTime={} --AvgPacketSize={} '
                         '--LinkDelay={} --LinkRate={} --MaxBufferLength={} --load_factor={} '
-                        '--adj_mat_file_name={} --overlay_mat_file_name={} --node_coordinates_file_name={} --node_intensity_file_name={}'
-                        ' --signaling={} --AgentType={} --signalingType={} --syncStep={} --lossPenalty={} --activateOverlaySignaling={} --nPacketsOverlaySignaling={} '.format( params["seed"],
-                                                                                                  params["basePort"],
-                                                                                                  str(params["simTime"]),
-                                                                                                  params["packet_size"],
-                                                                                                  params["link_delay"],
-                                                                                                  str(params["link_cap"]) + "bps",
-                                                                                                  str(params["max_out_buffer_size"]) + "B",
-                                                                                                  params["load_factor"],
-                                                                                                  params["adjacency_matrix_path"],
-                                                                                                  params["overlay_matrix_path"],
-                                                                                                  params["node_coordinates_path"],
-                                                                                                  params["traffic_matrix_path"],
-                                                                                                  bool(params["signalingSim"]),
-                                                                                                  params["agent_type"],
-                                                                                                  params["signaling_type"],
-                                                                                                  params["sync_step"],
-                                                                                                  params["loss_penalty"],
-                                                                                                  bool(params["activateOverlay"]),
-                                                                                                  params["nPacketsOverlay"]
-                                                                                                  ))
+                        '--adj_mat_file_name={} --overlay_mat_file_name={} --node_coordinates_file_name={} '
+                        '--node_intensity_file_name={} --signaling={} --AgentType={} --signalingType={} '
+                        '--syncStep={} --lossPenalty={} --activateOverlaySignaling={} --nPacketsOverlaySignaling={} '
+                        '--train={}'.format( params["seed"],
+                                             params["basePort"],
+                                             str(params["simTime"]),
+                                             params["packet_size"],
+                                             params["link_delay"],
+                                             str(params["link_cap"]) + "bps",
+                                             str(params["max_out_buffer_size"]) + "B",
+                                             params["load_factor"],
+                                             params["adjacency_matrix_path"],
+                                             params["overlay_matrix_path"],
+                                             params["node_coordinates_path"],
+                                             params["traffic_matrix_path"],
+                                             bool(params["signalingSim"]),
+                                             params["agent_type"],
+                                             params["signaling_type"],
+                                             params["sync_step"],
+                                             params["loss_penalty"],
+                                             bool(params["activateOverlay"]),
+                                             params["nPacketsOverlay"],
+                                             bool(params["train"])
+                                             ))
     run_ns3_command = shlex.split(f'./waf --run "{ns3_params_format}"')
     subprocess.Popen(run_ns3_command)
     os.chdir(current_folder_path)
@@ -405,6 +408,7 @@ def main():
 
     ## run the agents threads
     agent_instances = []
+    print(params["G"].nodes())
     for index in params["G"].nodes(): #range(params["numNodes"]):
         print("Index", index)
         agent_instance = Agent(index, agent_type=params["agent_type"], train=params["train"])

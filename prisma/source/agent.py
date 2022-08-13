@@ -622,7 +622,7 @@ class Agent():
 
         ### Make a gradient step
         td_errors = Agent.agents[self.index].train(obses_t, actions_t, targets_t, weights)
-        print("Node", self.index, "td error: ", np.mean(td_errors**2))    
+        #print("Node", self.index, "td error: ", np.mean(td_errors**2))    
         self.episode_mean_td_error.append(np.mean(td_errors))
         # print(self.index, Agent.curr_time, self.gradient_step_idx, np.mean(td_errors))
         with self.summary_writer_td_error.as_default():
@@ -664,7 +664,7 @@ class Agent():
                     try:
                         lost_packet_info = Agent.temp_obs.pop(lost_packet_id)
                         next_hop_degree = len(list(Agent.G.neighbors(self.neighbors[lost_packet_info["action"]])))
-                        print(lost_packet_id, lost_packet_info, next_hop_degree)
+                        #print(lost_packet_id, lost_packet_info, next_hop_degree)
                         rew = self._get_reward()
                         Agent.replay_buffer[self.index].add(np.array(lost_packet_info["obs"], dtype=float).squeeze(),
                                         lost_packet_info["action"], 
@@ -687,7 +687,7 @@ class Agent():
                         NodeIdSignaled = int(tokens[7].split('=')[-1])
                         NNIndex = int(tokens[8].split('=')[-1])
                         segIndex = int(tokens[9].split('=')[-1])
-                        if segIndex == 69: ## NN signaling complete
+                        if segIndex == 0: ## NN signaling complete
                             #print(f"sync {self.index} with neighbor {self.neighbors.index(NodeIdSignaled)}")
                             if NNIndex ==self.sync_counter - 1:
                                 self._sync_current(self.neighbors.index(NodeIdSignaled), with_temp=True)
