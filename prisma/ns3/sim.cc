@@ -106,6 +106,7 @@ void ModifyLinkRate(NetDeviceContainer *ptp, u_int32_t idx1, u_int32_t idx2, dou
 }
 
 
+
 int counter_send[100]= {0};
 void countPackets(int n_nodes, NetDeviceContainer* nd, std::string path, Ptr<const Packet> packet, const Address &src, const Address &dest){
 
@@ -161,6 +162,8 @@ int main (int argc, char *argv[])
   double lossPenalty = 0.0;
 
   bool train = false;
+
+  uint32_t movingAverageObsSize = 5;
   
   CommandLine cmd;
   // required parameters for OpenGym interface
@@ -194,6 +197,7 @@ int main (int argc, char *argv[])
   cmd.AddValue ("nPacketsOverlaySignaling", "nb of packets for triggering overlay signaling", nPacketsOverlaySignaling);
   cmd.AddValue ("lossPenalty", "Packet Loss Penalty", lossPenalty);
   cmd.AddValue ("train", "train", train);
+  cmd.AddValue ("movingAverageObsSize", "size of MA for collecting the Obs", movingAverageObsSize);
   cmd.Parse (argc, argv);
     
   NS_LOG_UNCOND("Ns3Env parameters:");
@@ -284,7 +288,7 @@ int main (int argc, char *argv[])
 
   
 
-  int n_nodes = coord_array.size ();
+  int n_nodes = 11; //coord_array.size ();
   int matrixDimension = Adj_Matrix.size ();
 
   if (matrixDimension != n_nodes)
@@ -335,7 +339,7 @@ int main (int argc, char *argv[])
 
   //Parameters of signaling
   double smallSignalingSize[n_nodes] = {0.0};
-  double bigSignalingSize = 512;
+  double bigSignalingSize = 36000;
   if(agentType=="sp" || agentType=="opt" || signalingType=="ideal"){
     activateSignaling=false;
   }
@@ -461,7 +465,7 @@ int main (int argc, char *argv[])
     
     Ptr<Node> n = nodes_switch.Get (overlayNodes[i]); // ref node
     //nodeOpenGymPort = openGymPort + i;
-    Ptr<OpenGymInterface> openGymInterface = CreateObject<OpenGymInterface> (openGymPort + overlayNodes[i]);
+    Ptr<OpenGymInterface> openGymInterface = CreateObject<OpenGymInterface> (openGymPort + i);
      Ptr<PacketRoutingEnv> packetRoutingEnv;
     if (eventBasedEnv){
       packetRoutingEnv = CreateObject<PacketRoutingEnv> (n, n_nodes, linkRateValue, activateSignaling, smallSignalingSize[overlayNodes[i]], overlayNeighbors[overlayNodes[i]]); // event-driven step
@@ -469,7 +473,7 @@ int main (int argc, char *argv[])
       packetRoutingEnv = CreateObject<PacketRoutingEnv> (Seconds(envStepTime), n); // time-driven step
     }
     packetRoutingEnv->SetOpenGymInterface(openGymInterface);
-    packetRoutingEnv->setOverlayConfig(overlayNeighbors[overlayNodes[i]], activateOverlaySignaling, nPacketsOverlaySignaling);
+    packetRoutingEnv->setOverlayConfig(overlayNeighbors[overlayNodes[i]], activateOverlaySignaling, nPacketsOverlaySignaling, movingAverageObsSize);
     packetRoutingEnv->setLossPenalty(lossPenalty);
     packetRoutingEnv->setNetDevicesContainer(&switch_nd);
     packetRoutingEnv->setTrainConfig(train);

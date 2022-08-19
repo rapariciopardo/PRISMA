@@ -24,14 +24,16 @@ if __name__ == '__main__':
     buffer_max_length = 270
     ### load the topology graph
     G=nx.Graph()
+
     for i, element in enumerate(np.loadtxt(open(f"examples/{topology_name}/node_coordinates.txt"))):
         G.add_node(i,pos=tuple(element))
-    G = nx.from_numpy_matrix(np.loadtxt(open(f"examples/{topology_name}/overlay_matrix.txt")), create_using=G)
-    remove_list = [node for node,degree in dict(G.degree()).items() if degree < 1]
-    G.remove_nodes_from(remove_list)
+    G = nx.from_numpy_matrix(np.loadtxt(open(f"examples/{topology_name}/adjacency_matrix_2.txt")), create_using=G)
+    #remove_list = [node for node,degree in dict(G.degree()).items() if degree < 1]
+    #G.remove_nodes_from(remove_list)
 
     print(G.nodes())
-
+    print(G.edges())
+    nx.draw_networkx(G, with_labels=True)
     
     ### loop for nodes
     models = []
@@ -60,13 +62,14 @@ if __name__ == '__main__':
                 else:
                     y_dst = np.concatenate((y_dst, y_dst_neighbor), axis=1)
             ### group the data into one tensor
+            
             if len(x_all) == 0: 
                 x_all = x_dst.copy()
                 y_all = y_dst.copy()
             else:
                 x_all = np.concatenate((x_all, x_dst), axis=0)
                 y_all = np.concatenate((y_all, y_dst), axis=0)
-            
+        print(x_all, y_all)   
         ### load the model
         model = DQN_buffer_model(observation_shape=(number_of_neighbors+1, ),
                  num_actions=number_of_neighbors, 
@@ -80,4 +83,3 @@ if __name__ == '__main__':
         ### saving the model    
         model.save(f"examples/{topology_name}/dqn_buffer_sp_init_overlay/node{node}")
         print()
-    raise(1)

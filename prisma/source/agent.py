@@ -41,6 +41,11 @@ class Agent():
     sim_avg_e2e_delay = 0.0
     sim_sum_e2e_delay = 0.0
     sim_cost = 0.0
+    sim_bytes_data = 0
+    sim_bytes_big_signaling = 0
+    sim_bytes_small_signaling = 0
+    sim_bytes_overlay_signaling_forward = 0
+    sim_bytes_overlay_signaling_back = 0
     total_new_rcv_pkts=0
     total_data_size=0
     total_arrived_pkts=0
@@ -80,7 +85,6 @@ class Agent():
     basePort = 0
     ## net topology
     G = None
-    oldG = None
     numNodes = 0
     maxNumNodes = 0
     ## learning params
@@ -109,7 +113,6 @@ class Agent():
 
         """
         cl.G = params_dict["G"]
-        cl.oldG = params_dict["oldG"]
         cl.numNodes = params_dict["numNodes"]
         cl.maxNumNodes = params_dict["maxNumNodes"]
         cl.stepTime = params_dict["stepTime"]
@@ -133,15 +136,15 @@ class Agent():
         cl.replay_buffer_max_size = params_dict["replay_buffer_max_size"]
         cl.traffic_matrix_path = params_dict["traffic_matrix_path"]
         cl.packet_size = params_dict["packet_size"]
-        cl.envs = cl.maxNumNodes * [None]
-        cl.agents = {i: None for i in range(cl.maxNumNodes)}
-        cl.upcoming_events = [[] for n in range(cl.maxNumNodes)]
+        cl.envs = cl.numNodes * [None]
+        cl.agents = {i: None for i in range(cl.numNodes)}
+        cl.upcoming_events = [[] for n in range(cl.numNodes)]
         if cl.prioritizedReplayBuffer:
-            cl.replay_buffer = [PrioritizedReplayBuffer(cl.replay_buffer_max_size, 1, len(list(cl.oldG.neighbors(n))), n) for n in range(cl.maxNumNodes)]
+            cl.replay_buffer = [PrioritizedReplayBuffer(cl.replay_buffer_max_size, 1, len(list(cl.G.neighbors(n))), n) for n in range(cl.numNodes)]
         else:
-            cl.replay_buffer = [ReplayBuffer(cl.replay_buffer_max_size) for n in range(cl.maxNumNodes)]
+            cl.replay_buffer = [ReplayBuffer(cl.replay_buffer_max_size) for n in range(cl.numNodes)]
         ## transition array to be saved for each node
-        cl.lock_info_array = [[] for n in range(cl.maxNumNodes)]
+        cl.lock_info_array = [[] for n in range(cl.numNodes)]
         cl.basePort = params_dict["basePort"]
         cl.load_path = params_dict["load_path"]
         cl.logs_folder = params_dict["logs_folder"]
@@ -159,6 +162,11 @@ class Agent():
         cl.sim_avg_e2e_delay = 0.0
         cl.sim_sum_e2e_delay = 0.0
         cl.sim_cost = 0.0
+        cl.sim_bytes_data = 0
+        cl.sim_bytes_big_signaling = 0
+        cl.sim_bytes_small_signaling = 0
+        cl.sim_bytes_overlay_signaling_forward = 0
+        cl.sim_bytes_overlay_signaling_back = 0
         cl.total_new_rcv_pkts=0
         cl.total_data_size=0
         cl.total_arrived_pkts=0
@@ -569,17 +577,24 @@ class Agent():
                         
             elif Agent.signaling_type == "target":
                 if element["pkt_id"] == signaling_pkt_id:
-                    Agent.replay_buffer[self.index].add(element["obs"],
-                                                    element["action"], 
-                                                    element["target"],
-                                                    element["new_obs"], 
-                                                    element["flag"],
-                                                    element["gradient_step"])
+                    
                     if Agent.prioritizedReplayBuffer:
+                        Agent.replay_buffer[self.index].add(element["obs"],
+                                                            element["action"], 
+                                                            element["target"],
+                                                            element["new_obs"], 
+                                                            element["flag"],
+                                                            element["gradient_step"])
                         if element["gradient_step"] > Agent.replay_buffer[self.index].latest_gradient_step[element["action"]]:
                             Agent.replay_buffer[self.index].latest_gradient_step[element["action"]] = element["gradient_step"] 
                             Agent.replay_buffer[self.index].update_priorities(Agent.replay_buffer[self.index].neighbors_idx[element["action"]],
                                                                             element["action"])
+                    else:
+                        Agent.replay_buffer[self.index].add(element["obs"],
+                                                    element["action"], 
+                                                    element["target"],
+                                                    element["new_obs"], 
+                                                    element["flag"])
                     Agent.upcoming_events[self.index].pop(idx)
                     break
                         
@@ -687,7 +702,7 @@ class Agent():
                         NodeIdSignaled = int(tokens[7].split('=')[-1])
                         NNIndex = int(tokens[8].split('=')[-1])
                         segIndex = int(tokens[9].split('=')[-1])
-                        if segIndex == 0: ## NN signaling complete
+                        if segIndex == 69: ## NN signaling complete
                             #print(f"sync {self.index} with neighbor {self.neighbors.index(NodeIdSignaled)}")
                             if NNIndex ==self.sync_counter - 1:
                                 self._sync_current(self.neighbors.index(NodeIdSignaled), with_temp=True)
@@ -711,8 +726,14 @@ class Agent():
                 Agent.sim_avg_e2e_delay =  float(tokens[15].split('=')[-1])
                 Agent.sim_sum_e2e_delay =  float(tokens[16].split('=')[-1])
                 Agent.sim_cost = float(tokens[17].split('=')[-1])
+                Agent.sim_bytes_data = float(tokens[18].split('=')[-1])
+                Agent.sim_bytes_big_signaling = float(tokens[19].split('=')[-1])
+                Agent.sim_bytes_small_signaling = float(tokens[20].split('=')[-1])
+                Agent.sim_bytes_overlay_signaling_forward = float(tokens[21].split('=')[-1])
+                Agent.sim_bytes_overlay_signaling_back = float(tokens[22].split('=')[-1])
                 #print(Agent.sim_injected_packets, Agent.sim_delivered_packets, Agent.sim_buffered_packets, Agent.sim_dropped_packets, Agent.sim_avg_e2e_delay)
                 Agent.nb_transitions += 1
+                #print("Node", self.index, "Obs: ", self.obs)
                 if self.pkt_id not in Agent.pkt_tracking_dict.keys(): ## check if the packet is a new arrival
                     self.count_new_pkts += 1
                     Agent.total_new_rcv_pkts += 1
@@ -728,8 +749,6 @@ class Agent():
                                                                 "start_time": Agent.curr_time,
                                                                 "tag": None}
                 else: ## if the packet is not new in the network
-                    
-
                     states_info = Agent.temp_obs.pop(self.pkt_id)
                     hop_time_real =  Agent.curr_time - states_info["time"]
                     hop_time_ideal = ((states_info["obs"][states_info["action"] + 1] + 512 ) * 8 / Agent.link_cap) + Agent.link_delay

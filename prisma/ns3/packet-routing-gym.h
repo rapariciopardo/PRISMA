@@ -69,7 +69,7 @@ public:
   PacketRoutingEnv ();
   PacketRoutingEnv (Ptr<Node> node, uint32_t numberOfNodes, uint64_t linkRateValue, bool activateSignaling, double signPacketSize, vector<int> overlayNeighbors);
   PacketRoutingEnv (Time stepTime, Ptr<Node> node);
-  void setOverlayConfig(vector<int> overlayNeighbors, bool activateOverlaySignaling, uint32_t nPacketsOverlaySignaling);
+  void setOverlayConfig(vector<int> overlayNeighbors, bool activateOverlaySignaling, uint32_t nPacketsOverlaySignaling, uint32_t movingAverageObsSize);
   void setNetDevicesContainer(NetDeviceContainer* nd);
   void setTrainConfig(bool train);
   void setLossPenalty(double lossPenalty);
@@ -101,6 +101,7 @@ private:
   uint32_t GetQueueLengthInBytes(Ptr<Node> node, uint32_t netDev_idx);
   uint32_t getNbPacketsBuffered();
   std::string GetLostPackets();
+  uint32_t mapOverlayNode(uint32_t underlayNode);
   void sendOverlaySignalingUpdate(uint8_t type);
 
   //bool SetCw(Ptr<Node> node, uint32_t cwMinValue=0, uint32_t cwMaxValue=0);
@@ -150,11 +151,12 @@ private:
   bool m_activateOverlaySignaling;
   bool m_train; 
   uint32_t m_countSendPackets;
-  vector<uint64_t> m_tunnelsDelay;
+  vector<uint64_t> m_tunnelsDelay [4];
   vector<StartingOverlayPacket> m_starting_overlay_packets [4];
   int m_overlayIndex [4];
   int m_overlayRecvIndex;
   uint32_t m_nPacketsOverlaySignaling;
+  uint32_t m_movingAverageObsSize;
 
   uint32_t m_packetsDropped;
   uint32_t m_packetsDelivered;
@@ -162,6 +164,11 @@ private:
   static int m_packetsInjectedGlobal;
   static int m_packetsDroppedGlobal;
   static int m_testPacketsDroppedGlobal;
+  static int m_bytesData;
+  static int m_bytesBigSignalling;
+  static int m_bytesSmallSignalling;
+  static int m_bytesOverlaySignalingForward;
+  static int m_bytesOverlaySignalingBack;
   static std::vector<int> m_end2endDelay;
   static std::vector<float> m_cost;
 

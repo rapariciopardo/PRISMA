@@ -55,6 +55,23 @@
 #include "my-tag.h"
 namespace ns3 {
 
+uint32_t mapOverlayNode(uint32_t underlayNode){
+  uint32_t res;
+  if(underlayNode==0){
+    res= 0;
+  }
+  if (underlayNode==5){
+    res= 1;
+  }
+  if (underlayNode==7){
+    res= 2;
+  }
+  if (underlayNode==10){
+    res= 3;
+  }
+  return res;
+}
+
 NS_LOG_COMPONENT_DEFINE ("BigSignalingGeneratorApplication");
 
 NS_OBJECT_ENSURE_REGISTERED (BigSignalingGeneratorApplication);
@@ -267,7 +284,7 @@ void BigSignalingGeneratorApplication::SendPacket ()
   tag.SetLastHop(m_src-1);
   tag.SetSegIndex(m_segIndex);
   tag.SetNNIndex(m_NNIndex);
-  tag.SetNodeId(m_src-1);
+  tag.SetNodeId(mapOverlayNode(m_src-1));
   packet->AddPacketTag(tag);
   m_txTrace (packet);
   std::string start_time = std::to_string(Simulator::Now().GetMilliSeconds());

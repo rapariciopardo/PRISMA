@@ -80,12 +80,13 @@ def arguments_parser():
     group1.add_argument('--signalingSim', type=int, help='Allows the signaling in NS3 Simulation', default=0)
     group1.add_argument('--activateOverlay', type=int, help='Allows the signaling in NS3 Simulation in Overlay', default=1)
     group1.add_argument('--nPacketsOverlay', type=int, help='Allows the signaling in NS3 Simulation', default=2)
-
+    group1.add_argument('--movingAverageObsSize', type=int, help="Sets the MA size of collecting the obs", default=5)
     
     group4 = parser.add_argument_group('Network parameters')
     group4.add_argument('--load_factor', type=float, help='scale of the traffic matrix', default=1)
     group4.add_argument('--adjacency_matrix_path', type=str, help='Path to the adjacency matrix', default="examples/abilene/adjacency_matrix.txt")
     group4.add_argument('--overlay_matrix_path', type=str, help='Path to the adjacency matrix', default="examples/abilene/overlay_matrix.txt")
+    group4.add_argument('--agent_adjacency_matrix_path', type=str, help='Path to the adjacency matrix', default="examples/abilene/adjacency_matrix_2.txt")
     group4.add_argument('--traffic_matrix_root_path', type=str, help='Path to the traffic matrix folder', default="examples/abilene/traffic_matrices/")
     group4.add_argument('--traffic_matrix_index', type=int, help='Index of the traffic matrix', default=0)
     group4.add_argument('--node_coordinates_path', type=str, help='Path to the nodes coordinates', default="examples/abilene/node_coordinates.txt")
@@ -140,6 +141,7 @@ def arguments_parser():
     #if params["save_models"]:
     #    params["save_models"] = os.path.abspath(params["save_models"])
     params["adjacency_matrix_path"] = os.path.abspath(params["adjacency_matrix_path"])
+    params["agent_adjacency_matrix_path"] = os.path.abspath(params["agent_adjacency_matrix_path"])
     params["overlay_matrix_path"] = os.path.abspath(params["overlay_matrix_path"])
     params["traffic_matrix_path"] = os.path.abspath(f'{params["traffic_matrix_root_path"].rstrip("/")}/node_intensity_normalized_{params["traffic_matrix_index"]}.txt')
     params["node_coordinates_path"] = os.path.abspath(params["node_coordinates_path"])
@@ -149,12 +151,8 @@ def arguments_parser():
     G=nx.DiGraph(nx.empty_graph())
     for i, element in enumerate(np.loadtxt(open(params["node_coordinates_path"]))):
         G.add_node(i,pos=tuple(element))
-    G = nx.from_numpy_matrix(np.loadtxt(open(params["overlay_matrix_path"])), parallel_edges=False, create_using=G)
-    G_old = nx.DiGraph(G)
-    params["maxNumNodes"] = G.number_of_nodes()
-    remove_list = [node for node,degree in dict(G.degree()).items() if degree < 1]
-    params["oldG"] = G_old
-    G.remove_nodes_from(remove_list)
+    G = nx.from_numpy_matrix(np.loadtxt(open(params["agent_adjacency_matrix_path"])), parallel_edges=False, create_using=G)
+    params["maxNumNodes"] = 11
     params["numNodes"] = G.number_of_nodes()
     params["G"] = G
     params["logs_parent_folder"] = params["logs_parent_folder"].rstrip("/")
@@ -318,7 +316,7 @@ def run_ns3(params):
                         '--adj_mat_file_name={} --overlay_mat_file_name={} --node_coordinates_file_name={} '
                         '--node_intensity_file_name={} --signaling={} --AgentType={} --signalingType={} '
                         '--syncStep={} --lossPenalty={} --activateOverlaySignaling={} --nPacketsOverlaySignaling={} '
-                        '--train={}'.format( params["seed"],
+                        '--train={} --movingAverageObsSize={}'.format( params["seed"],
                                              params["basePort"],
                                              str(params["simTime"]),
                                              params["packet_size"],
@@ -337,7 +335,8 @@ def run_ns3(params):
                                              params["loss_penalty"],
                                              bool(params["activateOverlay"]),
                                              params["nPacketsOverlay"],
-                                             bool(params["train"])
+                                             bool(params["train"]),
+                                             params["movingAverageObsSize"]
                                              ))
     run_ns3_command = shlex.split(f'./waf --run "{ns3_params_format}"')
     subprocess.Popen(run_ns3_command)
@@ -360,8 +359,8 @@ def main():
     random.seed(params["seed"])
 
     ## test results file name
-    test_results_file_name = f'{params["logs_parent_folder"]}/_tests_final/prio_{params["agent_type"]}_{params["signaling_type"]}_{params["signalingSim"]}_fixed_rb_{params["replay_buffer_max_size"]}_sync{int(1000*params["sync_step"])}ms_ratio_{int(100*params["sync_ratio"])}_load_{int(100*params["load_factor"])}.txt'
-    train_results_file_name = f'{params["logs_parent_folder"]}/_train_final/prio_{params["agent_type"]}_{params["signaling_type"]}_{params["signalingSim"]}_fixed_rb_{params["replay_buffer_max_size"]}_sync{int(1000*params["sync_step"])}ms_ratio_{int(100*params["sync_ratio"])}_load_{int(100*params["load_factor"])}.txt'
+    test_results_file_name = f'{params["logs_parent_folder"]}/_tests_overlay_6/prio_{params["agent_type"]}_{params["signaling_type"]}_{params["signalingSim"]}_fixed_rb_{params["replay_buffer_max_size"]}_sync{int(1000*params["sync_step"])}ms_ratio_{int(100*params["sync_ratio"])}_overlayPackets_{params["nPacketsOverlay"]}_load_{int(100*params["load_factor"])}.txt'
+    train_results_file_name = f'{params["logs_parent_folder"]}/_train_overlay_6/prio_{params["agent_type"]}_{params["signaling_type"]}_{params["signalingSim"]}_fixed_rb_{params["replay_buffer_max_size"]}_sync{int(1000*params["sync_step"])}ms_ratio_{int(100*params["sync_ratio"])}_overlayPackets_{params["nPacketsOverlay"]}_load_{int(100*params["load_factor"])}.txt'
     print(test_results_file_name)
     if params["train"] == 1:
         if params["session_name"] in os.listdir(params["logs_parent_folder"] + "/saved_models/"):
@@ -389,7 +388,6 @@ def main():
         ## Adapt the dict to the hparams api
         dict_to_store = copy.deepcopy(params)
         dict_to_store["G"] = str(params["G"])
-        dict_to_store["oldG"] = str(params["oldG"])
         dict_to_store["load_path"] = str(params["load_path"])
         dict_to_store["simArgs"] = str(params["simArgs"])
         hp.hparams(dict_to_store)  # record the values used in this trial
@@ -439,7 +437,13 @@ def main():
             Number Test Drooped = {Agent.sim_test_dropped},
             Delay_real = {Agent.sim_avg_e2e_delay},
             Cost = {Agent.sim_cost},
-            Hops = {Agent.total_hops/Agent.sim_delivered_packets}
+            Hops = {Agent.total_hops/Agent.sim_delivered_packets},
+            nbBytesData = {Agent.sim_bytes_data},
+            nbBytesBigSignaling = {Agent.sim_bytes_big_signaling},
+            nbBytesSmallSignaling = {Agent.sim_bytes_small_signaling},
+            nbBytesOverlaySignalingForward = {Agent.sim_bytes_overlay_signaling_forward},
+            nbBytesOverlaySignalingBack = {Agent.sim_bytes_overlay_signaling_back},
+            OverheadRatio = {(Agent.sim_bytes_big_signaling+Agent.sim_bytes_small_signaling+Agent.sim_bytes_overlay_signaling_forward+Agent.sim_bytes_overlay_signaling_back)/Agent.sim_bytes_data}
             """)
     
     print(f""" Summary of the episode :
@@ -499,7 +503,8 @@ def main():
                         Agent.sim_dropped_packets,
                         Agent.sim_avg_e2e_delay,
                         Agent.sim_cost,
-                        Agent.total_hops/Agent.sim_delivered_packets
+                        Agent.total_hops/Agent.sim_delivered_packets,
+                        (Agent.sim_bytes_big_signaling+Agent.sim_bytes_small_signaling+Agent.sim_bytes_overlay_signaling_forward+Agent.sim_bytes_overlay_signaling_back)/Agent.sim_bytes_data
                         ]
                           
         

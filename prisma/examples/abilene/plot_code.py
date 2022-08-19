@@ -25,8 +25,7 @@ plt.rcParams.update({'font.weight': 'bold'})
 # plt.rcParams.update({'font.serif': ["Times"]})
 if __name__ == '__main__':
     ### define params
-    stat_names = [
-                  "Average Cost Per Packets",
+    stat_names = ["Average Cost Per Packets",
                   "Avg e2e Delay", 
                   "Avg loss rate"]
     stat_file_names = ["loss", "delay", "rew", "real_rew", "total_rew", "overhead"]
@@ -42,9 +41,10 @@ if __name__ == '__main__':
     line_styles = ["solid" , "solid", "dashed", "dashed"]
     colors = [ "purple", "green", "red","blue"]
     avg_data = {}
-    test_train = ["_tests_final", "_train_final", "_train_final"]
+    avg_data_loads = {}
+    test_folder = "_tests_overlay_6"
     signaling_inband=1
-    rb_size = 10000
+    rb_size = 5000
     lite = ("", "","","", "")
     ### check if folder exists
     if folder_name not in os.listdir(folder_path):
@@ -54,7 +54,9 @@ if __name__ == '__main__':
             # fig1, ax1 = plt.subplots()
             # fig1.set_size_inches(19.4, 10)
             # [0.6428656100517803, 0.47653319732663824, 0.44059512730308725, 0.36639229472221074, 0.5688626373310568, ]
-            for xxx, signaling_type in enumerate(["NN", "sp"]):
+            for xxx, signaling_type in enumerate(["target", "sp"]):
+                #if(xxx==1):
+                #    continue
                 # if kkk_idx==1 and xxx >1:
                     # continue
                 for stat_idx in range(len(stat_names)):
@@ -63,63 +65,71 @@ if __name__ == '__main__':
                     ## stat over sync step
                     # fig1 = plt.figure()
                     # fig1.set_size_inches(19.4, 10)
-                    sync_steps = []
+                sync_steps = []
+                sync_charge_steps = []
                     
                     
                     # fig = plt.figure()
                     # fig.set_size_inches(19.4, 10)
-                    list_charges = [[60, 70, 80, 90, 100, 110, 120, 130, 140], [40], [40]]
+                #list_charges = [60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 175, 200, 250, 300]
+                list_charges = [60, 80, 100, 120, 140, 160, 180, 200, 220, 240]
                     # list_charges = [40]
             
             
-                    syncs = np.arange(1000, 8000, 1000).tolist()
+                syncs = [1000]#np.arange(1000, 8000, 1000).tolist()
+                overlayPackets = [50]#[5,10,20,50,100,500]
                     # syncs.remove(6000)
                     # syncs.remove(7000)
                     # syncs = np.arange(500, 5000, 500).tolist() + np.arange(5000, 15000, 5000).tolist()
-                    if signaling_type in ("ideal", "NN"):
-                        names = [f"prio_dqn_buffer{lite[xxx]}_{signaling_type}_{signaling_inband}_fixed_rb_{rb_size}_sync{xx}ms_ratio_{(10, 20,20, 20)[kkk_idx]}" for xx in syncs] 
-                        official_names = [f"DQN Buffer {signaling_type} sync {xx}s" for xx in np.array(syncs)/1000] 
-                    elif signaling_type in ("target"):
-                        names = [f"dqn_buffer{lite[xxx]}_{signaling_type}_{signaling_inband}_fixed_rb_{512}_sync{10000}ms_ratio_{(10, 20,20, 20)[kkk_idx]}" for xx in syncs] 
-                        official_names = [f"DQN Buffer {signaling_type} sync {xx}s" for xx in np.array(syncs)/1000] 
-                    elif signaling_type in ("prio"):
-                            names = [f"prio_dqn_buffer{lite[xxx]}_target_{signaling_inband}_fixed_rb_{5000}_sync{10000}ms_ratio_{(10, 20,20, 20)[kkk_idx]}" for xx in syncs] 
-                            official_names = [f"DQN Buffer {signaling_type} sync {xx}s" for xx in np.array(syncs)/1000] 
-                    
-                    elif signaling_type == "sp":
-                        names = ["prio_sp_ideal_1_fixed_rb_10000_sync500ms_ratio_10"]* len(syncs)
-                        official_names = ["Shortest Path"]* len(syncs)
-                    else:
-                        names = ["opt_ideal_0_fixed_rb_20000_sync10000ms_ratio_10"] * len(syncs) 
-                        official_names = ["Optimal Solution"] * len(syncs)
-                    j = 0
-                    for i in range(len(names)):
-                        for charge_index, charge in enumerate(list_charges[kkk_idx]):
-                            if (signaling_type == "sp" or signaling_type == "opt") and charge == 40:
-                                continue
-                            temp = np.loadtxt(f"{test_train[kkk_idx]}/{names[i]}_load_{charge}.txt", delimiter=',', dtype=object)
-                            print(names[i], temp.shape)
-                            if len(temp.shape) == 1:
-                                delay_temp = np.array(temp[kkk], dtype=float).reshape(1, -1)
-                            else:
-                                delay_temp = np.array(temp[:, kkk], dtype=float).mean(axis=0).reshape(1, -1)
-                    
-                            if charge_index == 0:
-                                delay = delay_temp.reshape(1, -1)
-                            else:
-                                delay = np.concatenate((delay, delay_temp.reshape(1, -1)))
-                        sync_steps.append(np.mean(delay, axis=0))
-        
-                        j += 1
-                    print(stat_names[stat_idx], sync_steps)
-                    
-        
-                    
-                    avg_data[f"{signaling_type}{lite[xxx]}_{stat_names[kkk_idx]}_{signaling_inband}_{test_train[kkk_idx]}"] = np.array(sync_steps)[:, 0]
+                if signaling_type in ("ideal", "NN"):
+                    names = [f"prio_dqn_buffer{lite[xxx]}_{signaling_type}_{signaling_inband}_fixed_rb_{rb_size}_sync{xx}ms_ratio_10_overlayPackets_{yy}" for xx in syncs for yy in overlayPackets] 
+                    official_names = [f"DQN Buffer {signaling_type} sync {xx}s overlayPackets {yy}" for xx in np.array(syncs)/1000 for yy in overlayPackets] 
+                elif signaling_type in ("target"):
+                    print("here")
+                    names = [f"prio_dqn_buffer{lite[xxx]}_{signaling_type}_{signaling_inband}_fixed_rb_{rb_size}_sync{xx}ms_ratio_10_overlayPackets_{yy}" for xx in syncs for yy in overlayPackets] 
+                    official_names = [f"DQN Buffer {signaling_type} sync {xx}s overlayPackets {yy}" for xx in np.array(syncs)/1000 for yy in overlayPackets]  
+                #elif signaling_type in ("prio"):
+                #    names = [f"prio_dqn_buffer{lite[xxx]}_target_{signaling_inband}_fixed_rb_{5000}_sync{10000}ms_ratio_{(10, 20,20, 20)[kkk_idx]}" for xx in syncs] 
+                #    official_names = [f"DQN Buffer {signaling_type} sync {xx}s" for xx in np.array(syncs)/1000] 
+                #
+                elif signaling_type == "sp":
+                    names = ["prio_sp_ideal_1_fixed_rb_10000_sync1000ms_ratio_10_overlayPackets_50"]* len(syncs)
+                    official_names = ["Shortest Path"]* len(syncs)
+                #else:
+                #    names = ["opt_ideal_0_fixed_rb_20000_sync10000ms_ratio_10"] * len(syncs) 
+                #    official_names = ["Optimal Solution"] * len(syncs)
+                j = 0
+                for i in range(len(names)):
+                    for charge_index, charge in enumerate(list_charges):
+                        #if (signaling_type == "sp" or signaling_type == "opt") and charge == 40:
+                        #    continue
+                        temp = np.loadtxt(f"{test_folder}/{names[i]}_load_{charge}.txt", delimiter=',', dtype=object)
+                        #print(names[i], temp.shape)
+                        if len(temp.shape) == 1:
+                            delay_temp = np.array(temp[kkk], dtype=float).reshape(1, -1)
+                        else:
+                            delay_temp = np.array(temp[:, kkk], dtype=float).mean(axis=0).reshape(1, -1)
+                
+                        if charge_index == 0:
+                            delay = delay_temp.reshape(1, -1)
+                        else:
+                            delay = np.concatenate((delay, delay_temp.reshape(1, -1)))
                         
-                    # ax1.plot(np.array(syncs)/1000, avg_data[f"{signaling_type}_{kkk}_{signaling_inband}"] , label=f"{model_names[xxx]}", color=colors[xxx], linestyle=line_styles[xxx], marker="o")
-        
+                    sync_steps.append(np.mean(delay, axis=0))
+                    sync_charge_steps.append(delay)
+    
+                    j += 1
+                print(stat_names[kkk_idx], sync_steps)
                     
+                best_sync = np.argmin(np.array(sync_steps), axis=0)
+                print(best_sync)
+                print(sync_charge_steps[best_sync[0]])
+                avg_data_loads[f"{signaling_type}{lite[xxx]}_{stat_names[kkk_idx]}_{signaling_inband}_{test_folder}"] = np.array(sync_charge_steps[best_sync[0]])[:, 0]
+                avg_data[f"{signaling_type}{lite[xxx]}_{stat_names[kkk_idx]}_{signaling_inband}_{test_folder}"] = np.array(sync_steps)[:, 0]
+                        
+                #ax1.plot(np.array(syncs)/1000, avg_data[f"{signaling_type}_{kkk}_{signaling_inband}"] , label=f"{model_names[xxx]}", color=colors[xxx], linestyle=line_styles[xxx], marker="o")
+        
+                
             # plt.vlines(min_x_value, 0, 3.5, linestyles="dotted", label="Minimum value")
             # ax1.set_ylabel(f"{stat_names[kkk]}")
             # ax1.set_xlabel(f"Synchronisation Period T_s (s)")
@@ -137,7 +147,35 @@ if __name__ == '__main__':
         
             # fig1.legend(loc=2)
             # fig1.tight_layout()
+
+            
         
+            fig2, ax2 = plt.subplots()
+            fig2.set_size_inches(19.4, 10)
+            ax2.plot(np.array(list_charges)/100,
+                 avg_data_loads[f"target_{stat_names[kkk_idx]}_1_{test_folder}"],
+                  label=f"Value sharing", linestyle=line_styles[0],
+                  marker="o",
+                  linewidth=7,
+                  markersize=20)
+            ax2.plot(np.array(list_charges)/100,
+                 avg_data_loads[f"sp_{stat_names[kkk_idx]}_1_{test_folder}"],
+                  label=f"SP", linestyle=line_styles[2],
+                  marker="o",
+                  color=colors[2],
+                  linewidth=7,
+                  markersize=20)
+            if(kkk_idx==0): ax2.set_ylim(0.0, 2.0)
+            if(kkk_idx==1): ax2.set_ylim(30, 500)
+            if(kkk_idx==2): ax2.set_ylim(0.0, 0.5)
+            ax2.set_xlim(0.6, 2.4)
+            ax2.set_xticks(np.array(list_charges)/100, np.array(list_charges)/100)#(np.arange(1, 9, 1, dtype =int), np.arange(1, 9, 1, dtype =int))
+            fig2.legend(prop={'weight':'normal'})
+            fig2.tight_layout()
+            ax2.set_xlabel(f"Load charge ", fontweight="bold")
+            ax2.set_ylabel(f"{stat_names[kkk_idx]}", fontweight="bold")
+            plt.savefig(f"pictures/avg_{stat_names[kkk_idx]}_overlay_load_inband.png")
+            plt.show()
     #fig2, ax2 = plt.subplots()
     #fig2.set_size_inches(19.4, 10)
     #ax2.plot( avg_data['NN_Singalling overhead_1__train_final']/avg_data["NN_data_1__train_final"],
@@ -156,12 +194,13 @@ if __name__ == '__main__':
     ## plot cost vs sync steps
     fig2, ax2 = plt.subplots()
     fig2.set_size_inches(19.4, 10)
-    ax2.plot(np.array(syncs)/1000,
-             avg_data["NN_Average Cost Per Packets_1__tests_final"],
-              label=f"Model sharing", linestyle=line_styles[0],
+    ax2.plot(overlayPackets,
+             avg_data[f"target_Average Cost Per Packets_1_{test_folder}"],
+              label=f"Value sharing", linestyle=line_styles[0],
               marker="o",
               linewidth=7,
               markersize=20)
+    
     
     # ax2.plot( np.array(syncs)/1000,
     #          avg_data["NN_lite_Average Cost Per Packets_1__tests_final"],
@@ -183,9 +222,9 @@ if __name__ == '__main__':
     #            color="black",
     #            linestyle="dashed",
     #            linewidth=7)
-    ax2.hlines(avg_data["sp_Average Cost Per Packets_1__tests_final"],
+    ax2.hlines(avg_data[f"sp_Average Cost Per Packets_1_{test_folder}"],
                 0 ,
-                12,
+                500,
                 label=f"SP",
                 color="red",
                 linestyle="dashed",
@@ -198,12 +237,12 @@ if __name__ == '__main__':
     #            color="blue",
     #            linestyle="dashed",
     #            linewidth=7)
-    ax2.set_ylim(0.0, 1.50)
-    ax2.set_xlim(0.5, 10)
-    ax2.set_xticks(np.arange(1, 9, 1, dtype =int), np.arange(1, 9, 1, dtype =int))
+    #ax2.set_ylim(0.0, 0.3)
+    #ax2.set_xlim(0, 500)
+    ax2.set_xticks(np.array(overlayPackets), np.array(overlayPackets))#(np.arange(1, 9, 1, dtype =int), np.arange(1, 9, 1, dtype =int))
     fig2.legend(prop={'weight':'normal'})
     fig2.tight_layout()
-    ax2.set_xlabel(f"Sync steps ", fontweight="bold")
+    ax2.set_xlabel(f"Overlay Resfreshing Raate ", fontweight="bold")
     ax2.set_ylabel(f"Average Cost per packet", fontweight="bold")
     
     
@@ -233,5 +272,5 @@ if __name__ == '__main__':
     
     # for i in range(2):
     #     for j in range(2):
-    # # plt.savefig(f"{folder_path}\\{folder_name}\\{stat_file_names[kkk]}_sync_step_variation_mse_offband.png")
+    plt.savefig(f"pictures/avg_cost_overlay_refresh_rate_variation_inband.png")
     plt.show()
