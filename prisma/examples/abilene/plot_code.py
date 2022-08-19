@@ -44,7 +44,7 @@ if __name__ == '__main__':
     avg_data_loads = {}
     test_folder = "_tests_overlay_6"
     signaling_inband=1
-    rb_size = 5000
+    rb_size = 10000
     lite = ("", "","","", "")
     ### check if folder exists
     if folder_name not in os.listdir(folder_path):
@@ -54,7 +54,7 @@ if __name__ == '__main__':
             # fig1, ax1 = plt.subplots()
             # fig1.set_size_inches(19.4, 10)
             # [0.6428656100517803, 0.47653319732663824, 0.44059512730308725, 0.36639229472221074, 0.5688626373310568, ]
-            for xxx, signaling_type in enumerate(["target", "sp"]):
+            for xxx, signaling_type in enumerate(["NN", "target", "sp", "prio"]):
                 #if(xxx==1):
                 #    continue
                 # if kkk_idx==1 and xxx >1:
@@ -77,21 +77,21 @@ if __name__ == '__main__':
             
             
                 syncs = [1000]#np.arange(1000, 8000, 1000).tolist()
-                overlayPackets = [50]#[5,10,20,50,100,500]
+                overlayPackets = [20]#,20,50,100]#[5,10,20,50,100,500]
                     # syncs.remove(6000)
                     # syncs.remove(7000)
                     # syncs = np.arange(500, 5000, 500).tolist() + np.arange(5000, 15000, 5000).tolist()
                 if signaling_type in ("ideal", "NN"):
-                    names = [f"prio_dqn_buffer{lite[xxx]}_{signaling_type}_{signaling_inband}_fixed_rb_{rb_size}_sync{xx}ms_ratio_10_overlayPackets_{yy}" for xx in syncs for yy in overlayPackets] 
+                    names = [f"prio_dqn_buffer{lite[xxx]}_{signaling_type}_{signaling_inband}_fixed_rb_{rb_size}_sync{xx}ms_ratio_10_overlayPackets_50" for xx in syncs for yy in overlayPackets] 
                     official_names = [f"DQN Buffer {signaling_type} sync {xx}s overlayPackets {yy}" for xx in np.array(syncs)/1000 for yy in overlayPackets] 
                 elif signaling_type in ("target"):
                     print("here")
-                    names = [f"prio_dqn_buffer{lite[xxx]}_{signaling_type}_{signaling_inband}_fixed_rb_{rb_size}_sync{xx}ms_ratio_10_overlayPackets_{yy}" for xx in syncs for yy in overlayPackets] 
+                    names = [f"prio_dqn_buffer{lite[xxx]}_{signaling_type}_{signaling_inband}_fixed_rb_5000_sync{xx}ms_ratio_10_overlayPackets_{yy}" for xx in syncs for yy in overlayPackets] 
                     official_names = [f"DQN Buffer {signaling_type} sync {xx}s overlayPackets {yy}" for xx in np.array(syncs)/1000 for yy in overlayPackets]  
-                #elif signaling_type in ("prio"):
-                #    names = [f"prio_dqn_buffer{lite[xxx]}_target_{signaling_inband}_fixed_rb_{5000}_sync{10000}ms_ratio_{(10, 20,20, 20)[kkk_idx]}" for xx in syncs] 
-                #    official_names = [f"DQN Buffer {signaling_type} sync {xx}s" for xx in np.array(syncs)/1000] 
-                #
+                elif signaling_type in ("prio"):
+                    names = [f"prio_60_1_dqn_buffer{lite[xxx]}_target_{signaling_inband}_fixed_rb_5000_sync{xx}ms_ratio_10_overlayPackets_{yy}" for xx in syncs for yy in overlayPackets] 
+                    official_names = [f"DQN Buffer {signaling_type} sync {xx}s overlayPackets {yy}" for xx in np.array(syncs)/1000 for yy in overlayPackets]
+                
                 elif signaling_type == "sp":
                     names = ["prio_sp_ideal_1_fixed_rb_10000_sync1000ms_ratio_10_overlayPackets_50"]* len(syncs)
                     official_names = ["Shortest Path"]* len(syncs)
@@ -153,9 +153,17 @@ if __name__ == '__main__':
             fig2, ax2 = plt.subplots()
             fig2.set_size_inches(19.4, 10)
             ax2.plot(np.array(list_charges)/100,
+                 avg_data_loads[f"NN_{stat_names[kkk_idx]}_1_{test_folder}"],
+                  label=f"Model sharing", linestyle=line_styles[0],
+                  marker="o",
+                  color=colors[0],
+                  linewidth=7,
+                  markersize=20)
+            ax2.plot(np.array(list_charges)/100,
                  avg_data_loads[f"target_{stat_names[kkk_idx]}_1_{test_folder}"],
                   label=f"Value sharing", linestyle=line_styles[0],
                   marker="o",
+                  color=colors[1],
                   linewidth=7,
                   markersize=20)
             ax2.plot(np.array(list_charges)/100,
@@ -163,6 +171,13 @@ if __name__ == '__main__':
                   label=f"SP", linestyle=line_styles[2],
                   marker="o",
                   color=colors[2],
+                  linewidth=7,
+                  markersize=20)
+            ax2.plot(np.array(list_charges)/100,
+                 avg_data_loads[f"prio_{stat_names[kkk_idx]}_1_{test_folder}"],
+                  label=f"Prio Value sharing", linestyle=line_styles[0],
+                  marker="o",
+                  color=colors[3],
                   linewidth=7,
                   markersize=20)
             if(kkk_idx==0): ax2.set_ylim(0.0, 2.0)
@@ -195,9 +210,24 @@ if __name__ == '__main__':
     fig2, ax2 = plt.subplots()
     fig2.set_size_inches(19.4, 10)
     ax2.plot(overlayPackets,
+             avg_data[f"NN_Average Cost Per Packets_1_{test_folder}"],
+              label=f"Model sharing", linestyle=line_styles[0],
+              marker="o",
+              color=colors[0],
+              linewidth=7,
+              markersize=20)
+    ax2.plot(overlayPackets,
              avg_data[f"target_Average Cost Per Packets_1_{test_folder}"],
               label=f"Value sharing", linestyle=line_styles[0],
               marker="o",
+              color=colors[1],
+              linewidth=7,
+              markersize=20)
+    ax2.plot(overlayPackets,
+             avg_data[f"prio_Average Cost Per Packets_1_{test_folder}"],
+              label=f"Prio Value sharing", linestyle=line_styles[0],
+              marker="o",
+              color=colors[3],
               linewidth=7,
               markersize=20)
     

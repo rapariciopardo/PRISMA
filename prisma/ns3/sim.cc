@@ -284,7 +284,7 @@ int main (int argc, char *argv[])
 
 
   vector<vector<std::string>> oldTraff_Matrix;
-  oldTraff_Matrix = readIntensityFile ("/home/tiago/Documents/NetSim/prisma/examples/abilene/traffic_matrices/node_intensity_normalized_0.txt");
+  oldTraff_Matrix = readIntensityFile ("../prisma/examples/abilene/traffic_matrices/node_intensity_normalized_0.txt");
 
   
 

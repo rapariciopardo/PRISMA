@@ -8,6 +8,7 @@ echo $6 # n_packs
 echo $7 # rb size
 echo $8 # increment
 echo $9 # topology
+echo ${10} #prio
 #module load singularity/3.5.2
 uname -a
 echo $(date)
@@ -22,7 +23,7 @@ python3 main.py \
 	--basePort=$(((4444+$2)+(1000*$3)+($res0*15)+($8*1000))) \
 	--train=1 \
 	--agent_type=$4 \
-	--session_name="ma_in_train_new_overlay_obs_in_bytes_fixed_$9_real_delay_$4_$5_ts_0_01_seed_$2_traff_mat_$3_rb_size_$7_batch_512_lr_1e-3_gamma_1_final_eps_0_01_load_40_refreshRate_$6_sync_$1_loss_x11_sp_init" \
+	--session_name="ma_in_train_new_overlay_obs_in_bytes_fixed_$9_real_delay_$4_$5_ts_0_01_seed_$2_prio_${10}_traff_mat_$3_rb_size_$7_batch_512_lr_1e-3_gamma_1_final_eps_0_01_load_80_refreshRate_$6_sync_$1_loss_x11_sp_init" \
 	--signaling_type=$5 \
 	--logs_parent_folder=examples/$9/ \
 	--traffic_matrix_root_path=examples/$9/traffic_matrices/ \
@@ -41,12 +42,13 @@ python3 main.py \
 	--start_tensorboard=0 \
 	--replay_buffer_max_size=$7 \
    	--link_delay="1ms" \
-	--load_factor=0.4 \
+	--load_factor=0.8 \
 	--sync_step=$1 \
 	--max_out_buffer_size=16260 \
 	--sync_ratio=0.2 \
 	--signalingSim=1 \
 	--nPacketsOverlay=$6 \
+	--prioritizedReplayBuffer=${10} \
 	--load_path=examples/$9/$4_sp_init_overlay 
 
 
@@ -78,7 +80,7 @@ for j in ${array[@]}
 		--basePort=$(((4444 + $2)+(1000*$3)+($res0 * 15)+($8*1000))) \
 		--train=0 \
 		--seed=$2 \
-		--session_name="ma_in_test_new_$9_real_delay_$4_$5_real_rb_$7_sync_step_$1_variation_mat_$3_seed_$2_load_$res2" \
+		--session_name="ma_in_test_new_$9_real_delay_$4_$5_real_rb_$7_sync_step_$1_variation_mat_$3_seed_$2_prio_${10}_load_$res2" \
 		--signaling_type=$5 \
 		--agent_type=$4 \
 		--logs_parent_folder=examples/$9/ \
@@ -94,7 +96,8 @@ for j in ${array[@]}
 		--replay_buffer_max_size=$7 \
 		--max_out_buffer_size=16260 \
 		--nPacketsOverlay=$6 \
-		--load_path=examples/$9/saved_models/ma_in_train_new_overlay_obs_in_bytes_fixed_$9_real_delay_$4_$5_ts_0_01_seed_$2_traff_mat_$3_rb_size_$7_batch_512_lr_1e-3_gamma_1_final_eps_0_01_load_40_refreshRate_$6_sync_$1_loss_x11_sp_init/iteration1_episode1 \
+		--prioritizedReplayBuffer=${10} \
+		--load_path=examples/$9/saved_models/ma_in_train_new_overlay_obs_in_bytes_fixed_$9_real_delay_$4_$5_ts_0_01_seed_$2_prio_${10}_traff_mat_$3_rb_size_$7_batch_512_lr_1e-3_gamma_1_final_eps_0_01_load_80_refreshRate_$6_sync_$1_loss_x11_sp_init/iteration1_episode1 \
 		--load_factor=$j
 	# oarsub -p "gpu='YES' and gpucapability>='5.0'" -l /nodes=1/gpunum=1,walltime=06:00:00 -d /home/ralliche/PRISMA-master/prisma/ "scripts/run_on_nef_test.sh $j 100 0 train_abilene_NN_ts_0_03_seed_100_traff_mat_0_batch_512_lr_1e-3_gamma_1_final_eps_0_01_load_40_sync_0.5_loss_x1_sp_init"
 	counter=$((counter+1))
