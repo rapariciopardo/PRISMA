@@ -54,7 +54,7 @@ if __name__ == '__main__':
             # fig1, ax1 = plt.subplots()
             # fig1.set_size_inches(19.4, 10)
             # [0.6428656100517803, 0.47653319732663824, 0.44059512730308725, 0.36639229472221074, 0.5688626373310568, ]
-            for xxx, signaling_type in enumerate(["NN", "target", "sp", "prio"]):
+            for xxx, signaling_type in enumerate(["NN",  "sp", "target", "prio"]):
                 #if(xxx==1):
                 #    continue
                 # if kkk_idx==1 and xxx >1:
@@ -82,14 +82,14 @@ if __name__ == '__main__':
                     # syncs.remove(7000)
                     # syncs = np.arange(500, 5000, 500).tolist() + np.arange(5000, 15000, 5000).tolist()
                 if signaling_type in ("ideal", "NN"):
-                    names = [f"prio_dqn_buffer{lite[xxx]}_{signaling_type}_{signaling_inband}_fixed_rb_{rb_size}_sync{xx}ms_ratio_10_overlayPackets_50" for xx in syncs for yy in overlayPackets] 
+                    names = [f"prio_0_dqn_buffer{lite[xxx]}_NN_{signaling_inband}_fixed_rb_10000_sync{xx}ms_ratio_10_overlayPackets_{yy}" for xx in syncs for yy in overlayPackets] 
                     official_names = [f"DQN Buffer {signaling_type} sync {xx}s overlayPackets {yy}" for xx in np.array(syncs)/1000 for yy in overlayPackets] 
                 elif signaling_type in ("target"):
                     print("here")
-                    names = [f"prio_dqn_buffer{lite[xxx]}_{signaling_type}_{signaling_inband}_fixed_rb_5000_sync{xx}ms_ratio_10_overlayPackets_{yy}" for xx in syncs for yy in overlayPackets] 
+                    names = [f"prio_0_dqn_buffer{lite[xxx]}_target_{signaling_inband}_fixed_rb_10000_sync{xx}ms_ratio_10_overlayPackets_{yy}" for xx in syncs for yy in overlayPackets] 
                     official_names = [f"DQN Buffer {signaling_type} sync {xx}s overlayPackets {yy}" for xx in np.array(syncs)/1000 for yy in overlayPackets]  
                 elif signaling_type in ("prio"):
-                    names = [f"prio_60_1_dqn_buffer{lite[xxx]}_target_{signaling_inband}_fixed_rb_5000_sync{xx}ms_ratio_10_overlayPackets_{yy}" for xx in syncs for yy in overlayPackets] 
+                    names = [f"prio_1_dqn_buffer{lite[xxx]}_target_{signaling_inband}_fixed_rb_10000_sync{xx}ms_ratio_10_overlayPackets_{yy}" for xx in syncs for yy in overlayPackets] 
                     official_names = [f"DQN Buffer {signaling_type} sync {xx}s overlayPackets {yy}" for xx in np.array(syncs)/1000 for yy in overlayPackets]
                 
                 elif signaling_type == "sp":
@@ -180,9 +180,9 @@ if __name__ == '__main__':
                   color=colors[3],
                   linewidth=7,
                   markersize=20)
-            if(kkk_idx==0): ax2.set_ylim(0.0, 2.0)
-            if(kkk_idx==1): ax2.set_ylim(30, 500)
-            if(kkk_idx==2): ax2.set_ylim(0.0, 0.5)
+            #if(kkk_idx==0): ax2.set_ylim(0.0, 2.0)
+            #if(kkk_idx==1): ax2.set_ylim(30, 500)
+            #if(kkk_idx==2): ax2.set_ylim(0.0, 0.5)
             ax2.set_xlim(0.6, 2.4)
             ax2.set_xticks(np.array(list_charges)/100, np.array(list_charges)/100)#(np.arange(1, 9, 1, dtype =int), np.arange(1, 9, 1, dtype =int))
             fig2.legend(prop={'weight':'normal'})
