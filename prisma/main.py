@@ -81,9 +81,11 @@ def arguments_parser():
     group1.add_argument('--activateOverlay', type=int, help='Allows the signaling in NS3 Simulation in Overlay', default=1)
     group1.add_argument('--nPacketsOverlay', type=int, help='Allows the signaling in NS3 Simulation', default=2)
     group1.add_argument('--movingAverageObsSize', type=int, help="Sets the MA size of collecting the obs", default=5)
-    
+    group1.add_argument('--activateUnderlayTraffic', type=int, help="sets if there is underlay traffic", default=0)
+
     group4 = parser.add_argument_group('Network parameters')
     group4.add_argument('--load_factor', type=float, help='scale of the traffic matrix', default=1)
+    group4.add_argument('--load_factor_trainning', type=float, help='scale of the traffic matrix', default=1)
     group4.add_argument('--adjacency_matrix_path', type=str, help='Path to the adjacency matrix', default="examples/abilene/adjacency_matrix.txt")
     group4.add_argument('--overlay_matrix_path', type=str, help='Path to the adjacency matrix', default="examples/abilene/overlay_matrix.txt")
     group4.add_argument('--agent_adjacency_matrix_path', type=str, help='Path to the adjacency matrix', default="examples/abilene/adjacency_matrix_2.txt")
@@ -316,7 +318,7 @@ def run_ns3(params):
                         '--adj_mat_file_name={} --overlay_mat_file_name={} --node_coordinates_file_name={} '
                         '--node_intensity_file_name={} --signaling={} --AgentType={} --signalingType={} '
                         '--syncStep={} --lossPenalty={} --activateOverlaySignaling={} --nPacketsOverlaySignaling={} '
-                        '--train={} --movingAverageObsSize={}'.format( params["seed"],
+                        '--train={} --movingAverageObsSize={} --activateUnderlayTraffic={}'.format( params["seed"],
                                              params["basePort"],
                                              str(params["simTime"]),
                                              params["packet_size"],
@@ -336,7 +338,8 @@ def run_ns3(params):
                                              bool(params["activateOverlay"]),
                                              params["nPacketsOverlay"],
                                              bool(params["train"]),
-                                             params["movingAverageObsSize"]
+                                             params["movingAverageObsSize"],
+                                             bool(params["activateUnderlayTraffic"])
                                              ))
     run_ns3_command = shlex.split(f'./waf --run "{ns3_params_format}"')
     subprocess.Popen(run_ns3_command)
@@ -359,8 +362,8 @@ def main():
     random.seed(params["seed"])
 
     ## test results file name
-    test_results_file_name = f'{params["logs_parent_folder"]}/_tests_overlay_6/prio_{params["prioritizedReplayBuffer"]}_{params["agent_type"]}_{params["signaling_type"]}_{params["signalingSim"]}_fixed_rb_{params["replay_buffer_max_size"]}_sync{int(1000*params["sync_step"])}ms_ratio_{int(100*params["sync_ratio"])}_overlayPackets_{params["nPacketsOverlay"]}_load_{int(100*params["load_factor"])}.txt'
-    train_results_file_name = f'{params["logs_parent_folder"]}/_train_overlay_6/prio_{params["prioritizedReplayBuffer"]}_{params["agent_type"]}_{params["signaling_type"]}_{params["signalingSim"]}_fixed_rb_{params["replay_buffer_max_size"]}_sync{int(1000*params["sync_step"])}ms_ratio_{int(100*params["sync_ratio"])}_overlayPackets_{params["nPacketsOverlay"]}_load_{int(100*params["load_factor"])}.txt'
+    test_results_file_name = f'{params["logs_parent_folder"]}/_tests_overlay_7/prio_{params["prioritizedReplayBuffer"]}_underlayTraff_{params["activateUnderlayTraffic"]}_{params["agent_type"]}_{params["signaling_type"]}_{params["signalingSim"]}_fixed_rb_{params["replay_buffer_max_size"]}_sync{int(1000*params["sync_step"])}ms_ratio_{int(100*params["sync_ratio"])}_overlayPackets_{params["nPacketsOverlay"]}_loadTrain_{int(100*params["load_factor_trainning"])}_load_{int(100*params["load_factor"])}.txt'
+    train_results_file_name = f'{params["logs_parent_folder"]}/_train_overlay_7/prio_{params["prioritizedReplayBuffer"]}_underlayTraff_{params["activateUnderlayTraffic"]}_{params["agent_type"]}_{params["signaling_type"]}_{params["signalingSim"]}_fixed_rb_{params["replay_buffer_max_size"]}_sync{int(1000*params["sync_step"])}ms_ratio_{int(100*params["sync_ratio"])}_overlayPackets_{params["nPacketsOverlay"]}_loadTrain_{int(100*params["load_factor_trainning"])}_load_{int(100*params["load_factor"])}.txt'
     print(test_results_file_name)
     if params["train"] == 1:
         if params["session_name"] in os.listdir(params["logs_parent_folder"] + "/saved_models/"):

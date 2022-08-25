@@ -32,6 +32,7 @@ if __name__ == '__main__':
     folder_path = "."
     
     kkk = 3
+    plot = 0
     """ 1 ==  sync step variation for ideal case 
         2 == signaling type comparaison for sync step 1s and 20% ratio 
         3 == ratio comparaison  for NN signaling 
@@ -54,7 +55,7 @@ if __name__ == '__main__':
             # fig1, ax1 = plt.subplots()
             # fig1.set_size_inches(19.4, 10)
             # [0.6428656100517803, 0.47653319732663824, 0.44059512730308725, 0.36639229472221074, 0.5688626373310568, ]
-            for xxx, signaling_type in enumerate(["NN",  "sp", "target", "prio"]):
+            for xxx, signaling_type in enumerate(["NN",  "sp"]):
                 #if(xxx==1):
                 #    continue
                 # if kkk_idx==1 and xxx >1:
@@ -75,14 +76,18 @@ if __name__ == '__main__':
                 list_charges = [60, 80, 100, 120, 140, 160, 180, 200, 220, 240]
                     # list_charges = [40]
             
-            
-                syncs = [1000]#np.arange(1000, 8000, 1000).tolist()
+                if(plot==0): 
+                    syncs = [1000, 3000, 5000, 7000, 9000, 11000, 15000, 20000, 50000]
+                    rb=[10000] #np.arange(1000, 8000, 1000).tolist()
+                if(plot==1):
+                    syncs = [1000]
+                    rb = [513, 1024, 2500, 5000, 10000, 20000]
                 overlayPackets = [20]#,20,50,100]#[5,10,20,50,100,500]
                     # syncs.remove(6000)
                     # syncs.remove(7000)
                     # syncs = np.arange(500, 5000, 500).tolist() + np.arange(5000, 15000, 5000).tolist()
                 if signaling_type in ("ideal", "NN"):
-                    names = [f"prio_0_dqn_buffer{lite[xxx]}_NN_{signaling_inband}_fixed_rb_10000_sync{xx}ms_ratio_10_overlayPackets_{yy}" for xx in syncs for yy in overlayPackets] 
+                    names = [f"prio_0_dqn_buffer{lite[xxx]}_NN_{signaling_inband}_fixed_rb_{zz}_sync{xx}ms_ratio_10_overlayPackets_{yy}" for xx in syncs for yy in overlayPackets for zz in rb] 
                     official_names = [f"DQN Buffer {signaling_type} sync {xx}s overlayPackets {yy}" for xx in np.array(syncs)/1000 for yy in overlayPackets] 
                 elif signaling_type in ("target"):
                     print("here")
@@ -149,48 +154,48 @@ if __name__ == '__main__':
             # fig1.tight_layout()
 
             
-        
-            fig2, ax2 = plt.subplots()
-            fig2.set_size_inches(19.4, 10)
-            ax2.plot(np.array(list_charges)/100,
-                 avg_data_loads[f"NN_{stat_names[kkk_idx]}_1_{test_folder}"],
-                  label=f"Model sharing", linestyle=line_styles[0],
-                  marker="o",
-                  color=colors[0],
-                  linewidth=7,
-                  markersize=20)
-            ax2.plot(np.array(list_charges)/100,
-                 avg_data_loads[f"target_{stat_names[kkk_idx]}_1_{test_folder}"],
-                  label=f"Value sharing", linestyle=line_styles[0],
-                  marker="o",
-                  color=colors[1],
-                  linewidth=7,
-                  markersize=20)
-            ax2.plot(np.array(list_charges)/100,
-                 avg_data_loads[f"sp_{stat_names[kkk_idx]}_1_{test_folder}"],
-                  label=f"SP", linestyle=line_styles[2],
-                  marker="o",
-                  color=colors[2],
-                  linewidth=7,
-                  markersize=20)
-            ax2.plot(np.array(list_charges)/100,
-                 avg_data_loads[f"prio_{stat_names[kkk_idx]}_1_{test_folder}"],
-                  label=f"Prio Value sharing", linestyle=line_styles[0],
-                  marker="o",
-                  color=colors[3],
-                  linewidth=7,
-                  markersize=20)
+            #
+            #fig2, ax2 = plt.subplots()
+            #fig2.set_size_inches(19.4, 10)
+            #ax2.plot(np.array(list_charges)/100,
+            #     avg_data_loads[f"NN_{stat_names[kkk_idx]}_1_{test_folder}"],
+            #      label=f"Model sharing", linestyle=line_styles[0],
+            #      marker="o",
+            #      color=colors[0],
+            #      linewidth=7,
+            #      markersize=20)
+            #ax2.plot(np.array(list_charges)/100,
+            #     avg_data_loads[f"target_{stat_names[kkk_idx]}_1_{test_folder}"],
+            #      label=f"Value sharing", linestyle=line_styles[0],
+            #      marker="o",
+            #      color=colors[1],
+            #      linewidth=7,
+            #      markersize=20)
+            #ax2.plot(np.array(list_charges)/100,
+            #     avg_data_loads[f"sp_{stat_names[kkk_idx]}_1_{test_folder}"],
+            #      label=f"SP", linestyle=line_styles[2],
+            #      marker="o",
+            #      color=colors[2],
+            #      linewidth=7,
+            #      markersize=20)
+            #ax2.plot(np.array(list_charges)/100,
+            #     avg_data_loads[f"prio_{stat_names[kkk_idx]}_1_{test_folder}"],
+            #      label=f"Prio Value sharing", linestyle=line_styles[0],
+            #      marker="o",
+            #      color=colors[3],
+            #      linewidth=7,
+            #      markersize=20)
             #if(kkk_idx==0): ax2.set_ylim(0.0, 2.0)
             #if(kkk_idx==1): ax2.set_ylim(30, 500)
             #if(kkk_idx==2): ax2.set_ylim(0.0, 0.5)
-            ax2.set_xlim(0.6, 2.4)
-            ax2.set_xticks(np.array(list_charges)/100, np.array(list_charges)/100)#(np.arange(1, 9, 1, dtype =int), np.arange(1, 9, 1, dtype =int))
-            fig2.legend(prop={'weight':'normal'})
-            fig2.tight_layout()
-            ax2.set_xlabel(f"Load charge ", fontweight="bold")
-            ax2.set_ylabel(f"{stat_names[kkk_idx]}", fontweight="bold")
-            plt.savefig(f"pictures/avg_{stat_names[kkk_idx]}_overlay_load_inband.png")
-            plt.show()
+            #ax2.set_xlim(0.6, 2.4)
+            #ax2.set_xticks(np.array(list_charges)/100, np.array(list_charges)/100)#(np.arange(1, 9, 1, dtype =int), np.arange(1, 9, 1, dtype =int))
+            #fig2.legend(prop={'weight':'normal'})
+            #fig2.tight_layout()
+            #ax2.set_xlabel(f"Load charge ", fontweight="bold")
+            #ax2.set_ylabel(f"{stat_names[kkk_idx]}", fontweight="bold")
+            #plt.savefig(f"pictures/avg_{stat_names[kkk_idx]}_overlay_load_inband.png")
+            #plt.show()
     #fig2, ax2 = plt.subplots()
     #fig2.set_size_inches(19.4, 10)
     #ax2.plot( avg_data['NN_Singalling overhead_1__train_final']/avg_data["NN_data_1__train_final"],
@@ -209,28 +214,32 @@ if __name__ == '__main__':
     ## plot cost vs sync steps
     fig2, ax2 = plt.subplots()
     fig2.set_size_inches(19.4, 10)
-    ax2.plot(overlayPackets,
+    if(plot==0):
+        x_value = np.array(syncs)/1000
+    if(plot==1):
+        x_value = np.array(rb)
+    ax2.plot(x_value,
              avg_data[f"NN_Average Cost Per Packets_1_{test_folder}"],
               label=f"Model sharing", linestyle=line_styles[0],
               marker="o",
               color=colors[0],
               linewidth=7,
               markersize=20)
-    ax2.plot(overlayPackets,
-             avg_data[f"target_Average Cost Per Packets_1_{test_folder}"],
-              label=f"Value sharing", linestyle=line_styles[0],
-              marker="o",
-              color=colors[1],
-              linewidth=7,
-              markersize=20)
-    ax2.plot(overlayPackets,
-             avg_data[f"prio_Average Cost Per Packets_1_{test_folder}"],
-              label=f"Prio Value sharing", linestyle=line_styles[0],
-              marker="o",
-              color=colors[3],
-              linewidth=7,
-              markersize=20)
-    
+    #ax2.plot(overlayPackets,
+    #         avg_data[f"target_Average Cost Per Packets_1_{test_folder}"],
+    #          label=f"Value sharing", linestyle=line_styles[0],
+    #          marker="o",
+    #          color=colors[1],
+    #          linewidth=7,
+    #          markersize=20)
+    #ax2.plot(overlayPackets,
+    #         avg_data[f"prio_Average Cost Per Packets_1_{test_folder}"],
+    #          label=f"Prio Value sharing", linestyle=line_styles[0],
+    #          marker="o",
+    #          color=colors[3],
+    #          linewidth=7,
+    #          markersize=20)
+    #
     
     # ax2.plot( np.array(syncs)/1000,
     #          avg_data["NN_lite_Average Cost Per Packets_1__tests_final"],
@@ -253,8 +262,8 @@ if __name__ == '__main__':
     #            linestyle="dashed",
     #            linewidth=7)
     ax2.hlines(avg_data[f"sp_Average Cost Per Packets_1_{test_folder}"],
-                0 ,
-                500,
+                x_value[0] ,
+                x_value[-1],
                 label=f"SP",
                 color="red",
                 linestyle="dashed",
@@ -269,10 +278,10 @@ if __name__ == '__main__':
     #            linewidth=7)
     #ax2.set_ylim(0.0, 0.3)
     #ax2.set_xlim(0, 500)
-    ax2.set_xticks(np.array(overlayPackets), np.array(overlayPackets))#(np.arange(1, 9, 1, dtype =int), np.arange(1, 9, 1, dtype =int))
+    ax2.set_xticks(np.array(x_value), np.array(x_value))#(np.arange(1, 9, 1, dtype =int), np.arange(1, 9, 1, dtype =int))
     fig2.legend(prop={'weight':'normal'})
     fig2.tight_layout()
-    ax2.set_xlabel(f"Overlay Resfreshing Raate ", fontweight="bold")
+    ax2.set_xlabel(f"Sync step ", fontweight="bold")
     ax2.set_ylabel(f"Average Cost per packet", fontweight="bold")
     
     

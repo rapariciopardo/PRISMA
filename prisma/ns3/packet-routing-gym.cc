@@ -287,13 +287,12 @@ PacketRoutingEnv::dropPacket(Ptr<PacketRoutingEnv> entity, Ptr<const Packet> pac
   MyTag tagCopy;
   packet->PeekPacketTag(tagCopy);
   if(tagCopy.GetSimpleValue()==0){
-    m_cost.push_back(entity->m_loss_penalty);
-    m_packetsDroppedGlobal += 1;
-    entity->m_lost_packets +=std::to_string(packet->GetUid());
-    entity->m_lost_packets += ";";
-    //NS_LOG_UNCOND("Packet dropped here "<<m_packetsDroppedGlobal);
-    //NS_LOG_UNCOND(entity->m_lost_packets);
-    //NS_LOG_UNCOND("Penalty: "<<entity->m_loss_penalty);
+    if(tagCopy.GetTrafficValable()==1){
+      m_cost.push_back(entity->m_loss_penalty);
+      m_packetsDroppedGlobal += 1;
+      entity->m_lost_packets +=std::to_string(packet->GetUid());
+      entity->m_lost_packets += ";";
+    }
   }  
 }
 
@@ -395,26 +394,29 @@ PacketRoutingEnv::GetReward()
 std::string
 PacketRoutingEnv::GetLostPackets(){
   std::string lost_packets;
-  for(size_t j=0;j<m_overlayNeighbors.size();j++){
-    auto it = m_packetsSent[j].begin();
-    while(it != m_packetsSent[j].end()){
-      //NS_LOG_UNCOND(m_tunnelsDelay[j]);
-      if(Simulator::Now().GetMilliSeconds() - it->start_time>= 3000){ //100*m_tunnelsDelay[j]){
-        //NS_LOG_UNCOND("----------------------------------");
-        //NS_LOG_UNCOND("Start: "<<it->start_time<<"  Now: "<<Simulator::Now().GetMilliSeconds());
-        //NS_LOG_UNCOND("UID: "<<it->uid);
-        //NS_LOG_UNCOND("----------------------------------");
-        lost_packets +=std::to_string(it->uid);
-        lost_packets += ";";
-        it = m_packetsSent[j].erase(it);
-        m_testPacketsDroppedGlobal ++;
-      }
-      else{
-        it++;
+  if(m_train){
+    for(size_t j=0;j<m_overlayNeighbors.size();j++){
+      auto it = m_packetsSent[j].begin();
+      while(it != m_packetsSent[j].end()){
+        //NS_LOG_UNCOND(m_tunnelsDelay[j]);
+        if(Simulator::Now().GetMilliSeconds() - it->start_time>= 3000){ //100*m_tunnelsDelay[j]){
+          //NS_LOG_UNCOND("----------------------------------");
+          //NS_LOG_UNCOND("Start: "<<it->start_time<<"  Now: "<<Simulator::Now().GetMilliSeconds());
+          //NS_LOG_UNCOND("UID: "<<it->uid);
+          //NS_LOG_UNCOND("----------------------------------");
+          lost_packets +=std::to_string(it->uid);
+          lost_packets += ";";
+          it = m_packetsSent[j].erase(it);
+          m_testPacketsDroppedGlobal ++;
+        }
+        else{
+          it++;
+        }
       }
     }
+    //NS_LOG_UNCOND("LOST "<<loss);
   }
-  //NS_LOG_UNCOND("LOST "<<loss);
+  
   return lost_packets;
 }
 
@@ -866,7 +868,7 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
       it=entity->m_packetsSent[entity->m_overlayRecvIndex].erase(it);
     }
     else{
-      NS_LOG_UNCOND("ERR "<<entity->m_pcktIdSign);
+      NS_LOG_UNCOND("ERR "<<entity->m_pcktIdSign<<"   Node: "<<entity->m_node->GetId()<<"   Time: "<<Simulator::Now().GetMilliSeconds()<<"   Id: "<<p->GetUid());
     }
     //NS_LOG_UNCOND("here");
   }

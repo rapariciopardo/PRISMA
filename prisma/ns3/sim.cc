@@ -164,6 +164,8 @@ int main (int argc, char *argv[])
   bool train = false;
 
   uint32_t movingAverageObsSize = 5;
+
+  bool activateUnderlayTraffic = true;
   
   CommandLine cmd;
   // required parameters for OpenGym interface
@@ -198,6 +200,7 @@ int main (int argc, char *argv[])
   cmd.AddValue ("lossPenalty", "Packet Loss Penalty", lossPenalty);
   cmd.AddValue ("train", "train", train);
   cmd.AddValue ("movingAverageObsSize", "size of MA for collecting the Obs", movingAverageObsSize);
+  cmd.AddValue ("activateUnderlayTraffic", "Set if activate underlay traffic", activateUnderlayTraffic);
   cmd.Parse (argc, argv);
     
   NS_LOG_UNCOND("Ns3Env parameters:");
@@ -217,6 +220,7 @@ int main (int argc, char *argv[])
   NS_LOG_UNCOND("--agentType: "<< agentType);
   NS_LOG_UNCOND("--SignalingType: "<<signalingType);
   NS_LOG_UNCOND("--lossPenalty: "<<lossPenalty);
+  NS_LOG_UNCOND("--activateUnderlayTraffic: "<<activateUnderlayTraffic);
 
   
   
@@ -277,16 +281,7 @@ int main (int argc, char *argv[])
   coord_array = readCordinatesFile (node_coordinates_file_name);
 
   vector<vector<std::string>> Traff_Matrix;
-  Traff_Matrix = readIntensityFile (node_intensity_file_name);
-
-  NS_LOG_UNCOND(node_intensity_file_name);
-
-
-
-  vector<vector<std::string>> oldTraff_Matrix;
-  oldTraff_Matrix = readIntensityFile ("../prisma/examples/abilene/traffic_matrices/node_intensity_normalized_0.txt");
-
-  
+  Traff_Matrix = readIntensityFile (node_intensity_file_name);  
 
   int n_nodes = 11; //coord_array.size ();
   int matrixDimension = Adj_Matrix.size ();
@@ -410,6 +405,9 @@ int main (int argc, char *argv[])
   address.SetBase ("10.1.1.0", "255.255.255.0");
   Ipv4InterfaceContainer interfaces_switch = address.Assign (switch_nd);
 
+  TrafficControlHelper tch;
+  tch.Uninstall (switch_nd);
+  
   // Create the overlay links
   vector<int> overlayNodes;
   vector<int> overlayNeighbors[n_nodes];
@@ -432,6 +430,7 @@ int main (int argc, char *argv[])
   }
 
   //Create The Overlay Mask Traffic rate
+  float ActivateTrafficRate[n_nodes][n_nodes];
   float OverlayMaskTrafficRate[n_nodes][n_nodes];
 
   for(int i=0;i<n_nodes;i++){
@@ -439,14 +438,18 @@ int main (int argc, char *argv[])
 
       if(overlayNodesChecker[i] && overlayNodesChecker[j] && i!=j){
         OverlayMaskTrafficRate[i][j] = 1.0;
+        ActivateTrafficRate[i][j] = 1.0;
       } else{
         OverlayMaskTrafficRate[i][j] =0.0;
+        ActivateTrafficRate[i][j] = 0.0;
       }
       std::cout<<OverlayMaskTrafficRate[i][j]<<" ";
+      if(activateUnderlayTraffic){
+        ActivateTrafficRate[i][j] = 1.0;
+      }
     }
     std::cout<<std::endl;
   }
-  NS_LOG_UNCOND(OverlayMaskTrafficRate);
 
   // OpenGym Env
   NS_LOG_INFO ("Setting up OpemGym Envs for each node.");
@@ -520,9 +523,10 @@ int main (int argc, char *argv[])
   for(int i=0;i<n_nodes;i++){
     for(int j = 0;j<n_nodes;j++){
       if(i!=j){
-        sum_traffic_rate_mat += ceil(DataRate(oldTraff_Matrix[i][j]).GetBitRate());
+        sum_traffic_rate_mat += ceil(DataRate(Traff_Matrix[i][j]).GetBitRate());
         count_traffic_rate_mat++;
-        if(OverlayMaskTrafficRate[i][j]==1.0){
+        if(ActivateTrafficRate[i][j]==1.0){
+          //NS_LOG_UNCOND(ceil(DataRate(Traff_Matrix[i][j]).GetBitRate()));
           sum_masked_traffic_rate_mat += ceil(DataRate(Traff_Matrix[i][j]).GetBitRate());
           count_masked_traffic_rate_mat++;
         } 
@@ -532,6 +536,7 @@ int main (int argc, char *argv[])
   sum_traffic_rate_mat /= n_nodes;
   sum_masked_traffic_rate_mat /= overlayNodes.size();
   float factor_overlay = sum_traffic_rate_mat / sum_masked_traffic_rate_mat;
+  if(activateUnderlayTraffic) factor_overlay = 1.0;
   NS_LOG_UNCOND("FACTOR OVERLAY "<<sum_traffic_rate_mat<<"    "<<sum_masked_traffic_rate_mat<<"    "<<factor_overlay);
 
   
@@ -545,7 +550,7 @@ int main (int argc, char *argv[])
       //interface = 0;
       for (int j = 0; j < n_nodes; j++)
         {
-          if (i != j)
+          if (i != j && ActivateTrafficRate[i][j]>0)
             {
               // We needed to generate a random number (rn) to be used to eliminate
               // the artificial congestion caused by sending the packets at the
@@ -555,7 +560,9 @@ int main (int argc, char *argv[])
               x->SetAttribute ("Min", DoubleValue (0));
               x->SetAttribute ("Max", DoubleValue (1));
               Address sinkAddress;
-              string string_ip_dest= "10.1.1."+std::to_string(i+1);
+              string string_ip_dest;
+              if(OverlayMaskTrafficRate[i][j]==1.0) string_ip_dest= "10.1.1."+std::to_string(i+1);
+              else string_ip_dest= "10.2.2."+std::to_string(j+1);
               Ipv4Address ip_dest(string_ip_dest.c_str());
               sinkAddress = InetSocketAddress (ip_dest, sinkPortUDP);
               if(true){
@@ -563,7 +570,7 @@ int main (int argc, char *argv[])
                 PoissonAppHelper poisson  ("ns3::UdpSocketFactory",sinkAddress);
                 poisson.SetAverageRate (DataRate(ceil(DataRate(Traff_Matrix[i][j]).GetBitRate()*load_factor*factor_overlay)), AvgPacketSize);
                 poisson.SetTrafficValableProbability(OverlayMaskTrafficRate[i][j]);
-                //NS_LOG_UNCOND(i<<"   "<<j<<"     "<<OverlayMaskTrafficRate[i][j]);
+                NS_LOG_UNCOND(i<<"   "<<j<<"     "<<OverlayMaskTrafficRate[i][j]);
                 poisson.SetUpdatable(false, updateTrafficRateTime);
                 poisson.SetDestination(uint32_t (j+1));
                 ApplicationContainer apps = poisson.Install (nodes_traffic.Get (i));
