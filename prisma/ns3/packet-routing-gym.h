@@ -93,6 +93,7 @@ public:
   static void NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netDev, NetDeviceContainer* nd, Ptr<const Packet> packet);
   static void NotifyTrainStep(Ptr<PacketRoutingEnv> entity);
   bool is_trainStep_flag;
+  void simulationEnd(bool underlayTraff);
 
 
 private:
@@ -153,6 +154,7 @@ private:
   uint32_t m_countSendPackets;
   vector<uint64_t> m_tunnelsDelay [4];
   vector<StartingOverlayPacket> m_starting_overlay_packets [4];
+  vector<uint64_t> m_tunnelsDelayGlobal [4]; 
   int m_overlayIndex [4];
   int m_overlayRecvIndex;
   uint32_t m_nPacketsOverlaySignaling;
@@ -181,6 +183,10 @@ private:
 
   vector<StartingDataPacket> m_packetsSent [4];
   std::string m_lost_packets;
+
+  float m_cp = 0.0; 
+  int m_first_op_test = 0; 
+  int m_second_op_test = 0;
 
 
   

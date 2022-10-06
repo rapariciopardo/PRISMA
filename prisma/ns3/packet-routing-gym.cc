@@ -46,6 +46,7 @@
 #include <sstream>
 #include <iostream>
 #include <vector>
+#include <fstream>
 
 
 
@@ -800,6 +801,26 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
 
   //Receiving Packets and treating them according to its type
 
+  if(Simulator::Now().GetSeconds()>=(entity->m_cp+1.0)){
+    entity->m_cp += 1.0;
+    //NS_LOG_UNCOND("Time: "<<Simulator::Now().GetSeconds()<<"   "<<entity->m_node->GetId());
+    for(size_t i =0; i<entity->m_overlayNeighbors.size();i++){
+      uint64_t value;
+      if(entity->m_starting_overlay_packets[i].size()>=1){
+        value = std::max(getAverage(entity->m_tunnelsDelay[i])*2, double(Simulator::Now().GetMilliSeconds() - entity->m_starting_overlay_packets[i][0].start_time))/2.0;
+        if(getAverage(entity->m_tunnelsDelay[i])*2 > double(Simulator::Now().GetMilliSeconds() - entity->m_starting_overlay_packets[i][0].start_time)){
+          entity->m_first_op_test += 1;
+        } else{
+          entity->m_second_op_test += 1;
+        }
+      } else {
+        value = getAverage(entity->m_tunnelsDelay[i]);
+        entity->m_first_op_test += 1;
+      }
+  
+      entity->m_tunnelsDelayGlobal[i].push_back(value);
+    }
+  }
   // Type: 0 ----- Data Packets
   if(tagCopy.GetSimpleValue()==0x00){
     if(tagCopy.GetTrafficValable()==0){
@@ -948,5 +969,22 @@ PacketRoutingEnv::NotifyTrainStep(Ptr<PacketRoutingEnv> entity)
   //NS_LOG_UNCOND("Sim time : "<<Simulator::Now().GetMilliSeconds());
 
   entity->Notify();
+}
+void
+PacketRoutingEnv::simulationEnd(bool underlayTraff)
+{
+  NS_LOG_UNCOND("Finishing Simulation");
+  NS_LOG_UNCOND("Node: "<<m_node->GetId()<<"    First: "<<m_first_op_test<<"   Second: "<<m_second_op_test);
+  for(size_t i=0;i<m_overlayNeighbors.size();i++){
+    std::string filename = "output_ping_"+std::to_string(underlayTraff)+"_" + std::to_string(m_node->GetId())+"_"+std::to_string(i)+".txt";
+    NS_LOG_UNCOND(filename);
+    ofstream outputFile(filename);
+    if(outputFile.is_open()){
+      for(size_t j = 0;j<m_tunnelsDelayGlobal[i].size();j++){
+        outputFile << m_tunnelsDelayGlobal[i][j] << std::endl;
+      }
+      outputFile.close();
+    }
+  }
 }
 }// ns3 namespace

@@ -29,7 +29,7 @@ python3 main.py \
 	--basePort=$(((4444+$2)+(1000*$3)+($res0*15)+($8*1000))) \
 	--train=1 \
 	--agent_type=$4 \
-	--session_name="ma_in_train_new_overlay_obs_in_bytes_fixed_$9_real_delay_$4_$5_ts_0_01_seed_$2_prio_${10}_traff_mat_$3_rb_size_$7_batch_512_lr_1e-3_gamma_1_final_eps_0_01_load_${res1}_refreshRate_$6_underlayTraff_${12}_sync_$1_loss_x11_sp_init" \
+	--session_name="qui_t_t_ma_in_train_new_overlay_obs_in_bytes_fixed_$9_real_delay_$4_$5_ts_0_01_seed_$2_prio_${10}_traff_mat_$3_rb_size_$7_batch_512_lr_1e-3_gamma_1_final_eps_0_01_load_${res1}_refreshRate_$6_underlayTraff_${12}_sync_$1_loss_x11_sp_init" \
 	--signaling_type=$5 \
 	--logs_parent_folder=examples/$9/ \
 	--traffic_matrix_root_path=examples/$9/traffic_matrices/ \
@@ -61,16 +61,16 @@ python3 main.py \
 
 
 array=(
-0.6
-0.8
-1.0
-1.2
-1.4
+#0.6
+#0.8
+#1.0
+#1.2
+#1.4
 1.6
-1.8
-2.0
-2.2
-2.4
+#1.8
+#2.0
+#2.2
+#2.4
 )
 counter=0
 
@@ -106,7 +106,7 @@ for j in ${array[@]}
 		--nPacketsOverlay=$6 \
 		--prioritizedReplayBuffer=${10} \
         --activateUnderlayTraffic=${12} \
-		--load_path=examples/$9/saved_models/ma_in_train_new_overlay_obs_in_bytes_fixed_$9_real_delay_$4_$5_ts_0_01_seed_$2_prio_${10}_traff_mat_$3_rb_size_$7_batch_512_lr_1e-3_gamma_1_final_eps_0_01_load_${res1}_refreshRate_$6_underlayTraff_${12}_sync_$1_loss_x11_sp_init/iteration1_episode1 \
+		--load_path=examples/$9/saved_models/qui_t_t_ma_in_train_new_overlay_obs_in_bytes_fixed_$9_real_delay_$4_$5_ts_0_01_seed_$2_prio_${10}_traff_mat_$3_rb_size_$7_batch_512_lr_1e-3_gamma_1_final_eps_0_01_load_${res1}_refreshRate_$6_underlayTraff_${12}_sync_$1_loss_x11_sp_init/iteration1_episode1 \
 		--load_factor_trainning=${11} \
 		--load_factor=$j
 	# oarsub -p "gpu='YES' and gpucapability>='5.0'" -l /nodes=1/gpunum=1,walltime=06:00:00 -d /home/ralliche/PRISMA-master/prisma/ "scripts/run_on_nef_test.sh $j 100 0 train_abilene_NN_ts_0_03_seed_100_traff_mat_0_batch_512_lr_1e-3_gamma_1_final_eps_0_01_load_40_sync_0.5_loss_x1_sp_init"
