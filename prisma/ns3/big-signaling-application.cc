@@ -258,7 +258,7 @@ void BigSignalingGeneratorApplication::ScheduleNextTx ()
       }
       double dataRate = (m_pktSizeMean*8)/m_syncStep;
       double delay = ((m_segSize*8)/dataRate);
-       //iat->GetValue(); // bits/ static_cast<double>(m_avgRate.GetBitRate ());
+      //iat->GetValue(); // bits/ static_cast<double>(m_avgRate.GetBitRate ());
       //NS_LOG_UNCOND("DELAY:     "<<delay);
       Time nextTime (Seconds (delay)); // Time till next packet
       //NS_LOG_LOGIC ("nextTime = " << nextTime);
@@ -290,7 +290,7 @@ void BigSignalingGeneratorApplication::SendPacket ()
   std::string start_time = std::to_string(Simulator::Now().GetMilliSeconds());
   m_socket->SetIpTtl(255);
   m_socket->Send(packet);
-  m_totBytes += m_pktSize;
+  m_totBytes += m_segSize;
   Address localAddress;
   m_socket->GetSockName (localAddress);
   if (InetSocketAddress::IsMatchingType (m_peer))

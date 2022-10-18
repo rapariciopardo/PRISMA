@@ -334,7 +334,7 @@ int main (int argc, char *argv[])
 
   //Parameters of signaling
   double smallSignalingSize[n_nodes] = {0.0};
-  double bigSignalingSize = 36000;
+  double bigSignalingSize = 512;
   if(agentType=="sp" || agentType=="opt" || signalingType=="ideal"){
     activateSignaling=false;
   }
@@ -377,8 +377,7 @@ int main (int argc, char *argv[])
               {
                 PointToPointHelper p2p;
 
-                if(i==2 && j==4) p2p.SetDeviceAttribute ("DataRate", DataRateValue (BadLinkRate));
-                else p2p.SetDeviceAttribute ("DataRate", DataRateValue (LinkRate));
+                p2p.SetDeviceAttribute ("DataRate", DataRateValue (LinkRate));
                 p2p.SetChannelAttribute ("Delay", StringValue (LinkDelay));
                 p2p.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue (MaxBufferLength));    
                 NetDeviceContainer n_devs = p2p.Install(NodeContainer(nodes_switch.Get(i), nodes_switch.Get(j)));
@@ -443,10 +442,11 @@ int main (int argc, char *argv[])
         OverlayMaskTrafficRate[i][j] =0.0;
         ActivateTrafficRate[i][j] = 0.0;
       }
-      std::cout<<OverlayMaskTrafficRate[i][j]<<" ";
       if(activateUnderlayTraffic){
         ActivateTrafficRate[i][j] = 1.0;
       }
+      std::cout<<OverlayMaskTrafficRate[i][j]<<" ";
+
     }
     std::cout<<std::endl;
   }
@@ -477,6 +477,8 @@ int main (int argc, char *argv[])
     }
     packetRoutingEnv->SetOpenGymInterface(openGymInterface);
     packetRoutingEnv->setOverlayConfig(overlayNeighbors[overlayNodes[i]], activateOverlaySignaling, nPacketsOverlaySignaling, movingAverageObsSize);
+    packetRoutingEnv->m_node_container = &nodes_switch;
+    packetRoutingEnv->setPingTimeout(16260, 500000, 1);
     packetRoutingEnv->setLossPenalty(lossPenalty);
     packetRoutingEnv->setNetDevicesContainer(&switch_nd);
     packetRoutingEnv->setTrainConfig(train);
@@ -565,7 +567,7 @@ int main (int argc, char *argv[])
               else string_ip_dest= "10.2.2."+std::to_string(j+1);
               Ipv4Address ip_dest(string_ip_dest.c_str());
               sinkAddress = InetSocketAddress (ip_dest, sinkPortUDP);
-              if(true){
+              if(true){ //((i==10 && j==5) || (i==5 && j==0)){
                 double rn = x->GetValue ();
                 PoissonAppHelper poisson  ("ns3::UdpSocketFactory",sinkAddress);
                 poisson.SetAverageRate (DataRate(ceil(DataRate(Traff_Matrix[i][j]).GetBitRate()*load_factor*factor_overlay)), AvgPacketSize);
@@ -656,6 +658,7 @@ int main (int argc, char *argv[])
   {
     NS_LOG_UNCOND("flags" << i);
     packetRoutingEnvs[i]->is_trainStep_flag = 1;
+    packetRoutingEnvs[i]->simulationEnd(activateUnderlayTraffic, load_factor);
     myOpenGymInterfaces[i]->NotifySimulationEnd();
   }
   Simulator::Destroy ();
@@ -777,7 +780,6 @@ vector<vector<double> > readCordinatesFile (std::string node_coordinates_file_na
   return coord_array;
 
 }
-
 
 vector<vector<std::string>> readIntensityFile (std::string intensity_file_name)
 {

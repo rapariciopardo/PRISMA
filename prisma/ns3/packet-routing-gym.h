@@ -93,7 +93,9 @@ public:
   static void NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netDev, NetDeviceContainer* nd, Ptr<const Packet> packet);
   static void NotifyTrainStep(Ptr<PacketRoutingEnv> entity);
   bool is_trainStep_flag;
-  void simulationEnd(bool underlayTraff);
+  NodeContainer* m_node_container;
+  void simulationEnd(bool underlayTraff, double load);
+  void setPingTimeout(uint32_t maxBufferSize, uint32_t linkCapacity, uint32_t propagationDelay);
 
 
 private:
@@ -154,7 +156,9 @@ private:
   uint32_t m_countSendPackets;
   vector<uint64_t> m_tunnelsDelay [4];
   vector<StartingOverlayPacket> m_starting_overlay_packets [4];
-  vector<uint64_t> m_tunnelsDelayGlobal [4]; 
+  vector<uint64_t> m_tunnelsDelayGlobal [4];
+  vector<uint32_t> m_bufferOccGlobal[2]; 
+  int m_count_ping [4];
   int m_overlayIndex [4];
   int m_overlayRecvIndex;
   uint32_t m_nPacketsOverlaySignaling;
@@ -165,6 +169,8 @@ private:
   static int m_packetsDeliveredGlobal;
   static int m_packetsInjectedGlobal;
   static int m_packetsDroppedGlobal;
+  static int m_packetsDroppedTotalGlobal;
+  static int m_packetsInjectedTotalGlobal;
   static int m_testPacketsDroppedGlobal;
   static int m_bytesData;
   static int m_bytesBigSignalling;
@@ -187,6 +193,10 @@ private:
   float m_cp = 0.0; 
   int m_first_op_test = 0; 
   int m_second_op_test = 0;
+
+  float m_pingTimeout[2];
+  float m_lastPingOut;
+  vector<float> m_pingDiffs;
 
 
   

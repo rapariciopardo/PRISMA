@@ -34,7 +34,9 @@ class Agent():
     agents = {}
     currIt = 0
     sim_injected_packets=0
+    sim_global_injected_packets=0
     sim_dropped_packets = 0
+    sim_global_dropped_packets=0
     sim_test_dropped = 0
     sim_delivered_packets = 0
     sim_buffered_packets = 0
@@ -155,7 +157,9 @@ class Agent():
         cl.signalingSim = params_dict["signalingSim"]
         cl.currIt = 0
         cl.sim_injected_packets=0
+        cl.sim_global_injected_packets=0
         cl.sim_dropped_packets = 0
+        cl.sim_global_dropped_packets=0
         cl.sim_test_dropped = 0
         cl.sim_delivered_packets = 0
         cl.sim_buffered_packets = 0
@@ -709,7 +713,7 @@ class Agent():
                         NodeIdSignaled = int(tokens[7].split('=')[-1])
                         NNIndex = int(tokens[8].split('=')[-1])
                         segIndex = int(tokens[9].split('=')[-1])
-                        if segIndex == 69: ## NN signaling complete
+                        if segIndex == 0: ## NN signaling complete
                             #print(f"sync {self.index} with neighbor {self.neighbors.index(NodeIdSignaled)}")
                             if NNIndex ==self.sync_counter - 1:
                                 self._sync_current(self.neighbors.index(NodeIdSignaled), with_temp=True)
@@ -738,6 +742,9 @@ class Agent():
                 Agent.sim_bytes_small_signaling = float(tokens[20].split('=')[-1])
                 Agent.sim_bytes_overlay_signaling_forward = float(tokens[21].split('=')[-1])
                 Agent.sim_bytes_overlay_signaling_back = float(tokens[22].split('=')[-1])
+                Agent.sim_global_injected_packets = float(tokens[23].split("=")[-1])
+                Agent.sim_global_dropped_packets = float(tokens[24].split("=")[-1])
+                #print(Agent.sim_global_dropped_packets, Agent.sim_dropped_packets)
                 #print(Agent.sim_injected_packets, Agent.sim_delivered_packets, Agent.sim_buffered_packets, Agent.sim_dropped_packets, Agent.sim_avg_e2e_delay)
                 Agent.nb_transitions += 1
                 #print("Node", self.index, "Obs: ", self.obs)
@@ -823,7 +830,7 @@ class Agent():
                         if Agent.signalingSim == 0 and self.train:
                             Agent.small_signaling_overhead_counter += self.small_signaling_pkt_size
                             Agent.small_signaling_pkt_counter += 1
-                    if self.done: ## if the packet arrived to destination  
+                    if self.done: ## if the packet arrived to destination
                         self.count_arrived_packets += 1
                         Agent.total_arrived_pkts += 1
                         # Agent.total_e2e_delay += delay_time
@@ -853,9 +860,9 @@ class Agent():
                             break
             break
 
-        if(not os.path.exists("logs/")):
-            os.mkdir("logs")
-        np.savetxt("logs/log_dict_"+Agent.sessionName+".txt", np.asarray(Agent.info_debug, dtype='object'), fmt='%s')
+        #if(not os.path.exists("logs/")):
+        #    os.mkdir("logs")
+        #np.savetxt("logs/log_dict_"+Agent.sessionName+".txt", np.asarray(Agent.info_debug, dtype='object'), fmt='%s')
         #f.open(f"replay_buffer_samples/{self.index}", "wb")
         print("saving replay buffer")
         

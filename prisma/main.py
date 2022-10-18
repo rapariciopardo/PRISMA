@@ -362,8 +362,8 @@ def main():
     random.seed(params["seed"])
 
     ## test results file name
-    test_results_file_name = f'{params["logs_parent_folder"]}/_tests_overlay_14/prio_{params["prioritizedReplayBuffer"]}_underlayTraff_{params["activateUnderlayTraffic"]}_{params["agent_type"]}_{params["signaling_type"]}_{params["signalingSim"]}_fixed_rb_{params["replay_buffer_max_size"]}_sync{int(1000*params["sync_step"])}ms_ratio_{int(100*params["sync_ratio"])}_overlayPackets_{params["nPacketsOverlay"]}_loadTrain_{int(100*params["load_factor_trainning"])}_load_{int(100*params["load_factor"])}.txt'
-    train_results_file_name = f'{params["logs_parent_folder"]}/_train_overlay_14/prio_{params["prioritizedReplayBuffer"]}_underlayTraff_{params["activateUnderlayTraffic"]}_{params["agent_type"]}_{params["signaling_type"]}_{params["signalingSim"]}_fixed_rb_{params["replay_buffer_max_size"]}_sync{int(1000*params["sync_step"])}ms_ratio_{int(100*params["sync_ratio"])}_overlayPackets_{params["nPacketsOverlay"]}_loadTrain_{int(100*params["load_factor_trainning"])}_load_{int(100*params["load_factor"])}.txt'
+    test_results_file_name = f'{params["logs_parent_folder"]}/_tests_overlay_17/t300_10k_prio_{params["prioritizedReplayBuffer"]}_underlayTraff_{params["activateUnderlayTraffic"]}_{params["agent_type"]}_{params["signaling_type"]}_{params["signalingSim"]}_fixed_rb_{params["replay_buffer_max_size"]}_sync{int(1000*params["sync_step"])}ms_ratio_{int(100*params["sync_ratio"])}_overlayPackets_{params["nPacketsOverlay"]}_loadTrain_{int(100*params["load_factor_trainning"])}_load_{int(100*params["load_factor"])}.txt'
+    train_results_file_name = f'{params["logs_parent_folder"]}/_train_overlay_17/t300_10k_prio_{params["prioritizedReplayBuffer"]}_underlayTraff_{params["activateUnderlayTraffic"]}_{params["agent_type"]}_{params["signaling_type"]}_{params["signalingSim"]}_fixed_rb_{params["replay_buffer_max_size"]}_sync{int(1000*params["sync_step"])}ms_ratio_{int(100*params["sync_ratio"])}_overlayPackets_{params["nPacketsOverlay"]}_loadTrain_{int(100*params["load_factor_trainning"])}_load_{int(100*params["load_factor"])}.txt'
     print(test_results_file_name)
     if params["train"] == 1:
         if params["session_name"] in os.listdir(params["logs_parent_folder"] + "/saved_models/"):
@@ -447,6 +447,8 @@ def main():
             nbBytesOverlaySignalingForward = {Agent.sim_bytes_overlay_signaling_forward},
             nbBytesOverlaySignalingBack = {Agent.sim_bytes_overlay_signaling_back},
             OverheadRatio = {(Agent.sim_bytes_big_signaling+Agent.sim_bytes_small_signaling+Agent.sim_bytes_overlay_signaling_forward+Agent.sim_bytes_overlay_signaling_back)/Agent.sim_bytes_data}
+            Number of Total packets = {Agent.sim_global_injected_packets},
+            Number Total Drooped = {Agent.sim_global_dropped_packets}
             """)
     
     print(f""" Summary of the episode :
@@ -507,7 +509,10 @@ def main():
                         Agent.sim_avg_e2e_delay,
                         Agent.sim_cost,
                         Agent.total_hops/Agent.sim_delivered_packets,
-                        (Agent.sim_bytes_big_signaling+Agent.sim_bytes_small_signaling+Agent.sim_bytes_overlay_signaling_forward+Agent.sim_bytes_overlay_signaling_back)/Agent.sim_bytes_data
+                        (Agent.sim_bytes_big_signaling+Agent.sim_bytes_small_signaling+Agent.sim_bytes_overlay_signaling_forward+Agent.sim_bytes_overlay_signaling_back)/Agent.sim_bytes_data,
+                        Agent.sim_global_injected_packets,
+                        Agent.sim_global_dropped_packets,
+                        Agent.sim_global_dropped_packets/Agent.sim_global_injected_packets
                         ]
                           
         

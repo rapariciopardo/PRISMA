@@ -339,6 +339,14 @@ PointToPointNetDevice::Receive (Ptr<Packet> packet)
 {
   NS_LOG_FUNCTION (this << packet);
   //if(m_node->GetId()!=0) NS_LOG_UNCOND("RECEIVE "<<m_node->GetId()<<"   "<<packet->ToString());
+  //MyTag tagCopy;
+  //packet->PeekPacketTag(tagCopy);
+  //
+  //if(tagCopy.GetLastHop()==7 && tagCopy.GetSimpleValue()==0 && m_node->GetId()==3){
+  //  NS_LOG_UNCOND("Recv: Node: "<<m_node->GetId()<<"   "<<m_ifIndex);
+  //  NS_LOG_UNCOND(m_queue->GetNBytes()<<"   "<<Simulator::Now().GetSeconds());
+  //}
+  
   uint16_t protocol = 0;
   if (m_receiveErrorModel && m_receiveErrorModel->IsCorrupt (packet) ) 
     {
@@ -523,11 +531,29 @@ PointToPointNetDevice::Send (
   //NS_LOG_UNCOND ("p=" << packet->ToString() << ", dest=" << &dest);
   //NS_LOG_UNCOND ("UID is " << packet->GetUid ());
 
+  //MyTag tagCopy;
+  //packet->PeekPacketTag(tagCopy);
+  //
+  //if(tagCopy.GetLastHop()==7 && tagCopy.GetSimpleValue()==0 && m_node->GetId()==3){
+  //  NS_LOG_UNCOND("Node: "<<m_node->GetId()<<"   "<<m_ifIndex);
+  //  NS_LOG_UNCOND(m_queue->GetNBytes()<<"   "<<Simulator::Now().GetSeconds());
+  //}
+
   //
   // If IsLinkUp() is false it means there is no channel to send any packet 
   // over so we just hit the drop trace on the packet and return an error.
   //
-    
+  MyTag tagcopy;
+  packet->PeekPacketTag(tagcopy);
+
+  if(tagcopy.GetSimpleValue()>4) return false;
+  //if(tagcopy.GetSimpleValue()==0 && tagcopy.GetTrafficValable()==1){
+  //  NS_LOG_UNCOND("..............");
+  //  NS_LOG_UNCOND("Node: "<<m_node->GetId()<<"    IF: "<<m_ifIndex<<"    ID: "<<packet->GetUid());
+  //  NS_LOG_UNCOND("Queue: "<<m_queue->GetNBytes()<<"    TIME: "<<Simulator::Now().GetMilliSeconds()<<"    SIZE: "<<packet->GetSize()<<"    TAG: "<<uint32_t(tagcopy.GetSimpleValue())<<"   VAL: "<<uint32_t(tagcopy.GetTrafficValable()));
+  //  NS_LOG_UNCOND("Dst: "<<tagcopy.GetFinalDestination()<<"    LastHop: "<<tagcopy.GetLastHop());
+  //  if(tagcopy.GetTrafficValable()==237) NS_LOG_UNCOND(packet->ToString());
+  //}
 
   if (IsLinkUp () == false)
     {
@@ -548,10 +574,6 @@ PointToPointNetDevice::Send (
   //
   
   bool enq = m_queue->Enqueue (packet);
-  MyTag tagcopy;
-  packet->PeekPacketTag(tagcopy);
-  
-  
   if (enq)
   {
     //
@@ -573,6 +595,7 @@ PointToPointNetDevice::Send (
   // Enqueue may fail (overflow)
 
   if(tagcopy.GetSimpleValue()==0){
+    //NS_LOG_UNCOND("AQUI "<<m_queue->GetNBytes()<<"   "<<m_node->GetId()<<"    "<<m_ifIndex<< "   "<<Simulator::Now().GetMilliSeconds()<<"    "<<uint32_t(tagcopy.GetTrafficValable()));
     m_macTxDropTrace (packet);
   }
 
