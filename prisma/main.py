@@ -172,7 +172,7 @@ def arguments_parser():
     
     ## Add optimal solution path
     topology_name = params["adjacency_matrix_path"].split("/")[-2]
-    params["optimal_soltion_path"] = f"examples/{topology_name}/optimal_solution/{params['traffic_matrix_index']}_norm_matrix_uniform/{int(params['load_factor']*100)}_ut_minCostMCF.json"
+    params["optimal_soltion_path"] = f"examples/{topology_name}/optimal_solution/overlay_traffic_matrix_{params['traffic_matrix_index']}/{int(params['load_factor']*100)}_ut_minCostMCF.json"
     return params
 
 def custom_plots():
@@ -362,8 +362,8 @@ def main():
     random.seed(params["seed"])
 
     ## test results file name
-    test_results_file_name = f'{params["logs_parent_folder"]}/_tests_overlay_17/t300_10k_prio_{params["prioritizedReplayBuffer"]}_underlayTraff_{params["activateUnderlayTraffic"]}_{params["agent_type"]}_{params["signaling_type"]}_{params["signalingSim"]}_fixed_rb_{params["replay_buffer_max_size"]}_sync{int(1000*params["sync_step"])}ms_ratio_{int(100*params["sync_ratio"])}_overlayPackets_{params["nPacketsOverlay"]}_loadTrain_{int(100*params["load_factor_trainning"])}_load_{int(100*params["load_factor"])}.txt'
-    train_results_file_name = f'{params["logs_parent_folder"]}/_train_overlay_17/t300_10k_prio_{params["prioritizedReplayBuffer"]}_underlayTraff_{params["activateUnderlayTraffic"]}_{params["agent_type"]}_{params["signaling_type"]}_{params["signalingSim"]}_fixed_rb_{params["replay_buffer_max_size"]}_sync{int(1000*params["sync_step"])}ms_ratio_{int(100*params["sync_ratio"])}_overlayPackets_{params["nPacketsOverlay"]}_loadTrain_{int(100*params["load_factor_trainning"])}_load_{int(100*params["load_factor"])}.txt'
+    test_results_file_name = f'{params["logs_parent_folder"]}/_tests_overlay_19/ter_300_7k_prio_{params["prioritizedReplayBuffer"]}_underlayTraff_{params["activateUnderlayTraffic"]}_{params["agent_type"]}_{params["signaling_type"]}_{params["signalingSim"]}_fixed_rb_{params["replay_buffer_max_size"]}_sync{int(1000*params["sync_step"])}ms_ratio_{int(100*params["sync_ratio"])}_overlayPackets_{params["nPacketsOverlay"]}_loadTrain_{int(100*params["load_factor_trainning"])}_load_{int(100*params["load_factor"])}.txt'
+    train_results_file_name = f'{params["logs_parent_folder"]}/_train_overlay_17/ter_300_7k_prio_{params["prioritizedReplayBuffer"]}_underlayTraff_{params["activateUnderlayTraffic"]}_{params["agent_type"]}_{params["signaling_type"]}_{params["signalingSim"]}_fixed_rb_{params["replay_buffer_max_size"]}_sync{int(1000*params["sync_step"])}ms_ratio_{int(100*params["sync_ratio"])}_overlayPackets_{params["nPacketsOverlay"]}_loadTrain_{int(100*params["load_factor_trainning"])}_load_{int(100*params["load_factor"])}.txt'
     print(test_results_file_name)
     if params["train"] == 1:
         if params["session_name"] in os.listdir(params["logs_parent_folder"] + "/saved_models/"):
@@ -520,7 +520,7 @@ def main():
            
         with open(test_results_file_name, 'a') as f: 
             writer = csv.writer(f) 
-            writer.writerow(new_fields_stats) 
+            writer.writerow(new_fields_stats)
     else:   
         with open(train_results_file_name, 'a') as f: 
             writer = csv.writer(f) 

@@ -321,6 +321,7 @@ PacketRoutingEnv::dropPacket(Ptr<PacketRoutingEnv> entity, Ptr<const Packet> pac
       m_packetsDroppedGlobal += 1;
       entity->m_lost_packets +=std::to_string(packet->GetUid());
       entity->m_lost_packets += ";";
+      //NS_LOG_UNCOND("Dropped       "<<m_packetsDroppedGlobal);
     }
   }  
 }
@@ -706,13 +707,13 @@ PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
         sendOverlaySignalingUpdate(uint8_t(2));
       }
     }
-
+    //NS_LOG_UNCOND("Action "<<m_fwdDev_idx);
     if(m_isGameOver){
       //NS_LOG_UNCOND("FINAL DESTINATION!");
     } else if (m_fwdDev_idx < m_overlayNeighbors.size() && m_signaling==0){
       //if(m_node->GetId()==0 ||m_node->GetId()==7) m_fwdDev_idx = 0;
       //else m_fwdDev_idx = 1;
-      //NS_LOG_UNCOND(m_fwdDev_idx);
+      //NS_LOG_UNCOND("Action "<<m_fwdDev_idx<<"   "<<m_overlayNeighbors[m_fwdDev_idx]+1 );
       //Replace the updated tag
       MyTag sendingTag;
       m_pckt->PeekPacketTag(sendingTag);
@@ -744,6 +745,7 @@ PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
       m_countSendPackets += 1;
     }
     else{
+      dropPacket(this, m_pckt);
       //NS_LOG_UNCOND ("Not valid");
     }
     

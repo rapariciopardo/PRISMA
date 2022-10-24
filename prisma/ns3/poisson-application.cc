@@ -246,6 +246,10 @@ void PoissonGeneratorApplication::StartSending ()
   if(m_updatable){
     UpdateAvgTrafficRate();
   }
+  //if(m_trafficValableProbability<0.1){
+  //  m_avgRate = DataRate(m_avgRate.GetBitRate()/4.0);
+  //  NS_LOG_UNCOND("Src: "<<m_socket->GetNode()->GetId()-11<<"  Dest: "<<m_dest-1<<"    "<<m_avgRate.GetBitRate());
+  //}
   ScheduleNextTx ();  // Schedule the send packet event
 }
 

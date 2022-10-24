@@ -281,7 +281,12 @@ int main (int argc, char *argv[])
   coord_array = readCordinatesFile (node_coordinates_file_name);
 
   vector<vector<std::string>> Traff_Matrix;
-  Traff_Matrix = readIntensityFile (node_intensity_file_name);  
+  Traff_Matrix = readIntensityFile (node_intensity_file_name);
+
+  NS_LOG_UNCOND(node_intensity_file_name);
+
+  vector<vector<std::string>> Traff_Matrix_test;
+  Traff_Matrix_test = readIntensityFile ("/home/tiago/Documents/NetSim/prisma/examples/abilene/traffic_matrices/node_intensity_normalized_0.txt");
 
   int n_nodes = 11; //coord_array.size ();
   int matrixDimension = Adj_Matrix.size ();
@@ -525,7 +530,7 @@ int main (int argc, char *argv[])
   for(int i=0;i<n_nodes;i++){
     for(int j = 0;j<n_nodes;j++){
       if(i!=j){
-        sum_traffic_rate_mat += ceil(DataRate(Traff_Matrix[i][j]).GetBitRate());
+        sum_traffic_rate_mat += ceil(DataRate(Traff_Matrix_test[i][j]).GetBitRate());
         count_traffic_rate_mat++;
         if(ActivateTrafficRate[i][j]==1.0){
           //NS_LOG_UNCOND(ceil(DataRate(Traff_Matrix[i][j]).GetBitRate()));
@@ -536,7 +541,8 @@ int main (int argc, char *argv[])
     }
   }
   sum_traffic_rate_mat /= n_nodes;
-  sum_masked_traffic_rate_mat /= overlayNodes.size();
+  if(activateUnderlayTraffic) sum_masked_traffic_rate_mat /= n_nodes;
+  else sum_masked_traffic_rate_mat /= overlayNodes.size();
   float factor_overlay = sum_traffic_rate_mat / sum_masked_traffic_rate_mat;
   if(activateUnderlayTraffic) factor_overlay = 1.0;
   NS_LOG_UNCOND("FACTOR OVERLAY "<<sum_traffic_rate_mat<<"    "<<sum_masked_traffic_rate_mat<<"    "<<factor_overlay);
@@ -570,6 +576,7 @@ int main (int argc, char *argv[])
               if(true){ //((i==10 && j==5) || (i==5 && j==0)){
                 double rn = x->GetValue ();
                 PoissonAppHelper poisson  ("ns3::UdpSocketFactory",sinkAddress);
+                //NS_LOG_UNCOND(i<<"  "<<j<<"   "<<DataRate(ceil(DataRate(Traff_Matrix[i][j]).GetBitRate()*load_factor*factor_overlay)).GetBitRate());
                 poisson.SetAverageRate (DataRate(ceil(DataRate(Traff_Matrix[i][j]).GetBitRate()*load_factor*factor_overlay)), AvgPacketSize);
                 poisson.SetTrafficValableProbability(OverlayMaskTrafficRate[i][j]);
                 NS_LOG_UNCOND(i<<"   "<<j<<"     "<<OverlayMaskTrafficRate[i][j]);

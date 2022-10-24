@@ -155,6 +155,7 @@ def optimal_routing_decision(graph, routing_mat, rejected_mat, actual_node, src_
     dst = int(dst_node)
     actual = int(actual_node)
     neighbors = list(graph.neighbors(actual))
+    #print(src, dst, actual, neighbors)
     indices = np.where(np.array(list(graph.edges))[ :,0]==actual)[0]
     prob_to_neighbors = routing_mat[src][dst][indices]
     loss_prob = rejected_mat[src][dst]

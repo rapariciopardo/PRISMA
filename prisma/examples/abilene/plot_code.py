@@ -20,7 +20,7 @@ def set_box_color(bp, color):
     plt.setp(bp['medians'], color=color)
 
 plt.rcParams.update({'font.family': "Times New Roman"})
-plt.rcParams.update({'font.size': 60})
+plt.rcParams.update({'font.size': 50})
 plt.rcParams.update({'font.weight': 'bold'})
 # plt.rcParams.update({'font.serif': ["Times"]})
 if __name__ == '__main__':
@@ -37,16 +37,17 @@ if __name__ == '__main__':
         2 == signaling type comparaison for sync step 1s and 20% ratio 
         3 == ratio comparaison  for NN signaling 
     """
-    model_names = ["DQN Routing - Model Sharing - 180%", "DQN Routing - Value Sharing - 180%", "Shortest Path Routing"]
+    dqn_name= "NN"
+    model_names = [dqn_name+"60%", "SP", "OPT"]
     folder_name =  f"tests_sync_variation_mat0_rb_10k_plots"
-    line_styles = ["solid" , "solid", "dashed", "dashed"]
-    colors = [ "purple", "green", "red","blue"]
+    line_styles = ["solid" , "solid", "dashed", "dashed", "solid"]
+    colors = [ "purple", "green", "red"]
     avg_data = {}
     avg_data_loads = {}
-    test_folder = "_tests_overlay_11"
+    test_folder = "_tests_overlay_17"
     signaling_inband=1
-    underlay=0
-    list_charges = [60, 80, 100, 120, 140, 160, 180, 200, 220, 240]
+    underlay=1
+    list_charges = [60, 70,80,90, 100,110, 120,130, 140]
     #list_charges = [140]
 
     if(plot==0): 
@@ -60,10 +61,11 @@ if __name__ == '__main__':
         sync_ind = 1000
         syncs = [sync_ind]
         rb = [rb_size_ind]
-    overlayPackets = [20]#,20,50,100]#[5,10,20,50,100,500]
-    agents = ["NN", "target", "sp"]
+    overlayPackets = [100]#,20,50,100]#[5,10,20,50,100,500]
+    agents = ["NN","sp","opt"]
+    loads_train = [60,80,80,90,100,80,80]
                 
-    lite = ("", "","","", "")
+    lite = ("", "","","", "", "")
     ### check if folder exists
     if folder_name not in os.listdir(folder_path):
         os.mkdir(folder_path + "/" + folder_name)
@@ -85,25 +87,29 @@ if __name__ == '__main__':
                     
                     
                 if signaling_type in ("ideal", "NN"):
-                    names = [f"prio_0_underlayTraff_{underlay}_dqn_buffer{lite[xxx]}_NN_{signaling_inband}_fixed_rb_{zz}_sync{xx}ms_ratio_10_overlayPackets_{yy}_loadTrain_{aa}" for xx in syncs for yy in overlayPackets for zz in rb for aa in [180]] 
+                    print("here")
+                    names = [f"ter_300_7k_prio_0_underlayTraff_{underlay}_dqn_buffer_NN_{signaling_inband}_fixed_rb_{zz}_sync{xx}ms_ratio_10_overlayPackets_{yy}_loadTrain_{loads_train[xxx]}" for xx in syncs for yy in overlayPackets for zz in rb] 
                     official_names = [f"DQN Buffer {signaling_type} sync {xx}s overlayPackets {yy}" for xx in np.array(syncs)/1000 for yy in overlayPackets] 
+                elif signaling_type in ("timeout"):
+                    names = [f"prio_0_underlayTraff_{underlay}_dqn_buffer_NN_{signaling_inband}_fixed_rb_{zz}_sync{xx}ms_ratio_10_overlayPackets_{yy}_loadTrain_{aa}_Timeout" for xx in syncs for yy in overlayPackets for zz in rb for aa in [80]] 
+                    official_names = [f"DQN Buffer {signaling_type} sync {xx}s overlayPackets {yy} Timeout" for xx in np.array(syncs)/1000 for yy in overlayPackets]
                 elif signaling_type in ("target"):
                     print("here")
                     if(plot==0):
-                        names = [f"prio_0_underlayTraff_{underlay}_dqn_buffer{lite[xxx]}_target_{signaling_inband}_fixed_rb_2500_sync1000ms_ratio_10_overlayPackets_{yy}_loadTrain_40" for yy in overlayPackets] 
+                        names = [f"prio_0_underlayTraff_{underlay}_dqn_buffer_target_{signaling_inband}_fixed_rb_2500_sync1000ms_ratio_10_overlayPackets_{yy}_loadTrain_40" for yy in overlayPackets] 
                     else:
-                        names = [f"prio_0_underlayTraff_{underlay}_dqn_buffer{lite[xxx]}_target_{signaling_inband}_fixed_rb_{zz}_sync{xx}ms_ratio_10_overlayPackets_{yy}_loadTrain_180" for xx in syncs for yy in overlayPackets for zz in rb] 
+                        names = [f"prio_0_underlayTraff_{underlay}_dqn_buffer_target_{signaling_inband}_fixed_rb_{zz}_sync{xx}ms_ratio_10_overlayPackets_{yy}_loadTrain_180" for xx in syncs for yy in overlayPackets for zz in rb] 
                     official_names = [f"DQN Buffer {signaling_type} sync {xx}s overlayPackets {yy}" for xx in np.array(syncs)/1000 for yy in overlayPackets]  
                 elif signaling_type in ("prio"):
-                    names = [f"prio_1_dqn_buffer{lite[xxx]}_target_{signaling_inband}_fixed_rb_10000_sync{xx}ms_ratio_10_overlayPackets_{yy}" for xx in syncs for yy in overlayPackets] 
+                    names = [f"prio_1_dqn_buffer_target_{signaling_inband}_fixed_rb_10000_sync{xx}ms_ratio_10_overlayPackets_{yy}" for xx in syncs for yy in overlayPackets] 
                     official_names = [f"DQN Buffer {signaling_type} sync {xx}s overlayPackets {yy}" for xx in np.array(syncs)/1000 for yy in overlayPackets]
                 
                 elif signaling_type == "sp":
-                    names = [f"prio_0_underlayTraff_{underlay}_sp_ideal_1_fixed_rb_10000_sync1000ms_ratio_10_overlayPackets_20_loadTrain_180"]* len(syncs)
+                    names = [f"ter_300_7k_prio_0_underlayTraff_1_sp_ideal_1_fixed_rb_10000_sync1000ms_ratio_10_overlayPackets_100_loadTrain_80"]* len(syncs)
                     official_names = ["Shortest Path"]* len(syncs)
-                #else:
-                #    names = ["opt_ideal_0_fixed_rb_20000_sync10000ms_ratio_10"] * len(syncs) 
-                #    official_names = ["Optimal Solution"] * len(syncs)
+                elif signaling_type == "opt":
+                    names = ["ter_300_7k_prio_0_underlayTraff_1_opt_ideal_1_fixed_rb_10000_sync1000ms_ratio_10_overlayPackets_100_loadTrain_80"] * len(syncs) 
+                    official_names = ["Optimal Solution"] * len(syncs)
                 j = 0
                 for i in range(len(names)):
                     for charge_index, charge in enumerate(list_charges):
@@ -123,11 +129,9 @@ if __name__ == '__main__':
                         
                     sync_steps.append(np.mean(delay, axis=0))
                     if(plot==2):
-                        if(names[i] == f"prio_0_underlayTraff_{underlay}_dqn_buffer_{signaling_type}_1_fixed_rb_{rb_size_ind}_sync{sync_ind}ms_ratio_10_overlayPackets_20_loadTrain_180" or
-                           names[i] == f"prio_0_underlayTraff_{underlay}_sp_ideal_1_fixed_rb_10000_sync1000ms_ratio_10_overlayPackets_20_loadTrain_180"):
-                            avg_data_loads[f"{signaling_type}{lite[xxx]}_{stat_names[kkk_idx]}_{signaling_inband}_{test_folder}"] = np.array(delay)[:, 0]
-                        if(names[i]==f"prio_0_underlayTraff_{underlay}_dqn_buffer_{signaling_type}_1_fixed_rb_{rb_size_ind}_sync{sync_ind}ms_ratio_10_overlayPackets_20_loadTrain_400"):
-                            avg_data_loads[f"teste"] = np.array(delay)[:, 0]
+                        print(np.array(delay), xxx, f"{signaling_type}{lite[xxx]}_{stat_names[kkk_idx]}_{signaling_inband}_{test_folder}_{loads_train[xxx]}")
+                        avg_data_loads[f"{signaling_type}{lite[xxx]}_{stat_names[kkk_idx]}_{signaling_inband}_{test_folder}_{loads_train[xxx]}"] = np.array(delay)[:, 0]
+                       
                     sync_charge_steps.append(delay)
     
                     j += 1
@@ -150,7 +154,7 @@ if __name__ == '__main__':
                 for idx_agent, agent in enumerate(agents):
                     print(agent, idx_agent)
                     ax2.plot(np.array(list_charges)/100,
-                         avg_data_loads[f"{agent}_{stat_names[kkk_idx]}_1_{test_folder}"],
+                         avg_data_loads[f"{agent}_{stat_names[kkk_idx]}_1_{test_folder}_{loads_train[idx_agent]}"],
                           label=f"{model_names[idx_agent]}", linestyle=line_styles[0],
                           marker="o",
                           color=colors[idx_agent],
@@ -166,9 +170,9 @@ if __name__ == '__main__':
                 #if(kkk_idx==0): ax2.set_ylim(0.0, 2.0)
                 #if(kkk_idx==1): ax2.set_ylim(30, 500)
                 #if(kkk_idx==2): ax2.set_ylim(0.0, 0.5)
-                ax2.set_xlim(0.6, 2.4)
-                ax2.set_xticks(np.array(list_charges)/100, np.array(list_charges)/100)#(np.arange(1, 9, 1, dtype =int), np.arange(1, 9, 1, dtype =int))
-                fig2.legend(prop={'weight':'normal'})
+                ax2.set_xlim(0.6, 1.4)
+                ax2.set_xticks(np.array(list_charges)/100) #(np.arange(1, 9, 1, dtype =int), np.arange(1, 9, 1, dtype =int))
+                fig2.legend(prop={'weight':'normal'}, loc='lower right')
                 fig2.tight_layout()
                 ax2.set_xlabel(f"Load charge ", fontweight="bold")
                 ax2.set_ylabel(f"{stat_names[kkk_idx]}", fontweight="bold")
