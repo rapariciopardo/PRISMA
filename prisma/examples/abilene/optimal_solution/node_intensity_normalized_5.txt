@@ -1,0 +1,11 @@
+1bps 1bps 1bps 1bps 1bps 60.43Kbps 1bps 46.35Kbps 1bps 1bps 29.65Kbps
+1bps 1bps 1bps 1bps 1bps 1bps 1bps 1bps 1bps 1bps 1bps
+1bps 1bps 1bps 1bps 1bps 1bps 1bps 1bps 1bps 1bps 1bps
+1bps 1bps 1bps 1bps 1bps 1bps 1bps 1bps 1bps 1bps 1bps
+1bps 1bps 1bps 1bps 1bps 1bps 1bps 1bps 1bps 1bps 1bps
+57.24Kbps 1bps 1bps 1bps 1bps 1bps 1bps 58.26Kbps 1bps 1bps 1.36Kbps
+1bps 1bps 1bps 1bps 1bps 1bps 1bps 1bps 1bps 1bps 1bps
+37.43Kbps 1bps 1bps 1bps 1bps 7.83Kbps 1bps 1bps 1bps 1bps 20.56Kbps
+1bps 1bps 1bps 1bps 1bps 1bps 1bps 1bps 1bps 1bps 1bps
+1bps 1bps 1bps 1bps 1bps 1bps 1bps 1bps 1bps 1bps 1bps
+17.54Kbps 1bps 1bps 1bps 1bps 8.38Kbps 1bps 4.8Kbps 1bps 1bps 1bps

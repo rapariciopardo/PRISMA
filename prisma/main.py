@@ -19,6 +19,7 @@ import networkx as nx
 import os
 import datetime
 import csv
+import json
 from tensorboard.plugins.hparams import api as hp
 from source.agent import Agent
 from source.utils import save_model
@@ -82,6 +83,8 @@ def arguments_parser():
     group1.add_argument('--nPacketsOverlay', type=int, help='Allows the signaling in NS3 Simulation', default=2)
     group1.add_argument('--movingAverageObsSize', type=int, help="Sets the MA size of collecting the obs", default=5)
     group1.add_argument('--activateUnderlayTraffic', type=int, help="sets if there is underlay traffic", default=0)
+    group1.add_argument('--activateUnderlayTrafficTrain', type=int, help="sets if there is underlay traffic", default=0)
+
 
     group4 = parser.add_argument_group('Network parameters')
     group4.add_argument('--load_factor', type=float, help='scale of the traffic matrix', default=1)
@@ -144,6 +147,7 @@ def arguments_parser():
     #    params["save_models"] = os.path.abspath(params["save_models"])
     params["adjacency_matrix_path"] = os.path.abspath(params["adjacency_matrix_path"])
     params["agent_adjacency_matrix_path"] = os.path.abspath(params["agent_adjacency_matrix_path"])
+    params["opt_rejected_path"] = os.path.abspath("test.txt")
     params["overlay_matrix_path"] = os.path.abspath(params["overlay_matrix_path"])
     params["traffic_matrix_path"] = os.path.abspath(f'{params["traffic_matrix_root_path"].rstrip("/")}/node_intensity_normalized_{params["traffic_matrix_index"]}.txt')
     params["node_coordinates_path"] = os.path.abspath(params["node_coordinates_path"])
@@ -172,7 +176,7 @@ def arguments_parser():
     
     ## Add optimal solution path
     topology_name = params["adjacency_matrix_path"].split("/")[-2]
-    params["optimal_soltion_path"] = f"examples/{topology_name}/optimal_solution/overlay_traffic_matrix_{params['traffic_matrix_index']}/{int(params['load_factor']*100)}_ut_minCostMCF.json"
+    params["optimal_soltion_path"] = f"examples/{topology_name}/optimal_solution/{params['traffic_matrix_index']}_norm_matrix_uniform/{int(params['load_factor']*100)}_ut_minCostMCF.json"
     return params
 
 def custom_plots():
@@ -318,7 +322,7 @@ def run_ns3(params):
                         '--adj_mat_file_name={} --overlay_mat_file_name={} --node_coordinates_file_name={} '
                         '--node_intensity_file_name={} --signaling={} --AgentType={} --signalingType={} '
                         '--syncStep={} --lossPenalty={} --activateOverlaySignaling={} --nPacketsOverlaySignaling={} '
-                        '--train={} --movingAverageObsSize={} --activateUnderlayTraffic={}'.format( params["seed"],
+                        '--train={} --movingAverageObsSize={} --activateUnderlayTraffic={} --opt_rejected_file_name={}'.format( params["seed"],
                                              params["basePort"],
                                              str(params["simTime"]),
                                              params["packet_size"],
@@ -339,7 +343,8 @@ def run_ns3(params):
                                              params["nPacketsOverlay"],
                                              bool(params["train"]),
                                              params["movingAverageObsSize"],
-                                             bool(params["activateUnderlayTraffic"])
+                                             bool(params["activateUnderlayTraffic"]),
+                                             params["opt_rejected_path"]
                                              ))
     run_ns3_command = shlex.split(f'./waf --run "{ns3_params_format}"')
     subprocess.Popen(run_ns3_command)
@@ -360,10 +365,10 @@ def main():
     tf.random.set_seed(params["seed"])
     np.random.seed(params["seed"])
     random.seed(params["seed"])
-
+    
     ## test results file name
-    test_results_file_name = f'{params["logs_parent_folder"]}/_tests_overlay_19/ter_300_7k_prio_{params["prioritizedReplayBuffer"]}_underlayTraff_{params["activateUnderlayTraffic"]}_{params["agent_type"]}_{params["signaling_type"]}_{params["signalingSim"]}_fixed_rb_{params["replay_buffer_max_size"]}_sync{int(1000*params["sync_step"])}ms_ratio_{int(100*params["sync_ratio"])}_overlayPackets_{params["nPacketsOverlay"]}_loadTrain_{int(100*params["load_factor_trainning"])}_load_{int(100*params["load_factor"])}.txt'
-    train_results_file_name = f'{params["logs_parent_folder"]}/_train_overlay_17/ter_300_7k_prio_{params["prioritizedReplayBuffer"]}_underlayTraff_{params["activateUnderlayTraffic"]}_{params["agent_type"]}_{params["signaling_type"]}_{params["signalingSim"]}_fixed_rb_{params["replay_buffer_max_size"]}_sync{int(1000*params["sync_step"])}ms_ratio_{int(100*params["sync_ratio"])}_overlayPackets_{params["nPacketsOverlay"]}_loadTrain_{int(100*params["load_factor_trainning"])}_load_{int(100*params["load_factor"])}.txt'
+    test_results_file_name = f'{params["logs_parent_folder"]}/_tests_overlay_20/ter_t_1000_20k_tr_{params["traffic_matrix_index"]}_underlayTraff_{params["activateUnderlayTrafficTrain"]}_{params["agent_type"]}_{params["signaling_type"]}_{params["signalingSim"]}_fixed_rb_{params["replay_buffer_max_size"]}_sync{int(1000*params["sync_step"])}ms_ratio_{int(100*params["sync_ratio"])}_overlayPackets_{params["nPacketsOverlay"]}_loadTrain_{int(100*params["load_factor_trainning"])}_load_{int(100*params["load_factor"])}.txt'
+    train_results_file_name = f'{params["logs_parent_folder"]}/_train_overlay_20/ter_1000_20k_tr_{params["traffic_matrix_index"]}_underlayTraff_{params["activateUnderlayTrafficTrain"]}_{params["agent_type"]}_{params["signaling_type"]}_{params["signalingSim"]}_fixed_rb_{params["replay_buffer_max_size"]}_sync{int(1000*params["sync_step"])}ms_ratio_{int(100*params["sync_ratio"])}_overlayPackets_{params["nPacketsOverlay"]}_loadTrain_{int(100*params["load_factor_trainning"])}_load_{int(100*params["load_factor"])}.txt'
     print(test_results_file_name)
     if params["train"] == 1:
         if params["session_name"] in os.listdir(params["logs_parent_folder"] + "/saved_models/"):
@@ -400,12 +405,14 @@ def main():
         tf.summary.experimental.write_raw_pb(
                 custom_plots().SerializeToString(), step=0
             )
+    ## setup the agents (fix the static variables)
+    Agent.init_static_vars(params)
+    
     print("running ns-3")
     ## run ns3 simulator
     run_ns3(params)
     
-    ## setup the agents (fix the static variables)
-    Agent.init_static_vars(params)
+    
 
     ## run the agents threads
     agent_instances = []

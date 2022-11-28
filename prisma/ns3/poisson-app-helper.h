@@ -86,6 +86,8 @@ public:
 
   void SetUpdatable(bool updatable, double updateTrafficRateTime);
 
+  void SetRejectedProbability(bool optimal, double rejectProb);
+
   void SetDestination(uint32_t dest);
 
   /**

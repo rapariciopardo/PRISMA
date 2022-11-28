@@ -560,6 +560,11 @@ PointToPointNetDevice::Send (
       m_macTxDropTrace (packet);
       return false;
     }
+  if(tagcopy.GetSimpleValue()==0 && tagcopy.GetRejectedPacket()==1 && m_node->GetId()<11){
+    //NS_LOG_UNCOND(m_node->GetId()<<"     "<<m_ifIndex<<"    "<<tagcopy.GetFinalDestination()<<"   OPTIMAL REJECT    "<<packet->GetUid());
+    m_macTxDropTrace (packet);
+    return false;
+  }
 
   //
   // Stick a point to point protocol header on the packet in preparation for

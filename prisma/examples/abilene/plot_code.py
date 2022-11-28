@@ -38,13 +38,13 @@ if __name__ == '__main__':
         3 == ratio comparaison  for NN signaling 
     """
     dqn_name= "NN"
-    model_names = [dqn_name+"60%", "SP", "OPT"]
+    model_names = ["NN", "OPT", "SP"]
     folder_name =  f"tests_sync_variation_mat0_rb_10k_plots"
     line_styles = ["solid" , "solid", "dashed", "dashed", "solid"]
-    colors = [ "purple", "green", "red"]
+    colors = [ "purple", "green", "red", "orange"]
     avg_data = {}
     avg_data_loads = {}
-    test_folder = "_tests_overlay_17"
+    test_folder = "_tests_overlay_19"
     signaling_inband=1
     underlay=1
     list_charges = [60, 70,80,90, 100,110, 120,130, 140]
@@ -62,15 +62,15 @@ if __name__ == '__main__':
         syncs = [sync_ind]
         rb = [rb_size_ind]
     overlayPackets = [100]#,20,50,100]#[5,10,20,50,100,500]
-    agents = ["NN","sp","opt"]
-    loads_train = [60,80,80,90,100,80,80]
+    agents = ["NN", "opt","sp"]
+    loads_train = [60,15,80,90,100,80,80]
                 
     lite = ("", "","","", "", "")
     ### check if folder exists
     if folder_name not in os.listdir(folder_path):
         os.mkdir(folder_path + "/" + folder_name)
     for signaling_inband in (1,):
-        for kkk_idx, kkk in enumerate((12, 11, 7)):
+        for kkk_idx, kkk in enumerate((12, 11, -1)):
             # fig1, ax1 = plt.subplots()
             # fig1.set_size_inches(19.4, 10)
             # [0.6428656100517803, 0.47653319732663824, 0.44059512730308725, 0.36639229472221074, 0.5688626373310568, ]
@@ -88,8 +88,15 @@ if __name__ == '__main__':
                     
                 if signaling_type in ("ideal", "NN"):
                     print("here")
-                    names = [f"ter_300_7k_prio_0_underlayTraff_{underlay}_dqn_buffer_NN_{signaling_inband}_fixed_rb_{zz}_sync{xx}ms_ratio_10_overlayPackets_{yy}_loadTrain_{loads_train[xxx]}" for xx in syncs for yy in overlayPackets for zz in rb] 
+                    names = [f"ter_1000_20k_prio_0_underlayTraff_{underlay}_dqn_buffer_NN_{signaling_inband}_fixed_rb_{zz}_sync{xx}ms_ratio_10_overlayPackets_{yy}_loadTrain_{loads_train[xxx]}" for xx in syncs for yy in overlayPackets for zz in rb] 
                     official_names = [f"DQN Buffer {signaling_type} sync {xx}s overlayPackets {yy}" for xx in np.array(syncs)/1000 for yy in overlayPackets] 
+                
+                elif signaling_type in ("proportional"):
+                    names = [f"ter_1000_20k_tr_0_underlayTraff_{underlay}_dqn_buffer_NN_{signaling_inband}_fixed_rb_{zz}_sync{xx}ms_ratio_10_overlayPackets_{yy}_loadTrain_{aa}" for xx in syncs for yy in overlayPackets for zz in rb for aa in [60]] 
+                    official_names = [f"DQN Buffer {signaling_type} sync {xx}s overlayPackets {yy} Timeout" for xx in np.array(syncs)/1000 for yy in overlayPackets]
+                elif signaling_type in ("No-Back"):
+                    names = [f"ter_1000_20k_tr_0_underlayTraff_0_dqn_buffer_NN_{signaling_inband}_fixed_rb_{zz}_sync{xx}ms_ratio_10_overlayPackets_{yy}_loadTrain_{aa}" for xx in syncs for yy in overlayPackets for zz in rb for aa in [60]] 
+                    official_names = [f"DQN Buffer {signaling_type} sync {xx}s overlayPackets {yy} Timeout" for xx in np.array(syncs)/1000 for yy in overlayPackets]
                 elif signaling_type in ("timeout"):
                     names = [f"prio_0_underlayTraff_{underlay}_dqn_buffer_NN_{signaling_inband}_fixed_rb_{zz}_sync{xx}ms_ratio_10_overlayPackets_{yy}_loadTrain_{aa}_Timeout" for xx in syncs for yy in overlayPackets for zz in rb for aa in [80]] 
                     official_names = [f"DQN Buffer {signaling_type} sync {xx}s overlayPackets {yy} Timeout" for xx in np.array(syncs)/1000 for yy in overlayPackets]
@@ -105,10 +112,10 @@ if __name__ == '__main__':
                     official_names = [f"DQN Buffer {signaling_type} sync {xx}s overlayPackets {yy}" for xx in np.array(syncs)/1000 for yy in overlayPackets]
                 
                 elif signaling_type == "sp":
-                    names = [f"ter_300_7k_prio_0_underlayTraff_1_sp_ideal_1_fixed_rb_10000_sync1000ms_ratio_10_overlayPackets_100_loadTrain_80"]* len(syncs)
+                    names = [f"ter_1000_20k_prio_0_underlayTraff_1_sp_ideal_1_fixed_rb_10000_sync1000ms_ratio_10_overlayPackets_100_loadTrain_60"]* len(syncs)
                     official_names = ["Shortest Path"]* len(syncs)
                 elif signaling_type == "opt":
-                    names = ["ter_300_7k_prio_0_underlayTraff_1_opt_ideal_1_fixed_rb_10000_sync1000ms_ratio_10_overlayPackets_100_loadTrain_80"] * len(syncs) 
+                    names = ["ter_t_1000_20k_tr_0_underlayTraff_1_opt_ideal_1_fixed_rb_10000_sync3000ms_ratio_10_overlayPackets_100_loadTrain_60"] * len(syncs) 
                     official_names = ["Optimal Solution"] * len(syncs)
                 j = 0
                 for i in range(len(names)):
@@ -116,7 +123,7 @@ if __name__ == '__main__':
                         #if (signaling_type == "sp" or signaling_type == "opt") and charge == 40:
                         #    continue
                         temp = np.loadtxt(f"{test_folder}/{names[i]}_load_{charge}.txt", delimiter=',', dtype=object)
-                        #print(names[i], temp.shape)
+                        print(names[i], temp)
                         if len(temp.shape) == 1:
                             delay_temp = np.array(temp[kkk], dtype=float).reshape(1, -1)
                         else:

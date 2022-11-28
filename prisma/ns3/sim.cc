@@ -87,6 +87,7 @@ using namespace ns3;
 vector<vector<bool> > readNxNMatrix (std::string adj_mat_file_name);
 vector<vector<double> > readCordinatesFile (std::string node_coordinates_file_name);
 vector<vector<std::string>> readIntensityFile(std::string intensity_file_name);
+vector<vector<double> > readOptRejectedFile (std::string opt_rejected_file_name);
 void printCoordinateArray (const char* description, vector<vector<double> > coord_array);
 void printMatrix (const char* description, vector<vector<bool> > array);
 void ScheduleNextTrainStep(Ptr<PacketRoutingEnv> openGym);
@@ -155,6 +156,7 @@ int main (int argc, char *argv[])
   std::string overlay_mat_file_name ("scratch/prisma/examples/abilene/overlay_matrix.txt");
   std::string node_coordinates_file_name ("scratch/prisma/examples/abilene/node_coordinates.txt");
   std::string node_intensity_file_name("scratch/prisma/examples/abilene/node_intensity.txt");
+  std::string opt_rejected_file_name("scratch/prisma/test.txt");
 
   bool activateOverlaySignaling = true;
   uint32_t nPacketsOverlaySignaling = 2;
@@ -201,6 +203,7 @@ int main (int argc, char *argv[])
   cmd.AddValue ("train", "train", train);
   cmd.AddValue ("movingAverageObsSize", "size of MA for collecting the Obs", movingAverageObsSize);
   cmd.AddValue ("activateUnderlayTraffic", "Set if activate underlay traffic", activateUnderlayTraffic);
+  cmd.AddValue ("opt_rejected_file_name", "Rejected paths in Optimal Algorithm file name", opt_rejected_file_name);
   cmd.Parse (argc, argv);
     
   NS_LOG_UNCOND("Ns3Env parameters:");
@@ -221,6 +224,7 @@ int main (int argc, char *argv[])
   NS_LOG_UNCOND("--SignalingType: "<<signalingType);
   NS_LOG_UNCOND("--lossPenalty: "<<lossPenalty);
   NS_LOG_UNCOND("--activateUnderlayTraffic: "<<activateUnderlayTraffic);
+  NS_LOG_UNCOND("--RejectedTraffPath: "<<opt_rejected_file_name);
 
   
   
@@ -262,6 +266,9 @@ int main (int argc, char *argv[])
   vector<vector<bool> > OverlayAdj_Matrix;
   OverlayAdj_Matrix = readNxNMatrix (overlay_mat_file_name);
 
+  vector<vector<double>> OptRejected;
+  OptRejected = readOptRejectedFile(opt_rejected_file_name);
+
   //int n_packetsDropped = 0;
   //int n_packetsInjected = 0;
   //int n_packetsDelivered = 0;
@@ -286,7 +293,7 @@ int main (int argc, char *argv[])
   NS_LOG_UNCOND(node_intensity_file_name);
 
   vector<vector<std::string>> Traff_Matrix_test;
-  Traff_Matrix_test = readIntensityFile ("/home/tiago/Documents/NetSim/prisma/examples/abilene/traffic_matrices/node_intensity_normalized_0.txt");
+  Traff_Matrix_test = readIntensityFile ("/home/tiago/Documentos/PRISMA/prisma/examples/abilene/traffic_matrices/node_intensity_normalized_0.txt");
 
   int n_nodes = 11; //coord_array.size ();
   int matrixDimension = Adj_Matrix.size ();
@@ -343,6 +350,8 @@ int main (int argc, char *argv[])
   if(agentType=="sp" || agentType=="opt" || signalingType=="ideal"){
     activateSignaling=false;
   }
+  bool opt = false;
+  if(agentType=="opt") opt=true;
   if(signalingType=="NN"){
     NS_LOG_UNCOND("SMALL SIGNALING");
     for(int i=0;i<n_nodes;i++){
@@ -487,6 +496,7 @@ int main (int argc, char *argv[])
     packetRoutingEnv->setLossPenalty(lossPenalty);
     packetRoutingEnv->setNetDevicesContainer(&switch_nd);
     packetRoutingEnv->setTrainConfig(train);
+    NS_LOG_UNCOND("Aqui");
     for(size_t j = 1;j<nodes_switch.Get(overlayNodes[i])->GetNDevices();j++){
       Ptr<NetDevice> dev_switch =DynamicCast<NetDevice> (nodes_switch.Get(overlayNodes[i])->GetDevice(j)); 
       NS_LOG_UNCOND(dev_switch->GetNode()->GetId()<<"     "<<j);
@@ -544,7 +554,7 @@ int main (int argc, char *argv[])
   if(activateUnderlayTraffic) sum_masked_traffic_rate_mat /= n_nodes;
   else sum_masked_traffic_rate_mat /= overlayNodes.size();
   float factor_overlay = sum_traffic_rate_mat / sum_masked_traffic_rate_mat;
-  if(activateUnderlayTraffic) factor_overlay = 1.0;
+  if(true) factor_overlay = 1.0;
   NS_LOG_UNCOND("FACTOR OVERLAY "<<sum_traffic_rate_mat<<"    "<<sum_masked_traffic_rate_mat<<"    "<<factor_overlay);
 
   
@@ -579,6 +589,8 @@ int main (int argc, char *argv[])
                 //NS_LOG_UNCOND(i<<"  "<<j<<"   "<<DataRate(ceil(DataRate(Traff_Matrix[i][j]).GetBitRate()*load_factor*factor_overlay)).GetBitRate());
                 poisson.SetAverageRate (DataRate(ceil(DataRate(Traff_Matrix[i][j]).GetBitRate()*load_factor*factor_overlay)), AvgPacketSize);
                 poisson.SetTrafficValableProbability(OverlayMaskTrafficRate[i][j]);
+                NS_LOG_UNCOND(opt<<"   "<<OptRejected[i][j]);
+                poisson.SetRejectedProbability(opt, OptRejected[i][j]);
                 NS_LOG_UNCOND(i<<"   "<<j<<"     "<<OverlayMaskTrafficRate[i][j]);
                 poisson.SetUpdatable(false, updateTrafficRateTime);
                 poisson.SetDestination(uint32_t (j+1));
@@ -731,6 +743,67 @@ vector<vector<bool> > readNxNMatrix (std::string adj_mat_file_name)
   if (i != n_nodes)
     {
       NS_LOG_ERROR ("There are " << i << " rows and " << n_nodes << " columns.");
+      NS_FATAL_ERROR ("ERROR: The number of rows is not equal to the number of columns! in the adjacency matrix");
+    }
+
+  adj_mat_file.close ();
+  return array;
+
+}
+
+vector<vector<double> > readOptRejectedFile (std::string opt_rejected_file_name)
+{
+  ifstream adj_mat_file;
+  adj_mat_file.open (opt_rejected_file_name.c_str (), ios::in);
+  if (adj_mat_file.fail ())
+    {
+      NS_FATAL_ERROR ("File " << opt_rejected_file_name.c_str () << " not found");
+    }
+  vector<vector<double> > array;
+  int i = 0;
+  int n_nodes = 0;
+
+  while (!adj_mat_file.eof ())
+    {
+      string line;
+      getline (adj_mat_file, line);
+      if (line == "")
+        {
+          NS_LOG_UNCOND ("WARNING: Ignoring blank row in the array: " << i);
+          break;
+        }
+
+      istringstream iss (line);
+      double element;
+      vector<double> row;
+      int j = 0;
+
+      while (iss >> element)
+        {
+          row.push_back (element);
+          j++;
+        }
+
+      if (i == 0)
+        {
+          n_nodes = j;
+        }
+
+      if (j != n_nodes )
+        {
+          NS_LOG_ERROR ("ERROR: Number of elements in line " << i << ": " << j << " not equal to number of elements in line 0: " << n_nodes);
+          NS_FATAL_ERROR ("ERROR: The number of rows is not equal to the number of columns! in the adjacency matrix");
+        }
+      else
+        {
+          array.push_back (row);
+        }
+      i++;
+    }
+
+  if (i != n_nodes)
+    {
+      NS_LOG_UNCOND ("There are " << i << " rows and " << n_nodes << " columns.");
       NS_FATAL_ERROR ("ERROR: The number of rows is not equal to the number of columns! in the adjacency matrix");
     }
 

@@ -91,6 +91,10 @@ PoissonGeneratorApplication::GetTypeId (void)
                    DoubleValue(1.0),
                    MakeDoubleAccessor (&PoissonGeneratorApplication::m_trafficValableProbability),
                    MakeDoubleChecker<double>())
+    .AddAttribute ("RejectProbability", "The probability the traffic is rejected",
+                   DoubleValue(0.0),
+                   MakeDoubleAccessor (&PoissonGeneratorApplication::m_rejectProbability),
+                   MakeDoubleChecker<double>())
     .AddAttribute ("Remote", "The address of the destination",
                    AddressValue (),
                    MakeAddressAccessor (&PoissonGeneratorApplication::m_peer),
@@ -306,6 +310,11 @@ void PoissonGeneratorApplication::SendPacket ()
   }
   else {
     tag.SetTrafficValable(0);
+  }
+  if(value<m_rejectProbability){
+    tag.SetRejectedPacket(1);
+  } else{
+    tag.SetRejectedPacket(0);
   }
   packet->AddPacketTag(tag);
   m_txTrace (packet);

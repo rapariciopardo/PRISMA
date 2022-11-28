@@ -190,7 +190,8 @@ class Agent():
         if params_dict["agent_type"] == "opt":
             cl.optimal_routing_mat = np.array(json.load(open(params_dict["optimal_soltion_path"]))["routing"])
             cl.optimal_rejected_mat = np.array(json.load(open(params_dict["optimal_soltion_path"]))["rejected_flows"])
-
+        with open("test.txt" , 'wb') as f:
+            np.savetxt(f, cl.optimal_rejected_mat, delimiter=' ', newline='\n', header='', footer='', fmt='%1.2f', comments='# ')
     def __init__(self, index, agent_type="dqn", train=True):
         """ Init the agent
         index (int): agent index
@@ -864,9 +865,9 @@ class Agent():
         #    os.mkdir("logs")
         #np.savetxt("logs/log_dict_"+Agent.sessionName+".txt", np.asarray(Agent.info_debug, dtype='object'), fmt='%s')
         #f.open(f"replay_buffer_samples/{self.index}", "wb")
-        print("saving replay buffer")
+        #print("saving replay buffer")
         
-        Agent.replay_buffer[self.index].save(f"replay_buffer_samples/{self.index}")
+        #Agent.replay_buffer[self.index].save(f"replay_buffer_samples/{self.index}")
         
         self.env.ns3ZmqBridge.send_close_command()
         # print("***index :", self.index, "Done", "stepIdx =", self.stepIdx, "arrived pkts =", self.count_arrived_packets,  "new received pkts", self.count_new_pkts, "gradient steps", self.gradient_step_idx)

@@ -41,7 +41,7 @@ MyTag::GetSerializedSize (void) const
 {
   uint32_t ret = 9;
   if(m_simpleValue==0){
-    ret += 9;
+    ret += 10;
   }
   else if(m_simpleValue==1){
     ret += 12;
@@ -66,6 +66,7 @@ MyTag::Serialize (TagBuffer i) const
   if(m_simpleValue==0){
     i.WriteU64 (m_startTime);
     i.WriteU8 (m_trafficValable);
+    i.WriteU8 (m_rejectedPacket);
   }
   else if(m_simpleValue==1){
     i.WriteU32 (m_segIndex);
@@ -95,6 +96,7 @@ MyTag::Deserialize (TagBuffer i)
   if(m_simpleValue==0){
     m_startTime=i.ReadU64 ();
     m_trafficValable =i.ReadU8 ();
+    m_rejectedPacket =i.ReadU8 ();
   }
   else if(m_simpleValue==1){
     m_segIndex=i.ReadU32 ();
@@ -219,4 +221,13 @@ MyTag::GetOverlayIndex (void) const
 {
   return m_overlayIndex;
 }
-
+void
+MyTag::SetRejectedPacket(uint8_t value)
+{
+  m_rejectedPacket = value;
+}
+uint8_t
+MyTag::GetRejectedPacket (void) const
+{
+  return m_rejectedPacket;
+}

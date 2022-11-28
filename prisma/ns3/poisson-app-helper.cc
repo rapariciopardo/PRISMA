@@ -113,6 +113,14 @@ void
 PoissonAppHelper::SetTrafficValableProbability(double trafficValableProbability){
   m_factory.Set ("TrafficValableProbability", DoubleValue(trafficValableProbability));
 }
+void 
+PoissonAppHelper::SetRejectedProbability(bool optimal, double rejectProb){
+  if(optimal){
+    m_factory.Set ("RejectProbability", DoubleValue(rejectProb));
+  } else{
+    m_factory.Set ("RejectProbability", DoubleValue(0.0));
+  }
+}
 
 
 

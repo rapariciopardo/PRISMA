@@ -188,6 +188,7 @@ PacketRoutingEnv::setTrainConfig(bool train){
   m_train = train;
 }
 
+
 void
 PacketRoutingEnv::setLossPenalty(double lossPenalty){
   m_loss_penalty = lossPenalty;
@@ -316,6 +317,7 @@ PacketRoutingEnv::dropPacket(Ptr<PacketRoutingEnv> entity, Ptr<const Packet> pac
   packet->PeekPacketTag(tagCopy);
   if(tagCopy.GetSimpleValue()==0){
     m_packetsDroppedTotalGlobal += 1;
+    //NS_LOG_UNCOND(packet->GetUid());
     if(tagCopy.GetTrafficValable()==1){
       m_cost.push_back(entity->m_loss_penalty);
       m_packetsDroppedGlobal += 1;
