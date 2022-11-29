@@ -291,10 +291,6 @@ int main (int argc, char *argv[])
   Traff_Matrix = readIntensityFile (node_intensity_file_name);
 
   NS_LOG_UNCOND(node_intensity_file_name);
-
-  vector<vector<std::string>> Traff_Matrix_test;
-  Traff_Matrix_test = readIntensityFile ("/home/tiago/Documentos/PRISMA/prisma/examples/abilene/traffic_matrices/node_intensity_normalized_0.txt");
-
   int n_nodes = 11; //coord_array.size ();
   int matrixDimension = Adj_Matrix.size ();
 
@@ -540,7 +536,7 @@ int main (int argc, char *argv[])
   for(int i=0;i<n_nodes;i++){
     for(int j = 0;j<n_nodes;j++){
       if(i!=j){
-        sum_traffic_rate_mat += ceil(DataRate(Traff_Matrix_test[i][j]).GetBitRate());
+        sum_traffic_rate_mat += ceil(DataRate(Traff_Matrix[i][j]).GetBitRate());
         count_traffic_rate_mat++;
         if(ActivateTrafficRate[i][j]==1.0){
           //NS_LOG_UNCOND(ceil(DataRate(Traff_Matrix[i][j]).GetBitRate()));
@@ -589,8 +585,8 @@ int main (int argc, char *argv[])
                 //NS_LOG_UNCOND(i<<"  "<<j<<"   "<<DataRate(ceil(DataRate(Traff_Matrix[i][j]).GetBitRate()*load_factor*factor_overlay)).GetBitRate());
                 poisson.SetAverageRate (DataRate(ceil(DataRate(Traff_Matrix[i][j]).GetBitRate()*load_factor*factor_overlay)), AvgPacketSize);
                 poisson.SetTrafficValableProbability(OverlayMaskTrafficRate[i][j]);
-                NS_LOG_UNCOND(opt<<"   "<<OptRejected[i][j]);
-                poisson.SetRejectedProbability(opt, OptRejected[i][j]);
+                //NS_LOG_UNCOND(opt<<"   "<<OptRejected[i][j]);
+                poisson.SetRejectedProbability(opt, 0.0);
                 NS_LOG_UNCOND(i<<"   "<<j<<"     "<<OverlayMaskTrafficRate[i][j]);
                 poisson.SetUpdatable(false, updateTrafficRateTime);
                 poisson.SetDestination(uint32_t (j+1));

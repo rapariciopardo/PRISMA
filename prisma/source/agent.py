@@ -190,8 +190,8 @@ class Agent():
         if params_dict["agent_type"] == "opt":
             cl.optimal_routing_mat = np.array(json.load(open(params_dict["optimal_soltion_path"]))["routing"])
             cl.optimal_rejected_mat = np.array(json.load(open(params_dict["optimal_soltion_path"]))["rejected_flows"])
-        with open("test.txt" , 'wb') as f:
-            np.savetxt(f, cl.optimal_rejected_mat, delimiter=' ', newline='\n', header='', footer='', fmt='%1.2f', comments='# ')
+            with open("test.txt" , 'wb') as f:
+                np.savetxt(f, cl.optimal_rejected_mat, delimiter=' ', newline='\n', header='', footer='', fmt='%1.2f', comments='# ')
     def __init__(self, index, agent_type="dqn", train=True):
         """ Init the agent
         index (int): agent index
