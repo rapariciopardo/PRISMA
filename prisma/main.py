@@ -149,7 +149,7 @@ def arguments_parser():
     params["agent_adjacency_matrix_path"] = os.path.abspath(params["agent_adjacency_matrix_path"])
     params["opt_rejected_path"] = os.path.abspath("test.txt")
     params["overlay_matrix_path"] = os.path.abspath(params["overlay_matrix_path"])
-    params["traffic_matrix_path"] = os.path.abspath(f'{params["traffic_matrix_root_path"].rstrip("/")}/node_intensity_normalized_{params["traffic_matrix_index"]}.txt')
+    params["traffic_matrix_path"] = os.path.abspath(f'{params["traffic_matrix_root_path"].rstrip("/")}/traffic_mat_{params["traffic_matrix_index"]}_adjusted.txt')
     params["node_coordinates_path"] = os.path.abspath(params["node_coordinates_path"])
     params["ns3_sim_path"] = os.path.abspath(params["ns3_sim_path"])
 
@@ -176,7 +176,7 @@ def arguments_parser():
     
     ## Add optimal solution path
     topology_name = params["adjacency_matrix_path"].split("/")[-2]
-    params["optimal_soltion_path"] = f"examples/{topology_name}/optimal_solution/{params['traffic_matrix_index']}_no_limit_norm_matrix_uniform/{int(params['load_factor']*100)}_ut_minCostMCF.json"
+    params["optimal_soltion_path"] = f"examples/{topology_name}/optimal_solution/{params['traffic_matrix_index']}_adjusted_5_nodes_mesh_norm_matrix_uniform/{int(params['load_factor']*100)}_ut_minCostMCF.json"
     return params
 
 def custom_plots():
