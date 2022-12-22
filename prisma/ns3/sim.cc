@@ -88,6 +88,7 @@ vector<vector<bool> > readNxNMatrix (std::string adj_mat_file_name);
 vector<vector<double> > readCordinatesFile (std::string node_coordinates_file_name);
 vector<vector<std::string>> readIntensityFile(std::string intensity_file_name);
 vector<vector<double> > readOptRejectedFile (std::string opt_rejected_file_name);
+vector<int> readOverlayMatrix(std::string overlay_file_name);
 void printCoordinateArray (const char* description, vector<vector<double> > coord_array);
 void printMatrix (const char* description, vector<vector<bool> > array);
 void ScheduleNextTrainStep(Ptr<PacketRoutingEnv> openGym);
@@ -157,6 +158,8 @@ int main (int argc, char *argv[])
   std::string node_coordinates_file_name ("scratch/prisma/examples/abilene/node_coordinates.txt");
   std::string node_intensity_file_name("scratch/prisma/examples/abilene/node_intensity.txt");
   std::string opt_rejected_file_name("scratch/prisma/test.txt");
+  std::string map_overlay_file_name("scratch/prisma/test2.txt");
+
 
   bool activateOverlaySignaling = true;
   uint32_t nPacketsOverlaySignaling = 2;
@@ -204,6 +207,7 @@ int main (int argc, char *argv[])
   cmd.AddValue ("movingAverageObsSize", "size of MA for collecting the Obs", movingAverageObsSize);
   cmd.AddValue ("activateUnderlayTraffic", "Set if activate underlay traffic", activateUnderlayTraffic);
   cmd.AddValue ("opt_rejected_file_name", "Rejected paths in Optimal Algorithm file name", opt_rejected_file_name);
+  cmd.AddValue ("map_overlay_file_name", "Map overlay file name", map_overlay_file_name);
   cmd.Parse (argc, argv);
     
   NS_LOG_UNCOND("Ns3Env parameters:");
@@ -265,6 +269,9 @@ int main (int argc, char *argv[])
 
   vector<vector<bool> > OverlayAdj_Matrix;
   OverlayAdj_Matrix = readNxNMatrix (overlay_mat_file_name);
+
+  vector<int> map_overlay_array;
+  map_overlay_array = readOverlayMatrix(map_overlay_file_name);
 
   vector<vector<double>> OptRejected;
   OptRejected = readOptRejectedFile(opt_rejected_file_name);
@@ -367,7 +374,7 @@ int main (int argc, char *argv[])
     PointToPointHelper p2p;
     DataRate data_rate(LinkRate);
 
-    p2p.SetDeviceAttribute ("DataRate", DataRateValue (100000*data_rate.GetBitRate()*nodes_degree[i]));
+    p2p.SetDeviceAttribute ("DataRate", DataRateValue (1000000*data_rate.GetBitRate()*nodes_degree[i]));
     p2p.SetChannelAttribute ("Delay", StringValue ("0ms"));
     p2p.SetQueue ("ns3::DropTailQueue", "MaxSize", StringValue ("1000p"));    
     NetDeviceContainer n_devs = p2p.Install (NodeContainer (nodes_traffic.Get(i), nodes_switch.Get(i)));
@@ -425,16 +432,31 @@ int main (int argc, char *argv[])
     for(int j=i;j<n_nodes;j++){
       if(OverlayAdj_Matrix[i][j]==1){
         if(overlayNodesChecker[i]==0){
-          overlayNodes.push_back(i);
+          overlayNodes.push_back(map_overlay_array[i]);
           overlayNodesChecker[i] = 1;
         }
         if(overlayNodesChecker[j]==0){
-          overlayNodes.push_back(j);
+          overlayNodes.push_back(map_overlay_array[j]);
           overlayNodesChecker[j] = 1;
         }
-        overlayNeighbors[i].push_back(j);
-        overlayNeighbors[j].push_back(i);
+        overlayNeighbors[i].push_back(map_overlay_array[j]);
+        overlayNeighbors[j].push_back(map_overlay_array[i]);
       }
+    }
+  }
+
+  sort(overlayNodes.begin(), overlayNodes.end());
+  for(size_t i = 0;i<overlayNodes.size();i++){
+    auto it = find(map_overlay_array.begin(), map_overlay_array.end(), overlayNodes[i]);
+    overlayNodes[i] = it - map_overlay_array.begin();
+  }
+  
+
+  for(int i=0;i<n_nodes;i++){
+    sort(overlayNeighbors[i].begin(), overlayNeighbors[i].end());
+    for(size_t j=0;j<overlayNeighbors[i].size();j++){
+      auto it = find(map_overlay_array.begin(), map_overlay_array.end(), overlayNeighbors[i][j]);
+      overlayNeighbors[i][j] = it - map_overlay_array.begin();
     }
   }
 
@@ -486,13 +508,12 @@ int main (int argc, char *argv[])
       packetRoutingEnv = CreateObject<PacketRoutingEnv> (Seconds(envStepTime), n); // time-driven step
     }
     packetRoutingEnv->SetOpenGymInterface(openGymInterface);
-    packetRoutingEnv->setOverlayConfig(overlayNeighbors[overlayNodes[i]], activateOverlaySignaling, nPacketsOverlaySignaling, movingAverageObsSize);
+    packetRoutingEnv->setOverlayConfig(overlayNeighbors[overlayNodes[i]], activateOverlaySignaling, nPacketsOverlaySignaling, movingAverageObsSize, map_overlay_array);
     packetRoutingEnv->m_node_container = &nodes_switch;
     packetRoutingEnv->setPingTimeout(16260, 500000, 1);
     packetRoutingEnv->setLossPenalty(lossPenalty);
     packetRoutingEnv->setNetDevicesContainer(&switch_nd);
     packetRoutingEnv->setTrainConfig(train);
-    NS_LOG_UNCOND("Aqui");
     for(size_t j = 1;j<nodes_switch.Get(overlayNodes[i])->GetNDevices();j++){
       Ptr<NetDevice> dev_switch =DynamicCast<NetDevice> (nodes_switch.Get(overlayNodes[i])->GetDevice(j)); 
       NS_LOG_UNCOND(dev_switch->GetNode()->GetId()<<"     "<<j);
@@ -564,7 +585,7 @@ int main (int argc, char *argv[])
       //interface = 0;
       for (int j = 0; j < n_nodes; j++)
         {
-          if (i != j && ActivateTrafficRate[i][j]>0)
+          if (i != j && ActivateTrafficRate[i][j]>0 && DataRate(Traff_Matrix[i][j]).GetBitRate()>0)
             {
               // We needed to generate a random number (rn) to be used to eliminate
               // the artificial congestion caused by sending the packets at the
@@ -586,10 +607,10 @@ int main (int argc, char *argv[])
                 poisson.SetAverageRate (DataRate(ceil(DataRate(Traff_Matrix[i][j]).GetBitRate()*load_factor*factor_overlay)), AvgPacketSize);
                 poisson.SetTrafficValableProbability(OverlayMaskTrafficRate[i][j]);
                 //NS_LOG_UNCOND(opt<<"   "<<OptRejected[i][j]);
-                poisson.SetRejectedProbability(opt, 0.0);
-                NS_LOG_UNCOND(i<<"   "<<j<<"     "<<OverlayMaskTrafficRate[i][j]);
+                poisson.SetRejectedProbability(opt,0.0);
+                NS_LOG_UNCOND("Poisson "<<i<<"   "<<j<<"     "<<Traff_Matrix[i][j]);
                 poisson.SetUpdatable(false, updateTrafficRateTime);
-                poisson.SetDestination(uint32_t (j+1));
+                poisson.SetDestination(uint32_t (j+1), uint32_t (i+1));
                 ApplicationContainer apps = poisson.Install (nodes_traffic.Get (i));
                 apps.Start (Seconds (AppStartTime + rn));
                 apps.Stop (Seconds (AppStopTime));
@@ -605,7 +626,7 @@ int main (int argc, char *argv[])
 
                 BigSignalingAppHelper sign ("ns3::UdpSocketFactory",sinkAddress); 
                 sign.SetAverageStep (syncStep, bigSignalingSize); 
-                sign.SetSourceDest(i+1, j+1); 
+                sign.SetSourceDest(i+1, j+1, map_overlay_array[i]+1); 
                 ApplicationContainer apps = sign.Install (nodes_traffic.Get (i));  // traffic sources are installed on all nodes 
                 apps.Start (Seconds (AppStartTime )); 
                 apps.Stop (Seconds (AppStopTime)); 
@@ -668,6 +689,7 @@ int main (int argc, char *argv[])
   Simulator::Run ();
   // flowmon->SerializeToXmlFile (flow_name.c_str(), true, true);
   NS_LOG_UNCOND ("Simulation stop");
+  PointToPointNetDevice::PrintDelayInfo(agentType, load_factor);
   NS_LOG_UNCOND("Sent Packets: "<< counter_send);
   for (size_t i = 0; i < myOpenGymInterfaces.size(); i++)
   {
@@ -741,6 +763,66 @@ vector<vector<bool> > readNxNMatrix (std::string adj_mat_file_name)
       NS_LOG_ERROR ("There are " << i << " rows and " << n_nodes << " columns.");
       NS_FATAL_ERROR ("ERROR: The number of rows is not equal to the number of columns! in the adjacency matrix");
     }
+
+  adj_mat_file.close ();
+  return array;
+
+}
+
+vector<int> readOverlayMatrix(std::string overlay_file_name)
+{
+  ifstream adj_mat_file;
+  adj_mat_file.open (overlay_file_name.c_str (), ios::in);
+  if (adj_mat_file.fail ())
+    {
+      NS_FATAL_ERROR ("File " << overlay_file_name.c_str () << " not found");
+    }
+  vector<int> array;
+  int i = 0;
+  //int n_nodes = 0;
+
+  while (!adj_mat_file.eof ())
+    {
+      string line;
+      getline (adj_mat_file, line);
+      if (line == "")
+        {
+          NS_LOG_WARN ("WARNING: Ignoring blank row in the array: " << i);
+          break;
+        }
+
+      istringstream iss (line);
+      int element;
+      int j = 0;
+
+      while (iss >> element)
+        {
+          array.push_back (element);
+          j++;
+        }
+
+      //if (i == 0)
+      //  {
+      //    n_nodes = j;
+      //  }
+      //
+      //if (j != n_nodes )
+      //  {
+      //    NS_LOG_ERROR ("ERROR: Number of elements in line " << i << ": " << j << " not equal to number of elements in line 0: " << n_nodes);
+      //    NS_FATAL_ERROR ("ERROR: The number of rows is not equal to the number of columns! in the adjacency matrix");
+      //  }
+      //else
+      //  {
+      //    //array.push_back (row);
+      //  }
+      i++;
+    }
+
+  //if (i != n_nodes)
+  //  {
+  //    NS_LOG_ERROR ("There are " << i << " rows and " << n_nodes << " columns.");
+  //    NS_FATAL_ERROR ("ERROR: The number of rows is not equal to the number of columns! in the adjacency matrix");
+  //  }
 
   adj_mat_file.close ();
   return array;

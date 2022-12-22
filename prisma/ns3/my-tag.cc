@@ -39,7 +39,7 @@ MyTag::GetInstanceTypeId (void) const
 uint32_t 
 MyTag::GetSerializedSize (void) const
 {
-  uint32_t ret = 9;
+  uint32_t ret = 17;
   if(m_simpleValue==0){
     ret += 10;
   }
@@ -62,7 +62,9 @@ MyTag::Serialize (TagBuffer i) const
 {
   i.WriteU8 (m_simpleValue);
   i.WriteU32(m_finalDestination);
+  i.WriteU32(m_source);
   i.WriteU32 (m_lastHop);
+  i.WriteU32 (m_nextHop);
   if(m_simpleValue==0){
     i.WriteU64 (m_startTime);
     i.WriteU8 (m_trafficValable);
@@ -87,12 +89,15 @@ MyTag::Serialize (TagBuffer i) const
   
   
 }
-void 
+
+void
 MyTag::Deserialize (TagBuffer i)
 {
   m_simpleValue = i.ReadU8 ();
   m_finalDestination = i.ReadU32 ();
+  m_source = i.ReadU32();
   m_lastHop = i.ReadU32 ();
+  m_nextHop = i.ReadU32();
   if(m_simpleValue==0){
     m_startTime=i.ReadU64 ();
     m_trafficValable =i.ReadU8 ();
@@ -230,4 +235,24 @@ uint8_t
 MyTag::GetRejectedPacket (void) const
 {
   return m_rejectedPacket;
+}
+void
+MyTag::SetNextHop (uint32_t value)
+{
+  m_nextHop = value;
+}
+uint32_t 
+MyTag::GetNextHop (void) const
+{
+  return m_nextHop;
+}
+void
+MyTag::SetSource (uint32_t value)
+{
+  m_source = value;
+}
+uint32_t 
+MyTag::GetSource (void) const
+{
+  return m_source;
 }

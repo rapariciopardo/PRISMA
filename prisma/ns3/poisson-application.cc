@@ -79,6 +79,10 @@ PoissonGeneratorApplication::GetTypeId (void)
                    UintegerValue (1),
                    MakeUintegerAccessor (&PoissonGeneratorApplication::m_dest),
                    MakeUintegerChecker<uint32_t> (1))
+    .AddAttribute ("Src", "src",
+                   UintegerValue (1),
+                   MakeUintegerAccessor (&PoissonGeneratorApplication::m_src),
+                   MakeUintegerChecker<uint32_t> (1))
     .AddAttribute ("Updatable", "The Traffic Rate of node is updatable",
                    BooleanValue(false),
                    MakeBooleanAccessor (&PoissonGeneratorApplication::m_updatable),
@@ -275,8 +279,10 @@ void PoissonGeneratorApplication::ScheduleNextTx ()
      
       uint32_t bits = m_pktSize * 8;
       Ptr<ExponentialRandomVariable> iat = CreateObject<ExponentialRandomVariable> ();
+      
       iat->SetAttribute ("Mean", DoubleValue (bits/static_cast<double>(m_avgRate.GetBitRate ())));
       double delay = iat->GetValue(); // bits/ static_cast<double>(m_avgRate.GetBitRate ());
+      //if(m_src==5 && m_dest==10) NS_LOG_UNCOND("VERIFIER: "<<static_cast<double>(m_avgRate.GetBitRate ())<<"    "<<delay);
       //NS_LOG_UNCOND("DELAY:     "<<delay);
       Time nextTime (Seconds (delay)); // Time till next packet
       m_sendEvent = Simulator::Schedule (nextTime,
@@ -298,6 +304,8 @@ void PoissonGeneratorApplication::SendPacket ()
   tag.SetSimpleValue(0);
   
   tag.SetFinalDestination(m_dest-1);
+  tag.SetSource(m_src-1);
+  tag.SetNextHop(m_src-1);
   tag.SetLastHop(1000);
   tag.SetStartTime(uint64_t(Simulator::Now().GetMilliSeconds()));
   Ptr<UniformRandomVariable> x = CreateObject<UniformRandomVariable> ();

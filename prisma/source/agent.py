@@ -378,6 +378,11 @@ class Agent():
         ## schedule the exploration
         if self.train:
             self.update_eps = tf.constant(self.exploration.value(self.stepIdx))
+        #try:
+        #    if(self.pkt_id==19268):
+        #        print(self.obs)
+        #except:
+        #    pass
         
         ## take the action
         if self.obs[0] == self.index or self.stepIdx < 1 or self.signaling: # pkt arrived to dst or it is a train step, ignore the action
@@ -864,10 +869,12 @@ class Agent():
         #if(not os.path.exists("logs/")):
         #    os.mkdir("logs")
         #np.savetxt("logs/log_dict_"+Agent.sessionName+".txt", np.asarray(Agent.info_debug, dtype='object'), fmt='%s')
-        #f.open(f"replay_buffer_samples/{self.index}", "wb")
-        #print("saving replay buffer")
+        if(not os.path.exists(f"replay_buffer_samples/{Agent.sessionName}")):  
+            os.mkdir(f"replay_buffer_samples/{Agent.sessionName}/") 
+        open(f"replay_buffer_samples/{Agent.sessionName}/{self.index}", "wb")
+        print("saving replay buffer")
         
-        #Agent.replay_buffer[self.index].save(f"replay_buffer_samples/{self.index}")
+        Agent.replay_buffer[self.index].save(f"replay_buffer_samples/{Agent.sessionName}/{self.index}")
         
         self.env.ns3ZmqBridge.send_close_command()
         # print("***index :", self.index, "Done", "stepIdx =", self.stepIdx, "arrived pkts =", self.count_arrived_packets,  "new received pkts", self.count_new_pkts, "gradient steps", self.gradient_step_idx)

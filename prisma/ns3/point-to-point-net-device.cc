@@ -31,9 +31,42 @@
 #include "ns3/ppp-header.h"
 #include "my-tag.h"
 
+#include <sstream>
+#include <iostream>
+#include <vector>
+#include <fstream>
+
+
+
+
 
 namespace ns3 {
 
+float computeMean(std::vector<uint64_t> numbers)
+{
+    if(numbers.empty()) return 0;
+
+    float total = 0;
+    for (int number : numbers) {
+        total += number;
+    }
+
+    return (total / numbers.size());
+}
+
+float computeVariance(float mean, std::vector<uint64_t> numbers)
+{
+    float result = 0;
+    for(int number : numbers)
+    {
+        result += (number - mean)*(number - mean);
+    }
+
+    return result / (numbers.size() - 1);
+}
+
+
+std::vector<uint64_t> PointToPointNetDevice::m_e2eDelay[11][11];
 NS_LOG_COMPONENT_DEFINE ("PointToPointNetDeviceModified");
 
 NS_OBJECT_ENSURE_REGISTERED (PointToPointNetDevice);
@@ -389,6 +422,13 @@ PointToPointNetDevice::Receive (Ptr<Packet> packet)
 
       m_macRxTrace (originalPacket);
       m_rxCallback (this, packet, protocol, GetRemote ());
+      MyTag tagcopy;
+      packet->PeekPacketTag(tagcopy);
+      if(tagcopy.GetSimpleValue()==0 && tagcopy.GetFinalDestination()==m_node->GetId()){
+        m_e2eDelay[tagcopy.GetSource()][tagcopy.GetFinalDestination()].push_back( Simulator::Now().GetMilliSeconds() - tagcopy.GetStartTime());
+        //PrintDelayInfo();
+      }
+
     }
 }
 
@@ -547,7 +587,7 @@ PointToPointNetDevice::Send (
   packet->PeekPacketTag(tagcopy);
 
   if(tagcopy.GetSimpleValue()>4) return false;
-  //if(tagcopy.GetSimpleValue()==0 && tagcopy.GetTrafficValable()==1){
+  //if(packet->GetUid()==30){
   //  NS_LOG_UNCOND("..............");
   //  NS_LOG_UNCOND("Node: "<<m_node->GetId()<<"    IF: "<<m_ifIndex<<"    ID: "<<packet->GetUid());
   //  NS_LOG_UNCOND("Queue: "<<m_queue->GetNBytes()<<"    TIME: "<<Simulator::Now().GetMilliSeconds()<<"    SIZE: "<<packet->GetSize()<<"    TAG: "<<uint32_t(tagcopy.GetSimpleValue())<<"   VAL: "<<uint32_t(tagcopy.GetTrafficValable()));
@@ -577,10 +617,19 @@ PointToPointNetDevice::Send (
   //
   // We should enqueue and dequeue the packet to hit the tracing hooks.
   //
-  
+  //if(tagcopy.GetSource()==5 && tagcopy.GetFinalDestination()==7 && m_node->GetId()==5){
+  //  if(m_ifIndex==2) NS_LOG_UNCOND("AQUI");
+  //  if(m_ifIndex==3) NS_LOG_UNCOND("LA"); 
+  //  //NS_LOG_UNCOND(m_node->GetId()<<"     "<<m_ifIndex<<"    "<<tagcopy.GetSource()<<"   "<<tagcopy.GetFinalDestination()<<"  "<<uint32_t(tagcopy.GetSimpleValue())<<"     "<<m_queue->GetNBytes()<<"   NORMAL REJECT    "<<packet->GetUid());
+  //}
+
   bool enq = m_queue->Enqueue (packet);
   if (enq)
   {
+    //if(tagcopy.GetSimpleValue()==3 || tagcopy.GetSimpleValue()==4){
+    //  NS_LOG_UNCOND("Node: "<<m_node->GetId()<<"   IF: "<<m_ifIndex<<"   Time: "<<Simulator::Now().GetSeconds()<<"   Queue: "<<m_queue->GetNBytes()<<" Uid: "<<packet->GetUid());
+    //  NS_LOG_UNCOND("Tag: "<<uint32_t(tagcopy.GetSimpleValue())<<"   SRC: "<<tagcopy.GetSource()<<"   Dest: "<<tagcopy.GetFinalDestination());
+    //}
     //
     // If the channel is ready for transition we send the packet right now
     // 
@@ -599,8 +648,8 @@ PointToPointNetDevice::Send (
 
   // Enqueue may fail (overflow)
 
+  
   if(tagcopy.GetSimpleValue()==0){
-    //NS_LOG_UNCOND("AQUI "<<m_queue->GetNBytes()<<"   "<<m_node->GetId()<<"    "<<m_ifIndex<< "   "<<Simulator::Now().GetMilliSeconds()<<"    "<<uint32_t(tagcopy.GetTrafficValable()));
     m_macTxDropTrace (packet);
   }
 
@@ -721,6 +770,27 @@ PointToPointNetDevice::EtherToPpp (uint16_t proto)
     default: NS_ASSERT_MSG (false, "PPP Protocol number not defined!");
     }
   return 0;
+}
+
+void
+PointToPointNetDevice::PrintDelayInfo(std::string agent_type, float load_factor){
+  std::string filename = "e2e_delay_per_flow_"+agent_type+"_"+std::to_string(int(load_factor*100))+".txt";
+  std::ofstream outputFile1(filename);
+  if(outputFile1.is_open()){
+    for(size_t i = 0;i<11;i++){
+      for(size_t j = 0; j<11;j++){
+        //if(i==1 && j==9){
+        //  for(uint64_t element : m_e2eDelay[i][j]){
+        //    NS_LOG_UNCOND(element<< " ");
+        //  }
+        //}
+        float mean = computeMean(m_e2eDelay[i][j]);
+        float var = computeVariance(mean, m_e2eDelay[i][j]);
+        outputFile1 <<i<<" "<<j<<" "<<mean<<" "<<var << std::endl;
+      }
+    }
+    outputFile1.close();
+  }
 }
 
 

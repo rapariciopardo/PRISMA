@@ -88,7 +88,7 @@ public:
 
   void SetRejectedProbability(bool optimal, double rejectProb);
 
-  void SetDestination(uint32_t dest);
+  void SetDestination(uint32_t dest, uint32_t src);
 
   /**
    * Install an ns3::PoissonGeneratorApplication on each node of the input container

@@ -19,15 +19,17 @@ if __name__ == '__main__':
     """
     
     ### define the params
-    size_of_data_per_dst = 1000 
+    topology = '4n' #'5n'
+    size_of_data_per_dst = 5000 
     topology_name = "abilene"
     buffer_max_length = 270
     ### load the topology graph
     G=nx.Graph()
 
-    for i, element in enumerate(np.loadtxt(open(f"examples/{topology_name}/node_coordinates.txt"))):
+    for i, element in enumerate(np.loadtxt(open(f"examples/{topology_name}/node_coordinates_{topology}.txt"))):
         G.add_node(i,pos=tuple(element))
-    G = nx.from_numpy_matrix(np.loadtxt(open(f"examples/{topology_name}/adjacency_matrix_2.txt")), create_using=G)
+    G = nx.from_numpy_matrix(np.loadtxt(open(f"examples/{topology_name}/adjacency_matrix_2_{topology}.txt")), create_using=G)
+    ping_mat = np.loadtxt(open(f"scripts/ping_{topology}_mat.txt"))
     #remove_list = [node for node,degree in dict(G.degree()).items() if degree < 1]
     #G.remove_nodes_from(remove_list)
 
@@ -54,8 +56,10 @@ if __name__ == '__main__':
                                 axis=1)
             y_dst = []
             for interface_id, neighbor in enumerate(list(G.neighbors(node))):
-                #print(dst, node)
+                #print(dst, node, interface_id)
                 cost = len(nx.shortest_path(G, neighbor, dst)) -1
+                cost = (ping_mat[node][neighbor]+ping_mat[neighbor][dst])*0.001
+                print(dst, node, neighbor, cost)
                 y_dst_neighbor = cost * np.ones((size_of_data_per_dst, 1), dtype=int)
                 if len(y_dst) == 0: 
                     y_dst = y_dst_neighbor
@@ -81,5 +85,5 @@ if __name__ == '__main__':
                       )
         model.fit(x_all, y_all, batch_size=128, epochs=100)
         ### saving the model    
-        model.save(f"examples/{topology_name}/dqn_buffer_sp_init_overlay/node{node}")
+        model.save(f"examples/{topology_name}/dqn_buffer_sp_init_overlay_modified_{topology}/node{node}")
         print()

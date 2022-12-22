@@ -42,6 +42,8 @@
 #include "ospf-tag.h"
 #include <vector>
 
+#define MAX_TUNNELS 5
+
 namespace ns3 {
 
 class Node;
@@ -69,7 +71,7 @@ public:
   PacketRoutingEnv ();
   PacketRoutingEnv (Ptr<Node> node, uint32_t numberOfNodes, uint64_t linkRateValue, bool activateSignaling, double signPacketSize, vector<int> overlayNeighbors);
   PacketRoutingEnv (Time stepTime, Ptr<Node> node);
-  void setOverlayConfig(vector<int> overlayNeighbors, bool activateOverlaySignaling, uint32_t nPacketsOverlaySignaling, uint32_t movingAverageObsSize);
+  void setOverlayConfig(vector<int> overlayNeighbors, bool activateOverlaySignaling, uint32_t nPacketsOverlaySignaling, uint32_t movingAverageObsSize, vector<int> map_overlay_array);
   void setNetDevicesContainer(NetDeviceContainer* nd);
   void setTrainConfig(bool train);
   void setLossPenalty(double lossPenalty);
@@ -154,12 +156,12 @@ private:
   bool m_activateOverlaySignaling;
   bool m_train; 
   uint32_t m_countSendPackets;
-  vector<uint64_t> m_tunnelsDelay [4];
-  vector<StartingOverlayPacket> m_starting_overlay_packets [4];
-  vector<uint64_t> m_tunnelsDelayGlobal [4];
-  vector<uint32_t> m_bufferOccGlobal[2]; 
-  int m_count_ping [4];
-  int m_overlayIndex [4];
+  vector<uint64_t> m_tunnelsDelay [MAX_TUNNELS];
+  vector<StartingOverlayPacket> m_starting_overlay_packets [MAX_TUNNELS];
+  vector<uint64_t> m_tunnelsDelayGlobal [MAX_TUNNELS];
+  vector<uint32_t> m_bufferOccGlobal[MAX_TUNNELS]; 
+  int m_count_ping [MAX_TUNNELS];
+  int m_overlayIndex [MAX_TUNNELS];
   int m_overlayRecvIndex;
   uint32_t m_nPacketsOverlaySignaling;
   uint32_t m_movingAverageObsSize;
@@ -187,16 +189,20 @@ private:
   uint64_t m_timeStartOverlay;
   uint32_t m_recvOverlayIndex;
 
-  vector<StartingDataPacket> m_packetsSent [4];
+  vector<StartingDataPacket> m_packetsSent [MAX_TUNNELS];
   std::string m_lost_packets;
 
   float m_cp = 0.0; 
   int m_first_op_test = 0; 
   int m_second_op_test = 0;
 
-  float m_pingTimeout[2];
+  float m_pingTimeout[MAX_TUNNELS];
   float m_lastPingOut;
   vector<float> m_pingDiffs;
+
+  vector<int> m_map_overlay_array;
+  bool m_first[MAX_TUNNELS]={false};
+
 
  
 

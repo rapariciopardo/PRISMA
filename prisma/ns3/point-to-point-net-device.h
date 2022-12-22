@@ -154,6 +154,7 @@ public:
    */
   void NotifyLink (bool linkUp);
   void Receive (Ptr<Packet> p);
+  static void PrintDelayInfo(std::string agent_type, float load_factor);
 
   // The remaining methods are documented in ns3::NetDevice*
 
@@ -471,6 +472,8 @@ private:
    * \return The corresponding PPP protocol number
    */
   static uint16_t EtherToPpp (uint16_t protocol);
+  static std::vector<uint64_t> m_e2eDelay[11][11];
+
 };
 
 } // namespace ns3

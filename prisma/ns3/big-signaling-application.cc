@@ -55,22 +55,6 @@
 #include "my-tag.h"
 namespace ns3 {
 
-uint32_t mapOverlayNode(uint32_t underlayNode){
-  uint32_t res;
-  if(underlayNode==0){
-    res= 0;
-  }
-  if (underlayNode==5){
-    res= 1;
-  }
-  if (underlayNode==7){
-    res= 2;
-  }
-  if (underlayNode==10){
-    res= 3;
-  }
-  return res;
-}
 
 NS_LOG_COMPONENT_DEFINE ("BigSignalingGeneratorApplication");
 
@@ -90,6 +74,10 @@ BigSignalingGeneratorApplication::GetTypeId (void)
     .AddAttribute ("src", "src",
                    UintegerValue (0),
                    MakeUintegerAccessor (&BigSignalingGeneratorApplication::m_src),
+                   MakeUintegerChecker<uint32_t> (1))
+    .AddAttribute ("srcOverlay", "srcOverlay",
+                   UintegerValue (0),
+                   MakeUintegerAccessor (&BigSignalingGeneratorApplication::m_srcOverlay),
                    MakeUintegerChecker<uint32_t> (1))
     .AddAttribute ("dest", "dest",
                    UintegerValue (1),
@@ -281,10 +269,13 @@ void BigSignalingGeneratorApplication::SendPacket ()
   MyTag tag;
   tag.SetSimpleValue(0x01);
   tag.SetFinalDestination(m_dest-1);
+  tag.SetSource(m_src-1);
+  tag.SetNextHop(m_dest-1);
   tag.SetLastHop(m_src-1);
   tag.SetSegIndex(m_segIndex);
   tag.SetNNIndex(m_NNIndex);
-  tag.SetNodeId(mapOverlayNode(m_src-1));
+  if(m_srcOverlay-1>11) NS_LOG_UNCOND("ERROR "<<m_src-1);
+  tag.SetNodeId(m_srcOverlay-1);
   packet->AddPacketTag(tag);
   m_txTrace (packet);
   std::string start_time = std::to_string(Simulator::Now().GetMilliSeconds());

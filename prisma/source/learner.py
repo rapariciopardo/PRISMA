@@ -172,7 +172,9 @@ class DQN_AGENT(tf.Module):
 
         if update_eps >= 0:
             self.eps.assign(update_eps)
-            
+        #print(obs)
+        #if(obs[0][0]==4 and obs[0][1]==68):
+        #    print(stochastic, stochastic_actions, deterministic_actions)
         return output_actions
       
     #@tf.function()

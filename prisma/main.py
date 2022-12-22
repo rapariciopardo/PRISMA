@@ -90,8 +90,8 @@ def arguments_parser():
     group4.add_argument('--load_factor', type=float, help='scale of the traffic matrix', default=1)
     group4.add_argument('--load_factor_trainning', type=float, help='scale of the traffic matrix', default=1)
     group4.add_argument('--adjacency_matrix_path', type=str, help='Path to the adjacency matrix', default="examples/abilene/adjacency_matrix.txt")
-    group4.add_argument('--overlay_matrix_path', type=str, help='Path to the adjacency matrix', default="examples/abilene/overlay_matrix.txt")
-    group4.add_argument('--agent_adjacency_matrix_path', type=str, help='Path to the adjacency matrix', default="examples/abilene/adjacency_matrix_2.txt")
+    group4.add_argument('--overlay_matrix_path', type=str, help='Path to the adjacency matrix', default="examples/abilene/overlay_matrix_4n.txt")
+    group4.add_argument('--agent_adjacency_matrix_path', type=str, help='Path to the adjacency matrix', default="examples/abilene/adjacency_matrix_2_4n.txt")
     group4.add_argument('--traffic_matrix_root_path', type=str, help='Path to the traffic matrix folder', default="examples/abilene/traffic_matrices/")
     group4.add_argument('--traffic_matrix_index', type=int, help='Index of the traffic matrix', default=0)
     group4.add_argument('--node_coordinates_path', type=str, help='Path to the nodes coordinates', default="examples/abilene/node_coordinates.txt")
@@ -148,8 +148,10 @@ def arguments_parser():
     params["adjacency_matrix_path"] = os.path.abspath(params["adjacency_matrix_path"])
     params["agent_adjacency_matrix_path"] = os.path.abspath(params["agent_adjacency_matrix_path"])
     params["opt_rejected_path"] = os.path.abspath("test.txt")
+    params["map_overlay_path"] = os.path.abspath("mapOverlay_4n.txt")
     params["overlay_matrix_path"] = os.path.abspath(params["overlay_matrix_path"])
-    params["traffic_matrix_path"] = os.path.abspath(f'{params["traffic_matrix_root_path"].rstrip("/")}/traffic_mat_{params["traffic_matrix_index"]}_adjusted.txt')
+    params["traffic_matrix_path"] = os.path.abspath(f'{params["traffic_matrix_root_path"].rstrip("/")}/node_intensity_normalized_{params["traffic_matrix_index"]}.txt')
+    #params["traffic_matrix_path"] = os.path.abspath(f'{params["traffic_matrix_root_path"].rstrip("/")}/traffic_mat_{params["traffic_matrix_index"]}_adjusted_bps.txt')
     params["node_coordinates_path"] = os.path.abspath(params["node_coordinates_path"])
     params["ns3_sim_path"] = os.path.abspath(params["ns3_sim_path"])
 
@@ -160,6 +162,7 @@ def arguments_parser():
     G = nx.from_numpy_matrix(np.loadtxt(open(params["agent_adjacency_matrix_path"])), parallel_edges=False, create_using=G)
     params["maxNumNodes"] = 11
     params["numNodes"] = G.number_of_nodes()
+    print(G.number_of_nodes())
     params["G"] = G
     params["logs_parent_folder"] = params["logs_parent_folder"].rstrip("/")
 
@@ -323,7 +326,7 @@ def run_ns3(params):
                         '--adj_mat_file_name={} --overlay_mat_file_name={} --node_coordinates_file_name={} '
                         '--node_intensity_file_name={} --signaling={} --AgentType={} --signalingType={} '
                         '--syncStep={} --lossPenalty={} --activateOverlaySignaling={} --nPacketsOverlaySignaling={} '
-                        '--train={} --movingAverageObsSize={} --activateUnderlayTraffic={} --opt_rejected_file_name={}'.format( params["seed"],
+                        '--train={} --movingAverageObsSize={} --activateUnderlayTraffic={} --opt_rejected_file_name={} --map_overlay_file_name={}'.format( params["seed"],
                                              params["basePort"],
                                              str(params["simTime"]),
                                              params["packet_size"],
@@ -345,7 +348,8 @@ def run_ns3(params):
                                              bool(params["train"]),
                                              params["movingAverageObsSize"],
                                              bool(params["activateUnderlayTraffic"]),
-                                             params["opt_rejected_path"]
+                                             params["opt_rejected_path"],
+                                             params["map_overlay_path"]
                                              ))
     run_ns3_command = shlex.split(f'./waf --run "{ns3_params_format}"')
     subprocess.Popen(run_ns3_command)
@@ -368,8 +372,8 @@ def main():
     random.seed(params["seed"])
     
     ## test results file name
-    test_results_file_name = f'{params["logs_parent_folder"]}/_tests_overlay_21/ter_t_1000_20k_tr_{params["traffic_matrix_index"]}_underlayTraff_{params["activateUnderlayTrafficTrain"]}_{params["agent_type"]}_{params["signaling_type"]}_{params["signalingSim"]}_fixed_rb_{params["replay_buffer_max_size"]}_sync{int(1000*params["sync_step"])}ms_ratio_{int(100*params["sync_ratio"])}_overlayPackets_{params["nPacketsOverlay"]}_loadTrain_{int(100*params["load_factor_trainning"])}_load_{int(100*params["load_factor"])}.txt'
-    train_results_file_name = f'{params["logs_parent_folder"]}/_train_overlay_20/ter_1000_20k_tr_{params["traffic_matrix_index"]}_underlayTraff_{params["activateUnderlayTrafficTrain"]}_{params["agent_type"]}_{params["signaling_type"]}_{params["signalingSim"]}_fixed_rb_{params["replay_buffer_max_size"]}_sync{int(1000*params["sync_step"])}ms_ratio_{int(100*params["sync_ratio"])}_overlayPackets_{params["nPacketsOverlay"]}_loadTrain_{int(100*params["load_factor_trainning"])}_load_{int(100*params["load_factor"])}.txt'
+    test_results_file_name = f'{params["logs_parent_folder"]}/_tests_overlay_5n_2/ter_t_1000_20k_tr_{params["traffic_matrix_index"]}_underlayTraff_{params["activateUnderlayTrafficTrain"]}_{params["agent_type"]}_{params["signaling_type"]}_{params["signalingSim"]}_fixed_rb_{params["replay_buffer_max_size"]}_sync{int(1000*params["sync_step"])}ms_ratio_{int(100*params["sync_ratio"])}_overlayPackets_{params["nPacketsOverlay"]}_loadTrain_{int(100*params["load_factor_trainning"])}_load_{int(100*params["load_factor"])}.txt'
+    train_results_file_name = f'{params["logs_parent_folder"]}/_train_overlay_5n/ter_1000_20k_tr_{params["traffic_matrix_index"]}_underlayTraff_{params["activateUnderlayTrafficTrain"]}_{params["agent_type"]}_{params["signaling_type"]}_{params["signalingSim"]}_fixed_rb_{params["replay_buffer_max_size"]}_sync{int(1000*params["sync_step"])}ms_ratio_{int(100*params["sync_ratio"])}_overlayPackets_{params["nPacketsOverlay"]}_loadTrain_{int(100*params["load_factor_trainning"])}_load_{int(100*params["load_factor"])}.txt'
     print(test_results_file_name)
     if params["train"] == 1:
         if params["session_name"] in os.listdir(params["logs_parent_folder"] + "/saved_models/"):

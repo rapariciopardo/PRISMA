@@ -151,6 +151,7 @@ def optimal_routing_decision(graph, routing_mat, rejected_mat, actual_node, src_
     Returns:
         tuple: (action, tag)
     """
+    
     src = int(src_node)
     dst = int(dst_node)
     actual = int(actual_node)
@@ -159,9 +160,10 @@ def optimal_routing_decision(graph, routing_mat, rejected_mat, actual_node, src_
     indices = np.where(np.array(list(graph.edges))[ :,0]==actual)[0]
     prob_to_neighbors = routing_mat[src][dst][indices]
     loss_prob = rejected_mat[src][dst]
-    if actual == src: ## see if the packet is rejected
-        if np.random.rand() <= loss_prob:
-            return -1, None
+    
+    #if actual == src: ## see if the packet is rejected
+    #    if np.random.rand() <= loss_prob:
+    #        return -1, None
         
     if tag:
         if tag in prob_to_neighbors and tag < 1:

@@ -123,6 +123,7 @@ private:
   uint32_t        m_pktSizeMean;
   float           m_syncStep;
   uint32_t        m_src;
+  uint32_t        m_srcOverlay;
   uint32_t        m_dest;
   uint32_t        m_segIndex;
   uint32_t        m_NNIndex;

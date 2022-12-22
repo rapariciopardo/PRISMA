@@ -70,7 +70,7 @@ def DQN_buffer_lite_model(observation_shape, num_actions, num_nodes, input_size_
         if s ==0:
             flattened_split = layers.Flatten()(one_hot_layer(split[s]))
         else:
-            flattened_split = layers.LayerNormalization(center=False, scale=False, trainable=False, axis=1)(split[s])
+            flattened_split = split[s] # layers.LayerNormalization(center=False, scale=False, trainable=False, axis=1)(split[s])
 
         out_split = layers.Dense(units=16, activation="elu", kernel_initializer='he_uniform', bias_initializer='he_uniform')(flattened_split)
         tensors_2_concat.append(out_split)

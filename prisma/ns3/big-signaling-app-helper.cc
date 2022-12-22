@@ -100,8 +100,9 @@ BigSignalingAppHelper::SetAverageStep (float syncStep, uint32_t packetSize)
 }
 
 void
-BigSignalingAppHelper::SetSourceDest (uint32_t src, uint32_t dest){
+BigSignalingAppHelper::SetSourceDest (uint32_t src, uint32_t dest, uint32_t srcOverlay){
   m_factory.Set ("src", UintegerValue(src));
   m_factory.Set ("dest", UintegerValue(dest));
+  m_factory.Set ("srcOverlay", UintegerValue(srcOverlay));
 }
 } // namespace ns3

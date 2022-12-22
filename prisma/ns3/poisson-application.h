@@ -117,6 +117,7 @@ private:
   Ptr<Socket>     m_socket;       //!< Associated socket
   Address         m_peer;         //!< Peer address
   uint32_t        m_dest;
+  uint32_t        m_src;
   bool            m_connected;    //!< True if connected
   DataRate        m_avgRate;      //!< Rate that data is generated
   DataRate        m_avgRateFailSafe;      //!< Rate that data is generated (check copy)

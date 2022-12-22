@@ -44,10 +44,10 @@ if __name__ == '__main__':
     colors = [ "purple", "green", "red", "orange"]
     avg_data = {}
     avg_data_loads = {}
-    test_folder = "_tests_overlay_21"
+    test_folder = "_tests_overlay_5n"
     signaling_inband=1
     underlay=1
-    list_charges = [60, 70,80,90, 100,110, 120,130, 140]
+    list_charges = [60, 70,80,90, 100,110, 120]
     #list_charges = [140]
 
     if(plot==0): 
@@ -62,7 +62,7 @@ if __name__ == '__main__':
         syncs = [sync_ind]
         rb = [rb_size_ind]
     overlayPackets = [100]#,20,50,100]#[5,10,20,50,100,500]
-    agents = ["opt", "sp"]
+    agents = ["opt"]
     loads_train = [60,15,80,90,100,80,80]
                 
     lite = ("", "","","", "", "")
@@ -115,7 +115,7 @@ if __name__ == '__main__':
                     names = ["ter_t_1000_20k_tr_0_underlayTraff_1_sp_ideal_1_fixed_rb_10000_sync1000ms_ratio_10_overlayPackets_100_loadTrain_60"]* len(syncs)
                     official_names = ["Shortest Path"]* len(syncs)
                 elif signaling_type == "opt":
-                    names = ["ter_t_1000_20k_tr_0_underlayTraff_1_opt_ideal_1_fixed_rb_10000_sync1000ms_ratio_10_overlayPackets_100_loadTrain_93"] * len(syncs) 
+                    names = ["ter_t_1000_20k_tr_0_underlayTraff_1_opt_ideal_1_fixed_rb_10000_sync1000ms_ratio_10_overlayPackets_100_loadTrain_60"] * len(syncs) 
                     official_names = ["Optimal Solution"] * len(syncs)
                 j = 0
                 for i in range(len(names)):

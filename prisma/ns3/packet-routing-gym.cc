@@ -159,12 +159,13 @@ PacketRoutingEnv::PacketRoutingEnv (Time stepTime, Ptr<Node> node)
   //Simulator::Schedule (Seconds(0.0), &PacketRoutingEnv::ScheduleNextStateRead, this);
 }
 void 
-PacketRoutingEnv::setOverlayConfig(vector<int> overlayNeighbors, bool activateOverlaySignaling, uint32_t nPacketsOverlaySignaling,  uint32_t movingAverageObsSize){
+PacketRoutingEnv::setOverlayConfig(vector<int> overlayNeighbors, bool activateOverlaySignaling, uint32_t nPacketsOverlaySignaling,  uint32_t movingAverageObsSize, vector<int> map_overlay_array){
   m_overlayNeighbors = overlayNeighbors;
   m_activateOverlaySignaling = activateOverlaySignaling;
   m_nPacketsOverlaySignaling = nPacketsOverlaySignaling;
   m_movingAverageObsSize = movingAverageObsSize;
   m_countSendPackets = 0;
+  m_map_overlay_array = map_overlay_array;
   for(size_t i=0;i<m_overlayNeighbors.size();i++){
     m_overlayIndex[i] = 0;
     //m_tunnelsDelay.push_back(0);
@@ -196,24 +197,37 @@ PacketRoutingEnv::setLossPenalty(double lossPenalty){
 
 void
 PacketRoutingEnv::setPingTimeout(uint32_t maxBufferSize, uint32_t linkCapacity, uint32_t propagationDelay){
-  uint32_t nextHopSize[2];
+  uint32_t nextHopSize[4];
   if(m_node->GetId()==0){
     nextHopSize[0] = 2;
-    nextHopSize[1] = 2;
-  } else if(m_node->GetId()==7){
-    nextHopSize[0] = 2;
-    nextHopSize[1] = 5;
+    nextHopSize[1] = 4;
+    nextHopSize[2] = 3;
+    nextHopSize[3] = 2;
   } else if(m_node->GetId()==5){
     nextHopSize[0] = 2;
     nextHopSize[1] = 2;
-  } else{
+    nextHopSize[2] = 2;
+    nextHopSize[3] = 4;
+  } else if(m_node->GetId()==10){
+    nextHopSize[0] = 4;
+    nextHopSize[1] = 2;
+    nextHopSize[2] = 1;
+    nextHopSize[3] = 5;
+  } else if (m_node->GetId()==8){
+    nextHopSize[0] = 3;
+    nextHopSize[1] = 2;
+    nextHopSize[2] = 1;
+    nextHopSize[3] = 4;
+  } else if(m_node->GetId()==7){
     nextHopSize[0] = 2;
-    nextHopSize[1] = 5;
+    nextHopSize[1] = 4;
+    nextHopSize[2] = 5;
+    nextHopSize[3] = 4;
   }
   
   
-  for(size_t i=0;i<2;i++){
-    m_pingTimeout[i] = ((((float(maxBufferSize)+8.0)*8.0)/float(linkCapacity)) + 0.001*float(propagationDelay))*2*nextHopSize[i];
+  for(size_t i=0;i<4;i++){
+    m_pingTimeout[i] = ((((float(maxBufferSize)+38.0)*8.0)/float(linkCapacity)) + 0.001*float(propagationDelay))*1000*2*nextHopSize[i];
     NS_LOG_UNCOND("Node: "<<m_node->GetId()<<"   IF: "<<i<<"   PingTimeout: "<<m_pingTimeout[i]);
   }
 }
@@ -270,6 +284,7 @@ PacketRoutingEnv::GetObservationSpace()
   for(size_t i = 0;i<m_overlayNeighbors.size();i++){
     m_fwdDev_idx_overlay = i;
     m_src = m_node->GetId();
+    if(m_node->GetId()==10 && i==2) NS_LOG_UNCOND("PUSH "<<m_starting_overlay_packets[i].size());
     sendOverlaySignalingUpdate(uint8_t(3));
     m_lastPingOut = Simulator::Now().GetSeconds();
   }
@@ -331,18 +346,7 @@ PacketRoutingEnv::dropPacket(Ptr<PacketRoutingEnv> entity, Ptr<const Packet> pac
 uint32_t
 PacketRoutingEnv::mapOverlayNode(uint32_t underlayNode){
   uint32_t res;
-  if(underlayNode==0){
-    res= 0;
-  }
-  if (underlayNode==5){
-    res= 1;
-  }
-  if (underlayNode==7){
-    res= 2;
-  }
-  if (underlayNode==10){
-    res= 3;
-  }
+  res = m_map_overlay_array[underlayNode];
   return res;
 }
 
@@ -394,11 +398,13 @@ PacketRoutingEnv::GetObservation()
     else{
       if(m_starting_overlay_packets[i].size()>=1 && m_tunnelsDelay[i].size()>=1){
         if(double(Simulator::Now().GetMilliSeconds() - m_starting_overlay_packets[i][0].start_time)/2.0 >= m_pingTimeout[i]){
-          value=uint(m_pingTimeout[i]*1000.0);
+          value=uint(m_pingTimeout[i]);
+          NS_LOG_UNCOND("Node: "<<m_node->GetId()<<"Time: "<<Simulator::Now().GetSeconds());
+          NS_LOG_UNCOND(m_starting_overlay_packets[i][0].index<<"       "<<m_starting_overlay_packets[i][0].start_time);
           //m_tunnelsDelay[i].push_back(m_pingTimeout[i]);
           //value = getAverage(m_tunnelsDelay[i]);
-          //auto it = m_starting_overlay_packets[i].begin();
-          //it = m_starting_overlay_packets[i].erase(it);
+          auto it = m_starting_overlay_packets[i].begin();
+          it = m_starting_overlay_packets[i].erase(it);
         } else{
           value = getAverage(m_tunnelsDelay[i]);
         }
@@ -439,11 +445,12 @@ PacketRoutingEnv::GetLostPackets(){
       auto it = m_packetsSent[j].begin();
       while(it != m_packetsSent[j].end()){
         //NS_LOG_UNCOND(m_tunnelsDelay[j]);
-        if(Simulator::Now().GetMilliSeconds() - it->start_time>= 3000){ //100*m_tunnelsDelay[j]){
+        if(Simulator::Now().GetMilliSeconds() - it->start_time>= 2000){ //100*m_tunnelsDelay[j]){
           //NS_LOG_UNCOND("----------------------------------");
           //NS_LOG_UNCOND("Start: "<<it->start_time<<"  Now: "<<Simulator::Now().GetMilliSeconds());
           //NS_LOG_UNCOND("UID: "<<it->uid);
           //NS_LOG_UNCOND("----------------------------------");
+          //if(it->uid==19268) NS_LOG_UNCOND("DROP AQUI TIME "<<Simulator::Now().GetMilliSeconds()<<"    START "<<it->start_time);
           lost_packets +=std::to_string(it->uid);
           lost_packets += ";";
           it = m_packetsSent[j].erase(it);
@@ -595,6 +602,7 @@ PacketRoutingEnv::GetExtraInfo()
 
 void
 PacketRoutingEnv::sendOverlaySignalingUpdate(uint8_t type){
+  
   //Define Tag
   MyTag tagSmallSignaling;
 
@@ -611,6 +619,10 @@ PacketRoutingEnv::sendOverlaySignalingUpdate(uint8_t type){
   if(type==3) tagSmallSignaling.SetFinalDestination(m_overlayNeighbors[m_fwdDev_idx_overlay]);
   if(type==4) tagSmallSignaling.SetFinalDestination(m_lastHop);
   tagSmallSignaling.SetLastHop(m_src);
+  tagSmallSignaling.SetSource(m_src);
+  if(type==2) tagSmallSignaling.SetNextHop(m_lastHop);
+  if(type==3) tagSmallSignaling.SetNextHop(m_overlayNeighbors[m_fwdDev_idx_overlay]);
+  if(type==4) tagSmallSignaling.SetNextHop(m_lastHop);
 
   if(type==3) tagSmallSignaling.SetOverlayIndex(m_overlayIndex[m_fwdDev_idx_overlay]);
   if(type==4) tagSmallSignaling.SetOverlayIndex(m_recvOverlayIndex);
@@ -658,12 +670,12 @@ PacketRoutingEnv::sendOverlaySignalingUpdate(uint8_t type){
     dev->Send(smallSignalingPckt, m_destAddr, 0x800);
   }
 
-
 }
 
 bool
 PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
 {
+  //if(m_node->GetId()==10) NS_LOG_UNCOND("AQUI5 "<<Simulator::Now().GetSeconds());
   if (is_trainStep_flag==0){
     
     //Get discrete action
@@ -687,6 +699,7 @@ PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
 
     //For Data Packets which are not in source
     if(m_signaling==0 && m_activateSignaling){
+      //if(m_node->GetId()==10) NS_LOG_UNCOND("AQUI6 "<<Simulator::Now().GetSeconds());
       //if the limit is reached, send the overlay signaling
       if(m_countSendPackets >=m_nPacketsOverlaySignaling && m_activateOverlaySignaling){
         for(size_t i=0;i<m_overlayNeighbors.size();i++){
@@ -696,9 +709,11 @@ PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
           start.start_time=Simulator::Now().GetMilliSeconds();
           m_starting_overlay_packets[i].push_back(start);
           m_fwdDev_idx_overlay = i;
+          //if(m_node->GetId()==10 && i==2) NS_LOG_UNCOND("PUSH "<<m_starting_overlay_packets[i].size());
           sendOverlaySignalingUpdate(uint8_t(3));
         }
         m_countSendPackets = 0;
+        //NS_LOG_UNCOND("AQUII "<<m_node->GetId());
         m_pingDiffs.push_back(Simulator::Now().GetSeconds()-m_lastPingOut);
         m_lastPingOut = Simulator::Now().GetSeconds();
       }
@@ -713,14 +728,17 @@ PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
     if(m_isGameOver){
       //NS_LOG_UNCOND("FINAL DESTINATION!");
     } else if (m_fwdDev_idx < m_overlayNeighbors.size() && m_signaling==0){
+      //if(m_node->GetId()==10) NS_LOG_UNCOND("AQUI7 "<<Simulator::Now().GetSeconds());
       //if(m_node->GetId()==0 ||m_node->GetId()==7) m_fwdDev_idx = 0;
       //else m_fwdDev_idx = 1;
-      //NS_LOG_UNCOND("Action "<<m_fwdDev_idx<<"   "<<m_overlayNeighbors[m_fwdDev_idx]+1 );
       //Replace the updated tag
       MyTag sendingTag;
       m_pckt->PeekPacketTag(sendingTag);
       sendingTag.SetLastHop(m_node->GetId());
+      sendingTag.SetNextHop(m_overlayNeighbors[m_fwdDev_idx]);
       m_pckt->ReplacePacketTag(sendingTag);
+      //if(sendingTag.GetSource()==10 && sendingTag.GetFinalDestination()==0) NS_LOG_UNCOND("Action "<<m_fwdDev_idx<<"   "<<m_overlayNeighbors[m_fwdDev_idx]);
+
 
       //Adding Headers
       m_pckt->AddHeader(m_udpHeader);
@@ -744,11 +762,12 @@ PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
       m_packetsSent[m_fwdDev_idx].push_back(start);
       dev->Send(m_pckt, m_destAddr, 0x0800);
       
+      //NS_LOG_UNCOND("Node: "<<m_node->GetId()<<"    Count: "<<m_countSendPackets);
       m_countSendPackets += 1;
     }
     else{
       dropPacket(this, m_pckt);
-      //NS_LOG_UNCOND ("Not valid");
+      if(m_node->GetId()==10) NS_LOG_UNCOND ("Not valid "<< Simulator::Now().GetSeconds());
     }
     
   }
@@ -762,7 +781,6 @@ PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
 void
 PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netDev, NetDeviceContainer* nd, Ptr<const Packet> packet)
 {  
-  
   // define is train step flag
   entity->is_trainStep_flag = 0;
 
@@ -819,6 +837,11 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
 
   //Get Destination, source and last Hop
   entity->m_dest = tagCopy.GetFinalDestination();
+  //if(tagCopy.GetSource()==10 && tagCopy.GetFinalDestination()==0) NS_LOG_UNCOND("AQUI "<<tagCopy.GetNextHop()<<"    "<<entity->m_node->GetId()<<"  "<<Simulator::Now().GetSeconds());
+  if(tagCopy.GetNextHop()!=entity->m_node->GetId()) {
+    return ;
+  }
+  //if(tagCopy.GetSource()==10 && tagCopy.GetFinalDestination()==0 && tagCopy.GetSimpleValue()==0) NS_LOG_UNCOND("AQUI2");
   entity->m_src = entity->m_node->GetId();
   entity->m_lastHop = tagCopy.GetLastHop();
   
@@ -837,7 +860,7 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
   auto it = std::find(entity->m_overlayNeighbors.begin(), entity->m_overlayNeighbors.end(), entity->m_lastHop);
   if (it != entity->m_overlayNeighbors.end())
   {
-      entity->m_overlayRecvIndex = distance(entity->m_overlayNeighbors.begin(), it);
+    entity->m_overlayRecvIndex = distance(entity->m_overlayNeighbors.begin(), it);
   }
   else if(entity->m_lastHop !=1000 && tagCopy.GetSimpleValue()!=1)
   {
@@ -845,7 +868,6 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
     NS_LOG_UNCOND("ERRRRRRRRR "<<entity->m_lastHop<<"    tag: "<<uint32_t(tagCopy.GetSimpleValue())<<"   UID: "<<packet->GetUid());
     NS_LOG_UNCOND("Node: "<<entity->m_node->GetId());
   }
-
   //Receiving Packets and treating them according to its type
   if(Simulator::Now().GetSeconds()>=(entity->m_cp+1.0)){
     entity->m_cp += 1.0;
@@ -891,6 +913,8 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
     if(tagCopy.GetTrafficValable()==0){
       return ;
     }
+    //if(tagCopy.GetSource()==10 && tagCopy.GetFinalDestination()==0) NS_LOG_UNCOND("AQUI3");
+
     entity->m_packetStart = uint32_t(tagCopy.GetStartTime());
     if(entity->m_lastHop!=1000){
       if(entity->m_dest == entity->m_node->GetId()){
@@ -916,9 +940,15 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
       entity->m_tunnelsDelay[entity->m_overlayRecvIndex].erase(entity->m_tunnelsDelay[entity->m_overlayRecvIndex].begin());
     }
     entity->m_tunnelsDelay[entity->m_overlayRecvIndex].push_back(tagCopy.GetStartTime());
+    if(entity->m_first[entity->m_overlayRecvIndex]==false){
+      NS_LOG_UNCOND("Node: "<<entity->m_map_overlay_array[entity->m_node->GetId()]<<"    IF: "<<entity->m_overlayRecvIndex<<"     Ping: "<<tagCopy.GetStartTime());
+      entity->m_first[entity->m_overlayRecvIndex] = true;
+    }
     entity->m_count_ping[entity->m_overlayRecvIndex] += 1;
+    //NS_LOG_UNCOND("Node: "<<entity->m_node->GetId()<<"      Tunnel Recv Index: "<<entity->m_overlayRecvIndex<<"     Vector Pings sent size: "<<entity->m_starting_overlay_packets[entity->m_overlayRecvIndex].size());
     auto it = entity->m_starting_overlay_packets[entity->m_overlayRecvIndex].begin();
     while(it->index != tagCopy.GetOverlayIndex()){
+      //NS_LOG_UNCOND("erase "<<it->index);
       it = entity->m_starting_overlay_packets[entity->m_overlayRecvIndex].erase(it);
     }
     it = entity->m_starting_overlay_packets[entity->m_overlayRecvIndex].erase(it);
@@ -930,6 +960,7 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
     //  //}
     //  //entity->m_starting_overlay_packets[entity->m_overlayRecvIndex].erase(entity->m_starting_overlay_packets[entity->m_overlayRecvIndex].begin());
     //}
+    
   }
 
   
@@ -985,17 +1016,18 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
   }
   
   //Printing INFO
-  if(false){
-    NS_LOG_UNCOND("..............................................................");
-    NS_LOG_UNCOND("SimTime: "<<Simulator::Now().GetMilliSeconds());
-    NS_LOG_UNCOND("Uid: "<<p->GetUid());
-    NS_LOG_UNCOND("Node: "<<entity->m_node->GetId()<<"    ND: "<<netDev->GetIfIndex());
-    NS_LOG_UNCOND("Destination: "<< entity->m_dest);
-    NS_LOG_UNCOND("Last Hop: "<<entity->m_lastHop);
-    NS_LOG_UNCOND("TAG: "<<uint32_t(tagCopy.GetSimpleValue()));
-    NS_LOG_UNCOND(p->ToString());
-    if(tagCopy.GetSimpleValue()==1) NS_LOG_UNCOND("BIG SIGNALING");
-  }
+  //if(tagCopy.GetSimpleValue()==0){
+  //  NS_LOG_UNCOND("..............................................................");
+  //  NS_LOG_UNCOND("SimTime: "<<Simulator::Now().GetMilliSeconds());
+  //  NS_LOG_UNCOND("Uid: "<<p->GetUid());
+  //  NS_LOG_UNCOND("Node: "<<entity->m_node->GetId()<<"    ND: "<<netDev->GetIfIndex());
+  //  NS_LOG_UNCOND("Destination: "<< entity->m_dest);
+  //  NS_LOG_UNCOND("Last Hop: "<<entity->m_lastHop);
+  //  NS_LOG_UNCOND("TAG: "<<uint32_t(tagCopy.GetSimpleValue()));
+  //  NS_LOG_UNCOND(p->ToString());
+  //  if(tagCopy.GetSimpleValue()==1) NS_LOG_UNCOND("BIG SIGNALING");
+  //  NS_LOG_UNCOND("-----------------------------------------------------------------");
+  //}
 
   if(tagCopy.GetSimpleValue()==3 || tagCopy.GetSimpleValue()==4){
     return ;
@@ -1015,6 +1047,7 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
   
 
  
+  //if(tagCopy.GetSource()==10 && tagCopy.GetFinalDestination()==0) NS_LOG_UNCOND("AQUI4");
 
  
   
@@ -1034,6 +1067,7 @@ PacketRoutingEnv::NotifyTrainStep(Ptr<PacketRoutingEnv> entity)
   // //NS_LOG_UNCOND("Src: "<<entity->m_src);
   // //NS_LOG_UNCOND("Packet id: "<<entity->m_pckt->GetUid());
   //NS_LOG_UNCOND("Sim time : "<<Simulator::Now().GetMilliSeconds());
+
 
   entity->Notify();
 }

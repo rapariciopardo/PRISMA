@@ -11,6 +11,7 @@ echo $9 # topology
 echo ${10} #prio
 echo ${11} #load_trai
 echo ${12} #underlay_traff
+echo ${13} #SimTimeTrainning
 #module load singularity/3.5.2
 uname -a
 echo $(date)
@@ -25,23 +26,23 @@ cd ..
 
 python3 main.py \
 	--seed=$2 \
-	--simTime=100 \
+	--simTime=${13} \
 	--basePort=$(((4444+$2)+(1000*$3)+($res0*15)+($8*1000))) \
 	--train=1 \
 	--agent_type=$4 \
-	--session_name="off_seg_fac_1_t1000_7k_ma_in_train_overlay_obs_fixed_$9_real_delay_$4_$5_ts_0_01_seed_$2_traff_mat_$3_rb_size_$7_batch_512_lr_1e-3_gamma_1_final_eps_0_01_load_${res1}_refreshRate_$6_underlayTraff_${12}_sync_$1_loss_x11_sp_init" \
+	--session_name="ping_corr_no_normoff_corr_4n${13}_buf_1x_ma_in_train_overlay_obs_fixed_$9_real_delay_$4_$5_ts_0_01_seed_$2_traff_mat_$3_rb_size_$7_batch_512_lr_1e-3_gamma_1_final_eps_0_01_load_${res1}_refreshRate_$6_underlayTraff_${12}_sync_$1_loss_x11_sp_init" \
 	--signaling_type=$5 \
 	--logs_parent_folder=examples/$9/ \
 	--traffic_matrix_root_path=examples/$9/traffic_matrices/ \
 	--traffic_matrix_index=$3 \
 	--adjacency_matrix_path=examples/$9/adjacency_matrix.txt \
-	--node_coordinates_path=examples/$9/node_coordinates.txt \
+	--node_coordinates_path=examples/$9/node_coordinates_4n.txt \
 	--training_step=0.01 \
 	--batch_size=512 \
 	--lr=0.001 \
 	--exploration_final_eps=0.01 \
 	--exploration_initial_eps=1.0 \
-	--iterationNum=20000 \
+	--iterationNum=15000 \
 	--gamma=1.0 \
 	--training_trigger_type="time" \
 	--save_models=1 \
@@ -58,19 +59,19 @@ python3 main.py \
 	--movingAverageObsSize=100 \
 	--prioritizedReplayBuffer=${10} \
 	--activateUnderlayTraffic=${12} \
-	--load_path=examples/$9/$4_sp_init_overlay 
+	--load_path=examples/$9/$4_sp_init_overlay_modified 
 
 
 array=(
-0.6
-0.7
-0.8
-0.9
-1.0
-1.1
-1.2
-1.3
-1.4
+#0.6
+#0.7
+#0.8
+#0.9
+#1.0
+#1.1
+#1.2
+###1.3
+###1.4
 )
 counter=0
 
@@ -88,7 +89,7 @@ for j in ${array[@]}
 		--basePort=$(((4444 + $2)+(1000*$3)+($res0 * 15)+($8*1000))) \
 		--train=0 \
 		--seed=200 \
-		--session_name="ma_in_test_qua_500_7k_new_$9_real_delay_$4_$5_real_rb_$7_sync_step_$1_variation_mat_$3_seed_$2_prio_${10}_load_$res2" \
+		--session_name="t_off_corr_5n${13}_buf_1x_ma_in_test_new_$9_real_delay_$4_$5_real_rb_$7_sync_step_$1_variation_mat_$3_seed_$2_prio_${10}_load_$res2" \
 		--signaling_type=$5 \
 		--agent_type=$4 \
 		--logs_parent_folder=examples/$9/ \
@@ -108,7 +109,7 @@ for j in ${array[@]}
 		--prioritizedReplayBuffer=${10} \
         --activateUnderlayTraffic=1 \
 		--activateUnderlayTrafficTrain=${12} \
-		--load_path=examples/$9/saved_models/off_seg_new_t1000_7k_ma_in_train_new_overlay_obs_in_bytes_fixed_abilene_real_delay_dqn_buffer_NN_ts_0_01_seed_100_prio_0_traff_mat_0_rb_size_10000_batch_512_lr_1e-3_gamma_1_final_eps_0_01_load_600_refreshRate_100_underlayTraff_0_sync_1_loss_x11_sp_init/iteration1_episode1 \
+		--load_path=examples/$9/saved_models/off_corr_5n${13}_buf_1x_ma_in_train_overlay_obs_fixed_$9_real_delay_$4_$5_ts_0_01_seed_$2_traff_mat_$3_rb_size_$7_batch_512_lr_1e-3_gamma_1_final_eps_0_01_load_${res1}_refreshRate_$6_underlayTraff_${12}_sync_$1_loss_x11_sp_init/iteration1_episode1 \
 		--load_factor_trainning=${11} \
 		--load_factor=$j
 	# oarsub -p "gpu='YES' and gpucapability>='5.0'" -l /nodes=1/gpunum=1,walltime=06:00:00 -d /home/ralliche/PRISMA-master/prisma/ "scripts/run_on_nef_test.sh $j 100 0 train_abilene_NN_ts_0_03_seed_100_traff_mat_0_batch_512_lr_1e-3_gamma_1_final_eps_0_01_load_40_sync_0.5_loss_x1_sp_init"

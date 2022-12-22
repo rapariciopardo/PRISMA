@@ -106,8 +106,9 @@ PoissonAppHelper::SetUpdatable(bool updatable, double updateTrafficRateTime){
 }
 
 void
-PoissonAppHelper::SetDestination(uint32_t dest){
+PoissonAppHelper::SetDestination(uint32_t dest, uint32_t src){
   m_factory.Set ("Dest", UintegerValue(dest));
+  m_factory.Set ("Src", UintegerValue(src));
 }
 void
 PoissonAppHelper::SetTrafficValableProbability(double trafficValableProbability){

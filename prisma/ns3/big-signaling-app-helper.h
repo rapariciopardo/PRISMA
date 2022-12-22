@@ -82,7 +82,7 @@ public:
    */
   void SetAverageStep (float syncStep, uint32_t packetSize = 512);
 
-  void SetSourceDest (uint32_t src, uint32_t dest);
+  void SetSourceDest (uint32_t src, uint32_t dest, uint32_t srcOverlay);
   /**
    * Install an ns3::BigSignalingGeneratorApplication on each node of the input container
    * configured with all the attributes set with SetAttribute.
