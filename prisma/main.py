@@ -84,7 +84,7 @@ def arguments_parser():
     group1.add_argument('--movingAverageObsSize', type=int, help="Sets the MA size of collecting the obs", default=5)
     group1.add_argument('--activateUnderlayTraffic', type=int, help="sets if there is underlay traffic", default=0)
     group1.add_argument('--activateUnderlayTrafficTrain', type=int, help="sets if there is underlay traffic", default=0)
-
+    group1.add_argument('--map_overlay_path', type=str, help='Path to the map overlay file', default="mapOverlay_4n.txt")
 
     group4 = parser.add_argument_group('Network parameters')
     group4.add_argument('--load_factor', type=float, help='scale of the traffic matrix', default=1)
@@ -148,7 +148,7 @@ def arguments_parser():
     params["adjacency_matrix_path"] = os.path.abspath(params["adjacency_matrix_path"])
     params["agent_adjacency_matrix_path"] = os.path.abspath(params["agent_adjacency_matrix_path"])
     params["opt_rejected_path"] = os.path.abspath("test.txt")
-    params["map_overlay_path"] = os.path.abspath("mapOverlay_4n.txt")
+    params["map_overlay_path"] = os.path.abspath(params["map_overlay_path"])
     params["overlay_matrix_path"] = os.path.abspath(params["overlay_matrix_path"])
     params["traffic_matrix_path"] = os.path.abspath(f'{params["traffic_matrix_root_path"].rstrip("/")}/node_intensity_normalized_{params["traffic_matrix_index"]}.txt')
     #params["traffic_matrix_path"] = os.path.abspath(f'{params["traffic_matrix_root_path"].rstrip("/")}/traffic_mat_{params["traffic_matrix_index"]}_adjusted_bps.txt')
