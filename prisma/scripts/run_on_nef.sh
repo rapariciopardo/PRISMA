@@ -30,21 +30,21 @@ python3 main.py \
 	--basePort=$(((4444+$2)+(1000*$3)+($res0*15)+($8*1000))) \
 	--train=1 \
 	--agent_type=$4 \
-	--session_name="ping_corr_no_norm_4n${13}_buf_1x_ma_in_train_overlay_obs_fixed_$9_real_delay_$4_$5_ts_0_01_seed_$2_traff_mat_$3_rb_size_$7_batch_512_lr_1e-3_gamma_1_final_eps_0_01_load_${res1}_refreshRate_$6_underlayTraff_${12}_sync_$1_loss_x11_sp_init" \
+	--session_name="ping_corr_no_norm_5n${13}_buf_1x_ma_in_train_overlay_obs_fixed_$9_real_delay_$4_$5_ts_0_01_seed_$2_traff_mat_$3_rb_size_$7_batch_512_lr_1e-3_gamma_1_final_eps_0_01_load_${res1}_refreshRate_$6_underlayTraff_${12}_sync_$1_loss_x11_sp_init" \
 	--signaling_type=$5 \
 	--logs_parent_folder=examples/$9/ \
 	--traffic_matrix_root_path=examples/$9/traffic_matrices/ \
 	--traffic_matrix_index=$3 \
-	--agent_adjacency_matrix_path=examples/$9/adjacency_matrix_2_4n.txt \
+	--agent_adjacency_matrix_path=examples/$9/adjacency_matrix_2_5n.txt \
 	--adjacency_matrix_path=examples/$9/adjacency_matrix.txt \
-	--node_coordinates_path=examples/$9/node_coordinates_4n.txt \
-	--overlay_matrix_path=examples/$9/overlay_matrix_4n.txt \
-	--map_overlay_path=mapOverlay_4n.txt \
+	--node_coordinates_path=examples/$9/node_coordinates_5n.txt \
+	--overlay_matrix_path=examples/$9/overlay_matrix_5n.txt \
+	--map_overlay_path=mapOverlay_5n.txt \
 	--training_step=0.01 \
 	--batch_size=512 \
 	--lr=0.001 \
 	--exploration_final_eps=0.01 \
-	--exploration_initial_eps=1.0 \
+	--exploration_initial_eps=0.01 \
 	--iterationNum=15000 \
 	--gamma=1.0 \
 	--training_trigger_type="time" \
@@ -62,17 +62,17 @@ python3 main.py \
 	--movingAverageObsSize=100 \
 	--prioritizedReplayBuffer=${10} \
 	--activateUnderlayTraffic=${12} \
-	--load_path=examples/$9/$4_sp_init_overlay_modified 
+	--load_path=examples/$9/$4_sp_init_overlay_modified_5n
 
 
 array=(
 0.6
-0.7
-0.8
-0.9
-1.0
-1.1
-1.2
+#0.7
+#0.8
+#0.9
+#1.0
+#1.1
+#1.2
 ##1.3
 ##1.4
 )
@@ -92,16 +92,16 @@ for j in ${array[@]}
 		--basePort=$(((4444 + $2)+(1000*$3)+($res0 * 15)+($8*1000))) \
 		--train=0 \
 		--seed=200 \
-		--session_name="t_off_corr_4n${13}_buf_1x_ma_in_test_new_$9_real_delay_$4_$5_real_rb_$7_sync_step_$1_variation_mat_$3_seed_$2_prio_${10}_load_$res2" \
+		--session_name="t_off_corr_5n${13}_buf_1x_ma_in_test_new_$9_real_delay_$4_$5_real_rb_$7_sync_step_$1_variation_mat_$3_seed_$2_prio_${10}_load_$res2" \
 		--signaling_type=$5 \
 		--agent_type=$4 \
 		--logs_parent_folder=examples/$9/ \
 		--traffic_matrix_index=0 \
-		--agent_adjacency_matrix_path=examples/$9/adjacency_matrix_2_4n.txt \
+		--agent_adjacency_matrix_path=examples/$9/adjacency_matrix_2_5n.txt \
 		--adjacency_matrix_path=examples/$9/adjacency_matrix.txt \
-		--node_coordinates_path=examples/$9/node_coordinates_4n.txt \
-		--overlay_matrix_path=examples/$9/overlay_matrix_4n.txt \
-		--map_overlay_path=mapOverlay_4n.txt \
+		--node_coordinates_path=examples/$9/node_coordinates_5n.txt \
+		--overlay_matrix_path=examples/$9/overlay_matrix_5n.txt \
+		--map_overlay_path=mapOverlay_5n.txt \
 		--save_models=0 \
 		--start_tensorboard=0 \
 		--sync_step=$1 \
@@ -114,7 +114,7 @@ for j in ${array[@]}
 		--prioritizedReplayBuffer=${10} \
         --activateUnderlayTraffic=1 \
 		--activateUnderlayTrafficTrain=${12} \
-		--load_path=examples/$9/saved_models/ping_corr_no_norm_4n${13}_buf_1x_ma_in_train_overlay_obs_fixed_$9_real_delay_$4_$5_ts_0_01_seed_$2_traff_mat_$3_rb_size_$7_batch_512_lr_1e-3_gamma_1_final_eps_0_01_load_${res1}_refreshRate_$6_underlayTraff_${12}_sync_$1_loss_x11_sp_init/iteration1_episode1 \
+		--load_path=examples/$9/saved_models/ping_corr_no_norm_5n${13}_buf_1x_ma_in_train_overlay_obs_fixed_$9_real_delay_$4_$5_ts_0_01_seed_$2_traff_mat_$3_rb_size_$7_batch_512_lr_1e-3_gamma_1_final_eps_0_01_load_${res1}_refreshRate_$6_underlayTraff_${12}_sync_$1_loss_x11_sp_init/iteration1_episode1 \
 		--load_factor_trainning=${11} \
 		--load_factor=$j
 	# oarsub -p "gpu='YES' and gpucapability>='5.0'" -l /nodes=1/gpunum=1,walltime=06:00:00 -d /home/ralliche/PRISMA-master/prisma/ "scripts/run_on_nef_test.sh $j 100 0 train_abilene_NN_ts_0_03_seed_100_traff_mat_0_batch_512_lr_1e-3_gamma_1_final_eps_0_01_load_40_sync_0.5_loss_x1_sp_init"
