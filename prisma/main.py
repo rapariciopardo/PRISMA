@@ -25,6 +25,7 @@ from source.agent import Agent
 from source.utils import save_model
 import subprocess, signal
 import shlex
+import pathlib
 from tensorboard.plugins.custom_scalar import summary as cs_summary
 from tensorboard.plugins.custom_scalar import layout_pb2
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
@@ -165,18 +166,19 @@ def arguments_parser():
     print(G.number_of_nodes())
     params["G"] = G
     params["logs_parent_folder"] = params["logs_parent_folder"].rstrip("/")
+    pathlib.Path(params["logs_parent_folder"]).mkdir(parents=True, exist_ok=True)
 
     ## Add session name
     if params["session_name"] == None:
         params["session_name"] = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    params["logs_folder"] = params["logs_parent_folder"] + "/results/"+ params["session_name"]
+    params["logs_folder"] = params["logs_parent_folder"] + "/" + params["session_name"]
 
     ## add some params for tensorboard writer
     params["global_stats_path"] = f'{params["logs_folder"]}/stats'
     params["nb_arrived_pkts_path"] = f'{params["logs_folder"]}/nb_arrived_pkts'
     params["nb_new_pkts_path"] = f'{params["logs_folder"]}/nb_new_pkts'
     params["nb_lost_pkts_path"] = f'{params["logs_folder"]}/nb_lost_pkts'
-    
+
     ## Add optimal solution path
     topology_name = params["adjacency_matrix_path"].split("/")[-2]
     params["optimal_soltion_path"] = f"examples/{topology_name}/optimal_solution/{params['traffic_matrix_index']}_adjusted_5_nodes_mesh_norm_matrix_uniform/{int(params['load_factor']*100)}_ut_minCostMCF.json"
@@ -372,44 +374,48 @@ def main():
     random.seed(params["seed"])
     
     ## test results file name
-    test_results_file_name = f'{params["logs_parent_folder"]}/_tests_overlay_5n_2/ter_t_1000_20k_tr_{params["traffic_matrix_index"]}_underlayTraff_{params["activateUnderlayTrafficTrain"]}_{params["agent_type"]}_{params["signaling_type"]}_{params["signalingSim"]}_fixed_rb_{params["replay_buffer_max_size"]}_sync{int(1000*params["sync_step"])}ms_ratio_{int(100*params["sync_ratio"])}_overlayPackets_{params["nPacketsOverlay"]}_loadTrain_{int(100*params["load_factor_trainning"])}_load_{int(100*params["load_factor"])}.txt'
-    train_results_file_name = f'{params["logs_parent_folder"]}/_train_overlay_5n/ter_1000_20k_tr_{params["traffic_matrix_index"]}_underlayTraff_{params["activateUnderlayTrafficTrain"]}_{params["agent_type"]}_{params["signaling_type"]}_{params["signalingSim"]}_fixed_rb_{params["replay_buffer_max_size"]}_sync{int(1000*params["sync_step"])}ms_ratio_{int(100*params["sync_ratio"])}_overlayPackets_{params["nPacketsOverlay"]}_loadTrain_{int(100*params["load_factor_trainning"])}_load_{int(100*params["load_factor"])}.txt'
+    test_results_file_name = f'{params["logs_parent_folder"]}/_tests_overlay_4n_2/ter_t_1000_20k_tr_{params["traffic_matrix_index"]}_underlayTraff_{params["activateUnderlayTrafficTrain"]}_{params["agent_type"]}_{params["signaling_type"]}_{params["signalingSim"]}_fixed_rb_{params["replay_buffer_max_size"]}_sync{int(1000*params["sync_step"])}ms_ratio_{int(100*params["sync_ratio"])}_overlayPackets_{params["nPacketsOverlay"]}_loadTrain_{int(100*params["load_factor_trainning"])}_load_{int(100*params["load_factor"])}.txt'
+    train_results_file_name = f'{params["logs_parent_folder"]}/_train_overlay_4n/ter_1000_20k_tr_{params["traffic_matrix_index"]}_underlayTraff_{params["activateUnderlayTrafficTrain"]}_{params["agent_type"]}_{params["signaling_type"]}_{params["signalingSim"]}_fixed_rb_{params["replay_buffer_max_size"]}_sync{int(1000*params["sync_step"])}ms_ratio_{int(100*params["sync_ratio"])}_overlayPackets_{params["nPacketsOverlay"]}_loadTrain_{int(100*params["load_factor_trainning"])}_load_{int(100*params["load_factor"])}.txt'
     print(test_results_file_name)
     if params["train"] == 1:
+        pathlib.Path(params["logs_parent_folder"] + "/saved_models/").mkdir(parents=True, exist_ok=True)
         if params["session_name"] in os.listdir(params["logs_parent_folder"] + "/saved_models/"):
                 print(f'The couple {params["seed"]} {params["traffic_matrix_index"]} already exists in : {params["logs_parent_folder"] + "/saved_models/" + params["session_name"]}')
                 return 1
          
-    else:
-        if test_results_file_name.split("/")[-1] in os.listdir("/".join(test_results_file_name.split("/")[:-1])):
-            ## check if the couple seed traff mat idx is already in the file
-            if [params["traffic_matrix_index"], params["seed"]] in np.atleast_2d(np.genfromtxt(test_results_file_name, delimiter=",", dtype=int))[:, 2:4].tolist():
-                print(f'The couple {params["seed"]} {params["traffic_matrix_index"]} already exists in the {test_results_file_name}')
-                return 1
+    # else:
+    #     if test_results_file_name.split("/")[-1] in os.listdir("/".join(test_results_file_name.split("/")[:-1])):
+    #         ## check if the couple seed traff mat idx is already in the file
+    #         if [params["traffic_matrix_index"], params["seed"]] in np.atleast_2d(np.genfromtxt(test_results_file_name, delimiter=",", dtype=int))[:, 2:4].tolist():
+    #             print(f'The couple {params["seed"]} {params["traffic_matrix_index"]} already exists in the {test_results_file_name}')
+    #             return 1
                         
     # if params["train"] == 0:
     #     params["signalingSim"] = 0
     ## Setup writer for the global stats
-    summary_writer_parent = tf.summary.create_file_writer(logdir=params["logs_folder"] )
-    summary_writer_session = tf.summary.create_file_writer(logdir=params["global_stats_path"] )
-    summary_writer_nb_arrived_pkts = tf.summary.create_file_writer(logdir=params["nb_arrived_pkts_path"] )
-    summary_writer_nb_new_pkts = tf.summary.create_file_writer(logdir=params["nb_new_pkts_path"] )
-    summary_writer_nb_lost_pkts = tf.summary.create_file_writer(logdir=params["nb_lost_pkts_path"] )
+    if params["train"] == 1:
+        summary_writer_parent = tf.summary.create_file_writer(logdir=params["logs_folder"] )
+        summary_writer_session = tf.summary.create_file_writer(logdir=params["global_stats_path"] )
+        summary_writer_nb_arrived_pkts = tf.summary.create_file_writer(logdir=params["nb_arrived_pkts_path"] )
+        summary_writer_nb_new_pkts = tf.summary.create_file_writer(logdir=params["nb_new_pkts_path"] )
+        summary_writer_nb_lost_pkts = tf.summary.create_file_writer(logdir=params["nb_lost_pkts_path"] )
 
-    ## write the session info
-    with tf.summary.create_file_writer(logdir=params["logs_folder"]).as_default():
-        ## Adapt the dict to the hparams api
-        dict_to_store = copy.deepcopy(params)
-        dict_to_store["G"] = str(params["G"])
-        dict_to_store["load_path"] = str(params["load_path"])
-        dict_to_store["simArgs"] = str(params["simArgs"])
-        hp.hparams(dict_to_store)  # record the values used in this trial
+        ## write the session info
+        with tf.summary.create_file_writer(logdir=params["logs_folder"]).as_default():
+            ## Adapt the dict to the hparams api
+            dict_to_store = copy.deepcopy(params)
+            dict_to_store["G"] = str(params["G"])
+            dict_to_store["load_path"] = str(params["load_path"])
+            dict_to_store["simArgs"] = str(params["simArgs"])
+            hp.hparams(dict_to_store)  # record the values used in this trial
     
-    ## Define the custom categories in tensorboard
-    with summary_writer_parent.as_default():
-        tf.summary.experimental.write_raw_pb(
-                custom_plots().SerializeToString(), step=0
-            )
+        ## Define the custom categories in tensorboard
+        with summary_writer_parent.as_default():
+            tf.summary.experimental.write_raw_pb(
+                    custom_plots().SerializeToString(), step=0
+                )
+    else:
+        summary_writer_results = tf.summary.create_file_writer(logdir=params["logs_folder"] + "/test_results")
     ## setup the agents (fix the static variables)
     Agent.init_static_vars(params)
     
@@ -442,7 +448,8 @@ def main():
     ## wait until simulation complete and update info about the env at each timestep
     while threading.active_count() > params["numNodes"] * (1+ params["train"]):
         sleep(params["logging_timestep"])
-        stats_writer(summary_writer_session, summary_writer_nb_arrived_pkts, summary_writer_nb_lost_pkts, summary_writer_nb_new_pkts)
+        if params["train"] == 1:
+            stats_writer(summary_writer_session, summary_writer_nb_arrived_pkts, summary_writer_nb_lost_pkts, summary_writer_nb_new_pkts)
 
     print(f"Signaling overhead = {Agent.small_signaling_overhead_counter}")
     print(f""" Summary of the Simulation:
@@ -529,14 +536,19 @@ def main():
                           
         
     if params["train"] == 0:
-           
-        with open(test_results_file_name, 'a') as f: 
-            writer = csv.writer(f) 
-            writer.writerow(new_fields_stats)
-    else:   
-        with open(train_results_file_name, 'a') as f: 
-            writer = csv.writer(f) 
-            writer.writerow(new_fields_stats) 
+        ## store test stats
+        with summary_writer_results.as_default():
+            tf.summary.scalar('e2e_delay', Agent.sim_avg_e2e_delay, step=int(params["load_factor"]*100))
+            tf.summary.scalar('loss_rate', Agent.sim_dropped_packets/Agent.sim_injected_packets, step=int(params["load_factor"]*100))
+            tf.summary.scalar('cost', Agent.sim_cost, step=int(params["load_factor"]*100))
+
+    #     with open(test_results_file_name, 'a') as f: 
+    #         writer = csv.writer(f) 
+    #         writer.writerow(new_fields_stats)
+    # else:   
+    #     with open(train_results_file_name, 'a') as f: 
+    #         writer = csv.writer(f) 
+    #         writer.writerow(new_fields_stats) 
     
 
     ## save models        
