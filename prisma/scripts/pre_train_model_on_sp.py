@@ -19,8 +19,8 @@ if __name__ == '__main__':
     """
     
     ### define the params
-    topology = '4n' #'5n'
-    size_of_data_per_dst = 5000 
+    topology = '11n'#'4n' #'5n'
+    size_of_data_per_dst = 1000 
     topology_name = "abilene"
     buffer_max_length = 270
     ### load the topology graph

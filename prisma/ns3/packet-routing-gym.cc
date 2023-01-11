@@ -189,6 +189,11 @@ PacketRoutingEnv::setTrainConfig(bool train){
   m_train = train;
 }
 
+void
+PacketRoutingEnv::setPingAsObs(bool pingAsObs){
+  m_pingAsObs = pingAsObs;
+}
+
 
 void
 PacketRoutingEnv::setLossPenalty(double lossPenalty){
@@ -390,7 +395,7 @@ PacketRoutingEnv::GetObservation()
     Ptr<Ipv4Route> route = routing->RouteOutput (packet_test, m_ipHeader, 0, sockerr);
     Ptr<PointToPointNetDevice> dev = DynamicCast<PointToPointNetDevice>(route->GetOutputDevice());
     uint value;
-    if(m_activateOverlaySignaling==0){
+    if(m_activateOverlaySignaling==0 || m_pingAsObs==false){
       //uint32_t value = GetQueueLength (m_node, i);
       value = GetQueueLengthInBytes (m_node, dev->GetIfIndex());
       //NS_LOG_UNCOND("Node: "<<m_node->GetId()<<"   Value: "<<value);
@@ -399,8 +404,8 @@ PacketRoutingEnv::GetObservation()
       if(m_starting_overlay_packets[i].size()>=1 && m_tunnelsDelay[i].size()>=1){
         if(double(Simulator::Now().GetMilliSeconds() - m_starting_overlay_packets[i][0].start_time)/2.0 >= m_pingTimeout[i]){
           value=uint(m_pingTimeout[i]);
-          NS_LOG_UNCOND("Node: "<<m_node->GetId()<<"Time: "<<Simulator::Now().GetSeconds());
-          NS_LOG_UNCOND(m_starting_overlay_packets[i][0].index<<"       "<<m_starting_overlay_packets[i][0].start_time);
+          //NS_LOG_UNCOND("Node: "<<m_node->GetId()<<"Time: "<<Simulator::Now().GetSeconds());
+          //NS_LOG_UNCOND(m_starting_overlay_packets[i][0].index<<"       "<<m_starting_overlay_packets[i][0].start_time);
           //m_tunnelsDelay[i].push_back(m_pingTimeout[i]);
           //value = getAverage(m_tunnelsDelay[i]);
           auto it = m_starting_overlay_packets[i].begin();

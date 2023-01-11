@@ -42,7 +42,7 @@
 #include "ospf-tag.h"
 #include <vector>
 
-#define MAX_TUNNELS 5
+#define MAX_TUNNELS 11
 
 namespace ns3 {
 
@@ -75,6 +75,7 @@ public:
   void setNetDevicesContainer(NetDeviceContainer* nd);
   void setTrainConfig(bool train);
   void setLossPenalty(double lossPenalty);
+  void setPingAsObs(bool pingAsObs);
   virtual ~PacketRoutingEnv ();
   static TypeId GetTypeId (void);
   virtual void DoDispose ();
@@ -202,6 +203,8 @@ private:
 
   vector<int> m_map_overlay_array;
   bool m_first[MAX_TUNNELS]={false};
+
+  bool m_pingAsObs = true;
 
 
  
