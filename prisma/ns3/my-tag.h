@@ -42,6 +42,8 @@ public:
   uint32_t GetNextHop (void) const;
   void SetSource (uint32_t value);
   uint32_t GetSource (void) const;
+  void SetTunnelOverlaySendingIndex (uint32_t value);
+  uint32_t GetTunnelOverlaySendingIndex (void) const;
 private:
   uint8_t m_simpleValue;
   uint64_t m_startTime;
@@ -55,7 +57,8 @@ private:
   uint32_t m_segIndex;
   uint32_t m_NNIndex;
   uint32_t m_nodeId;
-  uint32_t m_overlayIndex;  
+  uint32_t m_overlayIndex;
+  uint32_t m_tunnelOverlaySendingIndex;  
 };
 }
 

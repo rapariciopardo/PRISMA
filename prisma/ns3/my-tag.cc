@@ -50,10 +50,10 @@ MyTag::GetSerializedSize (void) const
     ret += 8;
   }
   else if (m_simpleValue==3){
-    ret += 12;
+    ret += 16;
   }
   else if (m_simpleValue==4){
-    ret += 12;
+    ret += 16;
   }
   return ret;
 }
@@ -81,10 +81,12 @@ MyTag::Serialize (TagBuffer i) const
   else if(m_simpleValue==3){
     i.WriteU64 (m_startTime);
     i.WriteU32 (m_overlayIndex);
+    i.WriteU32 (m_tunnelOverlaySendingIndex);
   }
   else if(m_simpleValue==4){
     i.WriteU64 (m_startTime);
     i.WriteU32 (m_overlayIndex);
+    i.WriteU32 (m_tunnelOverlaySendingIndex);
   }
   
   
@@ -114,10 +116,12 @@ MyTag::Deserialize (TagBuffer i)
   else if(m_simpleValue==3){
     m_startTime=i.ReadU64 ();
     m_overlayIndex=i.ReadU32 ();
+    m_tunnelOverlaySendingIndex = i.ReadU32 ();
   }
   else if(m_simpleValue==4){
     m_startTime=i.ReadU64 ();
     m_overlayIndex = i.ReadU32 ();
+    m_tunnelOverlaySendingIndex = i.ReadU32 ();
   }
  
 }
@@ -255,4 +259,14 @@ uint32_t
 MyTag::GetSource (void) const
 {
   return m_source;
+}
+void
+MyTag::SetTunnelOverlaySendingIndex (uint32_t value)
+{
+  m_tunnelOverlaySendingIndex = value;
+}
+uint32_t 
+MyTag::GetTunnelOverlaySendingIndex (void) const
+{
+  return m_tunnelOverlaySendingIndex;
 }

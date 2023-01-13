@@ -76,6 +76,7 @@ public:
   void setTrainConfig(bool train);
   void setLossPenalty(double lossPenalty);
   void setPingAsObs(bool pingAsObs);
+  void setLogsFolder(std::string logs_folder);
   virtual ~PacketRoutingEnv ();
   static TypeId GetTypeId (void);
   virtual void DoDispose ();
@@ -197,7 +198,7 @@ private:
   int m_first_op_test = 0; 
   int m_second_op_test = 0;
 
-  float m_pingTimeout[MAX_TUNNELS];
+  int m_pingTimeout[MAX_TUNNELS];
   float m_lastPingOut;
   vector<float> m_pingDiffs;
 
@@ -205,6 +206,8 @@ private:
   bool m_first[MAX_TUNNELS]={false};
 
   bool m_pingAsObs = true;
+
+  std::string m_logs_folder;
 
 
  

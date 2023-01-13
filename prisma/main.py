@@ -331,7 +331,7 @@ def run_ns3(params):
                         '--node_intensity_file_name={} --signaling={} --AgentType={} --signalingType={} '
                         '--syncStep={} --lossPenalty={} --activateOverlaySignaling={} --nPacketsOverlaySignaling={} '
                         '--train={} --movingAverageObsSize={} --activateUnderlayTraffic={} --opt_rejected_file_name={} '
-                        '--map_overlay_file_name={} --pingAsObs={}'.format( params["seed"],
+                        '--map_overlay_file_name={} --pingAsObs={} --logs_folder={}'.format( params["seed"],
                                              params["basePort"],
                                              str(params["simTime"]),
                                              params["packet_size"],
@@ -355,7 +355,8 @@ def run_ns3(params):
                                              bool(params["activateUnderlayTraffic"]),
                                              params["opt_rejected_path"],
                                              params["map_overlay_path"],
-                                             bool(params["pingAsObs"])
+                                             bool(params["pingAsObs"]),
+                                             params["logs_folder"]
                                              ))
     run_ns3_command = shlex.split(f'./waf --run "{ns3_params_format}"')
     subprocess.Popen(run_ns3_command)

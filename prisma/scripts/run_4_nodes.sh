@@ -42,14 +42,14 @@ python3 main.py \
 	--overlay_matrix_path=examples/$9/overlay_matrix_4n.txt \
 	--map_overlay_path=mapOverlay_4n.txt \
 	--training_step=0.01 \
-	--batch_size=1024 \
-	--lr=0.0001 \
+	--batch_size=512 \
+	--lr=0.001 \
 	--exploration_final_eps=0.01 \
 	--exploration_initial_eps=1.0 \
 	--iterationNum=15000 \
 	--gamma=1.0 \
 	--training_trigger_type="time" \
-	--save_models=1 \
+	--save_models=0 \
 	--start_tensorboard=0 \
 	--replay_buffer_max_size=$7 \
   	--link_delay="1ms" \
@@ -69,11 +69,11 @@ python3 main.py \
 array=(
 #0.6
 #0.7
-0.8
+#0.8
 #0.9
-1.0
+#1.0
 #1.1
-1.2
+#1.2
 ##1.3
 ##1.4
 )

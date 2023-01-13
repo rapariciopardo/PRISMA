@@ -649,11 +649,10 @@ PointToPointNetDevice::Send (
   // Enqueue may fail (overflow)
 
   
-  if(tagcopy.GetSimpleValue()==0){
+ 
+  if(tagcopy.GetSimpleValue()==3 || tagcopy.GetSimpleValue()==4 || tagcopy.GetSimpleValue()==0){
     m_macTxDropTrace (packet);
-  }
-
-  
+  } 
   return false;
 }
 

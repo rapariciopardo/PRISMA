@@ -159,6 +159,7 @@ int main (int argc, char *argv[])
   std::string node_intensity_file_name("scratch/prisma/examples/abilene/node_intensity.txt");
   std::string opt_rejected_file_name("scratch/prisma/test.txt");
   std::string map_overlay_file_name("scratch/prisma/test2.txt");
+  std::string logs_folder("../prisma/abilene/examples/4n");
 
 
   bool activateOverlaySignaling = true;
@@ -211,6 +212,8 @@ int main (int argc, char *argv[])
   cmd.AddValue ("opt_rejected_file_name", "Rejected paths in Optimal Algorithm file name", opt_rejected_file_name);
   cmd.AddValue ("map_overlay_file_name", "Map overlay file name", map_overlay_file_name);
   cmd.AddValue ("pingAsObs", "ping as observation variable", pingAsObs);
+  cmd.AddValue ("logs_folder", "Logs folder", logs_folder);
+
   cmd.Parse (argc, argv);
     
   NS_LOG_UNCOND("Ns3Env parameters:");
@@ -233,6 +236,7 @@ int main (int argc, char *argv[])
   NS_LOG_UNCOND("--activateUnderlayTraffic: "<<activateUnderlayTraffic);
   NS_LOG_UNCOND("--RejectedTraffPath: "<<opt_rejected_file_name);
   NS_LOG_UNCOND("--pingAsObs: "<<pingAsObs);
+  NS_LOG_UNCOND("--logs_folder: "<<logs_folder);
 
   
   
@@ -511,8 +515,9 @@ int main (int argc, char *argv[])
     } else {
       packetRoutingEnv = CreateObject<PacketRoutingEnv> (Seconds(envStepTime), n); // time-driven step
     }
-    packetRoutingEnv->SetOpenGymInterface(openGymInterface);
+    packetRoutingEnv->setLogsFolder(logs_folder);
     packetRoutingEnv->setOverlayConfig(overlayNeighbors[overlayNodes[i]], activateOverlaySignaling, nPacketsOverlaySignaling, movingAverageObsSize, map_overlay_array);
+    packetRoutingEnv->SetOpenGymInterface(openGymInterface);
     packetRoutingEnv->m_node_container = &nodes_switch;
     packetRoutingEnv->setPingTimeout(16260, 500000, 1);
     packetRoutingEnv->setLossPenalty(lossPenalty);

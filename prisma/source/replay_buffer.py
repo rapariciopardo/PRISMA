@@ -41,13 +41,18 @@ class ReplayBuffer(object):
         for i in idxes:
             data = self._storage[i]
             obs_t, action, reward, obs_tp1, done = data
+            #print(obs_t)
             obses_t.append(obs_t)
             actions.append(np.array(action, copy=False))
             rewards.append(reward)
             obses_tp1.append(obs_tp1)
             dones.append(done)
-        return np.array(obses_t), np.array(actions), np.array(rewards), np.array(obses_tp1, dtype=object), np.array(dones), np.ones(len(idxes), dtype=np.float32)
-
+        try:                
+            return np.array(obses_t), np.array(actions), np.array(rewards), np.array(obses_tp1, dtype=object), np.array(dones), np.ones(len(idxes), dtype=np.float32)
+        except:
+            print("ERROR")
+            print(obses_t)
+            raise(1)
     def sample(self, batch_size):
         """Sample a batch of experiences.
         Parameters

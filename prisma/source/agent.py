@@ -224,6 +224,10 @@ class Agent():
         ### define node neighbors
         self.neighbors = list(Agent.G.neighbors(self.index))
 
+        for i in range(len(self.neighbors)):
+            outputFile = open(f"{Agent.logs_folder}/rew_{self.index}_{i}.txt", 'w')
+            outputFile.close()
+
 
         ### define the ns3 env
         self.env = ns3env.Ns3Env(port=int(self.port), stepTime=Agent.stepTime, startSim=Agent.startSim, simSeed=Agent.seed, simArgs=Agent.simArgs, debug=Agent.debug)
@@ -580,7 +584,11 @@ class Agent():
                                 element["reward"],
                                 element["new_obs"], 
                                 element["flag"])
-                    #print(self.index, element)
+                    
+                    
+                    outputFile = open(f"{Agent.logs_folder}/rew_{self.index}_{element['action']}.txt", 'a+')
+                    outputFile.write(str(Agent.curr_time)+"  "+str(element["reward"])+'\n')
+                    outputFile.close()
                     Agent.upcoming_events[self.index].pop(idx)
                     break
                         
@@ -638,7 +646,22 @@ class Agent():
             action_indices_all = np.concatenate(action_indices_all)
 
             ### prepare tf variables
-            obses_t = tf.constant(obses_t[action_indices_all,])
+            
+            try:
+                #if(self.index==9):
+                #    print("Node: ", self.index)
+                #    print(action_indices_all, action_indices_all.shape)
+                #    print(obses_t, obses_t.shape, type(obses_t[0]))
+                obses_t = tf.constant(obses_t[action_indices_all,])
+            except:
+                print("ERROR")
+                print("Node: ", self.index)
+                print(action_indices_all, action_indices_all.shape)
+                print(obses_t, obses_t.shape, type(obses_t[0]))
+                for i in obses_t:
+                    print(i.shape)
+                raise(1)
+            
             actions_t = tf.constant(actions_t[action_indices_all], shape=(Agent.batch_size))
             targets_t = tf.constant(tf.concat(targets_t, axis=0), shape=(Agent.batch_size))
         
@@ -688,7 +711,6 @@ class Agent():
                     try:
                         lost_packet_info = Agent.temp_obs.get(int(lost_packet_id))
                         next_hop_degree = len(list(Agent.G.neighbors(self.neighbors[lost_packet_info["action"]])))
-                        #print(lost_packet_id, lost_packet_info, next_hop_degree)
                         rew = self._get_reward()
                         if(Agent.prioritizedReplayBuffer):
                             Agent.replay_buffer[self.index].add(np.array(lost_packet_info["obs"], dtype=float).squeeze(),
@@ -698,6 +720,9 @@ class Agent():
                                         True,
                                         Agent.replay_buffer[self.index].latest_gradient_step[lost_packet_info["action"]])
                         else:
+                            outputFile = open(f".{Agent.logs_folder}/rew_{self.index}_{lost_packet_info['action']}.txt", 'a+')
+                            outputFile.write(str(Agent.curr_time)+"  "+str(rew)+'\n')
+                            outputFile.close()
                             Agent.replay_buffer[self.index].add(np.array(lost_packet_info["obs"], dtype=float).squeeze(),
                                         lost_packet_info["action"], 
                                         rew,
