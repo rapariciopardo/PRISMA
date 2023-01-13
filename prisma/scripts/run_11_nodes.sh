@@ -49,7 +49,7 @@ python3 main.py \
 	--iterationNum=15000 \
 	--gamma=1.0 \
 	--training_trigger_type="time" \
-	--save_models=1 \
+	--save_models=0 \
 	--start_tensorboard=0 \
 	--replay_buffer_max_size=$7 \
   	--link_delay="1ms" \
@@ -64,6 +64,7 @@ python3 main.py \
 	--prioritizedReplayBuffer=${10} \
 	--activateUnderlayTraffic=${12} \
     --pingAsObs=1 \
+	--groundTruthFrequence=0.1 \
 	--load_path=examples/$9/$4_sp_init_overlay_modified_11n
 
 

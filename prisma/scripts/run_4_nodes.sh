@@ -63,7 +63,7 @@ python3 main.py \
 	--movingAverageObsSize=100 \
 	--prioritizedReplayBuffer=${10} \
 	--activateUnderlayTraffic=${12} \
-	--load_path=examples/$9/$4_sp_init_overlay_modified
+	--load_path=examples/$9/$4_sp_init_overlay_modified_4n
 
 
 array=(

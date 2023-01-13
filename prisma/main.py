@@ -87,6 +87,7 @@ def arguments_parser():
     group1.add_argument('--activateUnderlayTrafficTrain', type=int, help="sets if there is underlay traffic", default=0)
     group1.add_argument('--map_overlay_path', type=str, help='Path to the map overlay file', default="mapOverlay_4n.txt")
     group1.add_argument('--pingAsObs', type=int, help="dets if ping value is used as observation", default=1)
+    group1.add_argument('--groundTruthFrequence', type=float, help="groundTruthFrequence", default=0.1)
 
 
     group4 = parser.add_argument_group('Network parameters')
@@ -331,7 +332,7 @@ def run_ns3(params):
                         '--node_intensity_file_name={} --signaling={} --AgentType={} --signalingType={} '
                         '--syncStep={} --lossPenalty={} --activateOverlaySignaling={} --nPacketsOverlaySignaling={} '
                         '--train={} --movingAverageObsSize={} --activateUnderlayTraffic={} --opt_rejected_file_name={} '
-                        '--map_overlay_file_name={} --pingAsObs={} --logs_folder={}'.format( params["seed"],
+                        '--map_overlay_file_name={} --pingAsObs={} --logs_folder={} --groundTruthFrequence={}'.format( params["seed"],
                                              params["basePort"],
                                              str(params["simTime"]),
                                              params["packet_size"],
@@ -356,7 +357,8 @@ def run_ns3(params):
                                              params["opt_rejected_path"],
                                              params["map_overlay_path"],
                                              bool(params["pingAsObs"]),
-                                             params["logs_folder"]
+                                             params["logs_folder"],
+                                             params["groundTruthFrequence"]
                                              ))
     run_ns3_command = shlex.split(f'./waf --run "{ns3_params_format}"')
     subprocess.Popen(run_ns3_command)

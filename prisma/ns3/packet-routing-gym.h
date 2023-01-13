@@ -43,6 +43,7 @@
 #include <vector>
 
 #define MAX_TUNNELS 11
+#define MAX_NODES 11
 
 namespace ns3 {
 
@@ -100,9 +101,13 @@ public:
   NodeContainer* m_node_container;
   void simulationEnd(bool underlayTraff, double load);
   void setPingTimeout(uint32_t maxBufferSize, uint32_t linkCapacity, uint32_t propagationDelay);
+  void setGroundTruthFrequence(float interval);
+  
 
 
 private:
+  void scheduleGroundTruthPrint();
+  void groundTruthPrint();
   void ScheduleNextStateRead();
   uint32_t GetQueueLength(Ptr<Node> node, uint32_t netDev_idx);
   uint32_t GetQueueLengthInBytes(Ptr<Node> node, uint32_t netDev_idx);
@@ -208,6 +213,10 @@ private:
   bool m_pingAsObs = true;
 
   std::string m_logs_folder;
+
+  NetDeviceContainer m_netDevs_perNode[MAX_NODES];
+
+  float m_intervalGroundTruth;
 
 
  

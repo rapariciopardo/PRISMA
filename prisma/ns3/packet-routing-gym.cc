@@ -194,15 +194,29 @@ PacketRoutingEnv::setOverlayConfig(vector<int> overlayNeighbors, bool activateOv
     filename = m_logs_folder+"/tavg_" + std::to_string(mapOverlayNode(m_node->GetId()))+"_"+std::to_string(i)+".txt";
     ofstream outputFile2(filename);
     outputFile2.close();
+
+    filename = m_logs_folder+"/groundTruth.txt";
+    ofstream outputFile3(filename);
+    outputFile3.close();
   }
 }
 
 void
 PacketRoutingEnv::setNetDevicesContainer(NetDeviceContainer* nd){
+  
   for(size_t i =0; i < nd->GetN();i++){
+    //NS_LOG_UNCOND(i<<"     "<<nd->Get(i)->GetNode()->GetId()<<"    "<<nd->Get(i)->GetIfIndex());
     if(m_node->GetId()==0) nd->Get(i)->TraceConnectWithoutContext("MacTxDrop", MakeBoundCallback(&dropPacket, this));
     m_all_nds.Add(nd->Get(i));
+    if(i>=MAX_NODES){
+      m_netDevs_perNode[nd->Get(i)->GetNode()->GetId()].Add(nd->Get(i));
+    } 
   }
+  //for(size_t i =0; i<MAX_NODES;i++){
+  //  for(size_t j=0 ;j<m_netDevs_perNode[i].GetN();j++){
+  //    NS_LOG_UNCOND(i<<"    "<<j<<"     "<<m_netDevs_perNode[i].Get(j)->GetNode()->GetId()<<"    "<<m_netDevs_perNode[i].Get(j)->GetIfIndex());
+  //  }
+  //}
 }
 
 void
@@ -1122,6 +1136,33 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
   
   //Notify
   entity->Notify();
+}
+void 
+PacketRoutingEnv::setGroundTruthFrequence(float interval){
+  m_intervalGroundTruth = interval;
+  scheduleGroundTruthPrint();
+}
+void 
+PacketRoutingEnv::scheduleGroundTruthPrint(){
+  Simulator::Schedule (Seconds(m_intervalGroundTruth), &PacketRoutingEnv::groundTruthPrint, this);
+}
+
+void
+PacketRoutingEnv::groundTruthPrint(){
+  std::string filename;
+  filename = m_logs_folder+"/"+"groundTruth.txt";
+  ofstream outputFile(filename, std::ios_base::app);
+  if(outputFile.is_open()){
+    outputFile << Simulator::Now().GetSeconds();
+    for(size_t i =0; i<MAX_NODES;i++){
+      for(size_t j=0 ;j<m_netDevs_perNode[i].GetN();j++){
+        outputFile <<" "<<GetQueueLengthInBytes(m_netDevs_perNode[i].Get(j)->GetNode(), m_netDevs_perNode[i].Get(j)->GetIfIndex());
+      }
+    }
+    outputFile <<std::endl;
+    outputFile.close();
+  }
+  scheduleGroundTruthPrint();
 }
 
 void

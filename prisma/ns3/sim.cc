@@ -161,6 +161,8 @@ int main (int argc, char *argv[])
   std::string map_overlay_file_name("scratch/prisma/test2.txt");
   std::string logs_folder("../prisma/abilene/examples/4n");
 
+  float groundTruthFrequence = -1;
+
 
   bool activateOverlaySignaling = true;
   uint32_t nPacketsOverlaySignaling = 2;
@@ -213,6 +215,7 @@ int main (int argc, char *argv[])
   cmd.AddValue ("map_overlay_file_name", "Map overlay file name", map_overlay_file_name);
   cmd.AddValue ("pingAsObs", "ping as observation variable", pingAsObs);
   cmd.AddValue ("logs_folder", "Logs folder", logs_folder);
+  cmd.AddValue ("groundTruthFrequence", "ground truth freq", groundTruthFrequence);
 
   cmd.Parse (argc, argv);
     
@@ -237,6 +240,7 @@ int main (int argc, char *argv[])
   NS_LOG_UNCOND("--RejectedTraffPath: "<<opt_rejected_file_name);
   NS_LOG_UNCOND("--pingAsObs: "<<pingAsObs);
   NS_LOG_UNCOND("--logs_folder: "<<logs_folder);
+  NS_LOG_UNCOND("--groundTruthFrequence: "<<groundTruthFrequence);
 
   
   
@@ -524,6 +528,9 @@ int main (int argc, char *argv[])
     packetRoutingEnv->setNetDevicesContainer(&switch_nd);
     packetRoutingEnv->setTrainConfig(train);
     packetRoutingEnv->setPingAsObs(pingAsObs);
+    if(i==0 && groundTruthFrequence>0){
+      packetRoutingEnv->setGroundTruthFrequence(groundTruthFrequence);
+    }
     for(size_t j = 1;j<nodes_switch.Get(overlayNodes[i])->GetNDevices();j++){
       Ptr<NetDevice> dev_switch =DynamicCast<NetDevice> (nodes_switch.Get(overlayNodes[i])->GetDevice(j)); 
       dev_switch->TraceConnectWithoutContext("MacRx", MakeBoundCallback(&PacketRoutingEnv::NotifyPktRcv, packetRoutingEnv, dev_switch, &traffic_nd));

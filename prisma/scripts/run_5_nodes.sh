@@ -62,17 +62,17 @@ python3 main.py \
 	--movingAverageObsSize=100 \
 	--prioritizedReplayBuffer=${10} \
 	--activateUnderlayTraffic=${12} \
-	--load_path=examples/$9/$4_sp_init_overlay_modified
+	--load_path=examples/$9/$4_sp_init_overlay_modified_5n
 
 
 array=(
-0.6
-0.7
-0.8
-0.9
-1.0
-1.1
-1.2
+#0.6
+#0.7
+#0.8
+#0.9
+#1.0
+#1.1
+#1.2
 ##1.3
 ##1.4
 )
