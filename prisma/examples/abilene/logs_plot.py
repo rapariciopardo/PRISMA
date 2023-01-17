@@ -1,10 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-exp="4nodes"
-session="test_log_4n_exp_0_1"
-nodes = [0,1,2,3]
-interfaces = [0,1]
+exp="5nodes"
+session="test_log_5n_10p"
+nodes = [0,1,2,3,4]
+interfaces = [0,1,2,3]
 logs=["rew", "delay", "tavg"]
 for node in nodes:
     for interface in interfaces:
@@ -22,11 +22,11 @@ for node in nodes:
 
             ax.plot(time, value, label=log)
 
-        filename = f"{exp}/{session}/tsent_{node}_{interface}.txt"
-        Data = np.genfromtxt(filename, dtype=float, delimiter="  ")
-        time = Data[:]
-        value = np.zeros(time.shape)
-        ax.plot(time, value, 'o', label="Tsent")
+        #filename = f"{exp}/{session}/tsent_{node}_{interface}.txt"
+        #Data = np.genfromtxt(filename, dtype=float, delimiter="  ")
+        #time = Data[:]
+        #value = np.zeros(time.shape)
+        #ax.plot(time, value, 'o', label="Tsent")
 
         ax.legend()
         plt.savefig(f"{exp}/{session}/{node}_{interface}.png")
