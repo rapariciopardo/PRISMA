@@ -708,8 +708,8 @@ class Agent():
                 delay_time = float(tokens[0].split('=')[-1])
                 lost_packets = np.array((tokens[1].split('=')[-1]).split(';')[:-1], dtype=int).tolist()
                 for lost_packet_id in lost_packets:
+                    lost_packet_info = Agent.temp_obs.get(int(lost_packet_id))
                     try:
-                        lost_packet_info = Agent.temp_obs.get(int(lost_packet_id))
                         next_hop_degree = len(list(Agent.G.neighbors(self.neighbors[lost_packet_info["action"]])))
                         rew = self._get_reward()
                         if(Agent.prioritizedReplayBuffer):
@@ -720,7 +720,7 @@ class Agent():
                                         True,
                                         Agent.replay_buffer[self.index].latest_gradient_step[lost_packet_info["action"]])
                         else:
-                            outputFile = open(f".{Agent.logs_folder}/rew_{self.index}_{lost_packet_info['action']}.txt", 'a+')
+                            outputFile = open(f"{Agent.logs_folder}/rew_{self.index}_{lost_packet_info['action']}.txt", 'a+')
                             outputFile.write(str(Agent.curr_time)+"  "+str(rew)+'\n')
                             outputFile.close()
                             Agent.replay_buffer[self.index].add(np.array(lost_packet_info["obs"], dtype=float).squeeze(),

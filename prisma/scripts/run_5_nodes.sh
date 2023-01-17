@@ -32,7 +32,7 @@ python3 main.py \
 	--agent_type=$4 \
 	--session_name=${14} \
 	--signaling_type=$5 \
-	--logs_parent_folder=examples/$9/ \
+	--logs_parent_folder=examples/$9/${15} \
 	--traffic_matrix_root_path=examples/$9/traffic_matrices/ \
 	--traffic_matrix_index=$3 \
 	--agent_adjacency_matrix_path=examples/$9/adjacency_matrix_2_5n.txt \
@@ -41,14 +41,14 @@ python3 main.py \
 	--overlay_matrix_path=examples/$9/overlay_matrix_5n.txt \
 	--map_overlay_path=mapOverlay_5n.txt \
 	--training_step=0.01 \
-	--batch_size=1024 \
-	--lr=0.0001 \
+	--batch_size=512 \
+	--lr=0.001 \
 	--exploration_final_eps=0.01 \
 	--exploration_initial_eps=1.0 \
 	--iterationNum=15000 \
 	--gamma=1.0 \
 	--training_trigger_type="time" \
-	--save_models=0 \
+	--save_models=1 \
 	--start_tensorboard=0 \
 	--replay_buffer_max_size=$7 \
   --link_delay="1ms" \

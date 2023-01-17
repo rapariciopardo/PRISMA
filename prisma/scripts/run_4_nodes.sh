@@ -44,12 +44,12 @@ python3 main.py \
 	--training_step=0.01 \
 	--batch_size=512 \
 	--lr=0.001 \
-	--exploration_final_eps=0.01 \
-	--exploration_initial_eps=1.0 \
+	--exploration_final_eps=0.1 \
+	--exploration_initial_eps=0.1 \
 	--iterationNum=15000 \
 	--gamma=1.0 \
 	--training_trigger_type="time" \
-	--save_models=0 \
+	--save_models=1 \
 	--start_tensorboard=0 \
 	--replay_buffer_max_size=$7 \
   	--link_delay="1ms" \

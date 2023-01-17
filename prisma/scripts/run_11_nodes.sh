@@ -25,57 +25,57 @@ res1=${FLOAT/.*}
 echo $res1
 #	--session_name="ping_corr_no_norm_11n${13}_buf_1x_ma_in_train_overlay_obs_fixed_$9_real_delay_$4_$5_ts_0_01_seed_$2_traff_mat_$3_rb_size_$7_batch_512_lr_1e-3_gamma_1_final_eps_0_01_load_${res1}_refreshRate_$6_underlayTraff_${12}_sync_$1_loss_x11_sp_init" \
 
-python3 main.py \
-	--seed=$2 \
-	--simTime=${13} \
-	--basePort=$(((4444+$2)+(1000*$3)+($res0*15)+($8*1000))) \
-	--train=1 \
-	--agent_type=$4 \
-	--session_name=${14} \
-	--signaling_type=$5 \
-	--logs_parent_folder=examples/$9/${15} \
-	--traffic_matrix_root_path=examples/$9/traffic_matrices/ \
-	--traffic_matrix_index=$3 \
-	--agent_adjacency_matrix_path=examples/$9/adjacency_matrix_2_11n.txt \
-	--adjacency_matrix_path=examples/$9/adjacency_matrix.txt \
-	--node_coordinates_path=examples/$9/node_coordinates_11n.txt \
-	--overlay_matrix_path=examples/$9/overlay_matrix_11n.txt \
-	--map_overlay_path=mapOverlay_11n.txt \
-	--training_step=0.01 \
-	--batch_size=1024 \
-	--lr=0.0001 \
-	--exploration_final_eps=0.01 \
-	--exploration_initial_eps=1.0 \
-	--iterationNum=15000 \
-	--gamma=1.0 \
-	--training_trigger_type="time" \
-	--save_models=0 \
-	--start_tensorboard=0 \
-	--replay_buffer_max_size=$7 \
-  	--link_delay="1ms" \
-	--load_factor=${11} \
-	--load_factor_trainning=${11} \
-	--sync_step=$1 \
-	--max_out_buffer_size=16260 \
-	--sync_ratio=0.2 \
-	--signalingSim=1 \
-	--nPacketsOverlay=$6 \
-	--movingAverageObsSize=100 \
-	--prioritizedReplayBuffer=${10} \
-	--activateUnderlayTraffic=${12} \
-    --pingAsObs=1 \
-	--groundTruthFrequence=0.1 \
-	--load_path=examples/$9/$4_sp_init_overlay_modified_11n
-
+#python3 main.py \
+#	--seed=$2 \
+#	--simTime=${13} \
+#	--basePort=$(((4444+$2)+(1000*$3)+($res0*15)+($8*1000))) \
+#	--train=1 \
+#	--agent_type=$4 \
+#	--session_name=${14} \
+#	--signaling_type=$5 \
+#	--logs_parent_folder=examples/$9/${15} \
+#	--traffic_matrix_root_path=examples/$9/traffic_matrices/ \
+#	--traffic_matrix_index=$3 \
+#	--agent_adjacency_matrix_path=examples/$9/adjacency_matrix_2_11n.txt \
+#	--adjacency_matrix_path=examples/$9/adjacency_matrix.txt \
+#	--node_coordinates_path=examples/$9/node_coordinates_11n.txt \
+#	--overlay_matrix_path=examples/$9/overlay_matrix_11n.txt \
+#	--map_overlay_path=mapOverlay_11n.txt \
+#	--training_step=0.01 \
+#	--batch_size=512 \
+#	--lr=0.001 \
+#	--exploration_final_eps=0.01 \
+#	--exploration_initial_eps=1.0 \
+#	--iterationNum=5000 \
+#	--gamma=1.0 \
+#	--training_trigger_type="time" \
+#	--save_models=1 \
+#	--start_tensorboard=0 \
+#	--replay_buffer_max_size=$7 \
+#  	--link_delay="1ms" \
+#	--load_factor=${11} \
+#	--load_factor_trainning=${11} \
+#	--sync_step=$1 \
+#	--max_out_buffer_size=16260 \
+#	--sync_ratio=0.2 \
+#	--signalingSim=1 \
+#	--nPacketsOverlay=$6 \
+#	--movingAverageObsSize=100 \
+#	--prioritizedReplayBuffer=${10} \
+#	--activateUnderlayTraffic=${12} \
+#    --pingAsObs=1 \
+#	--groundTruthFrequence=0.1 \
+#	--load_path=examples/$9/$4_sp_init_overlay_modified_11n
+#
 
 array=(
-#0.6
-#0.7
-#0.8
-#0.9
-#1.0
-#1.1
-#1.2
+0.6
+0.7
+0.8
+0.9
+1.0
+1.1
+1.2
 ##1.3
 ##1.4
 )
