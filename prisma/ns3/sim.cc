@@ -519,6 +519,7 @@ int main (int argc, char *argv[])
     } else {
       packetRoutingEnv = CreateObject<PacketRoutingEnv> (Seconds(envStepTime), n); // time-driven step
     }
+    packetRoutingEnv->setTrainConfig(train);
     packetRoutingEnv->setLogsFolder(logs_folder);
     packetRoutingEnv->setOverlayConfig(overlayNeighbors[overlayNodes[i]], activateOverlaySignaling, nPacketsOverlaySignaling, movingAverageObsSize, map_overlay_array);
     packetRoutingEnv->SetOpenGymInterface(openGymInterface);
@@ -526,7 +527,6 @@ int main (int argc, char *argv[])
     packetRoutingEnv->setPingTimeout(16260, 500000, 1);
     packetRoutingEnv->setLossPenalty(lossPenalty);
     packetRoutingEnv->setNetDevicesContainer(&switch_nd);
-    packetRoutingEnv->setTrainConfig(train);
     packetRoutingEnv->setPingAsObs(pingAsObs);
     if(i==0 && groundTruthFrequence>0){
       packetRoutingEnv->setGroundTruthFrequence(groundTruthFrequence);

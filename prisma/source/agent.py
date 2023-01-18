@@ -223,10 +223,10 @@ class Agent():
 
         ### define node neighbors
         self.neighbors = list(Agent.G.neighbors(self.index))
-
-        for i in range(len(self.neighbors)):
-            outputFile = open(f"{Agent.logs_folder}/rew_{self.index}_{i}.txt", 'w')
-            outputFile.close()
+        if(self.train):
+            for i in range(len(self.neighbors)):
+                outputFile = open(f"{Agent.logs_folder}/rew_{self.index}_{i}.txt", 'w')
+                outputFile.close()
 
 
         ### define the ns3 env
@@ -585,10 +585,10 @@ class Agent():
                                 element["new_obs"], 
                                 element["flag"])
                     
-                    
-                    outputFile = open(f"{Agent.logs_folder}/rew_{self.index}_{element['action']}.txt", 'a+')
-                    outputFile.write(str(Agent.curr_time)+"  "+str(element["reward"])+'\n')
-                    outputFile.close()
+                    if(self.train):
+                        outputFile = open(f"{Agent.logs_folder}/rew_{self.index}_{element['action']}.txt", 'a+')
+                        outputFile.write(str(Agent.curr_time)+"  "+str(element["reward"])+'\n')
+                        outputFile.close()
                     Agent.upcoming_events[self.index].pop(idx)
                     break
                         
@@ -720,9 +720,10 @@ class Agent():
                                         True,
                                         Agent.replay_buffer[self.index].latest_gradient_step[lost_packet_info["action"]])
                         else:
-                            outputFile = open(f"{Agent.logs_folder}/rew_{self.index}_{lost_packet_info['action']}.txt", 'a+')
-                            outputFile.write(str(Agent.curr_time)+"  "+str(rew)+'\n')
-                            outputFile.close()
+                            if(self.train):
+                                outputFile = open(f"{Agent.logs_folder}/rew_{self.index}_{lost_packet_info['action']}.txt", 'a+')
+                                outputFile.write(str(Agent.curr_time)+"  "+str(rew)+'\n')
+                                outputFile.close()
                             Agent.replay_buffer[self.index].add(np.array(lost_packet_info["obs"], dtype=float).squeeze(),
                                         lost_packet_info["action"], 
                                         rew,
