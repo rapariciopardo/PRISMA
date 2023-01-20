@@ -397,46 +397,46 @@ class Agent():
             # print("-"*11)
             ## check if the pkt is lost
             #print("INFO PYTHON ", self.obs[self.action + 1] + (542), Agent.max_out_buffer_size)
-            if False: #(self.obs_nb[self.action + 1] + (542)) > Agent.max_out_buffer_size or self.action == -1:
-                #print(self.pkt_id, self.index, "lost")
-                Agent.node_lost_pkts += 1
-                rew = self._get_reward()
-                Agent.total_rewards_with_loss += rew
-                Agent.rewards.append(rew)
-                if self.train:
-                    next_hop = self.neighbors[self.action]
-                    next_hop_degree = len(list(Agent.G.neighbors(next_hop)))
-                    if self.agent_type == "dqn_buffer_fp":
-                        next_hop_degree += 2
-                    if Agent.prioritizedReplayBuffer:
-                        Agent.replay_buffer[self.index].add(np.array(self.obs, dtype=float).squeeze(),
-                                            self.action, 
-                                            rew,
-                                            np.array([self.obs[0]] + [0]*next_hop_degree, dtype=float).squeeze(), 
-                                            True,
-                                            Agent.replay_buffer[self.index].latest_gradient_step[self.action])
-                    else:
-                        Agent.replay_buffer[self.index].add(np.array(self.obs, dtype=float).squeeze(),
-                        self.action, 
-                        rew,
-                        np.array([self.obs[0]] + [0]*next_hop_degree, dtype=float).squeeze(), 
-                        True)
-                    ## when the pkt is lost we only store the latest gradient step idx
-                    # Agent.replay_buffer[self.index].latest_gradient_step[next_hop] = max((Agent.agents[next_hop].gradient_step_idx, Agent.replay_buffer[self.index].latest_gradient_step[next_hop]))
-                    # Agent.replay_buffer[self.index].update_priorities(Agent.replay_buffer[self.index].neighbors_idx[self.action],
-                    #                                                   self.action)
-                if  self.action == -1:
-                    self.action =Agent.numNodes
-                
-            ## Add to the temp obs
-            else:
-                Agent.temp_obs[int(self.pkt_id)]= {"node": self.index,
-                                                   "obs": self.obs,
-                                                   "action": self.action,
-                                                   "time": Agent.curr_time,
-                                                   "src" :Agent.pkt_tracking_dict[int(self.pkt_id)]["src"],
-                                                   "dst" :Agent.pkt_tracking_dict[int(self.pkt_id)]["dst"],
-                                                   }
+            #if False: #(self.obs_nb[self.action + 1] + (542)) > Agent.max_out_buffer_size or self.action == -1:
+            #    #print(self.pkt_id, self.index, "lost")
+            #    Agent.node_lost_pkts += 1
+            #    rew = self._get_reward()
+            #    Agent.total_rewards_with_loss += rew
+            #    Agent.rewards.append(rew)
+            #    if self.train:
+            #        next_hop = self.neighbors[self.action]
+            #        next_hop_degree = len(list(Agent.G.neighbors(next_hop)))
+            #        if self.agent_type == "dqn_buffer_fp":
+            #            next_hop_degree += 2
+            #        if Agent.prioritizedReplayBuffer:
+            #            Agent.replay_buffer[self.index].add(np.array(self.obs, dtype=float).squeeze(),
+            #                                self.action, 
+            #                                rew,
+            #                                np.array([self.obs[0]] + [0]*next_hop_degree, dtype=float).squeeze(), 
+            #                                True,
+            #                                Agent.replay_buffer[self.index].latest_gradient_step[self.action])
+            #        else:
+            #            Agent.replay_buffer[self.index].add(np.array(self.obs, dtype=float).squeeze(),
+            #            self.action, 
+            #            rew,
+            #            np.array([self.obs[0]] + [0]*next_hop_degree, dtype=float).squeeze(), 
+            #            True)
+            #        ## when the pkt is lost we only store the latest gradient step idx
+            #        # Agent.replay_buffer[self.index].latest_gradient_step[next_hop] = max((Agent.agents[next_hop].gradient_step_idx, Agent.replay_buffer[self.index].latest_gradient_step[next_hop]))
+            #        # Agent.replay_buffer[self.index].update_priorities(Agent.replay_buffer[self.index].neighbors_idx[self.action],
+            #        #                                                   self.action)
+            #    if  self.action == -1:
+            #        self.action =Agent.numNodes
+            #    
+            ### Add to the temp obs
+            #else:
+            Agent.temp_obs[int(self.pkt_id)]= {"node": self.index,
+                                               "obs": self.obs,
+                                               "action": self.action,
+                                               "time": Agent.curr_time,
+                                               "src" :Agent.pkt_tracking_dict[int(self.pkt_id)]["src"],
+                                               "dst" :Agent.pkt_tracking_dict[int(self.pkt_id)]["dst"],
+                                               }
 
         ### Apply the action
         return self.env.step(self.action)
@@ -626,7 +626,7 @@ class Agent():
         #     np.savetxt(f"savings/replay_buffer{self.index}.txt", np.array(Agent.replay_buffer[self.index]._storage, dtype=object)[indices], "%s")
         # print("train...", index)
         ## sample from the replay buffer
-        obses_t, actions_t, rewards_t, next_obses_t, dones_t, weights = Agent.replay_buffer[self.index].sample(Agent.batch_size)
+        obses_t, actions_t, rewards_t, next_obses_t, dones_t, weights = Agent.replay_buffer[self.index].sample(Agent.batch_size)   
         # weights, _ = np.ones(Agent.batch_size, dtype=np.float32), None
         if Agent.signaling_type == "target":
             targets_t = tf.constant(rewards_t, dtype=float)
@@ -648,18 +648,17 @@ class Agent():
             ### prepare tf variables
             
             try:
-                #if(self.index==9):
+                #if(self.index==0):
                 #    print("Node: ", self.index)
-                #    print(action_indices_all, action_indices_all.shape)
-                #    print(obses_t, obses_t.shape, type(obses_t[0]))
+                #    print(obses_t[0],actions_t[0],next_obses_t[0], dones_t[0], obses_t.shape)
                 obses_t = tf.constant(obses_t[action_indices_all,])
             except:
                 print("ERROR")
                 print("Node: ", self.index)
-                print(action_indices_all, action_indices_all.shape)
-                print(obses_t, obses_t.shape, type(obses_t[0]))
-                for i in obses_t:
-                    print(i.shape)
+                #print(action_indices_all, action_indices_all.shape)
+                print(obses_t[0], obses_t.shape, type(obses_t[0]))
+                #for i in obses_t:
+                #    print(i.shape)
                 raise(1)
             
             actions_t = tf.constant(actions_t[action_indices_all], shape=(Agent.batch_size))
@@ -706,31 +705,35 @@ class Agent():
                 ## info treatments
                 tokens = self.info.split(",")
                 delay_time = float(tokens[0].split('=')[-1])
-                lost_packets = np.array((tokens[1].split('=')[-1]).split(';')[:-1], dtype=int).tolist()
-                for lost_packet_id in lost_packets:
+                lost_packets = tokens[1].split('=')[-1].split(';')[:-1]
+                
+                for lost_packet in lost_packets:
+                    lost_packet_id, lost_packet_time = lost_packet.split("/")
                     lost_packet_info = Agent.temp_obs.get(int(lost_packet_id))
-                    try:
-                        next_hop_degree = len(list(Agent.G.neighbors(self.neighbors[lost_packet_info["action"]])))
-                        rew = self._get_reward()
-                        if(Agent.prioritizedReplayBuffer):
-                            Agent.replay_buffer[self.index].add(np.array(lost_packet_info["obs"], dtype=float).squeeze(),
-                                        lost_packet_info["action"], 
-                                        rew,
-                                        np.array([lost_packet_info["obs"][0]] + [0]*next_hop_degree, dtype=float).squeeze(), 
-                                        True,
-                                        Agent.replay_buffer[self.index].latest_gradient_step[lost_packet_info["action"]])
-                        else:
-                            if(self.train):
-                                outputFile = open(f"{Agent.logs_folder}/rew_{self.index}_{lost_packet_info['action']}.txt", 'a+')
-                                outputFile.write(str(Agent.curr_time)+"  "+str(rew)+'\n')
-                                outputFile.close()
-                            Agent.replay_buffer[self.index].add(np.array(lost_packet_info["obs"], dtype=float).squeeze(),
-                                        lost_packet_info["action"], 
-                                        rew,
-                                        np.array([lost_packet_info["obs"][0]] + [0]*next_hop_degree, dtype=float).squeeze(), 
-                                        True)
-                    except:
-                        pass
+                    if(lost_packet_info==None):
+                        continue
+                    if(int(lost_packet_time)!= int(lost_packet_info["time"]*1000)):
+                        continue
+                    next_hop_degree = len(list(Agent.G.neighbors(self.neighbors[lost_packet_info["action"]])))
+                    rew = self._get_reward()
+                    if(Agent.prioritizedReplayBuffer):
+                        Agent.replay_buffer[self.index].add(np.array(lost_packet_info["obs"], dtype=float).squeeze(),
+                                    lost_packet_info["action"], 
+                                    rew,
+                                    np.array([lost_packet_info["obs"][0]] + [0]*next_hop_degree, dtype=float).squeeze(), 
+                                    True,
+                                    Agent.replay_buffer[self.index].latest_gradient_step[lost_packet_info["action"]])
+                    else:
+                        if(self.train):
+                            outputFile = open(f"{Agent.logs_folder}/rew_{self.index}_{lost_packet_info['action']}.txt", 'a+')
+                            outputFile.write(str(Agent.curr_time)+"  "+str(rew)+'\n')
+                            outputFile.close()
+                        Agent.replay_buffer[self.index].add(np.array(lost_packet_info["obs"], dtype=float).squeeze(),
+                                    lost_packet_info["action"], 
+                                    rew,
+                                    np.array([lost_packet_info["obs"][0]] + [0]*next_hop_degree, dtype=float).squeeze(), 
+                                    True)
+
                 #print(lost_packets)
                 pkt_size = float(tokens[3].split('=')[-1])
                 Agent.curr_time = float(tokens[4].split('=')[-1])

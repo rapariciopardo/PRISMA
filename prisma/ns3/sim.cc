@@ -565,6 +565,7 @@ int main (int argc, char *argv[])
 
   
   NS_LOG_INFO ("Setup CBR Traffic Sources.");
+  //Not used anymore
   float sum_traffic_rate_mat = 0.0;
   float sum_masked_traffic_rate_mat = 0.0;
   int count_traffic_rate_mat = 0;
@@ -587,6 +588,7 @@ int main (int argc, char *argv[])
   if(activateUnderlayTraffic) sum_masked_traffic_rate_mat /= n_nodes;
   else sum_masked_traffic_rate_mat /= overlayNodes.size();
   float factor_overlay = sum_traffic_rate_mat / sum_masked_traffic_rate_mat;
+  //------------------------------------------------------------------------------------
   if(true) factor_overlay = 1.0;
   NS_LOG_UNCOND("FACTOR OVERLAY "<<sum_traffic_rate_mat<<"    "<<sum_masked_traffic_rate_mat<<"    "<<factor_overlay);
 
