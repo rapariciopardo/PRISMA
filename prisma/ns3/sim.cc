@@ -625,7 +625,7 @@ int main (int argc, char *argv[])
                 poisson.SetAverageRate (DataRate(ceil(DataRate(Traff_Matrix[i][j]).GetBitRate()*load_factor*factor_overlay)), AvgPacketSize);
                 poisson.SetTrafficValableProbability(OverlayMaskTrafficRate[i][j]);
                 //NS_LOG_UNCOND(opt<<"   "<<OptRejected[i][j]);
-                poisson.SetRejectedProbability(opt,0.0);
+                poisson.SetRejectedProbability(opt,OptRejected[i][j]);
                 poisson.SetUpdatable(false, updateTrafficRateTime);
                 poisson.SetDestination(uint32_t (j+1), uint32_t (i+1));
                 ApplicationContainer apps = poisson.Install (nodes_traffic.Get (i));

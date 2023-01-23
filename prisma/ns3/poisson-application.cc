@@ -324,6 +324,7 @@ void PoissonGeneratorApplication::SendPacket ()
   } else{
     tag.SetRejectedPacket(0);
   }
+
   packet->AddPacketTag(tag);
   m_txTrace (packet);
   m_socket->SetIpTtl(255);
