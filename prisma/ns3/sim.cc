@@ -159,6 +159,9 @@ int main (int argc, char *argv[])
   std::string node_intensity_file_name("scratch/prisma/examples/abilene/node_intensity.txt");
   std::string opt_rejected_file_name("scratch/prisma/test.txt");
   std::string map_overlay_file_name("scratch/prisma/test2.txt");
+  std::string logs_folder("../prisma/abilene/examples/4n");
+
+  float groundTruthFrequence = -1;
 
 
   bool activateOverlaySignaling = true;
@@ -167,6 +170,8 @@ int main (int argc, char *argv[])
   double lossPenalty = 0.0;
 
   bool train = false;
+
+  bool pingAsObs = true;
 
   uint32_t movingAverageObsSize = 5;
 
@@ -208,6 +213,10 @@ int main (int argc, char *argv[])
   cmd.AddValue ("activateUnderlayTraffic", "Set if activate underlay traffic", activateUnderlayTraffic);
   cmd.AddValue ("opt_rejected_file_name", "Rejected paths in Optimal Algorithm file name", opt_rejected_file_name);
   cmd.AddValue ("map_overlay_file_name", "Map overlay file name", map_overlay_file_name);
+  cmd.AddValue ("pingAsObs", "ping as observation variable", pingAsObs);
+  cmd.AddValue ("logs_folder", "Logs folder", logs_folder);
+  cmd.AddValue ("groundTruthFrequence", "ground truth freq", groundTruthFrequence);
+
   cmd.Parse (argc, argv);
     
   NS_LOG_UNCOND("Ns3Env parameters:");
@@ -229,6 +238,9 @@ int main (int argc, char *argv[])
   NS_LOG_UNCOND("--lossPenalty: "<<lossPenalty);
   NS_LOG_UNCOND("--activateUnderlayTraffic: "<<activateUnderlayTraffic);
   NS_LOG_UNCOND("--RejectedTraffPath: "<<opt_rejected_file_name);
+  NS_LOG_UNCOND("--pingAsObs: "<<pingAsObs);
+  NS_LOG_UNCOND("--logs_folder: "<<logs_folder);
+  NS_LOG_UNCOND("--groundTruthFrequence: "<<groundTruthFrequence);
 
   
   
@@ -406,10 +418,10 @@ int main (int argc, char *argv[])
               }
           }
       }
-  for(size_t i=0;i<link_devs.size();i++){
-    NS_LOG_UNCOND(get<0>(link_devs[i]) << "     " << get<1>(link_devs[i])<<"    "<<switch_nd.Get(get<0>(link_devs[i]))->GetNode()->GetId()<<"     "<<switch_nd.Get(get<1>(link_devs[i]))->GetNode()->GetId());
-    NS_LOG_UNCOND(switch_nd.Get(get<0>(link_devs[i]))->GetIfIndex());
-  }
+  //for(size_t i=0;i<link_devs.size();i++){
+  //  NS_LOG_UNCOND(get<0>(link_devs[i]) << "     " << get<1>(link_devs[i])<<"    "<<switch_nd.Get(get<0>(link_devs[i]))->GetNode()->GetId()<<"     "<<switch_nd.Get(get<1>(link_devs[i]))->GetNode()->GetId());
+  //  NS_LOG_UNCOND(switch_nd.Get(get<0>(link_devs[i]))->GetIfIndex());
+  //}
   
 
 
@@ -507,16 +519,20 @@ int main (int argc, char *argv[])
     } else {
       packetRoutingEnv = CreateObject<PacketRoutingEnv> (Seconds(envStepTime), n); // time-driven step
     }
-    packetRoutingEnv->SetOpenGymInterface(openGymInterface);
+    packetRoutingEnv->setTrainConfig(train);
+    packetRoutingEnv->setLogsFolder(logs_folder);
     packetRoutingEnv->setOverlayConfig(overlayNeighbors[overlayNodes[i]], activateOverlaySignaling, nPacketsOverlaySignaling, movingAverageObsSize, map_overlay_array);
+    packetRoutingEnv->SetOpenGymInterface(openGymInterface);
     packetRoutingEnv->m_node_container = &nodes_switch;
     packetRoutingEnv->setPingTimeout(16260, 500000, 1);
     packetRoutingEnv->setLossPenalty(lossPenalty);
     packetRoutingEnv->setNetDevicesContainer(&switch_nd);
-    packetRoutingEnv->setTrainConfig(train);
+    packetRoutingEnv->setPingAsObs(pingAsObs);
+    if(i==0 && groundTruthFrequence>0){
+      packetRoutingEnv->setGroundTruthFrequence(groundTruthFrequence);
+    }
     for(size_t j = 1;j<nodes_switch.Get(overlayNodes[i])->GetNDevices();j++){
       Ptr<NetDevice> dev_switch =DynamicCast<NetDevice> (nodes_switch.Get(overlayNodes[i])->GetDevice(j)); 
-      NS_LOG_UNCOND(dev_switch->GetNode()->GetId()<<"     "<<j);
       dev_switch->TraceConnectWithoutContext("MacRx", MakeBoundCallback(&PacketRoutingEnv::NotifyPktRcv, packetRoutingEnv, dev_switch, &traffic_nd));
     }
     
@@ -549,6 +565,7 @@ int main (int argc, char *argv[])
 
   
   NS_LOG_INFO ("Setup CBR Traffic Sources.");
+  //Not used anymore
   float sum_traffic_rate_mat = 0.0;
   float sum_masked_traffic_rate_mat = 0.0;
   int count_traffic_rate_mat = 0;
@@ -571,6 +588,7 @@ int main (int argc, char *argv[])
   if(activateUnderlayTraffic) sum_masked_traffic_rate_mat /= n_nodes;
   else sum_masked_traffic_rate_mat /= overlayNodes.size();
   float factor_overlay = sum_traffic_rate_mat / sum_masked_traffic_rate_mat;
+  //------------------------------------------------------------------------------------
   if(true) factor_overlay = 1.0;
   NS_LOG_UNCOND("FACTOR OVERLAY "<<sum_traffic_rate_mat<<"    "<<sum_masked_traffic_rate_mat<<"    "<<factor_overlay);
 
@@ -607,8 +625,7 @@ int main (int argc, char *argv[])
                 poisson.SetAverageRate (DataRate(ceil(DataRate(Traff_Matrix[i][j]).GetBitRate()*load_factor*factor_overlay)), AvgPacketSize);
                 poisson.SetTrafficValableProbability(OverlayMaskTrafficRate[i][j]);
                 //NS_LOG_UNCOND(opt<<"   "<<OptRejected[i][j]);
-                poisson.SetRejectedProbability(opt,0.0);
-                NS_LOG_UNCOND("Poisson "<<i<<"   "<<j<<"     "<<Traff_Matrix[i][j]);
+                poisson.SetRejectedProbability(opt,OptRejected[i][j]);
                 poisson.SetUpdatable(false, updateTrafficRateTime);
                 poisson.SetDestination(uint32_t (j+1), uint32_t (i+1));
                 ApplicationContainer apps = poisson.Install (nodes_traffic.Get (i));
@@ -618,10 +635,8 @@ int main (int argc, char *argv[])
               
 
               if(train && activateSignaling && OverlayAdj_Matrix[i][j]==1 && signalingType=="NN"){
-                NS_LOG_UNCOND("BIG SIGNALING");
                 string string_ip_bigSignaling= "10.2.2."+std::to_string(j+1);
                 Ipv4Address ip_big_signaling(string_ip_bigSignaling.c_str());
-                NS_LOG_UNCOND(ip_big_signaling);
                 sinkAddress = InetSocketAddress (ip_big_signaling, sinkPortUDP);
 
                 BigSignalingAppHelper sign ("ns3::UdpSocketFactory",sinkAddress); 

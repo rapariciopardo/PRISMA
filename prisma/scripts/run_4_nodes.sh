@@ -44,8 +44,8 @@ python3 main.py \
 	--training_step=0.01 \
 	--batch_size=512 \
 	--lr=0.001 \
-	--exploration_final_eps=0.01 \
-	--exploration_initial_eps=1.0 \
+	--exploration_final_eps=0.1 \
+	--exploration_initial_eps=0.1 \
 	--iterationNum=15000 \
 	--gamma=1.0 \
 	--training_trigger_type="time" \
@@ -67,15 +67,15 @@ python3 main.py \
 
 
 array=(
-0.6
-0.7
-0.8
-0.9
-1.0
-1.1
-1.2
-1.3
-1.4
+#0.6
+#0.7
+#0.8
+#0.9
+#1.0
+#1.1
+#1.2
+##1.3
+##1.4
 )
 counter=0
 

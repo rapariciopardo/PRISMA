@@ -413,21 +413,28 @@ PointToPointNetDevice::Receive (Ptr<Packet> packet)
       // normal receive callback sees.
       //
       ProcessHeader (packet, protocol);
+      MyTag tagcopy;
+      packet->PeekPacketTag(tagcopy);
 
       if (!m_promiscCallback.IsNull ())
         {
           m_macPromiscRxTrace (originalPacket);
           m_promiscCallback (this, packet, protocol, GetRemote (), GetAddress (), NetDevice::PACKET_HOST);
         }
+      if(tagcopy.GetSimpleValue()==0 && tagcopy.GetRejectedPacket()==1 && m_node->GetId()<11){
+        //NS_LOG_UNCOND(m_node->GetId()<<"     "<<m_ifIndex<<"    "<<tagcopy.GetFinalDestination()<<"   OPTIMAL REJECT    "<<packet->GetUid());
+        m_macTxDropTrace (packet);
+        return;
+      }
 
       m_macRxTrace (originalPacket);
       m_rxCallback (this, packet, protocol, GetRemote ());
-      MyTag tagcopy;
-      packet->PeekPacketTag(tagcopy);
+     
       if(tagcopy.GetSimpleValue()==0 && tagcopy.GetFinalDestination()==m_node->GetId()){
         m_e2eDelay[tagcopy.GetSource()][tagcopy.GetFinalDestination()].push_back( Simulator::Now().GetMilliSeconds() - tagcopy.GetStartTime());
         //PrintDelayInfo();
       }
+      
 
     }
 }
@@ -605,6 +612,7 @@ PointToPointNetDevice::Send (
     m_macTxDropTrace (packet);
     return false;
   }
+  
 
   //
   // Stick a point to point protocol header on the packet in preparation for
@@ -649,11 +657,10 @@ PointToPointNetDevice::Send (
   // Enqueue may fail (overflow)
 
   
-  if(tagcopy.GetSimpleValue()==0){
+ 
+  if(tagcopy.GetSimpleValue()==0 || tagcopy.GetSimpleValue()==3 || tagcopy.GetSimpleValue()==4){
     m_macTxDropTrace (packet);
-  }
-
-  
+  } 
   return false;
 }
 

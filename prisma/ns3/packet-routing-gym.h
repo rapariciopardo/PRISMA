@@ -42,7 +42,8 @@
 #include "ospf-tag.h"
 #include <vector>
 
-#define MAX_TUNNELS 5
+#define MAX_TUNNELS 11
+#define MAX_NODES 11
 
 namespace ns3 {
 
@@ -75,6 +76,8 @@ public:
   void setNetDevicesContainer(NetDeviceContainer* nd);
   void setTrainConfig(bool train);
   void setLossPenalty(double lossPenalty);
+  void setPingAsObs(bool pingAsObs);
+  void setLogsFolder(std::string logs_folder);
   virtual ~PacketRoutingEnv ();
   static TypeId GetTypeId (void);
   virtual void DoDispose ();
@@ -98,9 +101,13 @@ public:
   NodeContainer* m_node_container;
   void simulationEnd(bool underlayTraff, double load);
   void setPingTimeout(uint32_t maxBufferSize, uint32_t linkCapacity, uint32_t propagationDelay);
+  void setGroundTruthFrequence(float interval);
+  
 
 
 private:
+  void scheduleGroundTruthPrint();
+  void groundTruthPrint();
   void ScheduleNextStateRead();
   uint32_t GetQueueLength(Ptr<Node> node, uint32_t netDev_idx);
   uint32_t GetQueueLengthInBytes(Ptr<Node> node, uint32_t netDev_idx);
@@ -196,12 +203,20 @@ private:
   int m_first_op_test = 0; 
   int m_second_op_test = 0;
 
-  float m_pingTimeout[MAX_TUNNELS];
+  int m_pingTimeout[MAX_TUNNELS];
   float m_lastPingOut;
   vector<float> m_pingDiffs;
 
   vector<int> m_map_overlay_array;
   bool m_first[MAX_TUNNELS]={false};
+
+  bool m_pingAsObs = true;
+
+  std::string m_logs_folder;
+
+  NetDeviceContainer m_netDevs_perNode[MAX_NODES];
+
+  float m_intervalGroundTruth;
 
 
  
