@@ -538,9 +538,12 @@ def main():
     if params["train"] == 0:
         ## store test stats
         with summary_writer_results.as_default():
-            tf.summary.scalar('e2e_delay', Agent.sim_avg_e2e_delay, step=int(params["load_factor"]*100))
-            tf.summary.scalar('loss_rate', Agent.sim_dropped_packets/Agent.sim_injected_packets, step=int(params["load_factor"]*100))
-            tf.summary.scalar('cost', Agent.sim_cost, step=int(params["load_factor"]*100))
+            tf.summary.scalar('test_overlay_e2e_delay', Agent.sim_avg_e2e_delay, step=int(params["load_factor"]*100))
+            tf.summary.scalar('test_overlay_loss_rate', Agent.sim_dropped_packets/Agent.sim_injected_packets, step=int(params["load_factor"]*100))
+            tf.summary.scalar('test_overlay_cost', Agent.sim_cost, step=int(params["load_factor"]*100))
+            # tf.summary.scalar('test_global_e2e_delay', Agent.sim_avg_e2e_delay, step=int(params["load_factor"]*100))
+            # tf.summary.scalar('test_global_loss_rate', Agent.sim_global_dropped_packets/Agent.sim_global_injected_packets, step=int(params["load_factor"]*100))
+            tf.summary.scalar('test_global_cost', Agent.sim_cost, step=int(params["load_factor"]*100))
 
     #     with open(test_results_file_name, 'a') as f: 
     #         writer = csv.writer(f) 

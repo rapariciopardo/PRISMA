@@ -42,8 +42,8 @@ python3 main.py \
 	--overlay_matrix_path=examples/$9/overlay_matrix_4n.txt \
 	--map_overlay_path=mapOverlay_4n.txt \
 	--training_step=0.01 \
-	--batch_size=1024 \
-	--lr=0.0001 \
+	--batch_size=512 \
+	--lr=0.001 \
 	--exploration_final_eps=0.01 \
 	--exploration_initial_eps=1.0 \
 	--iterationNum=15000 \
@@ -63,19 +63,19 @@ python3 main.py \
 	--movingAverageObsSize=100 \
 	--prioritizedReplayBuffer=${10} \
 	--activateUnderlayTraffic=${12} \
-	--load_path=examples/$9/$4_sp_init_overlay_modified
+	--load_path=examples/$9/$4_sp_init_overlay_modified_4n
 
 
 array=(
-#0.6
-#0.7
+0.6
+0.7
 0.8
-#0.9
+0.9
 1.0
-#1.1
+1.1
 1.2
-##1.3
-##1.4
+1.3
+1.4
 )
 counter=0
 
@@ -89,7 +89,7 @@ for j in ${array[@]}
 	echo $res2
 
 	python3 main.py \
-		--simTime=20 \
+		--simTime=100 \
 		--basePort=$(((4444 + $2)+(1000*$3)+($res0 * 15)+($8*1000))) \
 		--train=0 \
 		--seed=200 \
