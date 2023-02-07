@@ -292,7 +292,6 @@ PointToPointNetDevice::TransmitStart (Ptr<Packet> p)
 
   NS_LOG_LOGIC ("Schedule TransmitCompleteEvent in " << txCompleteTime.GetSeconds () << "sec");
   Simulator::Schedule (txCompleteTime, &PointToPointNetDevice::TransmitComplete, this);
-
   bool result = m_channel->TransmitStart (p, this, txTime);
   if (result == false)
     {

@@ -39,7 +39,6 @@ python3 main.py \
 	--agent_adjacency_matrix_path=examples/$9/adjacency_matrix_2_4n.txt \
 	--adjacency_matrix_path=examples/$9/adjacency_matrix.txt \
 	--node_coordinates_path=examples/$9/node_coordinates_4n.txt \
-	--overlay_matrix_path=examples/$9/overlay_matrix_4n.txt \
 	--map_overlay_path=mapOverlay_4n.txt \
 	--training_step=0.01 \
 	--batch_size=512 \
@@ -101,7 +100,6 @@ for j in ${array[@]}
 		--agent_adjacency_matrix_path=examples/$9/adjacency_matrix_2_4n.txt \
 		--adjacency_matrix_path=examples/$9/adjacency_matrix.txt \
 		--node_coordinates_path=examples/$9/node_coordinates_4n.txt \
-		--overlay_matrix_path=examples/$9/overlay_matrix_4n.txt \
 		--map_overlay_path=mapOverlay_4n.txt \
 		--save_models=0 \
 		--start_tensorboard=0 \
