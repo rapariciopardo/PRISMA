@@ -209,6 +209,7 @@ class Agent():
             self.train = False
         self.index = index
         self.port = Agent.basePort + index
+        print("Index: ", self.index, "Port: ", self.port)
         self.stepIdx = 0
         self.sync_step = Agent.sync_step
         ## reset the env
