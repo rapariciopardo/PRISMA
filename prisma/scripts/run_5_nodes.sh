@@ -14,6 +14,8 @@ echo ${12} #underlay_traff
 echo ${13} #SimTimeTrainning
 echo ${14} #Session name
 echo ${15} #Experiment name
+echo ${16} #moving average window size
+
 #module load singularity/3.5.2
 uname -a
 echo $(date)
@@ -28,7 +30,7 @@ echo $res1
 python3 main.py \
 	--seed=$2 \
 	--simTime=${13} \
-	--basePort=$(((4444+$2)+(1000*$3)+($res0*15)+($8*1000))) \
+	--basePort=$(((7000 + $2)+($8*15))) \
 	--train=1 \
 	--agent_type=$4 \
 	--session_name=${14} \
@@ -43,9 +45,9 @@ python3 main.py \
 	--map_overlay_path=mapOverlay_5n.txt \
 	--training_step=0.01 \
 	--batch_size=512 \
-	--lr=0.001 \
-	--exploration_final_eps=0.01 \
-	--exploration_initial_eps=1.0 \
+	--lr=0.00001 \
+	--exploration_final_eps=0.1 \
+	--exploration_initial_eps=0.1 \
 	--iterationNum=15000 \
 	--gamma=1.0 \
 	--training_trigger_type="time" \
@@ -60,7 +62,7 @@ python3 main.py \
 	--sync_ratio=0.2 \
 	--signalingSim=1 \
 	--nPacketsOverlay=$6 \
-	--movingAverageObsSize=100 \
+	--movingAverageObsSize=${16} \
 	--prioritizedReplayBuffer=${10} \
 	--activateUnderlayTraffic=${12} \
 	--load_path=examples/$9/$4_sp_init_overlay_modified_5n
@@ -90,7 +92,7 @@ for j in ${array[@]}
 
 	python3 main.py \
 		--simTime=100 \
-		--basePort=$(((4444 + $2)+(1000*$3)+($res0 * 15)+($8*1000))) \
+		--basePort=$(((7000 + $2)+($8*15))) \
 		--train=0 \
 		--seed=200 \
 		--session_name=${14} \
@@ -111,7 +113,7 @@ for j in ${array[@]}
 		--replay_buffer_max_size=$7 \
 		--max_out_buffer_size=16260 \
 		--nPacketsOverlay=$6 \
-		--movingAverageObsSize=100 \
+		--movingAverageObsSize=${16} \
 		--prioritizedReplayBuffer=${10} \
        	--activateUnderlayTraffic=1 \
 		--activateUnderlayTrafficTrain=${12} \

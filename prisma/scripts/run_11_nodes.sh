@@ -30,7 +30,7 @@ echo $res1
 python3 main.py \
 	--seed=$2 \
 	--simTime=${13} \
-	--basePort=$(((4444+$2)+(1000*$3)+($res0*15)+($8*1000))) \
+	--basePort=$(((7000)+($8*15))) \
 	--train=1 \
 	--agent_type=$4 \
 	--session_name=${14} \
@@ -71,11 +71,11 @@ python3 main.py \
 
 
 array=(
-#0.6
-#0.7
-#0.8
-#0.9
-#1.0
+0.6
+0.7
+0.8
+0.9
+1.0
 1.1
 1.2
 ##1.3
@@ -93,8 +93,8 @@ for j in ${array[@]}
 	echo $res2
 
 	python3 main.py \
-		--simTime=20 \
-		--basePort=$(((4444 + $2)+(1000*$3)+($res0 * 15)+($8*1000))) \
+		--simTime=100 \
+		--basePort=$(((7000)+($8*15))) \
 		--train=0 \
 		--seed=200 \
 		--session_name=${14} \

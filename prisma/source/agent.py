@@ -16,6 +16,7 @@ import threading
 import operator
 import copy 
 import json
+import pandas as pd
 # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 
 __author__ = "Redha A. Alliche, Tiago Da Silva Barros, Ramon Aparicio-Pardo, Lucile Sassatelli"
@@ -32,6 +33,7 @@ class Agent():
     ## static variables for env description
     envs=[]
     agents = {}
+    throughputs = []
     currIt = 0
     sim_injected_packets=0
     sim_global_injected_packets=0
@@ -141,6 +143,7 @@ class Agent():
         cl.envs = cl.numNodes * [None]
         cl.agents = {i: None for i in range(cl.numNodes)}
         cl.upcoming_events = [[] for n in range(cl.numNodes)]
+        cl.throughputs = [pd.DataFrame(columns=("time", "data")) for _ in range(cl.numNodes)]
         if cl.prioritizedReplayBuffer:
             cl.replay_buffer = [PrioritizedReplayBuffer(cl.replay_buffer_max_size, 1, len(list(cl.G.neighbors(n))), n) for n in range(cl.numNodes)]
         else:
@@ -199,11 +202,11 @@ class Agent():
         train (bool): if true, train the agent. Valid only for agent_type = dqn 
         """
         ### compute the port number
-        if agent_type not in ("dqn_buffer", "dqn_buffer_lite", "dqn_routing", "dqn_buffer_fp", "sp", "opt"):
-            raise('Unknown agent type, please choose from : ("dqn_buffer", "dqn_buffer_lite", "dqn_routing", "dqn_buffer_fp", "sp", "opt")')
+        if agent_type not in ("dqn_buffer", "dqn_buffer_lite", "dqn_routing", "dqn_buffer_fp", "dqn_buffer_with_throughputs", "sp", "opt"):
+            raise('Unknown agent type, please choose from : ("dqn_buffer", "dqn_buffer_lite", "dqn_routing", "dqn_buffer_fp", "dqn_buffer_with_throughputs", "sp", "opt")')
 
         self.agent_type = agent_type
-        if agent_type in ("dqn_buffer", "dqn_buffer_lite", "dqn_routing", "dqn_buffer_fp"):
+        if agent_type in ("dqn_buffer", "dqn_buffer_lite", "dqn_routing", "dqn_buffer_fp", "dqn_buffer_with_throughputs"):
             self.train = train
         else:
             self.train = False
@@ -251,7 +254,7 @@ class Agent():
                 neighbors_degrees=[len(list(Agent.G.neighbors(x))) for x in self.neighbors]
             )
         elif self.agent_type == "dqn_buffer_lite":
-            ## declare the DQN buffer model
+            ## declare the DQN buffer lite model
             Agent.agents[self.index] = DQN_AGENT(
                 q_func=DQN_buffer_lite_model,
                 # observation_shape=self.env.observation_space.shape,
@@ -259,6 +262,22 @@ class Agent():
                 num_actions=self.env.action_space.n,
                 num_nodes=Agent.numNodes,
                 input_size_splits = [1,
+                                    self.env.action_space.n,
+                                    ],
+                lr=Agent.lr,
+                gamma=Agent.gamma,
+                neighbors_degrees=[len(list(Agent.G.neighbors(x))) for x in self.neighbors]
+            )
+        elif self.agent_type == "dqn_buffer_with_throughputs":
+            ## declare the DQN buffer with throughputs model
+            Agent.agents[self.index] = DQN_AGENT(
+                q_func=DQN_buffer_model,
+                # observation_shape=self.env.observation_space.shape,
+                observation_shape=(self.env.observation_space.shape[0] + self.env.action_space.n,), # dst + output interfaces delay estimation + neighbors throughputs(out traff per sec)
+                num_actions=self.env.action_space.n,
+                num_nodes=Agent.numNodes,
+                input_size_splits = [1,
+                                    self.env.action_space.n,
                                     self.env.action_space.n,
                                     ],
                 lr=Agent.lr,
@@ -304,7 +323,7 @@ class Agent():
             raise ValueError("Unknown agent type")
 
         ## compute big signaling delay
-        if self.agent_type in ("dqn_buffer", "dqn_buffer_lite", "dqn_routing", "dqn_buffer_fp"):
+        if self.agent_type in ("dqn_buffer", "dqn_buffer_lite", "dqn_routing", "dqn_buffer_fp", "dqn_buffer_with_throughputs"):
             self.nn_size = np.sum([np.prod(x.shape) for x in Agent.agents[self.index].q_network.trainable_weights])*32
             self.big_signaling_delay = (self.nn_size/ Agent.link_cap) + Agent.link_delay
             print("node:", self.index, "big signaling delay: ", self.big_signaling_delay, self.nn_size)
@@ -332,7 +351,7 @@ class Agent():
         self.sync_counter = -1
         
         ## load the models
-        if Agent.load_path is not None and self.agent_type in ("dqn_buffer", "dqn_buffer_lite", "dqn_routing", "dqn_buffer_fp"):
+        if Agent.load_path is not None and self.agent_type in ("dqn_buffer", "dqn_buffer_lite", "dqn_routing", "dqn_buffer_fp", "dqn_buffer_with_throughputs"):
             loaded_models = load_model(Agent.load_path, self.index)
             if loaded_models is not None:
                 Agent.agents[self.index].q_network.set_weights(loaded_models[self.index].get_weights())
@@ -365,7 +384,7 @@ class Agent():
         Args :
             obs (list): observation list
         """
-        if self.agent_type in("dqn_buffer", "dqn_buffer_lite", "dqn_routing","dqn_buffer_fp",):
+        if self.agent_type in("dqn_buffer", "dqn_buffer_lite", "dqn_routing","dqn_buffer_fp", "dqn_buffer_with_throughputs"):
             ### Take action using the NN
             action = Agent.agents[self.index].step(np.array([obs]), self.train, self.update_eps).numpy().item()
         elif self.agent_type == "sp":
@@ -382,54 +401,17 @@ class Agent():
         ## schedule the exploration
         if self.train:
             self.update_eps = tf.constant(self.exploration.value(self.stepIdx))
-        #try:
-        #    if(self.pkt_id==19268):
-        #        print(self.obs)
-        #except:
-        #    pass
-        
+
         ## take the action
         if self.obs[0] == self.index or self.stepIdx < 1 or self.signaling: # pkt arrived to dst or it is a train step, ignore the action
             self.action = 0
         else:
             self.action = self._take_action(self.obs)
-            # print(Agent.curr_time, self.index, self.obs, Agent.upcoming_events, self.action)
-            # print("-"*11)
-            ## check if the pkt is lost
-            #print("INFO PYTHON ", self.obs[self.action + 1] + (542), Agent.max_out_buffer_size)
-            #if False: #(self.obs_nb[self.action + 1] + (542)) > Agent.max_out_buffer_size or self.action == -1:
-            #    #print(self.pkt_id, self.index, "lost")
-            #    Agent.node_lost_pkts += 1
-            #    rew = self._get_reward()
-            #    Agent.total_rewards_with_loss += rew
-            #    Agent.rewards.append(rew)
-            #    if self.train:
-            #        next_hop = self.neighbors[self.action]
-            #        next_hop_degree = len(list(Agent.G.neighbors(next_hop)))
-            #        if self.agent_type == "dqn_buffer_fp":
-            #            next_hop_degree += 2
-            #        if Agent.prioritizedReplayBuffer:
-            #            Agent.replay_buffer[self.index].add(np.array(self.obs, dtype=float).squeeze(),
-            #                                self.action, 
-            #                                rew,
-            #                                np.array([self.obs[0]] + [0]*next_hop_degree, dtype=float).squeeze(), 
-            #                                True,
-            #                                Agent.replay_buffer[self.index].latest_gradient_step[self.action])
-            #        else:
-            #            Agent.replay_buffer[self.index].add(np.array(self.obs, dtype=float).squeeze(),
-            #            self.action, 
-            #            rew,
-            #            np.array([self.obs[0]] + [0]*next_hop_degree, dtype=float).squeeze(), 
-            #            True)
-            #        ## when the pkt is lost we only store the latest gradient step idx
-            #        # Agent.replay_buffer[self.index].latest_gradient_step[next_hop] = max((Agent.agents[next_hop].gradient_step_idx, Agent.replay_buffer[self.index].latest_gradient_step[next_hop]))
-            #        # Agent.replay_buffer[self.index].update_priorities(Agent.replay_buffer[self.index].neighbors_idx[self.action],
-            #        #                                                   self.action)
-            #    if  self.action == -1:
-            #        self.action =Agent.numNodes
-            #    
-            ### Add to the temp obs
-            #else:
+            
+            if self.agent_type == "dqn_buffer_with_throughputs":
+                ## add the packet into the throughput
+                Agent.throughputs[self.index] = pd.concat([Agent.throughputs[self.index], pd.DataFrame.from_records([{"time":pd.to_timedelta(Agent.curr_time, "S"),
+                                        "data":Agent.packet_size*8}])])            
             Agent.temp_obs[int(self.pkt_id)]= {"node": self.index,
                                                "obs": self.obs,
                                                "action": self.action,
@@ -638,6 +620,7 @@ class Agent():
             action_indices_all = []
             for indx, neighbor in enumerate(self.neighbors):
                 filtered_indices = np.where(np.array(list(Agent.G.neighbors(neighbor)))!=self.index)[0] # filter the net interface from where the pkt comes
+                # filtered_indices = np.where(np.array(list(Agent.G.neighbors(neighbor)))!=1000)[0] # filter the net interface from where the pkt comes
                 action_indices = np.where(actions_t == indx)[0]
                 action_indices_all.append(action_indices)
                 if len(action_indices):
@@ -688,11 +671,27 @@ class Agent():
         while True:
             self.obs = self.env.reset()
             self.stepIdx = 0
+            if self.agent_type == "dqn_buffer_with_throughputs":
+                obs_extension = [0]*len(self.neighbors)
+                self.obs.extend(obs_extension)
+                
             while True:
                 if(not self.env.connected):
                     break
                 self.obs, _, self.done, self.info = self._forward()
                 
+                if self.agent_type == "dqn_buffer_with_throughputs":
+                    ## add the throughputs of the neighbors
+                    obs_extension = []
+                    for neighbor in self.neighbors:
+                        # print(self.index, neighbor, len(Agent.throughputs[neighbor]), Agent.throughputs[neighbor])
+                        if len(Agent.throughputs[neighbor]) == 0:
+                            obs_extension.append(0)
+                        else:
+                            obs_extension.append(int(Agent.throughputs[neighbor].rolling("1S", on="time").sum().tail(1).data.item()))
+
+                    self.obs.extend(obs_extension)
+                    
                 ## check if episode is done
                 if self.done and self.obs[0] == -1:
                     break
@@ -716,11 +715,15 @@ class Agent():
                         continue
                     next_hop_degree = len(list(Agent.G.neighbors(self.neighbors[lost_packet_info["action"]])))
                     rew = self._get_reward()
+                    if self.agent_type=="dqn_buffer_with_throughputs":
+                        obs_shape = next_hop_degree*2
+                    else:
+                        obs_shape = next_hop_degree
                     if(Agent.prioritizedReplayBuffer):
                         Agent.replay_buffer[self.index].add(np.array(lost_packet_info["obs"], dtype=float).squeeze(),
                                     lost_packet_info["action"], 
                                     rew,
-                                    np.array([lost_packet_info["obs"][0]] + [0]*next_hop_degree, dtype=float).squeeze(), 
+                                    np.array([lost_packet_info["obs"][0]] + [0]*(obs_shape), dtype=float).squeeze(), 
                                     True,
                                     Agent.replay_buffer[self.index].latest_gradient_step[lost_packet_info["action"]])
                     else:
@@ -731,7 +734,7 @@ class Agent():
                         Agent.replay_buffer[self.index].add(np.array(lost_packet_info["obs"], dtype=float).squeeze(),
                                     lost_packet_info["action"], 
                                     rew,
-                                    np.array([lost_packet_info["obs"][0]] + [0]*next_hop_degree, dtype=float).squeeze(), 
+                                    np.array([lost_packet_info["obs"][0]] + [0]*(obs_shape), dtype=float).squeeze(), 
                                     True)
 
                 #print(lost_packets)
@@ -898,12 +901,12 @@ class Agent():
         #if(not os.path.exists("logs/")):
         #    os.mkdir("logs")
         #np.savetxt("logs/log_dict_"+Agent.sessionName+".txt", np.asarray(Agent.info_debug, dtype='object'), fmt='%s')
-        if(not os.path.exists(f"replay_buffer_samples/{Agent.sessionName}")):  
-            os.mkdir(f"replay_buffer_samples/{Agent.sessionName}/") 
-        open(f"replay_buffer_samples/{Agent.sessionName}/{self.index}", "wb")
-        print("saving replay buffer")
-        
-        Agent.replay_buffer[self.index].save(f"replay_buffer_samples/{Agent.sessionName}/{self.index}")
+        if self.train:
+            if(not os.path.exists(f"replay_buffer_samples/{Agent.sessionName}")):  
+                os.mkdir(f"replay_buffer_samples/{Agent.sessionName}/") 
+            open(f"replay_buffer_samples/{Agent.sessionName}/{self.index}", "wb")
+            print("saving replay buffer")
+            Agent.replay_buffer[self.index].save(f"replay_buffer_samples/{Agent.sessionName}/{self.index}")
         
         self.env.ns3ZmqBridge.send_close_command()
         # print("***index :", self.index, "Done", "stepIdx =", self.stepIdx, "arrived pkts =", self.count_arrived_packets,  "new received pkts", self.count_new_pkts, "gradient steps", self.gradient_step_idx)

@@ -111,7 +111,7 @@ def arguments_parser():
     group2.add_argument('--logging_timestep', type=int, help='Time delay (in real time) between each logging in seconds', default=5)
     
     group3 = parser.add_argument_group('DRL Agent arguments')
-    group3.add_argument('--agent_type', choices=["dqn_buffer", "dqn_routing", "dqn_buffer_fp", "dqn_buffer_lite", "sp", "opt"], type=str, help='The type of the agent. Can be dqn_buffer, dqn_routing, dqn_buffer_fp, sp or opt', default="dqn_buffer")
+    group3.add_argument('--agent_type', choices=["dqn_buffer", "dqn_routing", "dqn_buffer_fp", "dqn_buffer_lite", "dqn_buffer_with_throughputs", "sp", "opt"], type=str, help='The type of the agent. Can be dqn_buffer, dqn_routing, dqn_buffer_fp, sp or opt', default="dqn_buffer")
     group3.add_argument('--signaling_type', type=str, choices=["NN", "target", "ideal"], help='Type of the signaling. Can be "NN" for sending neighbors NN and (r,s\') tuple, "target" for sending only the target value and "ideal" for no signalisation (used when training)', default="ideal")
     group3.add_argument('--lr', type=float, help='Learning rate (used when training)', default=1e-4)
     group3.add_argument('--prioritizedReplayBuffer', type=int, help='if true, use prioritized replay buffer using the gradient step as weights (used when training)', default=0)
@@ -560,6 +560,9 @@ def main():
     #         writer = csv.writer(f) 
     #         writer.writerow(new_fields_stats) 
     
+    ## save the throughput dfs
+    for i in range(Agent.numNodes):
+        Agent.throughputs[i].to_csv(f'{params["logs_parent_folder"].rstrip("/")}/{params["session_name"]}/throughputs_node_{i}.txt')
 
     ## save models        
     if params["save_models"] and Agent.curr_time >= params["simTime"]-5:

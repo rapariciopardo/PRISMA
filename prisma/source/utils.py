@@ -59,7 +59,7 @@ def load_model(path, node_index=-1):
 
     """
     folders = os.listdir(path)
-    q_functions = [1]*11#len(folders)
+    q_functions = [1]*len(folders)
     for item in os.listdir(path):
         index = int(item.split("_")[-1][4:])
         print(index)

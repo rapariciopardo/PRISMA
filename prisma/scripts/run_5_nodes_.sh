@@ -4,17 +4,18 @@ echo $2 # seed
 echo $3 # traff mat index
 echo $4 # agent type
 echo $5 # signaling type
-echo $6 # frequency of sending the pings
+echo $6 # n_packs
 echo $7 # rb size
 echo $8 # increment
 echo $9 # topology
 echo ${10} #prio
-echo ${11} #load_train
+echo ${11} #load_trai
 echo ${12} #underlay_traff
 echo ${13} #SimTimeTrainning
 echo ${14} #Session name
 echo ${15} #Experiment name
-echo ${16} #moving average window size for pings
+echo ${16} #moving average window size
+
 #module load singularity/3.5.2
 uname -a
 echo $(date)
@@ -24,7 +25,7 @@ res0=$((${SYNC/.*} - 1))
 FLOAT=$(echo ${11}*1000 | bc)
 res1=${FLOAT/.*}
 echo $res1
-#	--session_name="ping_corr_no_norm_4n${13}_buf_1x_ma_in_train_overlay_obs_fixed_$9_real_delay_$4_$5_ts_0_01_seed_$2_traff_mat_$3_rb_size_$7_batch_512_lr_1e-3_gamma_1_final_eps_0_01_load_${res1}_refreshRate_$6_underlayTraff_${12}_sync_$1_loss_x11_sp_init" \
+#	--session_name="ping_corr_no_norm_5n${13}_buf_1x_ma_in_train_overlay_obs_fixed_$9_real_delay_$4_$5_ts_0_01_seed_$2_traff_mat_$3_rb_size_$7_batch_512_lr_1e-3_gamma_1_final_eps_0_01_load_${res1}_refreshRate_$6_underlayTraff_${12}_sync_$1_loss_x11_sp_init" \
 
 python3 main.py \
 	--seed=$2 \
@@ -37,18 +38,18 @@ python3 main.py \
 	--logs_parent_folder=examples/$9/${15} \
 	--traffic_matrix_root_path=examples/$9/traffic_matrices/ \
 	--traffic_matrix_index=$3 \
-	--agent_adjacency_matrix_path=examples/$9/adjacency_matrix_2_4n_mesh.txt \
+	--agent_adjacency_matrix_path=examples/$9/adjacency_matrix_2_5n.txt \
 	--adjacency_matrix_path=examples/$9/adjacency_matrix.txt \
-	--node_coordinates_path=examples/$9/node_coordinates_4n_mesh.txt \
-	--overlay_matrix_path=examples/$9/overlay_matrix_4n_mesh.txt \
-	--map_overlay_path=mapOverlay_4n.txt \
+	--node_coordinates_path=examples/$9/node_coordinates_5n.txt \
+	--overlay_matrix_path=examples/$9/overlay_matrix_5n.txt \
+	--map_overlay_path=mapOverlay_5n.txt \
 	--training_step=0.01 \
 	--batch_size=512 \
 	--lr=0.001 \
 	--exploration_final_eps=0.1 \
 	--exploration_initial_eps=0.1 \
 	--iterationNum=15000 \
-	--gamma=1.0 \
+	--gamma=0.8 \
 	--training_trigger_type="time" \
 	--save_models=1 \
 	--start_tensorboard=0 \
@@ -64,7 +65,7 @@ python3 main.py \
 	--movingAverageObsSize=${16} \
 	--prioritizedReplayBuffer=${10} \
 	--activateUnderlayTraffic=${12} \
-	--load_path=examples/$9/$4_sp_init_overlay_modified_4n_mesh
+	--load_path=examples/$9/$4_sp_init_overlay_modified_5n
 
 
 array=(
@@ -75,8 +76,8 @@ array=(
 1.0
 1.1
 1.2
-#1.3
-#1.4
+1.3
+1.4
 )
 counter=0
 
@@ -99,11 +100,11 @@ for j in ${array[@]}
 		--agent_type=$4 \
 		--logs_parent_folder=examples/$9/${15} \
 		--traffic_matrix_index=0 \
-		--agent_adjacency_matrix_path=examples/$9/adjacency_matrix_2_4n_mesh.txt \
+		--agent_adjacency_matrix_path=examples/$9/adjacency_matrix_2_5n.txt \
 		--adjacency_matrix_path=examples/$9/adjacency_matrix.txt \
-		--node_coordinates_path=examples/$9/node_coordinates_4n_mesh.txt \
-		--overlay_matrix_path=examples/$9/overlay_matrix_4n_mesh.txt \
-		--map_overlay_path=mapOverlay_4n.txt \
+		--node_coordinates_path=examples/$9/node_coordinates_5n.txt \
+		--overlay_matrix_path=examples/$9/overlay_matrix_5n.txt \
+		--map_overlay_path=mapOverlay_5n.txt \
 		--save_models=0 \
 		--start_tensorboard=0 \
 		--sync_step=$1 \
