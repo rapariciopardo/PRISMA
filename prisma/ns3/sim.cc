@@ -312,6 +312,7 @@ int main (int argc, char *argv[])
   NS_LOG_UNCOND(node_intensity_file_name);
   int n_nodes = 11; //coord_array.size ();
   int matrixDimension = Adj_Matrix.size ();
+  int overlayMatrixDimension = OverlayAdj_Matrix.size(); 
 
   if (matrixDimension != n_nodes)
     {
@@ -436,39 +437,30 @@ int main (int argc, char *argv[])
   TrafficControlHelper tch;
   tch.Uninstall (switch_nd);
   
-  // Create the overlay links
-  vector<int> overlayNodes;
+  // Create the overlay network
+  //Specifies the UnderlayIndex of overlay Nodes
+  int overlayNodes[overlayMatrixDimension];
+
+  //Specifies the underlay indexes of neighbors of overlay nodes (by underlayIndex)
   vector<int> overlayNeighbors[n_nodes];
+
+  //Check by underlayIndex if a node is Overlay
   bool overlayNodesChecker[n_nodes] = {0};
+
+  //Check for a node
   for(int i=0;i<n_nodes;i++){
-    for(int j=i;j<n_nodes;j++){
-      if(OverlayAdj_Matrix[i][j]==1){
-        if(overlayNodesChecker[i]==0){
-          overlayNodes.push_back(map_overlay_array[i]);
-          overlayNodesChecker[i] = 1;
-        }
-        if(overlayNodesChecker[j]==0){
-          overlayNodes.push_back(map_overlay_array[j]);
-          overlayNodesChecker[j] = 1;
-        }
-        overlayNeighbors[i].push_back(map_overlay_array[j]);
-        overlayNeighbors[j].push_back(map_overlay_array[i]);
-      }
+    if(map_overlay_array[i]>=0){
+      overlayNodesChecker[i] = 1;
+      overlayNodes[map_overlay_array[i]]=i;
     }
   }
 
-  sort(overlayNodes.begin(), overlayNodes.end());
-  for(size_t i = 0;i<overlayNodes.size();i++){
-    auto it = find(map_overlay_array.begin(), map_overlay_array.end(), overlayNodes[i]);
-    overlayNodes[i] = it - map_overlay_array.begin();
-  }
-  
-
-  for(int i=0;i<n_nodes;i++){
-    sort(overlayNeighbors[i].begin(), overlayNeighbors[i].end());
-    for(size_t j=0;j<overlayNeighbors[i].size();j++){
-      auto it = find(map_overlay_array.begin(), map_overlay_array.end(), overlayNeighbors[i][j]);
-      overlayNeighbors[i][j] = it - map_overlay_array.begin();
+  for(int i=0;i<overlayMatrixDimension;i++){
+    for(int j=i;j<overlayMatrixDimension;j++){
+      if(OverlayAdj_Matrix[i][j]==1){
+        overlayNeighbors[overlayNodes[i]].push_back(overlayNodes[j]);
+        overlayNeighbors[overlayNodes[j]].push_back(overlayNodes[i]);
+      }
     }
   }
 
@@ -503,9 +495,10 @@ int main (int argc, char *argv[])
   
   uint64_t linkRateValue= DataRate(LinkRate).GetBitRate();
   
-  for (size_t i = 0; i < overlayNodes.size(); i++)
+  for (int i = 0; i < overlayMatrixDimension; i++)
   {
-    NS_LOG_UNCOND("Node: "<<overlayNodes[i]);
+    NS_LOG_UNCOND("Node: "<<overlayNodes[i]<<"   Port: "<<openGymPort + i);
+    NS_LOG_UNCOND("Neighbors: ");
     for(int neighbor : overlayNeighbors[overlayNodes[i]]){
       NS_LOG_UNCOND(neighbor);
     }
@@ -538,33 +531,12 @@ int main (int argc, char *argv[])
     
     myOpenGymInterfaces.push_back (openGymInterface);
     packetRoutingEnvs.push_back (packetRoutingEnv);
-
-    
-      
   }  
-
-  
-
-  ///////////////////////////////////////////////////////////
-
-      
-  NS_LOG_UNCOND ("Create Links Between Nodes & Connecting OpenGym entity to event sources.");
-  //NetDeviceContainer list_p2pNetDevs = NetDeviceContainer();
-  
-  
-  uint32_t linkCount = 0;
-  
-  NS_LOG_INFO ("Number of links in the adjacency matrix is: " << linkCount);
-  //NS_LOG_INFO ("Number of all nodes is: " << nodes_switch.GetN ());
-
-  
-
- 
 
   // ---------- Create n*(n-1) CBR Flows -------------------------------------
 
   
-  NS_LOG_INFO ("Setup CBR Traffic Sources.");
+  NS_LOG_INFO ("");
   //Not used anymore
   float sum_traffic_rate_mat = 0.0;
   float sum_masked_traffic_rate_mat = 0.0;
@@ -584,15 +556,15 @@ int main (int argc, char *argv[])
       }
     }
   }
-  sum_traffic_rate_mat /= n_nodes;
-  if(activateUnderlayTraffic) sum_masked_traffic_rate_mat /= n_nodes;
-  else sum_masked_traffic_rate_mat /= overlayNodes.size();
-  float factor_overlay = sum_traffic_rate_mat / sum_masked_traffic_rate_mat;
-  //------------------------------------------------------------------------------------
-  if(true) factor_overlay = 1.0;
-  NS_LOG_UNCOND("FACTOR OVERLAY "<<sum_traffic_rate_mat<<"    "<<sum_masked_traffic_rate_mat<<"    "<<factor_overlay);
+  //sum_traffic_rate_mat /= n_nodes;
+  //if(activateUnderlayTraffic) sum_masked_traffic_rate_mat /= n_nodes;
+  //else sum_masked_traffic_rate_mat /= overlayNodes.size();
+  //float factor_overlay = sum_traffic_rate_mat / sum_masked_traffic_rate_mat;
+  ////------------------------------------------------------------------------------------
+  float factor_overlay = 1.0;
+  //NS_LOG_UNCOND("FACTOR OVERLAY "<<sum_traffic_rate_mat<<"    "<<sum_masked_traffic_rate_mat<<"    "<<factor_overlay);
 
-  
+  NS_LOG_UNCOND("Setup CBR Traffic Sources.");
   
   
   uint16_t sinkPortUDP = 11;
@@ -633,19 +605,21 @@ int main (int argc, char *argv[])
                 apps.Stop (Seconds (AppStopTime));
               }
               
+              if(train && activateSignaling && signalingType=="NN" && overlayNodesChecker[i] && overlayNodesChecker[j]){
+                if(OverlayAdj_Matrix[map_overlay_array[i]][map_overlay_array[j]]==1 ){
+                  string string_ip_bigSignaling= "10.2.2."+std::to_string(j+1);
+                  Ipv4Address ip_big_signaling(string_ip_bigSignaling.c_str());
+                  sinkAddress = InetSocketAddress (ip_big_signaling, sinkPortUDP);
 
-              if(train && activateSignaling && OverlayAdj_Matrix[i][j]==1 && signalingType=="NN"){
-                string string_ip_bigSignaling= "10.2.2."+std::to_string(j+1);
-                Ipv4Address ip_big_signaling(string_ip_bigSignaling.c_str());
-                sinkAddress = InetSocketAddress (ip_big_signaling, sinkPortUDP);
-
-                BigSignalingAppHelper sign ("ns3::UdpSocketFactory",sinkAddress); 
-                sign.SetAverageStep (syncStep, bigSignalingSize); 
-                sign.SetSourceDest(i+1, j+1, map_overlay_array[i]+1); 
-                ApplicationContainer apps = sign.Install (nodes_traffic.Get (i));  // traffic sources are installed on all nodes 
-                apps.Start (Seconds (AppStartTime )); 
-                apps.Stop (Seconds (AppStopTime)); 
-              }            
+                  BigSignalingAppHelper sign ("ns3::UdpSocketFactory",sinkAddress); 
+                  sign.SetAverageStep (syncStep, bigSignalingSize); 
+                  sign.SetSourceDest(i+1, j+1, map_overlay_array[i]+1); 
+                  ApplicationContainer apps = sign.Install (nodes_traffic.Get (i));  // traffic sources are installed on all nodes 
+                  apps.Start (Seconds (AppStartTime )); 
+                  apps.Stop (Seconds (AppStopTime)); 
+                }      
+              }
+                    
               
             }
         }
@@ -759,12 +733,13 @@ vector<vector<bool> > readNxNMatrix (std::string adj_mat_file_name)
       if (i == 0)
         {
           n_nodes = j;
+          NS_LOG_UNCOND("n_nodes "<<n_nodes);
         }
 
       if (j != n_nodes )
         {
           NS_LOG_ERROR ("ERROR: Number of elements in line " << i << ": " << j << " not equal to number of elements in line 0: " << n_nodes);
-          NS_FATAL_ERROR ("ERROR: The number of rows is not equal to the number of columns! in the adjacency matrix");
+          NS_FATAL_ERROR ("ERROR: The number of rows is not equal to the number of columns! in the adjacency matrix "<<i<<"   "<<j);
         }
       else
         {

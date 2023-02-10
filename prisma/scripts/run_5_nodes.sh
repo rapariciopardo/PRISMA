@@ -30,7 +30,7 @@ echo $res1
 python3 main.py \
 	--seed=$2 \
 	--simTime=${13} \
-	--basePort=$(((7000 + $2)+($8*15))) \
+	--basePort=$(((4444+$2)+(1000*$3)+($res0*15)+($8*1000))) \
 	--train=1 \
 	--agent_type=$4 \
 	--session_name=${14} \
@@ -41,20 +41,19 @@ python3 main.py \
 	--agent_adjacency_matrix_path=examples/$9/adjacency_matrix_2_5n.txt \
 	--adjacency_matrix_path=examples/$9/adjacency_matrix.txt \
 	--node_coordinates_path=examples/$9/node_coordinates_5n.txt \
-	--overlay_matrix_path=examples/$9/overlay_matrix_5n.txt \
 	--map_overlay_path=mapOverlay_5n.txt \
 	--training_step=0.01 \
 	--batch_size=512 \
-	--lr=0.00001 \
-	--exploration_final_eps=0.1 \
-	--exploration_initial_eps=0.1 \
-	--iterationNum=15000 \
+	--lr=0.001 \
+	--exploration_final_eps=0.01 \
+	--exploration_initial_eps=1.0 \
+	--iterationNum=3000 \
 	--gamma=1.0 \
 	--training_trigger_type="time" \
 	--save_models=1 \
 	--start_tensorboard=0 \
 	--replay_buffer_max_size=$7 \
-  	--link_delay="1ms" \
+ 	--link_delay="1ms" \
 	--load_factor=${11} \
 	--load_factor_trainning=${11} \
 	--sync_step=$1 \
@@ -65,8 +64,8 @@ python3 main.py \
 	--movingAverageObsSize=${16} \
 	--prioritizedReplayBuffer=${10} \
 	--activateUnderlayTraffic=${12} \
+	--groundTruthFrequence=0.1 \
 	--load_path=examples/$9/$4_sp_init_overlay_modified_5n
-
 
 array=(
 0.6
@@ -76,13 +75,13 @@ array=(
 1.0
 1.1
 1.2
-1.3
-1.4
+##1.3
+##1.4
 )
 counter=0
 
-#For running different agents, add the following arg:
-# --agent_type=sp \   #e.g., for Shortest Path agent
+##For running different agents, add the following arg:
+## --agent_type=sp \   #e.g., for Shortest Path agent
 for j in ${array[@]}
 	do
 	echo $j
@@ -103,7 +102,6 @@ for j in ${array[@]}
 		--agent_adjacency_matrix_path=examples/$9/adjacency_matrix_2_5n.txt \
 		--adjacency_matrix_path=examples/$9/adjacency_matrix.txt \
 		--node_coordinates_path=examples/$9/node_coordinates_5n.txt \
-		--overlay_matrix_path=examples/$9/overlay_matrix_5n.txt \
 		--map_overlay_path=mapOverlay_5n.txt \
 		--save_models=0 \
 		--start_tensorboard=0 \
@@ -118,6 +116,7 @@ for j in ${array[@]}
        	--activateUnderlayTraffic=1 \
 		--activateUnderlayTrafficTrain=${12} \
 		--load_path=examples/$9/${15}/saved_models/${14}/iteration1_episode1 \
+		--pingAsObs=${17} \
 		--load_factor_trainning=${11} \
 		--load_factor=$j
 	# oarsub -p "gpu='YES' and gpucapability>='5.0'" -l /nodes=1/gpunum=1,walltime=06:00:00 -d /home/ralliche/PRISMA-master/prisma/ "scripts/run_on_nef_test.sh $j 100 0 train_abilene_NN_ts_0_03_seed_100_traff_mat_0_batch_512_lr_1e-3_gamma_1_final_eps_0_01_load_40_sync_0.5_loss_x1_sp_init"

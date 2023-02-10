@@ -94,7 +94,6 @@ def arguments_parser():
     group4.add_argument('--load_factor', type=float, help='scale of the traffic matrix', default=1)
     group4.add_argument('--load_factor_trainning', type=float, help='scale of the traffic matrix', default=1)
     group4.add_argument('--adjacency_matrix_path', type=str, help='Path to the adjacency matrix', default="examples/abilene/adjacency_matrix.txt")
-    group4.add_argument('--overlay_matrix_path', type=str, help='Path to the adjacency matrix', default="examples/abilene/overlay_matrix_5n.txt")
     group4.add_argument('--agent_adjacency_matrix_path', type=str, help='Path to the adjacency matrix', default="examples/abilene/adjacency_matrix_2_5n.txt")
     group4.add_argument('--traffic_matrix_root_path', type=str, help='Path to the traffic matrix folder', default="examples/abilene/traffic_matrices/")
     group4.add_argument('--traffic_matrix_index', type=int, help='Index of the traffic matrix', default=0)
@@ -153,7 +152,6 @@ def arguments_parser():
     params["agent_adjacency_matrix_path"] = os.path.abspath(params["agent_adjacency_matrix_path"])
     params["opt_rejected_path"] = os.path.abspath("test.txt")
     params["map_overlay_path"] = os.path.abspath(params["map_overlay_path"])
-    params["overlay_matrix_path"] = os.path.abspath(params["overlay_matrix_path"])
     params["traffic_matrix_path"] = os.path.abspath(f'{params["traffic_matrix_root_path"].rstrip("/")}/node_intensity_normalized_{params["traffic_matrix_index"]}.txt')
     #params["traffic_matrix_path"] = os.path.abspath(f'{params["traffic_matrix_root_path"].rstrip("/")}/traffic_mat_{params["traffic_matrix_index"]}_adjusted_bps.txt')
     params["node_coordinates_path"] = os.path.abspath(params["node_coordinates_path"])
@@ -341,7 +339,7 @@ def run_ns3(params):
                                              str(params["max_out_buffer_size"]) + "B",
                                              params["load_factor"],
                                              params["adjacency_matrix_path"],
-                                             params["overlay_matrix_path"],
+                                             params["agent_adjacency_matrix_path"],
                                              params["node_coordinates_path"],
                                              params["traffic_matrix_path"],
                                              bool(params["signalingSim"]),
