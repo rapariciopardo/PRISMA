@@ -1,4 +1,4 @@
-PRISMA: A Packet Routing Simulator for Multi-Agent Reinforcement Learning
+Packet Routing Simulator for Multi-Agent Reinforcement Learning (PRISMA)
 ============
 
 PRISMA is a network simulation playground for developing and testing Multi-Agent Reinforcement Learning (MARL) solutions for dynamic packet routing (DPR). This framework is based on the OpenAI Gym toolkit and the ns-3 simulator.
