@@ -13,7 +13,7 @@ authors:
   - family-names: Sassatelli
     given-names: Lucile
     orcid: https://orcid.org/0000-0003-1232-17871
-title: "PRISMA: A Packet Routing Simulator for Multi-Agent Reinforcement Learning"
+title: "Packet Routing Simulator for Multi-Agent Reinforcement Learning (PRISMA)"
 version: v0.1
 doi: 10.5281/zenodo.7660362 
 date-released: 2023-02-21
