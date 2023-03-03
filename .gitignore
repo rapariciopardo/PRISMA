@@ -74,3 +74,5 @@ prisma/temp2.sh
 prisma/temp.sh
 prisma/test.sh
 prisma_latest.sif
+prisma/examples/abilene/*
+prisma/examples/geant/*
