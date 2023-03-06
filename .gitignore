@@ -46,6 +46,6 @@ build/
 waf3*/*
 venv/
 .vscode/
-prisma/examples/
+prisma/examples/*
 prisma/replay_buffer_samples/
 prisma/figures/
