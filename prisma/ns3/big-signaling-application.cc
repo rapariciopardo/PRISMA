@@ -268,6 +268,7 @@ void BigSignalingGeneratorApplication::SendPacket ()
   Ptr<Packet> packet = Create<Packet> (m_segSize);
   MyTag tag;
   tag.SetSimpleValue(0x01);
+  tag.SetTrafficValable(0);
   tag.SetFinalDestination(m_dest-1);
   tag.SetSource(m_src-1);
   tag.SetNextHop(m_dest-1);

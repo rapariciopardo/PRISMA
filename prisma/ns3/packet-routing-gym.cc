@@ -53,18 +53,22 @@
 namespace ns3 {
 uint32_t PacketRoutingEnv::m_n_nodes;
 int PacketRoutingEnv::m_packetsDeliveredGlobal;
+int PacketRoutingEnv::m_packetsDeliveredTotalGlobal;
 int PacketRoutingEnv::m_packetsInjectedGlobal;
 int PacketRoutingEnv::m_packetsDroppedGlobal;
 int PacketRoutingEnv::m_packetsDroppedTotalGlobal;
 int PacketRoutingEnv::m_packetsInjectedTotalGlobal;
 int PacketRoutingEnv::m_testPacketsDroppedGlobal;
 int PacketRoutingEnv::m_bytesData;
+int PacketRoutingEnv::m_TotalbytesData;
 int PacketRoutingEnv::m_bytesSmallSignalling;
 int PacketRoutingEnv::m_bytesBigSignalling;
 int PacketRoutingEnv::m_bytesOverlaySignalingForward;
 int PacketRoutingEnv::m_bytesOverlaySignalingBack;
 std::vector<int> PacketRoutingEnv::m_end2endDelay;
+std::vector<int> PacketRoutingEnv::m_end2endTotalDelay;
 std::vector<float> PacketRoutingEnv::m_cost;
+std::vector<float> PacketRoutingEnv::m_Totalcost;
 
 template<typename T>
 double getAverage(std::vector<T> const& v) {
@@ -257,7 +261,7 @@ PacketRoutingEnv::setPingTimeout(uint32_t maxBufferSize, uint32_t linkCapacity, 
   
   for(size_t i=0;i<4;i++){
     m_pingTimeout[i] = int(((((float(maxBufferSize)+38.0)*8.0)/float(linkCapacity)) + 0.001*float(propagationDelay))*1000*2*nextHopSize); //nextHopSize[i];
-    NS_LOG_UNCOND("Node: "<<m_node->GetId()<<"   IF: "<<i<<"   PingTimeout: "<<m_pingTimeout[i]);
+    // NS_LOG_UNCOND("Node: "<<m_node->GetId()<<"   IF: "<<i<<"   PingTimeout: "<<m_pingTimeout[i]);
   }
 }
 
@@ -296,7 +300,7 @@ PacketRoutingEnv::GetActionSpace()
 {
   NS_LOG_FUNCTION (this);
   Ptr<OpenGymDiscreteSpace> space = CreateObject<OpenGymDiscreteSpace> (m_overlayNeighbors.size()); // first dev is not p2p
-  NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", GetActionSpace: " << space);
+  // NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", GetActionSpace: " << space);
   return space;
 }
 
@@ -309,7 +313,7 @@ PacketRoutingEnv::GetObservationSpace()
   m_obs_shape = {uint32_t(1)+uint32_t(m_overlayNeighbors.size()),}; // Destination Node + (num_devs - 1) interfaces for other nodes
   std::string dtype = TypeNameGet<uint32_t> ();
   Ptr<OpenGymBoxSpace> space = CreateObject<OpenGymBoxSpace> (low, high, m_obs_shape, dtype);
-  NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", GetObservationSpace: " << space);
+  // NS_LOG_UNCOND ("Node: " << m_node->GetId() << ", GetObservationSpace: " << space);
   for(size_t i=0;i<m_overlayNeighbors.size();i++){
     m_fwdDev_idx_overlay = i;
     m_src = m_node->GetId();
@@ -367,6 +371,7 @@ PacketRoutingEnv::dropPacket(Ptr<PacketRoutingEnv> entity, Ptr<const Packet> pac
   packet->PeekPacketTag(tagCopy);
   if(tagCopy.GetSimpleValue()==0){
     m_packetsDroppedTotalGlobal += 1;
+    m_Totalcost.push_back(entity->m_loss_penalty);
     if(tagCopy.GetTrafficValable()==1){
       m_cost.push_back(entity->m_loss_penalty);
       m_packetsDroppedGlobal += 1;
@@ -625,7 +630,21 @@ PacketRoutingEnv::GetExtraInfo()
 
     myInfo += ",Total Dropped Packets ="; //24
     myInfo += std::to_string(m_packetsDroppedTotalGlobal);
+    
+    myInfo += ",Total Packets delivered ="; //25
+    myInfo += std::to_string(m_packetsDeliveredTotalGlobal);
 
+    myInfo += ",Total Avg End to End Delay ="; //26
+    myInfo += std::to_string(getAverage(m_end2endTotalDelay)); 
+
+    myInfo += ",Total Sum End to End Delay ="; //27
+    myInfo += std::to_string(getSum(m_end2endTotalDelay)); 
+
+    myInfo += ",Total Cost ="; //28
+    myInfo += std::to_string(getAverage(m_Totalcost)); 
+    
+    myInfo += ",Total Bytes Data ="; //29
+    myInfo += std::to_string(m_TotalbytesData);
 
    
 
@@ -652,9 +671,9 @@ PacketRoutingEnv::sendOverlaySignalingUpdate(uint8_t type){
 
   //Define packet size
   double packetSize;
-  if(type==2) packetSize=m_signPacketSize;
-  if(type==3) packetSize = 8;
-  if(type==4) packetSize = 8;
+  if(type==2) packetSize=m_signPacketSize; // small signalling pkt size
+  if(type==3) packetSize = 8; // ping pkt size
+  if(type==4) packetSize = 8; // ping back pkt size
 
   //Define Packet
   Ptr<Packet> smallSignalingPckt = Create<Packet> (packetSize);
@@ -687,6 +706,7 @@ PacketRoutingEnv::sendOverlaySignalingUpdate(uint8_t type){
   if(type==4){
     tagSmallSignaling.SetStartTime(uint64_t(Simulator::Now().GetMilliSeconds()) - m_timeStartOverlay);
   }
+  tagSmallSignaling.SetTrafficValable(0);
   smallSignalingPckt->AddPacketTag(tagSmallSignaling);
 
   //Adding headers
@@ -889,9 +909,13 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
   //Get Destination, source and last Hop
   entity->m_dest = tagCopy.GetFinalDestination();
   //if(tagCopy.GetSource()==10 && tagCopy.GetFinalDestination()==0) NS_LOG_UNCOND("AQUI "<<tagCopy.GetNextHop()<<"    "<<entity->m_node->GetId()<<"  "<<Simulator::Now().GetSeconds());
-  if(tagCopy.GetNextHop()!=entity->m_node->GetId()) {
+
+  
+  // skip the overlay pkts that are in an underlay node
+  if(tagCopy.GetNextHop() != entity->m_node->GetId() && (tagCopy.GetTrafficValable() ==1 || tagCopy.GetSimpleValue()!=0)) {
     return ;
   }
+
   //if(tagCopy.GetSource()==10 && tagCopy.GetFinalDestination()==0 && tagCopy.GetSimpleValue()==0) NS_LOG_UNCOND("AQUI2");
   entity->m_src = entity->m_node->GetId();
   entity->m_lastHop = tagCopy.GetLastHop();
@@ -901,8 +925,6 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
 
   //Get Packet Size
   entity->m_size = p->GetSize();
-
-
 
   //Other Information
   entity->m_lengthType = ppp_head.GetProtocol();
@@ -917,11 +939,11 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
   {
     NS_LOG_UNCOND(packet->ToString());
     NS_LOG_UNCOND("ERRRRRRRRR "<<entity->m_lastHop<<"    tag: "<<uint32_t(tagCopy.GetSimpleValue())<<"   UID: "<<packet->GetUid());
-    NS_LOG_UNCOND("Node: "<<entity->m_node->GetId());
   }
   //Receiving Packets and treating them according to its type
   //Not Used anymore
   if(Simulator::Now().GetSeconds()>=(entity->m_cp+1.0)){
+    // NS_LOG_UNCOND("Node: "<<entity->m_node->GetId());
     entity->m_cp += 1.0;
     for(size_t i =0; i<entity->m_overlayNeighbors.size();i++){
       uint64_t value;
@@ -931,24 +953,45 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
   }
   // Type: 0 ----- Data Packets
   if(tagCopy.GetSimpleValue()==0x00){
-    if(entity->m_lastHop==1000){
-      m_packetsInjectedTotalGlobal += 1;
-    }
-    if(tagCopy.GetTrafficValable()==0){
+    
+    entity->m_packetStart = uint32_t(tagCopy.GetStartTime());
+
+    // skip the underlay pkts
+    if(uint32_t(tagCopy.GetTrafficValable()==0)){
+      // if the pkt is new 
+      if(entity->m_lastHop==1000){
+        m_packetsInjectedTotalGlobal += 1;
+        m_TotalbytesData += entity->m_size;
+      }
+      // if the data packet arrived at the destination
+      if(entity->m_dest == entity->m_node->GetId()){
+          m_packetsDeliveredTotalGlobal += 1;
+          m_end2endTotalDelay.push_back(Simulator::Now().GetMilliSeconds()- entity->m_packetStart);
+          m_Totalcost.push_back((Simulator::Now().GetMilliSeconds()- entity->m_packetStart)*0.001);
+        }
+
       return ;
     }
-
-    entity->m_packetStart = uint32_t(tagCopy.GetStartTime());
-    if(entity->m_lastHop!=1000){
-      if(entity->m_dest == entity->m_node->GetId()){
-        m_packetsDeliveredGlobal += 1;
-        m_end2endDelay.push_back(Simulator::Now().GetMilliSeconds()- entity->m_packetStart);
-        m_cost.push_back((Simulator::Now().GetMilliSeconds()- entity->m_packetStart)*0.001);
+    // for overlay pkts
+    else{  
+      if(entity->m_lastHop!=1000){
+        if(entity->m_dest == entity->m_node->GetId()){
+          // increment overlay and global counters for arrived pkts
+          m_packetsDeliveredGlobal += 1;
+          m_end2endDelay.push_back(Simulator::Now().GetMilliSeconds()- entity->m_packetStart);
+          m_cost.push_back((Simulator::Now().GetMilliSeconds()- entity->m_packetStart)*0.001);
+          m_packetsDeliveredTotalGlobal += 1;
+          m_end2endTotalDelay.push_back(Simulator::Now().GetMilliSeconds()- entity->m_packetStart);
+          m_Totalcost.push_back((Simulator::Now().GetMilliSeconds()- entity->m_packetStart)*0.001);
+        }
       }
-    }
-    else{
-      m_packetsInjectedGlobal += 1;
-      m_bytesData += entity->m_size;
+      else{
+        // increment overlay and global counters for new pkts
+        m_packetsInjectedGlobal += 1;
+        m_bytesData += entity->m_size;
+        m_packetsInjectedTotalGlobal += 1;
+        m_TotalbytesData += entity->m_size;
+      }
     }
   }
 
@@ -972,7 +1015,7 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
     }
 
     if(entity->m_first[entity->m_overlayRecvIndex]==false){
-      NS_LOG_UNCOND("Node: "<<entity->m_map_overlay_array[entity->m_node->GetId()]<<"    IF: "<<entity->m_overlayRecvIndex<<"     Ping: "<<tagCopy.GetStartTime());
+      // NS_LOG_UNCOND("Node: "<<entity->m_map_overlay_array[entity->m_node->GetId()]<<"    IF: "<<entity->m_overlayRecvIndex<<"     Ping: "<<tagCopy.GetStartTime());
       entity->m_first[entity->m_overlayRecvIndex] = true;
     }
 

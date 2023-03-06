@@ -176,18 +176,22 @@ private:
   uint32_t m_packetsDropped;
   uint32_t m_packetsDelivered;
   static int m_packetsDeliveredGlobal;
+  static int m_packetsDeliveredTotalGlobal;
   static int m_packetsInjectedGlobal;
   static int m_packetsDroppedGlobal;
   static int m_packetsDroppedTotalGlobal;
   static int m_packetsInjectedTotalGlobal;
   static int m_testPacketsDroppedGlobal;
   static int m_bytesData;
+  static int m_TotalbytesData;
   static int m_bytesBigSignalling;
   static int m_bytesSmallSignalling;
   static int m_bytesOverlaySignalingForward;
   static int m_bytesOverlaySignalingBack;
   static std::vector<int> m_end2endDelay;
+  static std::vector<int> m_end2endTotalDelay;
   static std::vector<float> m_cost;
+  static std::vector<float> m_Totalcost;
 
   double m_loss_penalty;
 

@@ -39,13 +39,18 @@ class Agent():
     sim_global_injected_packets=0
     sim_dropped_packets = 0
     sim_global_dropped_packets=0
-    sim_test_dropped = 0
     sim_delivered_packets = 0
+    sim_global_delivered_packets = 0
     sim_buffered_packets = 0
+    sim_global_buffered_packets = 0
     sim_avg_e2e_delay = 0.0
     sim_sum_e2e_delay = 0.0
-    sim_cost = 0.0
+    sim_cost = 0.0    
+    sim_global_avg_e2e_delay = 0.0
+    sim_global_sum_e2e_delay = 0.0
+    sim_global_cost = 0.0
     sim_bytes_data = 0
+    sim_global_bytes_data = 0
     sim_bytes_big_signaling = 0
     sim_bytes_small_signaling = 0
     sim_bytes_overlay_signaling_forward = 0
@@ -163,13 +168,18 @@ class Agent():
         cl.sim_global_injected_packets=0
         cl.sim_dropped_packets = 0
         cl.sim_global_dropped_packets=0
-        cl.sim_test_dropped = 0
         cl.sim_delivered_packets = 0
+        cl.sim_global_delivered_packets = 0
         cl.sim_buffered_packets = 0
+        cl.sim_global_buffered_packets = 0
         cl.sim_avg_e2e_delay = 0.0
         cl.sim_sum_e2e_delay = 0.0
         cl.sim_cost = 0.0
+        cl.sim_global_avg_e2e_delay = 0.0
+        cl.sim_global_sum_e2e_delay = 0.0
+        cl.sim_global_cost = 0.0
         cl.sim_bytes_data = 0
+        cl.sim_global_bytes_data = 0
         cl.sim_bytes_big_signaling = 0
         cl.sim_bytes_small_signaling = 0
         cl.sim_bytes_overlay_signaling_forward = 0
@@ -752,8 +762,10 @@ class Agent():
                         NodeIdSignaled = int(tokens[7].split('=')[-1])
                         NNIndex = int(tokens[8].split('=')[-1])
                         segIndex = int(tokens[9].split('=')[-1])
-                        if segIndex == 0: ## NN signaling complete
-                            #print(f"sync {self.index} with neighbor {self.neighbors.index(NodeIdSignaled)}")
+                        if segIndex > 68:
+                            raise("segIndex > 68")
+                        if segIndex == 68: ## NN signaling complete
+                            print(f"sync {self.index} with neighbor {self.neighbors.index(NodeIdSignaled)}")
                             if NNIndex ==self.sync_counter - 1:
                                 self._sync_current(self.neighbors.index(NodeIdSignaled), with_temp=True)
                             else:
@@ -773,6 +785,7 @@ class Agent():
                 Agent.sim_delivered_packets = float(tokens[12].split('=')[-1])
                 Agent.sim_injected_packets = float(tokens[13].split('=')[-1])
                 Agent.sim_buffered_packets = Agent.sim_injected_packets - Agent.sim_delivered_packets - Agent.sim_dropped_packets #float(tokens[14].split('=')[-1])
+                Agent.sim_global_buffered_packets = float(tokens[14].split('=')[-1])
                 Agent.sim_avg_e2e_delay =  float(tokens[15].split('=')[-1])
                 Agent.sim_sum_e2e_delay =  float(tokens[16].split('=')[-1])
                 Agent.sim_cost = float(tokens[17].split('=')[-1])
@@ -783,6 +796,11 @@ class Agent():
                 Agent.sim_bytes_overlay_signaling_back = float(tokens[22].split('=')[-1])
                 Agent.sim_global_injected_packets = float(tokens[23].split("=")[-1])
                 Agent.sim_global_dropped_packets = float(tokens[24].split("=")[-1])
+                Agent.sim_global_delivered_packets = float(tokens[25].split("=")[-1])
+                Agent.sim_global_avg_e2e_delay =  float(tokens[26].split('=')[-1])
+                Agent.sim_global_sum_e2e_delay =  float(tokens[27].split('=')[-1])
+                Agent.sim_global_cost = float(tokens[28].split('=')[-1])
+                Agent.sim_global_bytes_data = float(tokens[29].split('=')[-1])
                 #print(Agent.sim_global_dropped_packets, Agent.sim_dropped_packets)
                 #print(Agent.sim_injected_packets, Agent.sim_delivered_packets, Agent.sim_buffered_packets, Agent.sim_dropped_packets, Agent.sim_avg_e2e_delay)
                 Agent.nb_transitions += 1

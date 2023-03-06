@@ -362,7 +362,7 @@ int main (int argc, char *argv[])
 
   //Parameters of signaling
   double smallSignalingSize[n_nodes] = {0.0};
-  double bigSignalingSize = 512;
+  double bigSignalingSize = 35328; // big signaling size in bytes
   if(agentType=="sp" || agentType=="opt" || signalingType=="ideal"){
     activateSignaling=false;
   }

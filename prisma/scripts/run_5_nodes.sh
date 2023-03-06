@@ -9,13 +9,16 @@ echo $7 # rb size
 echo $8 # increment
 echo $9 # topology
 echo ${10} #prio
-echo ${11} #load_trai
+echo ${11} #load_training
 echo ${12} #underlay_traff
 echo ${13} #SimTimeTrainning
 echo ${14} #Session name
 echo ${15} #Experiment name
 echo ${16} #moving average window size
-
+echo ${17} # learning rate
+echo ${18} # batch size
+echo ${19} # exploration starting ratio
+echo ${20} # exploration end ratio
 #module load singularity/3.5.2
 uname -a
 echo $(date)
@@ -30,7 +33,7 @@ echo $res1
 python3 main.py \
 	--seed=$2 \
 	--simTime=${13} \
-	--basePort=$(((4444+$2)+(1000*$3)+($res0*15)+($8*1000))) \
+	--basePort=$(((5000 + $2)+($8*11)))  \
 	--train=1 \
 	--agent_type=$4 \
 	--session_name=${14} \
@@ -43,11 +46,11 @@ python3 main.py \
 	--node_coordinates_path=examples/$9/node_coordinates_5n.txt \
 	--map_overlay_path=mapOverlay_5n.txt \
 	--training_step=0.01 \
-	--batch_size=512 \
-	--lr=0.001 \
-	--exploration_final_eps=0.01 \
-	--exploration_initial_eps=1.0 \
-	--iterationNum=3000 \
+	--batch_size=${18} \
+	--lr=${17} \
+	--exploration_final_eps=${20} \
+	--exploration_initial_eps=${19} \
+	--iterationNum=5000 \
 	--gamma=1.0 \
 	--training_trigger_type="time" \
 	--save_models=1 \
@@ -64,7 +67,7 @@ python3 main.py \
 	--movingAverageObsSize=${16} \
 	--prioritizedReplayBuffer=${10} \
 	--activateUnderlayTraffic=${12} \
-	--groundTruthFrequence=0.1 \
+	--groundTruthFrequence=1 \
 	--load_path=examples/$9/$4_sp_init_overlay_modified_5n
 
 array=(
@@ -90,35 +93,35 @@ for j in ${array[@]}
 	echo $res2
 
 	python3 main.py \
-		--simTime=100 \
-		--basePort=$(((7000 + $2)+($8*15))) \
-		--train=0 \
-		--seed=200 \
-		--session_name=${14} \
-		--signaling_type=$5 \
-		--agent_type=$4 \
-		--logs_parent_folder=examples/$9/${15} \
-		--traffic_matrix_index=0 \
-		--agent_adjacency_matrix_path=examples/$9/adjacency_matrix_2_5n.txt \
-		--adjacency_matrix_path=examples/$9/adjacency_matrix.txt \
-		--node_coordinates_path=examples/$9/node_coordinates_5n.txt \
-		--map_overlay_path=mapOverlay_5n.txt \
-		--save_models=0 \
-		--start_tensorboard=0 \
-		--sync_step=$1 \
-		--link_delay="1ms" \
-		--signalingSim=1 \
-		--replay_buffer_max_size=$7 \
-		--max_out_buffer_size=16260 \
-		--nPacketsOverlay=$6 \
-		--movingAverageObsSize=${16} \
-		--prioritizedReplayBuffer=${10} \
-       	--activateUnderlayTraffic=1 \
-		--activateUnderlayTrafficTrain=${12} \
-		--load_path=examples/$9/${15}/saved_models/${14}/iteration1_episode1 \
-		--pingAsObs=${17} \
-		--load_factor_trainning=${11} \
-		--load_factor=$j
+	--seed=$2 \
+	--simTime=100 \
+	--basePort=$(((5000 + $2)+($8*11)))  \
+	--train=0 \
+	--agent_type=$4 \
+	--session_name=${14} \
+	--signaling_type=$5 \
+	--logs_parent_folder=examples/$9/${15} \
+	--traffic_matrix_root_path=examples/$9/traffic_matrices/ \
+	--traffic_matrix_index=$3 \
+	--agent_adjacency_matrix_path=examples/$9/adjacency_matrix_2_5n.txt \
+	--adjacency_matrix_path=examples/$9/adjacency_matrix.txt \
+	--node_coordinates_path=examples/$9/node_coordinates_5n.txt \
+	--map_overlay_path=mapOverlay_5n.txt \
+	--save_models=0 \
+	--start_tensorboard=0 \
+ 	--link_delay="1ms" \
+	--load_factor=$j \
+	--sync_step=$1 \
+	--max_out_buffer_size=16260 \
+	--sync_ratio=0.2 \
+	--signalingSim=1 \
+	--nPacketsOverlay=$6 \
+	--movingAverageObsSize=${16} \
+	--prioritizedReplayBuffer=${10} \
+	--activateUnderlayTraffic=${12} \
+	--groundTruthFrequence=1 \
+	--load_path=examples/$9/${15}/saved_models/${14}/iteration1_episode1
+
 	# oarsub -p "gpu='YES' and gpucapability>='5.0'" -l /nodes=1/gpunum=1,walltime=06:00:00 -d /home/ralliche/PRISMA-master/prisma/ "scripts/run_on_nef_test.sh $j 100 0 train_abilene_NN_ts_0_03_seed_100_traff_mat_0_batch_512_lr_1e-3_gamma_1_final_eps_0_01_load_40_sync_0.5_loss_x1_sp_init"
 	counter=$((counter+1))
 	echo $counter

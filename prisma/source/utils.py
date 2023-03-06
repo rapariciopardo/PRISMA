@@ -169,8 +169,8 @@ def optimal_routing_decision(graph, routing_mat, rejected_mat, actual_node, src_
         if tag in prob_to_neighbors and tag < 1:
             return list(prob_to_neighbors).index(tag), tag
     
-    #print(src, dst, actual, neighbors)
-    #print(prob_to_neighbors)
+    # print(src, dst, actual, neighbors,list(graph.edges), routing_mat.shape, rejected_mat.shape)
+    # print(prob_to_neighbors)
     prob_general = list(prob_to_neighbors/sum(prob_to_neighbors))  
     choice = np.random.choice(neighbors, p=prob_general)
     tag = prob_to_neighbors[neighbors.index(choice)]

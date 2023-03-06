@@ -153,7 +153,7 @@ def arguments_parser():
     params["opt_rejected_path"] = os.path.abspath("test.txt")
     params["map_overlay_path"] = os.path.abspath(params["map_overlay_path"])
     params["traffic_matrix_path"] = os.path.abspath(f'{params["traffic_matrix_root_path"].rstrip("/")}/node_intensity_normalized_{params["traffic_matrix_index"]}.txt')
-    #params["traffic_matrix_path"] = os.path.abspath(f'{params["traffic_matrix_root_path"].rstrip("/")}/traffic_mat_{params["traffic_matrix_index"]}_adjusted_bps.txt')
+    # params["traffic_matrix_path"] = os.path.abspath(f'{params["traffic_matrix_root_path"].rstrip("/")}/traffic_mat_{params["traffic_matrix_index"]}_adjusted_bps.txt')
     params["node_coordinates_path"] = os.path.abspath(params["node_coordinates_path"])
     params["ns3_sim_path"] = os.path.abspath(params["ns3_sim_path"])
 
@@ -182,10 +182,13 @@ def arguments_parser():
 
     ## Add optimal solution path
     topology_name = params["adjacency_matrix_path"].split("/")[-2]
-    params["optimal_soltion_path"] = f"examples/{topology_name}/optimal_solution/11Nodes/{params['traffic_matrix_index']}_norm_matrix_uniform/{int(params['load_factor']*100)}_ut_minCostMCF.json"
+    # params["optimal_soltion_path"] = f"examples/{topology_name}/optimal_solution/11Nodes/{params['traffic_matrix_index']}_norm_matrix_uniform/{int(params['load_factor']*100)}_ut_minCostMCF.json"
+    params["optimal_soltion_path"] = f"examples/{topology_name}/optimal_solution/5 nodes overlay/{params['traffic_matrix_index']}_original_uniform/{int(params['load_factor']*100)}_ut_minCostMCF.json"
+    # params["optimal_soltion_path"] = f"examples/{topology_name}/optimal_solution/{params['traffic_matrix_index']}_adjusted_5_nodes_mesh_norm_matrix_uniform/{int(params['load_factor']*100)}_ut_minCostMCF.json"
     return params
 
 def custom_plots():
+    
     """define the costume plots for tensorboard"
     """
     cs = cs_summary.pb(
@@ -252,7 +255,7 @@ def stats_writer(summary_writer_session, summary_writer_nb_arrived_pkts, summary
     else:
         loss_ratio = -1
     if Agent.sim_delivered_packets > 0:
-        avg_delay = Agent.sim_avg_e2e_delay/(Agent.sim_delivered_packets*1000)
+        avg_delay = Agent.sim_avg_e2e_delay
         avg_cost = Agent.sim_cost/(Agent.sim_delivered_packets+Agent.sim_dropped_packets)
         avg_hops = Agent.total_hops/Agent.sim_delivered_packets
     else:
@@ -279,6 +282,11 @@ def stats_writer(summary_writer_session, summary_writer_nb_arrived_pkts, summary
         ## buffers occupation
         tf.summary.scalar('nb_buffered_pkts_over_time', Agent.sim_buffered_packets, step=int(Agent.curr_time*1e6))
         tf.summary.scalar('nb_buffered_pkts_over_iterations', Agent.sim_buffered_packets, step=Agent.currIt)
+        ## signalling overhead
+        tf.summary.scalar('overlay_data_pkts_injected_bytes_time', Agent.sim_bytes_data, step=int(Agent.curr_time*1e6))
+        tf.summary.scalar('overlay_big_signalling_bytes', Agent.sim_bytes_big_signaling, step=int(Agent.curr_time*1e6))
+        tf.summary.scalar('overlay_small_signalling_bytes', Agent.sim_bytes_small_signaling, step=int(Agent.curr_time*1e6))
+        tf.summary.scalar('overlay_ping_signalling_bytes', Agent.sim_bytes_overlay_signaling_back + Agent.sim_bytes_overlay_signaling_forward, step=int(Agent.curr_time*1e6))
         ## avg cost and avg delay
         tf.summary.scalar('avg_cost_over_iterations', avg_cost, step=Agent.currIt)
         tf.summary.scalar('avg_cost_over_time', avg_cost, step=int(Agent.curr_time*1e6))
@@ -458,25 +466,32 @@ def main():
 
     print(f"Signaling overhead = {Agent.small_signaling_overhead_counter}")
     print(f""" Summary of the Simulation:
-            Total number of packets = {Agent.sim_injected_packets}, 
-            Number of arrived packets = {Agent.sim_delivered_packets},
-            Number of lost packets = {Agent.sim_dropped_packets},
-            Number Test Drooped = {Agent.sim_test_dropped},
-            Delay_real = {Agent.sim_avg_e2e_delay},
-            Cost = {Agent.sim_cost},
+            Overlay Total injected packets = {Agent.sim_injected_packets}, 
+            Global Total injected packets = {Agent.sim_global_injected_packets}, 
+            Overlay arrived packets = {Agent.sim_delivered_packets},
+            Global arrived packets = {Agent.sim_global_delivered_packets},
+            Overlay lost packets = {Agent.sim_dropped_packets},
+            Global lost packets = {Agent.sim_global_dropped_packets},
+            Overlay buffered packets = {Agent.sim_buffered_packets},
+            Global buffered packets = {Agent.sim_global_buffered_packets},
+            Overlay lost ratio = {Agent.sim_dropped_packets/Agent.sim_injected_packets},
+            Global lost ratio = {Agent.sim_global_dropped_packets/Agent.sim_global_injected_packets},
+            Overlay e2e delay = {Agent.sim_avg_e2e_delay},
+            Global e2e delay = {Agent.sim_global_avg_e2e_delay},
+            Overlay Cost = {Agent.sim_cost},
+            Global Cost = {Agent.sim_global_cost},
             Hops = {Agent.total_hops/Agent.sim_delivered_packets},
-            nbBytesData = {Agent.sim_bytes_data},
+            Overlay Data packet size = {Agent.sim_bytes_data},
+            Global Data packet size = {Agent.sim_global_bytes_data},
             nbBytesBigSignaling = {Agent.sim_bytes_big_signaling},
             nbBytesSmallSignaling = {Agent.sim_bytes_small_signaling},
             nbBytesOverlaySignalingForward = {Agent.sim_bytes_overlay_signaling_forward},
             nbBytesOverlaySignalingBack = {Agent.sim_bytes_overlay_signaling_back},
             OverheadRatio = {(Agent.sim_bytes_big_signaling+Agent.sim_bytes_small_signaling+Agent.sim_bytes_overlay_signaling_forward+Agent.sim_bytes_overlay_signaling_back)/Agent.sim_bytes_data}
-            Number of Total packets = {Agent.sim_global_injected_packets},
-            Number Total Drooped = {Agent.sim_global_dropped_packets}
             """)
     
     print(f""" Summary of the episode :
-            Total number of Iterations = {Agent.currIt},
+            Total Iterations = {Agent.currIt},
             Total number of Transitions = {Agent.nb_transitions},
             Simulation time = {Agent.curr_time},
             Total e2e delay = {Agent.total_e2e_delay}, 
@@ -543,12 +558,20 @@ def main():
     if params["train"] == 0:
         ## store test stats
         with summary_writer_results.as_default():
-            tf.summary.scalar('test_overlay_e2e_delay', Agent.sim_avg_e2e_delay, step=int(params["load_factor"]*100))
+            tf.summary.scalar('test_global_injected_pkts', Agent.sim_global_injected_packets, step=int(params["load_factor"]*100))
+            tf.summary.scalar('test_overlay_injected_pkts', Agent.sim_injected_packets, step=int(params["load_factor"]*100))
+            tf.summary.scalar('test_global_lost_pkts', Agent.sim_global_dropped_packets, step=int(params["load_factor"]*100))
+            tf.summary.scalar('test_overlay_lost_pkts', Agent.sim_dropped_packets, step=int(params["load_factor"]*100))
+            tf.summary.scalar('test_global_arrived_pkts', Agent.sim_global_dropped_packets, step=int(params["load_factor"]*100))
+            tf.summary.scalar('test_overlay_arrived_pkts', Agent.sim_dropped_packets, step=int(params["load_factor"]*100))
+            tf.summary.scalar('test_global_e2e_delay', Agent.sim_avg_e2e_delay, step=int(params["load_factor"]*100))
+            tf.summary.scalar('test_overlay_e2e_delay', Agent.sim_global_avg_e2e_delay, step=int(params["load_factor"]*100))
+            tf.summary.scalar('test_global_loss_rate', Agent.sim_global_dropped_packets/Agent.sim_global_injected_packets, step=int(params["load_factor"]*100))
             tf.summary.scalar('test_overlay_loss_rate', Agent.sim_dropped_packets/Agent.sim_injected_packets, step=int(params["load_factor"]*100))
+            tf.summary.scalar('test_global_cost', Agent.sim_global_cost, step=int(params["load_factor"]*100))
             tf.summary.scalar('test_overlay_cost', Agent.sim_cost, step=int(params["load_factor"]*100))
             # tf.summary.scalar('test_global_e2e_delay', Agent.sim_avg_e2e_delay, step=int(params["load_factor"]*100))
             # tf.summary.scalar('test_global_loss_rate', Agent.sim_global_dropped_packets/Agent.sim_global_injected_packets, step=int(params["load_factor"]*100))
-            tf.summary.scalar('test_global_cost', Agent.sim_cost, step=int(params["load_factor"]*100))
 
     #     with open(test_results_file_name, 'a') as f: 
     #         writer = csv.writer(f) 
