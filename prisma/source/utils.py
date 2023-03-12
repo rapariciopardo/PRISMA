@@ -62,7 +62,6 @@ def load_model(path, node_index=-1):
     q_functions = [1]*len(folders)
     for item in os.listdir(path):
         index = int(item.split("_")[-1][4:])
-        print(index)
         if node_index >= 0 and node_index != index:
             continue
         try :
@@ -175,3 +174,67 @@ def optimal_routing_decision(graph, routing_mat, rejected_mat, actual_node, src_
     choice = np.random.choice(neighbors, p=prob_general)
     tag = prob_to_neighbors[neighbors.index(choice)]
     return neighbors.index(choice), tag
+
+
+def convert_tb_data(root_dir, sort_by=None):
+    """Convert local TensorBoard data into Pandas DataFrame.
+    
+    Function takes the root directory path and recursively parses
+    all events data.    
+    If the `sort_by` value is provided then it will use that column
+    to sort values; typically `wall_time` or `step`.
+    
+    *Note* that the whole data is converted into a DataFrame.
+    Depending on the data size this might take a while. If it takes
+    too long then narrow it to some sub-directories.
+    
+    Paramters:
+        root_dir: (str) path to root dir with tensorboard data.
+        sort_by: (optional str) column name to sort by.
+    
+    Returns:
+        pandas.DataFrame with [wall_time, name, step, value] columns.
+        
+    sources : 
+        - https://laszukdawid.com/blog/2021/01/26/parsing-tensorboard-data-locally/
+        - https://stackoverflow.com/questions/37304461/tensorflow-importing-data-from-a-tensorboard-tfevent-file
+    
+    """
+    import os
+    import pandas as pd
+    from tensorflow.python.summary.summary_iterator import summary_iterator
+    from tensorflow.python.framework import tensor_util
+
+    def convert_tfevent(filepath):
+        return pd.DataFrame([
+            parse_tfevent(e) for e in summary_iterator(filepath) if len(e.summary.value)
+        ])
+
+    def parse_tfevent(tfevent):
+        if "hparams" in tfevent.summary.value[0].tag:
+            scalar = 0.0
+        else:
+            scalar = tensor_util.MakeNdarray(tfevent.summary.value[0].tensor).item()
+        return dict(
+            wall_time=tfevent.wall_time,
+            name=tfevent.summary.value[0].tag,
+            step=tfevent.step,
+            value=scalar,
+        )
+    
+    columns_order = ['wall_time', 'name', 'step', 'value']
+    
+    out = []
+    for (root, _, filenames) in os.walk(root_dir):
+        for filename in filenames:
+            if "events.out.tfevents" not in filename:
+                continue
+            file_full_path = os.path.join(root, filename)
+            out.append(convert_tfevent(file_full_path))
+
+    # Concatenate (and sort) all partial individual dataframes
+    all_df = pd.concat(out)[columns_order]
+    if sort_by is not None:
+        all_df = all_df.sort_values(sort_by)
+        
+    return all_df.reset_index(drop=True)

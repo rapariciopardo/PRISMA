@@ -532,3 +532,53 @@ class PrioritizedReplayBuffer(ReplayBuffer_):
         self._it_sum[idxes] = values
         self._it_min[idxes] = values
         self._max_priority = max(self._max_priority, np.max(values))
+        
+class DigitalTwinDB(object):
+    
+    def __init__(self, max_time):
+        """
+        Implements the DataBase for the supervised training of the digital twin
+        
+        :param max_time: (int) the maximum number of seconds to store in the database
+        """
+        self.data = []
+        self.labels = []
+        self.times = []
+        self.max_time = max_time
+        self.length = 0
+        self.freeze = False
+        
+    def add(self, data, label, time):
+        """
+        Adds a new data to the database
+        
+        :param data: (np.ndarray) the data to add
+        :param label: (np.ndarray) the label to add
+        :param time: (float) the time of the data
+        """
+        self.freeze = True
+        self.length += 1
+        self.data.append(data)
+        self.labels.append(label)
+        self.times.append(time)
+        while self.times[-1] - self.times[0] > self.max_time:
+            self.length -= 1
+            self.data.pop(0)
+            self.labels.pop(0)
+            self.times.pop(0)
+        self.freeze = False
+        
+    def get_data(self):
+        """
+        Returns the data and labels stored in the database
+        
+        :return: (np.ndarray, np.ndarray) the data and the labels stored in the database
+        """
+        while self.freeze:
+            time.sleep(0.1)
+        a = self.data[:]
+        b = self.labels[:]
+        return np.array(a), np.array(b)
+    
+    def __len__(self):
+        return self.length

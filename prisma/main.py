@@ -22,13 +22,14 @@ import csv
 import json
 from tensorboard.plugins.hparams import api as hp
 from source.agent import Agent
-from source.utils import save_model
+from source.utils import save_model, convert_tb_data
 import subprocess, signal
 import shlex
 import pathlib
 from tensorboard.plugins.custom_scalar import summary as cs_summary
 from tensorboard.plugins.custom_scalar import layout_pb2
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
+# os.environ["CUDA_VISIBLE_DEVICES"]="1"
 gpus = tf.config.experimental.list_physical_devices('GPU')
 if gpus:
     try:
@@ -88,6 +89,7 @@ def arguments_parser():
     group1.add_argument('--map_overlay_path', type=str, help='Path to the map overlay file', default="mapOverlay_4n.txt")
     group1.add_argument('--pingAsObs', type=int, help="dets if ping value is used as observation", default=1)
     group1.add_argument('--groundTruthFrequence', type=float, help="groundTruthFrequence", default=0.1)
+    group1.add_argument('--d_t_max_time', type=float, help="The maximum length in seconds of the digital twin database", default=5)
 
 
     group4 = parser.add_argument_group('Network parameters')
@@ -110,9 +112,10 @@ def arguments_parser():
     group2.add_argument('--logging_timestep', type=int, help='Time delay (in real time) between each logging in seconds', default=5)
     
     group3 = parser.add_argument_group('DRL Agent arguments')
-    group3.add_argument('--agent_type', choices=["dqn_buffer", "dqn_routing", "dqn_buffer_fp", "dqn_buffer_lite", "dqn_buffer_with_throughputs", "sp", "opt"], type=str, help='The type of the agent. Can be dqn_buffer, dqn_routing, dqn_buffer_fp, sp or opt', default="dqn_buffer")
-    group3.add_argument('--signaling_type', type=str, choices=["NN", "target", "ideal"], help='Type of the signaling. Can be "NN" for sending neighbors NN and (r,s\') tuple, "target" for sending only the target value and "ideal" for no signalisation (used when training)', default="ideal")
+    group3.add_argument('--agent_type', choices=["dqn_buffer", "dqn_routing", "dqn_buffer_fp", "dqn_buffer_lite", "dqn_buffer_lighter", "dqn_buffer_lighter_2", "dqn_buffer_lighter_3", "dqn_buffer_ff", "dqn_buffer_with_throughputs", "sp", "opt"], type=str, help='The type of the agent. Can be dqn_buffer, dqn_routing, dqn_buffer_fp, sp or opt', default="dqn_buffer")
+    group3.add_argument('--signaling_type', type=str, choices=["NN", "target", "digital_twin", "ideal"], help='Type of the signaling. Can be "NN" for sending neighbors NN and (r,s\') tuple, "target" for sending only the target value and "ideal" for no signalisation (used when training)', default="ideal")
     group3.add_argument('--lr', type=float, help='Learning rate (used when training)', default=1e-4)
+    group3.add_argument('--bigSignalingSize', type=int, help='Size of the neural network in bytes (used when signaling type is NN)', default=200)
     group3.add_argument('--prioritizedReplayBuffer', type=int, help='if true, use prioritized replay buffer using the gradient step as weights (used when training)', default=0)
     
     group3.add_argument('--batch_size', type=int, help='Size of a batch (used when training)', default=512)
@@ -121,6 +124,7 @@ def arguments_parser():
     group3.add_argument('--exploration_initial_eps', type=float, help='Exploration intial value (used when training)', default=1.0)
     group3.add_argument('--exploration_final_eps', type=float, help='Exploration final value (used when training)', default=0.1)
     group3.add_argument('--load_path', type=str, help='Path to DQN models, if not None, loads the models from the given files', default=None)
+    group3.add_argument('--d_t_load_path', type=str, help='Path to the Digital Twin of the DQN models, if None, use the DQN models instead', default=None)
     group3.add_argument('--save_models', type=int, help='if True, store the models at the end of the training', default=0)
     group3.add_argument('--training_trigger_type', type=str, choices=["event", "time"], help='Type of the training trigger, can be "event" (for event based) or "time" (for time based) (used when training)', default="time")
     group3.add_argument('--training_step', type=float, help='Number of steps or seconds to train (used when training)', default=0.05)
@@ -146,6 +150,9 @@ def arguments_parser():
     params["logs_parent_folder"] = os.path.abspath(params["logs_parent_folder"])
     if params["load_path"]:
         params["load_path"] = os.path.abspath(params["load_path"])
+        
+    if params["d_t_load_path"]:
+        params["d_t_load_path"] = os.path.abspath(params["d_t_load_path"])
     #if params["save_models"]:
     #    params["save_models"] = os.path.abspath(params["save_models"])
     params["adjacency_matrix_path"] = os.path.abspath(params["adjacency_matrix_path"])
@@ -179,7 +186,7 @@ def arguments_parser():
     params["nb_arrived_pkts_path"] = f'{params["logs_folder"]}/nb_arrived_pkts'
     params["nb_new_pkts_path"] = f'{params["logs_folder"]}/nb_new_pkts'
     params["nb_lost_pkts_path"] = f'{params["logs_folder"]}/nb_lost_pkts'
-
+            
     ## Add optimal solution path
     topology_name = params["adjacency_matrix_path"].split("/")[-2]
     # params["optimal_soltion_path"] = f"examples/{topology_name}/optimal_solution/11Nodes/{params['traffic_matrix_index']}_norm_matrix_uniform/{int(params['load_factor']*100)}_ut_minCostMCF.json"
@@ -338,7 +345,7 @@ def run_ns3(params):
                         '--node_intensity_file_name={} --signaling={} --AgentType={} --signalingType={} '
                         '--syncStep={} --lossPenalty={} --activateOverlaySignaling={} --nPacketsOverlaySignaling={} '
                         '--train={} --movingAverageObsSize={} --activateUnderlayTraffic={} --opt_rejected_file_name={} '
-                        '--map_overlay_file_name={} --pingAsObs={} --logs_folder={} --groundTruthFrequence={}'.format( params["seed"],
+                        '--map_overlay_file_name={} --pingAsObs={} --logs_folder={} --groundTruthFrequence={} --bigSignalingSize={}'.format( params["seed"],
                                              params["basePort"],
                                              str(params["simTime"]),
                                              params["packet_size"],
@@ -364,7 +371,8 @@ def run_ns3(params):
                                              params["map_overlay_path"],
                                              bool(params["pingAsObs"]),
                                              params["logs_folder"],
-                                             params["groundTruthFrequence"]
+                                             params["groundTruthFrequence"],
+                                             params["bigSignalingSize"]
                                              ))
     run_ns3_command = shlex.split(f'./waf --run "{ns3_params_format}"')
     subprocess.Popen(run_ns3_command)
@@ -386,23 +394,26 @@ def main():
     np.random.seed(params["seed"])
     random.seed(params["seed"])
     
-    ## test results file name
-    test_results_file_name = f'{params["logs_parent_folder"]}/_tests_overlay_4n_2/ter_t_1000_20k_tr_{params["traffic_matrix_index"]}_underlayTraff_{params["activateUnderlayTrafficTrain"]}_{params["agent_type"]}_{params["signaling_type"]}_{params["signalingSim"]}_fixed_rb_{params["replay_buffer_max_size"]}_sync{int(1000*params["sync_step"])}ms_ratio_{int(100*params["sync_ratio"])}_overlayPackets_{params["nPacketsOverlay"]}_loadTrain_{int(100*params["load_factor_trainning"])}_load_{int(100*params["load_factor"])}.txt'
-    train_results_file_name = f'{params["logs_parent_folder"]}/_train_overlay_4n/ter_1000_20k_tr_{params["traffic_matrix_index"]}_underlayTraff_{params["activateUnderlayTrafficTrain"]}_{params["agent_type"]}_{params["signaling_type"]}_{params["signalingSim"]}_fixed_rb_{params["replay_buffer_max_size"]}_sync{int(1000*params["sync_step"])}ms_ratio_{int(100*params["sync_ratio"])}_overlayPackets_{params["nPacketsOverlay"]}_loadTrain_{int(100*params["load_factor_trainning"])}_load_{int(100*params["load_factor"])}.txt'
-    print(test_results_file_name)
     if params["train"] == 1:
         pathlib.Path(params["logs_parent_folder"] + "/saved_models/").mkdir(parents=True, exist_ok=True)
-        if params["session_name"] in os.listdir(params["logs_parent_folder"] + "/saved_models/"):
+        ## check if the session already exists
+        if os.path.exists(params["logs_parent_folder"] + "/saved_models/" + params["session_name"]):
+            if len(os.listdir(params["logs_parent_folder"] + "/saved_models/" + params["session_name"])) > 0:
                 print(f'The couple {params["seed"]} {params["traffic_matrix_index"]} already exists in : {params["logs_parent_folder"] + "/saved_models/" + params["session_name"]}')
                 return 1
-         
-    # else:
-    #     if test_results_file_name.split("/")[-1] in os.listdir("/".join(test_results_file_name.split("/")[:-1])):
-    #         ## check if the couple seed traff mat idx is already in the file
-    #         if [params["traffic_matrix_index"], params["seed"]] in np.atleast_2d(np.genfromtxt(test_results_file_name, delimiter=",", dtype=int))[:, 2:4].tolist():
-    #             print(f'The couple {params["seed"]} {params["traffic_matrix_index"]} already exists in the {test_results_file_name}')
-    #             return 1
-                        
+    
+    ## check if the test is already done   
+    else:
+        if os.path.exists(f"{params['logs_parent_folder']}/{params['session_name']}/test_results"):
+            if len(os.listdir(f"{params['logs_parent_folder']}/{params['session_name']}/test_results")) > 0:
+                ## check if the test load factor is already in the tensorboard file
+                try: 
+                    if int(100 * params["load_factor"]) in convert_tb_data(f"{params['logs_parent_folder']}/{params['session_name']}/test_results")["step"].values:
+                        print(f'The test session with load factor {params["load_factor"]} already exists in the {params["session_name"]}')
+                        return 1
+                except:
+                    pass
+                            
     # if params["train"] == 0:
     #     params["signalingSim"] = 0
     ## Setup writer for the global stats
@@ -419,6 +430,7 @@ def main():
             dict_to_store = copy.deepcopy(params)
             dict_to_store["G"] = str(params["G"])
             dict_to_store["load_path"] = str(params["load_path"])
+            dict_to_store["d_t_load_path"] = str(params["d_t_load_path"])
             dict_to_store["simArgs"] = str(params["simArgs"])
             hp.hparams(dict_to_store)  # record the values used in this trial
     
@@ -466,6 +478,9 @@ def main():
 
     print(f"Signaling overhead = {Agent.small_signaling_overhead_counter}")
     print(f""" Summary of the Simulation:
+            Simulation time = {Agent.curr_time},
+            Total Iterations = {Agent.currIt},
+            Total number of Transitions = {Agent.nb_transitions},
             Overlay Total injected packets = {Agent.sim_injected_packets}, 
             Global Total injected packets = {Agent.sim_global_injected_packets}, 
             Overlay arrived packets = {Agent.sim_delivered_packets},
@@ -490,27 +505,27 @@ def main():
             OverheadRatio = {(Agent.sim_bytes_big_signaling+Agent.sim_bytes_small_signaling+Agent.sim_bytes_overlay_signaling_forward+Agent.sim_bytes_overlay_signaling_back)/Agent.sim_bytes_data}
             """)
     
-    print(f""" Summary of the episode :
-            Total Iterations = {Agent.currIt},
-            Total number of Transitions = {Agent.nb_transitions},
-            Simulation time = {Agent.curr_time},
-            Total e2e delay = {Agent.total_e2e_delay}, 
-            Total number of packets = {Agent.total_new_rcv_pkts}, 
-            Number of arrived packets = {Agent.total_arrived_pkts},
-            Number of lost packets = {Agent.node_lost_pkts},
-            Loss ratio = {Agent.node_lost_pkts/Agent.total_new_rcv_pkts}
-            Delay_ideal = {np.array(Agent.delays_ideal).mean()}
-            Delay_real = {np.array(Agent.delays_real).mean()}
-            total cost = {Agent.total_rewards_with_loss}
-            theoretical cost = {((Agent.node_lost_pkts * Agent.loss_penalty) + np.array(Agent.delays_ideal).sum())/(Agent.node_lost_pkts + Agent.total_arrived_pkts)}
-            Avg cost = {Agent.total_rewards_with_loss/Agent.total_new_rcv_pkts}
-            Reward = {np.array(Agent.rewards).mean()} 
-            Signaling overhead = {Agent.small_signaling_overhead_counter + Agent.big_signaling_overhead_counter}
-            small nb Signaling pkts = {Agent.small_signaling_overhead_counter}
-            big nb Signaling pkts ideal = {Agent.big_signaling_overhead_counter}
-            Data pkts size = {Agent.total_data_size}
+    # print(f""" Summary of the episode :
+    #         Total Iterations = {Agent.currIt},
+    #         Total number of Transitions = {Agent.nb_transitions},
+    #         Simulation time = {Agent.curr_time},
+    #         Total e2e delay = {Agent.total_e2e_delay}, 
+    #         Total number of packets = {Agent.total_new_rcv_pkts}, 
+    #         Number of arrived packets = {Agent.total_arrived_pkts},
+    #         Number of lost packets = {Agent.node_lost_pkts},
+    #         Loss ratio = {Agent.node_lost_pkts/Agent.total_new_rcv_pkts}
+    #         Delay_ideal = {np.array(Agent.delays_ideal).mean()}
+    #         Delay_real = {np.array(Agent.delays_real).mean()}
+    #         total cost = {Agent.total_rewards_with_loss}
+    #         theoretical cost = {((Agent.node_lost_pkts * Agent.loss_penalty) + np.array(Agent.delays_ideal).sum())/(Agent.node_lost_pkts + Agent.total_arrived_pkts)}
+    #         Avg cost = {Agent.total_rewards_with_loss/Agent.total_new_rcv_pkts}
+    #         Reward = {np.array(Agent.rewards).mean()} 
+    #         Signaling overhead = {Agent.small_signaling_overhead_counter + Agent.big_signaling_overhead_counter}
+    #         small nb Signaling pkts = {Agent.small_signaling_overhead_counter}
+    #         big nb Signaling pkts ideal = {Agent.big_signaling_overhead_counter}
+    #         Data pkts size = {Agent.total_data_size}
     
-            """)
+    #         """)
     if Agent.total_arrived_pkts:
         print(f"Average delay per arrived packets = {Agent.total_e2e_delay/(Agent.total_arrived_pkts*1000)}")
         

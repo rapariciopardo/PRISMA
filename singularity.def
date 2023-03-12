@@ -1,0 +1,35 @@
+Bootstrap: docker
+From: tensorflow/tensorflow:latest-gpu
+
+%help
+    This is a container for PRISMA
+
+# copy the prisma folder to the container
+%files
+
+    /home/redha/PRISMA_copy /opt/PRISMA
+
+
+%post
+    # install packages dependencies
+    apt-get update && apt-get install -y gcc g++ python libzmq5 libzmq5-dev rsync libprotobuf-dev protobuf-compiler bc
+    
+    # install python dependencies
+    python3 -m pip install --upgrade pip 
+    python3 -m pip install gym numpy zmq tensorflow networkx matplotlib pandas scipy 
+    
+    # go to the prisma folder
+    cd /opt/PRISMA
+    ls . 
+    cd prisma/ns3gym/
+
+    # compile the protobuf files
+    sh compile_proto.sh
+
+    NOW=`date`
+    echo "export NOW=\"${NOW}\"" >> $SINGULARITY_ENVIRONMENT
+
+%runscript
+    echo "Container was created $NOW"
+    echo "Arguments received: $*"
+    exec echo "$@"

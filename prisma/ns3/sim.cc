@@ -144,7 +144,7 @@ int main (int argc, char *argv[])
   std::string agentType("DQN-buffer");
   std::string signalingType("NN");
   double syncStep = 1.0;
-  
+  double bigSignalingSize = 35328;
   bool eventBasedEnv = true;
   double load_factor = 0.01; // scaling applied to the traffic matrix
   std::string MaxBufferLength ("30p");
@@ -216,6 +216,7 @@ int main (int argc, char *argv[])
   cmd.AddValue ("pingAsObs", "ping as observation variable", pingAsObs);
   cmd.AddValue ("logs_folder", "Logs folder", logs_folder);
   cmd.AddValue ("groundTruthFrequence", "ground truth freq", groundTruthFrequence);
+  cmd.AddValue ("bigSignalingSize", "total size of the weights of the NN in bytes", bigSignalingSize);
 
   cmd.Parse (argc, argv);
     
@@ -362,7 +363,6 @@ int main (int argc, char *argv[])
 
   //Parameters of signaling
   double smallSignalingSize[n_nodes] = {0.0};
-  double bigSignalingSize = 35328; // big signaling size in bytes
   if(agentType=="sp" || agentType=="opt" || signalingType=="ideal"){
     activateSignaling=false;
   }
@@ -377,6 +377,11 @@ int main (int argc, char *argv[])
     for(int i=0;i<n_nodes;i++){
       smallSignalingSize[i] = 24;
     }
+  }
+    else if(signalingType=="digital_twin"){
+      for(int i=0;i<n_nodes;i++){
+        smallSignalingSize[i] = 8 + (8 * (2* nodes_degree[i] + 1));
+      }
   }  
 
   //Creating the links

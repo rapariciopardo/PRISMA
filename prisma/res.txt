@@ -1,4 +1,0 @@
-Waf: Entering directory `/home/ralliche/PRISMA-master/ns3-gym/build'
-Waf: Leaving directory `/home/ralliche/PRISMA-master/ns3-gym/build'
-Build commands will be stored in build/compile_commands.json
-'build' finished successfully (13.483s)

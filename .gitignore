@@ -49,3 +49,4 @@ venv/
 prisma/examples/*
 prisma/replay_buffer_samples/
 prisma/figures/
+singularity.img

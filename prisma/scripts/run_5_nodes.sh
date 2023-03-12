@@ -68,7 +68,8 @@ python3 main.py \
 	--prioritizedReplayBuffer=${10} \
 	--activateUnderlayTraffic=${12} \
 	--groundTruthFrequence=1 \
-	--load_path=examples/$9/$4_sp_init_overlay_modified_5n
+	--load_path=examples/$9/$4_sp_init_overlay_modified_5n \
+	--d_t_load_path=examples/$9/$4_lite_sp_init_overlay_modified_5n
 
 array=(
 0.6
@@ -93,8 +94,8 @@ for j in ${array[@]}
 	echo $res2
 
 	python3 main.py \
-	--seed=$2 \
 	--simTime=100 \
+	--seed=$2 \
 	--basePort=$(((5000 + $2)+($8*11)))  \
 	--train=0 \
 	--agent_type=$4 \
@@ -113,13 +114,11 @@ for j in ${array[@]}
 	--load_factor=$j \
 	--sync_step=$1 \
 	--max_out_buffer_size=16260 \
-	--sync_ratio=0.2 \
 	--signalingSim=1 \
 	--nPacketsOverlay=$6 \
 	--movingAverageObsSize=${16} \
 	--prioritizedReplayBuffer=${10} \
 	--activateUnderlayTraffic=${12} \
-	--groundTruthFrequence=1 \
 	--load_path=examples/$9/${15}/saved_models/${14}/iteration1_episode1
 
 	# oarsub -p "gpu='YES' and gpucapability>='5.0'" -l /nodes=1/gpunum=1,walltime=06:00:00 -d /home/ralliche/PRISMA-master/prisma/ "scripts/run_on_nef_test.sh $j 100 0 train_abilene_NN_ts_0_03_seed_100_traff_mat_0_batch_512_lr_1e-3_gamma_1_final_eps_0_01_load_40_sync_0.5_loss_x1_sp_init"
@@ -160,3 +159,5 @@ for j in ${array[@]}
 # 	--sync_ratio=0.2 \
 # 	--signalingSim=1 \
 # 	--load_path=examples/abilene/dqn_buffer_sp_init
+
+python3 main.py --seed=100 --simTime=200 --basePort=4000  --train=1 --agent_type=dqn_buffer --session_name=test_small_model_step_5 --signaling_type=digital_twin --logs_parent_folder=examples/abilene/tests_dt --traffic_matrix_root_path=examples/abilene/traffic_matrices/ --traffic_matrix_index=0 --agent_adjacency_matrix_path=examples/abilene/adjacency_matrix_2_5n.txt --adjacency_matrix_path=examples/abilene/adjacency_matrix.txt --node_coordinates_path=examples/abilene/node_coordinates_5n.txt --map_overlay_path=mapOverlay_5n.txt --training_step=0.01 --batch_size=512 --lr=0.0001 --exploration_final_eps=0.1 --exploration_initial_eps=0.1 --iterationNum=5000 --gamma=1.0 --training_trigger_type="time" --save_models=1 --start_tensorboard=1 --replay_buffer_max_size=10000 --link_delay="1ms" --load_factor=0.6 --load_factor_trainning=0.6 --sync_step=1 --max_out_buffer_size=16260 --sync_ratio=0.2 --signalingSim=1 --nPacketsOverlay=10 --movingAverageObsSize=5 --prioritizedReplayBuffer=0 --activateUnderlayTraffic=1 --groundTruthFrequence=1 --d_t_load_path=examples/abilene/dqn_buffer_lite_sp_init_overlay_modified_5n --load_path=examples/abilene/dqn_buffer_sp_init_overlay_modified_5n
