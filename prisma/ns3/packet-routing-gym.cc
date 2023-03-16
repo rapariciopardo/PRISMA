@@ -178,24 +178,24 @@ PacketRoutingEnv::setOverlayConfig(vector<int> overlayNeighbors, bool activateOv
     start.index = 0;
     start.start_time = 0;
     m_starting_overlay_packets[i].push_back(start);
-    if(m_train){
-      std::string filename;
-      filename = m_logs_folder+"/delay_" + std::to_string(mapOverlayNode(m_node->GetId()))+"_"+std::to_string(i)+".txt";
-      ofstream outputFile(filename);
-      outputFile.close();
+    // if(m_train){
+    //   std::string filename;
+    //   filename = m_logs_folder+"/delay_" + std::to_string(mapOverlayNode(m_node->GetId()))+"_"+std::to_string(i)+".txt";
+    //   ofstream outputFile(filename);
+    //   outputFile.close();
 
-      filename = m_logs_folder+"/tsent_" + std::to_string(mapOverlayNode(m_node->GetId()))+"_"+std::to_string(i)+".txt";
-      ofstream outputFile1(filename);
-      outputFile1.close();
+    //   filename = m_logs_folder+"/tsent_" + std::to_string(mapOverlayNode(m_node->GetId()))+"_"+std::to_string(i)+".txt";
+    //   ofstream outputFile1(filename);
+    //   outputFile1.close();
 
-      filename = m_logs_folder+"/tavg_" + std::to_string(mapOverlayNode(m_node->GetId()))+"_"+std::to_string(i)+".txt";
-      ofstream outputFile2(filename);
-      outputFile2.close();
+    //   filename = m_logs_folder+"/tavg_" + std::to_string(mapOverlayNode(m_node->GetId()))+"_"+std::to_string(i)+".txt";
+    //   ofstream outputFile2(filename);
+    //   outputFile2.close();
 
-      filename = m_logs_folder+"/groundTruth.txt";
-      ofstream outputFile3(filename);
-      outputFile3.close();
-    }
+    //   filename = m_logs_folder+"/groundTruth.txt";
+    //   ofstream outputFile3(filename);
+    //   outputFile3.close();
+    // }
   }
 }
 

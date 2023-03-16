@@ -29,12 +29,13 @@ import pathlib
 from tensorboard.plugins.custom_scalar import summary as cs_summary
 from tensorboard.plugins.custom_scalar import layout_pb2
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
-# os.environ["CUDA_VISIBLE_DEVICES"]="1"
+os.environ["CUDA_VISIBLE_DEVICES"]="1"
+# tf.debugging.set_log_device_placement(True)
+
 gpus = tf.config.experimental.list_physical_devices('GPU')
 if gpus:
     try:
-        for gpu in gpus:
-            tf.config.experimental.set_memory_growth(gpu, True)
+        tf.config.experimental.set_virtual_device_configuration(gpus[0], [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=1024)])
     except RuntimeError as e:
         print(e)
 
@@ -328,15 +329,15 @@ def run_ns3(params):
     current_folder_path = os.getcwd()
 
     ## Copy prisma into ns-3 folder
-    os.system(f'rsync -r ./ns3/* {params["ns3_sim_path"].rstrip("/")}/scratch/prisma')
-    os.system(f'rsync -r ./ns3_model/ipv4-interface.cc {params["ns3_sim_path"].rstrip("/")}/src/internet/model')
+    # os.system(f'rsync -r ./ns3/* {params["ns3_sim_path"].rstrip("/")}/scratch/prisma')
+    # os.system(f'rsync -r ./ns3_model/ipv4-interface.cc {params["ns3_sim_path"].rstrip("/")}/src/internet/model')
 
     ## go to ns3 dir
     os.chdir(params["ns3_sim_path"])
     
     ## run ns3 configure
     #configure_command = './waf -d optimized configure'
-    os.system('./waf configure')
+    # os.system('./waf configure')
     print(params['agent_type'])
     ## run NS3 simulator
     ns3_params_format = ('prisma --simSeed={} --openGymPort={} --simTime={} --AvgPacketSize={} '
@@ -442,7 +443,9 @@ def main():
     else:
         summary_writer_results = tf.summary.create_file_writer(logdir=params["logs_folder"] + "/test_results")
     ## setup the agents (fix the static variables)
+    print(f'python3 -m tensorboard.main --logdir={params["logs_folder"]} --port={params["tensorboard_port"]} --bind_all')
     Agent.init_static_vars(params)
+    
     
     print("running ns-3")
     ## run ns3 simulator
@@ -465,7 +468,7 @@ def main():
 
     ## Run tensorboard server
     if params["start_tensorboard"]:
-        args = shlex.split(f'python3 -m tensorboard.main --logdir={params["logs_folder"]} --port={params["tensorboard_port"]}')
+        args = shlex.split(f'python3 -m tensorboard.main --logdir={params["logs_folder"]} --port={params["tensorboard_port"]} --bind_all')
         subprocess.Popen(args)
     sleep(1)
     
@@ -630,4 +633,5 @@ if __name__ == '__main__':
     except:
         traceback.print_exc()
     finally:
+        print("kill process group")
         os.killpg(0, signal.SIGKILL)

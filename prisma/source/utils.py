@@ -3,7 +3,6 @@ from networkx.algorithms.clique import number_of_cliques
 import tensorflow as tf
 import os, multiprocessing, shutil
 import numpy as np
-from source.models import SplitLayer
 import math
 
 __author__ = "Redha A. Alliche, Tiago Da Silva Barros, Ramon Aparicio-Pardo, Lucile Sassatelli"
@@ -58,6 +57,7 @@ def load_model(path, node_index=-1):
     a list of Q functions for each agent. Return None if an error occurs
 
     """
+    from source.models import SplitLayer
     folders = os.listdir(path)
     q_functions = [1]*len(folders)
     for item in os.listdir(path):

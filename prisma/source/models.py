@@ -203,31 +203,27 @@ def DQN_buffer_lite_model(observation_shape, num_actions, num_nodes, input_size_
     Returns:
         model : keras NN model.
     """
-    inp = layers.Input(shape=observation_shape)
+    # print(observation_shape)
     one_hot_layer = layers.Lambda(lambda x: K.one_hot(K.cast(x,'int64'), num_nodes))
+    
+    inp = layers.Input(shape=(observation_shape[0]))
     split = SplitLayer(num_or_size_splits=input_size_splits)(inp)
+    # first_block = tf.keras.layers.CategoryEncoding(num_tokens=num_nodes, output_mode="one_hot", input_shape=(None, 1))(split[0])
+    first_block = layers.Flatten()(one_hot_layer(split[0]))
+    first_block = layers.Dense(units=16, activation="elu", kernel_initializer='he_uniform', bias_initializer='he_uniform', input_shape=(None, 11))(first_block)
     
-    tensors_2_concat = []
-    for s in range(len(input_size_splits)):
-        if input_size_splits[s] == 0: continue
+    second_block = layers.LayerNormalization(center=False, scale=False, trainable=False, axis=1, input_shape=(None, num_nodes))(split[1])
+    second_block = layers.Dense(units=16, activation="elu", kernel_initializer='he_uniform', bias_initializer='he_uniform', input_shape=(None, num_nodes))(second_block)
 
-        if s ==0:
-            flattened_split = layers.Flatten()(one_hot_layer(split[s]))
-        else:
-            flattened_split = layers.LayerNormalization(center=False, scale=False, trainable=False, axis=1)(split[s])
-
-        out_split = layers.Dense(units=16, activation="elu", kernel_initializer='he_uniform', bias_initializer='he_uniform')(flattened_split)
-        tensors_2_concat.append(out_split)
-    
+    tensors_2_concat = [first_block, second_block]
     if len(tensors_2_concat) > 1:    
         concatted = layers.Concatenate(axis=1)(tensors_2_concat)
     else:
         concatted = tensors_2_concat[0]
                  
-    out = layers.Dense(units=32, activation="elu", kernel_initializer='he_uniform', bias_initializer='he_uniform')(concatted)
-    out = layers.Dense(units=32, activation="elu", kernel_initializer='he_uniform', bias_initializer='he_uniform')(out)
-    out = layers.Dense(num_actions, activation='elu', kernel_initializer='he_uniform', bias_initializer='he_uniform')(out)
-
+    out = layers.Dense(units=32, activation="elu", kernel_initializer='he_uniform', bias_initializer='he_uniform', input_shape=(None, 32))(concatted)
+    out = layers.Dense(units=32, activation="elu", kernel_initializer='he_uniform', bias_initializer='he_uniform', input_shape=(None, 32))(out)
+    out = layers.Dense(num_actions, activation='elu', kernel_initializer='he_uniform', bias_initializer='he_uniform', input_shape=(None, 32))(out)
     return tf.keras.Model(inputs=inp, outputs=out)
 
 def DQN_buffer_ff_model(observation_shape, num_actions, num_nodes, input_size_splits): # lite 
