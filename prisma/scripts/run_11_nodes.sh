@@ -22,6 +22,8 @@ echo ${20} # exploration end ratio
 echo ${21} # d_t_max_time
 echo ${22} # nn size
 
+source /home/redha/anaconda3/etc/profile.d/conda.sh 
+conda activate tf
 #module load singularity/3.5.2
 uname -a
 echo $(date)
@@ -32,6 +34,51 @@ FLOAT=$(echo ${11}*1000 | bc)
 res1=${FLOAT/.*}
 echo $res1
 #	--session_name="ping_corr_no_norm_11n${13}_buf_1x_ma_in_train_overlay_obs_fixed_$9_real_delay_$4_$5_ts_0_01_seed_$2_traff_mat_$3_rb_size_$7_batch_512_lr_1e-3_gamma_1_final_eps_0_01_load_${res1}_refreshRate_$6_underlayTraff_${12}_sync_$1_loss_x11_sp_init" \
+
+echo python3 main.py \
+	--seed=$2 \
+	--simTime=${13} \
+	--basePort=$(((7000)+($8*15))) \
+	--train=1 \
+	--agent_type=$4 \
+	--session_name=${14} \
+	--signaling_type=$5 \
+	--logs_parent_folder=examples/$9/${15} \
+	--traffic_matrix_root_path=examples/$9/traffic_matrices/ \
+	--traffic_matrix_index=$3 \
+	--agent_adjacency_matrix_path=examples/$9/adjacency_matrix_2_11n.txt \
+	--adjacency_matrix_path=examples/$9/adjacency_matrix.txt \
+	--node_coordinates_path=examples/$9/node_coordinates_11n.txt \
+	--map_overlay_path=mapOverlay_11n.txt \
+	--training_step=0.05 \
+	--batch_size=${18} \
+	--lr=${17} \
+	--exploration_final_eps=${20} \
+	--exploration_initial_eps=${19} \
+	--iterationNum=5000 \
+	--gamma=1.0 \
+	--training_trigger_type="time" \
+	--save_models=1 \
+	--start_tensorboard=0 \
+	--replay_buffer_max_size=$7 \
+	--link_delay="1ms" \
+	--load_factor=${11} \
+	--load_factor_trainning=${11} \
+	--sync_step=$1 \
+	--max_out_buffer_size=16260 \
+	--sync_ratio=0.2 \
+	--signalingSim=1 \
+	--nPacketsOverlay=$6 \
+	--movingAverageObsSize=${16} \
+	--prioritizedReplayBuffer=${10} \
+	--activateUnderlayTraffic=${12} \
+	--bigSignalingSize=${22} \
+	--groundTruthFrequence=1 \
+	--pingAsObs=0 \
+	--d_t_max_time=${21} \
+	--load_path=examples/$9/pre_trained_models/${4}_sp_itc_11n_ping_delay \
+	--d_t_load_path=examples/$9/pre_trained_models/${4}_sp_itc_11n_ping_delay
+
 
 python3 main.py \
 	--seed=$2 \

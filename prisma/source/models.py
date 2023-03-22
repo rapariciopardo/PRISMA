@@ -108,7 +108,7 @@ def DQN_buffer_lighter_2_model(observation_shape, num_actions, num_nodes, input_
     """
     inp = layers.Input(shape=observation_shape)
     one_hot_layer = layers.Lambda(lambda x: K.one_hot(K.cast(x,'int64'), num_nodes))
-    split = SplitLayer(num_or_size_splits=input_size_splits)(inp)
+    split = tf.split(inp, num_or_size_splits=input_size_splits, axis=1)
     
     tensors_2_concat = []
     for s in range(len(input_size_splits)):

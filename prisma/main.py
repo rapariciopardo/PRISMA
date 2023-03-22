@@ -29,7 +29,9 @@ import pathlib
 from tensorboard.plugins.custom_scalar import summary as cs_summary
 from tensorboard.plugins.custom_scalar import layout_pb2
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
-os.environ["CUDA_VISIBLE_DEVICES"]="1"
+# os.environ["CUDA_VISIBLE_DEVICES"]="-1"
+# tf.config.threading.set_intra_op_parallelism_threads(11)
+# tf.config.threading.set_inter_op_parallelism_threads(11)
 # tf.debugging.set_log_device_placement(True)
 
 gpus = tf.config.experimental.list_physical_devices('GPU')
@@ -191,7 +193,7 @@ def arguments_parser():
     ## Add optimal solution path
     topology_name = params["adjacency_matrix_path"].split("/")[-2]
     # params["optimal_soltion_path"] = f"examples/{topology_name}/optimal_solution/11Nodes/{params['traffic_matrix_index']}_norm_matrix_uniform/{int(params['load_factor']*100)}_ut_minCostMCF.json"
-    params["optimal_soltion_path"] = f"examples/{topology_name}/optimal_solution/5 nodes overlay/{params['traffic_matrix_index']}_original_uniform/{int(params['load_factor']*100)}_ut_minCostMCF.json"
+    params["optimal_soltion_path"] = f"examples/{topology_name}/optimal_solution/11Nodes/{params['traffic_matrix_index']}_norm_matrix_uniform/{int(params['load_factor']*100)}_ut_minCostMCF.json"
     # params["optimal_soltion_path"] = f"examples/{topology_name}/optimal_solution/{params['traffic_matrix_index']}_adjusted_5_nodes_mesh_norm_matrix_uniform/{int(params['load_factor']*100)}_ut_minCostMCF.json"
     return params
 
@@ -383,9 +385,6 @@ def main():
     ## Get the arguments from the parser
     params = arguments_parser()
 
-    ## Metrics
-    # params["METRICS"] = ["avg_delay", "loss_ratio", "reward"]
-
     ## compute the loss penalty
     # params["loss_penalty"] = ((((params["max_out_buffer_size"] + 1)*params["packet_size"]*8)/params["link_cap"])) *params["numNodes"]
     params["loss_penalty"] = ((((params["max_out_buffer_size"] + 512+30)*8)/params["link_cap"])+0.001)*params["maxNumNodes"]
@@ -398,8 +397,8 @@ def main():
     if params["train"] == 1:
         pathlib.Path(params["logs_parent_folder"] + "/saved_models/").mkdir(parents=True, exist_ok=True)
         ## check if the session already exists
-        if os.path.exists(params["logs_parent_folder"] + "/saved_models/" + params["session_name"]):
-            if len(os.listdir(params["logs_parent_folder"] + "/saved_models/" + params["session_name"])) > 0:
+        if os.path.exists(params["logs_parent_folder"] + "/saved_models/" + params["session_name"] + "/iteration1_episode1"):
+            if len(os.listdir(params["logs_parent_folder"] + "/saved_models/" + params["session_name"] + "/iteration1_episode1")) > 0:
                 print(f'The couple {params["seed"]} {params["traffic_matrix_index"]} already exists in : {params["logs_parent_folder"] + "/saved_models/" + params["session_name"]}')
                 return 1
     

@@ -263,10 +263,16 @@ class Agent():
         Agent.envs[self.index] = self.env
         d_q_func = None
         if Agent.signaling_type == "digital_twin":
-            if "lite" in Agent.d_t_load_path:
+            if "lite_sp" in Agent.d_t_load_path:
                 d_q_func = DQN_buffer_lite_model
-            elif "lighter" in Agent.d_t_load_path:
+            elif "lighter_sp" in Agent.d_t_load_path:
                 d_q_func = DQN_buffer_lighter_model
+            elif "lighter_2_sp" in Agent.d_t_load_path:
+                d_q_func = DQN_buffer_lighter_2_model
+            elif "lighter_3_sp" in Agent.d_t_load_path:
+                d_q_func = DQN_buffer_lighter_3_model
+            elif "ff_sp" in Agent.d_t_load_path:
+                d_q_func = DQN_buffer_ff_model
             else:
                 d_q_func = DQN_buffer_model
             
@@ -512,7 +518,7 @@ class Agent():
         """
         if "dqn" in self.agent_type:
             ### Take action using the NN
-            action = Agent.agents[self.index].step(tf.constant(np.array([obs], dtype=float), shape=(1, len(obs))), self.train, self.update_eps, Agent.nodes_q_network_lock[self.index]).numpy().item()
+            action = Agent.agents[self.index].step(tf.constant(np.array([obs], dtype=float), shape=(1, len(obs))), self.train, self.update_eps, Agent.train_lock).numpy().item()
         elif self.agent_type == "sp":
             action = self.neighbors.index(Agent.agents[self.index](Agent.G, self.index, obs[0])[1])
         elif self.agent_type == "opt":
@@ -556,7 +562,7 @@ class Agent():
         Args:
             neighbor_idx (int): neighbor index for this node
         """
-        Agent.agents[self.index].sync_neighbor_target_q_network(neighbor_idx, with_temp=with_temp, lock=Agent.nodes_neighbors_copy_lock[self.index][neighbor_idx])
+        Agent.agents[self.index].sync_neighbor_target_q_network(neighbor_idx, with_temp=with_temp, lock=Agent.train_lock)
 
     def _sync_upcoming(self, neighbor_num, neighbor_idx):
         """
@@ -577,7 +583,7 @@ class Agent():
             upcoming (bool): if True, update the upcoming nn with neighbor nn, else, update target with upcoming
         """
         if self.signaling_type == "target":                
-            Agent.agents[self.index].update_target(lock=Agent.nodes_target_q_network_lock[self.index])
+            Agent.agents[self.index].update_target(lock=Agent.train_lock)
         else:
             if update_upcoming:
                 for indx, neighbor in enumerate(self.neighbors): 
@@ -731,7 +737,7 @@ class Agent():
                                                         element["reward"],
                                                         element["new_obs"], 
                                                         element["flag"])
-                    Agent.agents[self.index].neighbors_d_t_database[element["action"]].add(element["obs"],
+                    Agent.agents[self.index].neighbors_d_t_database[element["action"]].add(element["new_obs"],
                                                                                            element["targets"],
                                                                                            element["time"],)
                     Agent.upcoming_events[self.index].pop(idx)
@@ -770,10 +776,10 @@ class Agent():
                                                                                             rewards_t[action_indices],
                                                                                             tf.constant(next_obses_temp, shape=(len(action_indices), next_obses_temp.shape[1])), 
                                                                                             dones_t[action_indices], filtered_indices,
-                                                                                            lock=Agent.nodes_neighbors_copy_lock[self.index][indx]))
+                                                                                            lock=Agent.train_lock))
                     elif Agent.signaling_type == "digital_twin":
                         targets_t.append(Agent.agents[self.index].get_neighbor_d_t_value(indx, rewards_t[action_indices], tf.constant(
-                            np.array(np.vstack(next_obses_t[action_indices]), dtype=float)), dones_t[action_indices], filtered_indices))
+                            np.array(np.vstack(next_obses_t[action_indices]), dtype=float)), dones_t[action_indices], filtered_indices, lock=Agent.train_lock))
             action_indices_all = np.concatenate(action_indices_all)
 
             ### prepare tf variables
@@ -827,8 +833,9 @@ class Agent():
         if len(y) == 0 or len(x) == 0:
             return
         size = min(len(x), len(y))
-        loss = Agent.agents[self.index].neighbors_d_t_network[neighbor_idx].fit(x[:size], y[:size], batch_size=Agent.batch_size, epochs=20, verbose=0)
-        print("supervided training; node = ", self.index, " neighbor = ", neighbor_idx, " loss = ", loss.history["loss"][-1] , " time = ", Agent.curr_time, " len = ", len(y), len(x))
+        with Agent.train_lock:
+            loss = Agent.agents[self.index].neighbors_d_t_network[neighbor_idx].fit(x[:size], y[:size], batch_size=Agent.batch_size, epochs=int(10*Agent.d_t_max_time), verbose=0)
+        print("supervised training; node = ", self.index, " neighbor = ", neighbor_idx, " loss = ", loss.history["loss"][-1] , " time = ", Agent.curr_time, " len = ", len(y), len(x))
     
     def run_forwarder(self):
         """ 
@@ -1023,7 +1030,7 @@ class Agent():
                     elif Agent.signaling_type == "target":
                         ## compute the target value
                         filtered_index = np.where(np.array(list(Agent.G.neighbors(self.index)))!=int(states_info["node"]))[0] # filter the net interface from where the pkt comes 
-                        target = Agent.agents[self.index].get_target_value(np.array([hop_time_real]), np.array([self.obs]), np.array([self.done]), filtered_index, lock=Agent.nodes_target_q_network_lock[self.index])
+                        target = Agent.agents[self.index].get_target_value(np.array([hop_time_real]), np.array([self.obs]), np.array([self.done]), filtered_index, lock=Agent.train_lock)
                         # target = hop_time_ideal + Agent.gamma * (1- int(self.done)) * tf.reduce_min(Agent.agents[self.index].q_network(np.array([self.obs], dtype=float)), 1)
                         
                         self._push_upcoming_event(int(states_info["node"]), {   "time": Agent.curr_time + self.small_signaling_delay,
@@ -1039,8 +1046,9 @@ class Agent():
                             Agent.small_signaling_overhead_counter += self.small_signaling_pkt_size
                             Agent.small_signaling_pkt_counter += 1
                     elif Agent.signaling_type == "digital_twin":
-                        ## compute the target values
-                        targets = Agent.agents[self.index].q_network(np.array([self.obs], dtype=float))
+                        with Agent.train_lock:
+                            ## compute the target values
+                            targets = Agent.agents[self.index].q_network(np.array([self.obs], dtype=float))
                         # target = hop_time_ideal + Agent.gamma * (1- int(self.done)) * tf.reduce_min(Agent.agents[self.index].q_network(np.array([self.obs], dtype=float)), 1)
                         
                         self._push_upcoming_event(int(states_info["node"]), {   "time": Agent.curr_time + self.small_signaling_delay,
