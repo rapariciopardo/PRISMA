@@ -22,8 +22,8 @@ echo ${20} # exploration end ratio
 echo ${21} # d_t_max_time
 echo ${22} # nn size
 
-source /home/redha/anaconda3/etc/profile.d/conda.sh 
-conda activate tf
+# source /home/redha/anaconda3/etc/profile.d/conda.sh 
+# conda activate tf
 #module load singularity/3.5.2
 uname -a
 echo $(date)

@@ -790,15 +790,15 @@ class Agent():
                 print("Node: ", self.index)
                 print(obses_t[0], obses_t.shape, type(obses_t[0]))
                 raise(1)
-            
+            # with Agent.train_lock:
             actions_t = tf.constant(actions_t[action_indices_all], shape=(Agent.batch_size, 1))
             targets_t = tf.constant(tf.concat(targets_t, axis=0), shape=(Agent.batch_size, 1))
         
         weights = tf.constant(weights, dtype=float, shape=(Agent.batch_size, 1))
 
         ### Make a gradient step
-        with Agent.train_lock:
-            td_errors = Agent.agents[self.index].train(obses_t, actions_t, targets_t, weights, lock=Agent.nodes_q_network_lock[self.index])
+        # with Agent.train_lock:
+        td_errors = Agent.agents[self.index].train(obses_t, actions_t, targets_t, weights, lock=Agent.nodes_q_network_lock[self.index])
         #print("Node", self.index, "td error: ", np.mean(td_errors**2))    
         self.episode_mean_td_error.append(np.mean(td_errors))
         # print(self.index, Agent.curr_time, self.gradient_step_idx, np.mean(td_errors))
@@ -833,8 +833,8 @@ class Agent():
         if len(y) == 0 or len(x) == 0:
             return
         size = min(len(x), len(y))
-        with Agent.train_lock:
-            loss = Agent.agents[self.index].neighbors_d_t_network[neighbor_idx].fit(x[:size], y[:size], batch_size=Agent.batch_size, epochs=int(10*Agent.d_t_max_time), verbose=0)
+        # with Agent.train_lock:
+        loss = Agent.agents[self.index].neighbors_d_t_network[neighbor_idx].fit(x[:size], y[:size], batch_size=Agent.batch_size, epochs=int(10*Agent.d_t_max_time), verbose=0)
         print("supervised training; node = ", self.index, " neighbor = ", neighbor_idx, " loss = ", loss.history["loss"][-1] , " time = ", Agent.curr_time, " len = ", len(y), len(x))
     
     def run_forwarder(self):
@@ -1046,9 +1046,9 @@ class Agent():
                             Agent.small_signaling_overhead_counter += self.small_signaling_pkt_size
                             Agent.small_signaling_pkt_counter += 1
                     elif Agent.signaling_type == "digital_twin":
-                        with Agent.train_lock:
-                            ## compute the target values
-                            targets = Agent.agents[self.index].q_network(np.array([self.obs], dtype=float))
+                        # with Agent.train_lock:
+                        ## compute the target values
+                        targets = Agent.agents[self.index].q_network(np.array([self.obs], dtype=float))
                         # target = hop_time_ideal + Agent.gamma * (1- int(self.done)) * tf.reduce_min(Agent.agents[self.index].q_network(np.array([self.obs], dtype=float)), 1)
                         
                         self._push_upcoming_event(int(states_info["node"]), {   "time": Agent.curr_time + self.small_signaling_delay,

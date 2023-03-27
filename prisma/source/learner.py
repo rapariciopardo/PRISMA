@@ -148,9 +148,9 @@ class DQN_AGENT(tf.Module):
 
     #@tf.function
     def step(self, obs, stochastic=True, update_eps=-1, lock=None):
-        with lock:
-            with tf.device('/CPU:0'):
-                q_values = self.q_network(obs)
+        # with lock:
+        #     with tf.device('/CPU:0'):
+        q_values = self.q_network(obs)
         #deterministic_actions = tf.argmax(q_values, axis=1)
         deterministic_actions = tf.argmin(q_values, axis=1)
         batch_size = tf.shape(obs)[0]
@@ -176,26 +176,26 @@ class DQN_AGENT(tf.Module):
             importance_weights: batch of importance weights
             lock: lock to give access to the q network
         """
-        with lock:
-            with tf.device('/GPU:0'):
-                with tf.GradientTape() as tape:
-                    tape.watch(obs0)
-                    q_t = self.q_network(obs0)
-                    q_t_selected = tf.reduce_sum(q_t * tf.one_hot(actions, self.num_actions, dtype=tf.float32), 1)
+        # with lock:
+        #     with tf.device('/GPU:0'):
+        with tf.GradientTape() as tape:
+            tape.watch(obs0)
+            q_t = self.q_network(obs0)
+            q_t_selected = tf.reduce_sum(q_t * tf.one_hot(actions, self.num_actions, dtype=tf.float32), 1)
 
-                    td_error = q_t_selected - tf.stop_gradient(q_t_selected_targets)
-                    errors = huber_loss(td_error)
-                    # errors = tf.square(td_error)
-                    weighted_error = tf.reduce_mean(importance_weights * errors)
-                grads = tape.gradient(weighted_error, self.q_network.trainable_variables)
-                
-                if self.grad_norm_clipping:
-                    clipped_grads = []
-                    for grad in grads:
-                        clipped_grads.append(tf.clip_by_norm(grad, self.grad_norm_clipping))
-                    clipped_grads = grads
-                grads_and_vars = zip(grads, self.q_network.trainable_variables)
-                self.optimizer.apply_gradients(grads_and_vars)
+            td_error = q_t_selected - tf.stop_gradient(q_t_selected_targets)
+            errors = huber_loss(td_error)
+            # errors = tf.square(td_error)
+            weighted_error = tf.reduce_mean(importance_weights * errors)
+        grads = tape.gradient(weighted_error, self.q_network.trainable_variables)
+        
+        if self.grad_norm_clipping:
+            clipped_grads = []
+            for grad in grads:
+                clipped_grads.append(tf.clip_by_norm(grad, self.grad_norm_clipping))
+            clipped_grads = grads
+        grads_and_vars = zip(grads, self.q_network.trainable_variables)
+        self.optimizer.apply_gradients(grads_and_vars)
 
         return td_error
 
@@ -209,9 +209,9 @@ class DQN_AGENT(tf.Module):
         # pass
         q_vars = self.q_network.trainable_variables
         target_q_vars = self.target_q_network.trainable_variables
-        with lock:
-            for var, var_target in zip(q_vars, target_q_vars):
-                var_target.assign(var)
+        # with lock:
+        for var, var_target in zip(q_vars, target_q_vars):
+            var_target.assign(var)
 
     def get_target_value(self, rewards, obs1, dones, filtered_indices, lock):
         """Get the target value for the q network
@@ -224,8 +224,8 @@ class DQN_AGENT(tf.Module):
             lock {threading.Lock} -- lock to use to access the target q network
         
         """
-        with lock:
-            q_tp1 = tf.gather(self.target_q_network(obs1), filtered_indices, axis=1)
+        # with lock:
+        q_tp1 = tf.gather(self.target_q_network(obs1), filtered_indices, axis=1)
 
         #   if self.double_q:
         #     q_tp1_using_online_net = tf.gather(self.q_network(obs1), filtered_indices, axis=1)
@@ -259,9 +259,9 @@ class DQN_AGENT(tf.Module):
         """
         #print(type(self.neighbors_target_q_network))
         # print("get_target_value", neighbor_idx ,  rewards.shape, obs1.shape, dones.shape, self.neighbors_target_q_network[neighbor_idx].input_shape)
-        with lock:
-            with tf.device('/GPU:0'):
-                q_tp1 = tf.gather(self.neighbors_target_q_network[neighbor_idx](obs1), filtered_indices, axis=1)
+        # with lock:
+        #     with tf.device('/GPU:0'):
+        q_tp1 = tf.gather(self.neighbors_target_q_network[neighbor_idx](obs1), filtered_indices, axis=1)
         #q_tp1 = self.neighbors_target_q_network[neighbor_idx](obs1)
 
         q_tp1_best = tf.reduce_min(q_tp1, 1)
@@ -284,15 +284,15 @@ class DQN_AGENT(tf.Module):
         if with_temp:
             q_vars = self.neighbors_target_temp_upcoming_q_network[neighbor_idx].trainable_variables
             target_q_vars = self.neighbors_target_q_network[neighbor_idx].trainable_variables
-            with lock:
-                for var, var_target in zip(q_vars, target_q_vars):
-                    var_target.assign(var)
+            # with lock:
+            for var, var_target in zip(q_vars, target_q_vars):
+                var_target.assign(var)
         else:
             q_vars = self.neighbors_target_upcoming_q_network[neighbor_idx].trainable_variables
             target_q_vars = self.neighbors_target_q_network[neighbor_idx].trainable_variables 
-            with lock:
-                for var, var_target in zip(q_vars, target_q_vars):
-                    var_target.assign(var)
+            # with lock:
+            for var, var_target in zip(q_vars, target_q_vars):
+                var_target.assign(var)
 
     def get_neighbor_d_t_value(self, neighbor_idx, rewards, obs1, dones, filtered_indices, lock):
         """Return the target values using the digital twin of the neighbor target q network.
@@ -306,9 +306,9 @@ class DQN_AGENT(tf.Module):
         Returns:
             tf tensor: the target values
         """
-        with lock:
-            with tf.device('/GPU:1'):
-                q_tp1 = tf.gather(self.neighbors_d_t_network[neighbor_idx](obs1), filtered_indices, axis=1)
+        # with lock:
+        #     with tf.device('/GPU:0'):
+        q_tp1 = tf.gather(self.neighbors_d_t_network[neighbor_idx](obs1), filtered_indices, axis=1)
 
         q_tp1_best = tf.reduce_min(q_tp1, 1)
 
