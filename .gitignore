@@ -49,8 +49,7 @@ venv/
 prisma/examples/*
 prisma/replay_buffer_samples/
 prisma/figures/
-singularity.img
-prismacopy.sif
-singularity.def
-singularity.def
-prisma/cost_vs_sync_steps.png
+*.img
+*.def
+*.sif
+prisma/*.png

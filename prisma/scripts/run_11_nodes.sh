@@ -25,6 +25,7 @@ echo ${22} # nn size
 # source /home/redha/anaconda3/etc/profile.d/conda.sh 
 # conda activate tf
 #module load singularity/3.5.2
+START=$(date +%s)
 uname -a
 echo $(date)
 SYNC=$(echo $1/0.5 | bc)
@@ -50,7 +51,7 @@ echo python3 main.py \
 	--adjacency_matrix_path=examples/$9/adjacency_matrix.txt \
 	--node_coordinates_path=examples/$9/node_coordinates_11n.txt \
 	--map_overlay_path=mapOverlay_11n.txt \
-	--training_step=0.05 \
+	--training_step=0.01 \
 	--batch_size=${18} \
 	--lr=${17} \
 	--exploration_final_eps=${20} \
@@ -80,7 +81,7 @@ echo python3 main.py \
 	--d_t_load_path=examples/$9/pre_trained_models/${4}_sp_itc_11n_ping_delay
 
 
-python3 main.py \
+python3 -u main.py \
 	--seed=$2 \
 	--simTime=${13} \
 	--basePort=$(((7000)+($8*15))) \
@@ -95,7 +96,7 @@ python3 main.py \
 	--adjacency_matrix_path=examples/$9/adjacency_matrix.txt \
 	--node_coordinates_path=examples/$9/node_coordinates_11n.txt \
 	--map_overlay_path=mapOverlay_11n.txt \
-	--training_step=0.05 \
+	--training_step=0.01 \
 	--batch_size=${18} \
 	--lr=${17} \
 	--exploration_final_eps=${20} \
@@ -146,7 +147,7 @@ for j in ${array[@]}
 	res2=${FLOAT/.*}
 	echo $res2
 
-	python3 main.py \
+	python3 -u main.py \
 	--simTime=20 \
 	--seed=$2 \
 	--basePort=$(((7000)+($8*15))) \
@@ -180,83 +181,6 @@ for j in ${array[@]}
 	counter=$((counter+1))
 	echo $counter
 	done
-## mv -f examples/abilene/saved_models/train_abilene_NN_ts_0_03_seed_$2_traff_mat_$3_batch_512_lr_1e-3_gamma_1_final_eps_0_01_load_40_sync_$1_loss_x1_sp_init /data/coati/user/ralliche/examples/abilene/saved_models/
-## mv -f examples/abilene/results/train_abilene_NN_ts_0_03_seed_$2_traff_mat_$3_batch_512_lr_1e-3_gamma_1_final_eps_0_01_load_40_sync_$1_loss_x1_sp_init /data/coati/user/ralliche/examples/abilene/results/
-##### mv -f examples/abilene/results/test_abilene_sync_step_variation_mat_$3_seed_$2_load_$res1 /data/coati/user/ralliche/examples/abilene/results/
-#####
-##### python3 main.py \
-##### 	--seed=1000 \
-#### 	--simTime=5 \
-#### 	--basePort=5544 \
-#### 	--train=0 \
-### 	--agent_type=dqn_buffer \
-## 	--session_name="temp" \
-## 	--signaling_type=NN \
-## 	--logs_parent_folder=examples/abilene/ \
-## 	--traffic_matrix_root_path=examples/abilene/traffic_matrices/ \
-# 	--traffic_matrix_index=0 \
-# 	--adjacency_matrix_path=examples/abilene/adjacency_matrix.txt \
-# 	--node_coordinates_path=examples/abilene/node_coordinates.txt \
-# 	--training_step=0.01 \
-# 	--batch_size=512 \
-# 	--lr=0.001 \
-# 	--exploration_final_eps=0.01 \
-# 	--exploration_initial_eps=1.0 \
-# 	--iterationNum=3000 \
-# 	--gamma=1.0 \
-# 	--training_trigger_type="time" \
-# 	--save_models=1 \
-# 	--start_tensorboard=0 \
-# 	--replay_buffer_max_size=50000 \
-#    	--link_delay="0ms" \
-# 	--load_factor=0.01 \
-# 	--sync_step=0.1 \
-# 	--sync_ratio=0.2 \
-# 	--signalingSim=1 \
-# 	--load_path=examples/abilene/dqn_buffer_sp_init
-
-# python3 main.py --seed=100 --simTime=200 --basePort=5000 --pingAsObs=0 --d_t_max_time=5 --train=1 --agent_type=dqn_buffer --session_name=test_small_model_step_5 --signaling_type=digital_twin --logs_parent_folder=examples/abilene/tests_dt_itc --traffic_matrix_root_path=examples/abilene/traffic_matrices/ --traffic_matrix_index=0 --agent_adjacency_matrix_path=examples/abilene/adjacency_matrix_2_11n.txt --adjacency_matrix_path=examples/abilene/adjacency_matrix.txt --node_coordinates_path=examples/abilene/node_coordinates_11n.txt --map_overlay_path=mapOverlay_11n.txt --training_step=0.01 --batch_size=512 --lr=0.0001 --exploration_final_eps=0.1 --exploration_initial_eps=0.1 --iterationNum=5000 --gamma=1.0 --training_trigger_type="time" --save_models=1 --start_tensorboard=1 --replay_buffer_max_size=10000 --link_delay="1ms" --load_factor=0.6 --load_factor_trainning=0.6 --sync_step=1 --max_out_buffer_size=16260 --sync_ratio=0.2 --signalingSim=1 --nPacketsOverlay=10 --movingAverageObsSize=5 --prioritizedReplayBuffer=0 --activateUnderlayTraffic=1 --groundTruthFrequence=1 --d_t_load_path=examples/abilene/dqn_buffer_lite_sp_init --load_path=examples/abilene/dqn_buffer_sp_init
-
-# python3 main.py \
-# 	--seed=100 \
-# 	--simTime=100 \
-# 	--basePort=7000 \
-# 	--train=1 \
-# 	--agent_type=dqn_buffer \
-# 	--session_name=test \
-# 	--signaling_type=NN \
-# 	--logs_parent_folder=examples/abilene/exps \
-# 	--traffic_matrix_root_path=examples/abilene/traffic_matrices/ \
-# 	--traffic_matrix_index=0 \
-# 	--agent_adjacency_matrix_path=examples/abilene/adjacency_matrix_2_11n.txt \
-# 	--adjacency_matrix_path=examples/abilene/adjacency_matrix.txt \
-# 	--node_coordinates_path=examples/abilene/node_coordinates_11n.txt \
-# 	--map_overlay_path=mapOverlay_11n.txt \
-# 	--training_step=0.01 \
-# 	--batch_size=1024 \
-# 	--lr=0.001 \
-# 	--exploration_final_eps=1.0 \
-# 	--exploration_initial_eps=0.1 \
-# 	--iterationNum=5000 \
-# 	--gamma=1.0 \
-# 	--training_trigger_type="time" \
-# 	--save_models=1 \
-# 	--start_tensorboard=0 \
-# 	--replay_buffer_max_size=10000 \
-#  	--link_delay="1ms" \
-# 	--load_factor=0.4 \
-# 	--load_factor_trainning=0.4 \
-# 	--sync_step=2 \
-# 	--max_out_buffer_size=16260 \
-# 	--sync_ratio=0.2 \
-# 	--signalingSim=1 \
-# 	--nPacketsOverlay=1000 \
-# 	--movingAverageObsSize=100 \
-# 	--prioritizedReplayBuffer=0\
-# 	--activateUnderlayTraffic=1 \
-# 	--bigSignalingSize=35100 \
-# 	--groundTruthFrequence=1 \
-# 	--pingAsObs=0 \
-# 	--d_t_max_time=5 \
-# 	--load_path=examples/abilene/pre_trained_models/dqn_buffer_sp_init_overlay_modified_11n_ping_delay \
-# 	--d_t_load_path=examples/abilene/pre_trained_models/dqn_buffer_sp_init_overlay_modified_11n_ping_delay
+	
+END=$(date +%s);
+echo $((END-START)) | awk '{print int($1/60)":"int($1%60)}'

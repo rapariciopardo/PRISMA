@@ -16,7 +16,6 @@ import operator
 import copy 
 import json
 import pandas as pd
-import threading
 # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 
 __author__ = "Redha A. Alliche, Tiago Da Silva Barros, Ramon Aparicio-Pardo, Lucile Sassatelli"
@@ -82,7 +81,6 @@ class Agent():
     nodes_q_network_lock = None
     nodes_neighbors_copy_lock =  None
     nodes_target_q_network_lock = None
-    barrier = None
     ## general env params
     stepTime=0.1
     startSim=0
@@ -209,8 +207,6 @@ class Agent():
         cl.nodes_q_network_lock = [threading.Lock() for _ in range(cl.numNodes)]
         cl.nodes_neighbors_copy_lock = [[threading.Lock() for _ in range(cl.numNodes)] for _ in range(cl.numNodes)]
         cl.nodes_target_q_network_lock = [threading.Lock() for _ in range(cl.numNodes)]
-        cl.train_lock = threading.Lock()
-        cl.barrier = threading.Barrier(cl.numNodes)
         cl.sessionName=params_dict["session_name"]
         cl.total_rewards_with_loss=0
         cl.max_nb_arrived_pkts = params_dict["max_nb_arrived_pkts"]
@@ -225,7 +221,7 @@ class Agent():
         agent_type (str): agent type. Can be : "dqn" for dqn buffer, "dqn_routing" for deep q routing, "sp" for shortest path or "opt" for optimal solution
         train (bool): if true, train the agent. Valid only for agent_type = dqn 
         """
-        ### compute the port number
+        # check if agent type exists
         if agent_type not in ("dqn_buffer", "dqn_buffer_lite", "dqn_buffer_lighter", "dqn_buffer_lighter_2", "dqn_buffer_lighter_3", "dqn_buffer_ff", "dqn_routing", "dqn_buffer_fp", "dqn_buffer_with_throughputs", "sp", "opt"):
             raise('Unknown agent type, please choose from : ("dqn_buffer", "dqn_buffer_lite", "dqn_buffer_lighter", "dqn_buffer_lighter_2", "dqn_buffer_lighter_3", "dqn_buffer_ff", "dqn_routing", "dqn_buffer_fp", "dqn_buffer_with_throughputs", "sp", "opt")')
 
@@ -491,9 +487,10 @@ class Agent():
                 print("Restoring from {} for node {}".format(Agent.load_path, self.index))
                 if self.agent_type == "dqn_buffer_fp" and not self.train:
                     temp = np.loadtxt(f'{"/".join(Agent.load_path.split("/")[:-1])}/node_{self.index}_final_params.txt')
+                    print(temp)
                     self.update_eps = tf.constant(temp[0], dtype=np.float32)
                     self.gradient_step_idx = temp[1]
-        
+
         # Create the schedule for exploration.
         self.exploration = LinearSchedule(schedule_timesteps=int(Agent.iterationNum),
                                     initial_p=Agent.exploration_initial_eps,
@@ -518,7 +515,7 @@ class Agent():
         """
         if "dqn" in self.agent_type:
             ### Take action using the NN
-            action = Agent.agents[self.index].step(tf.constant(np.array([obs], dtype=float), shape=(1, len(obs))), self.train, self.update_eps, Agent.train_lock).numpy().item()
+            action = Agent.agents[self.index].step(np.array([obs]), self.train, self.update_eps).numpy().item()
         elif self.agent_type == "sp":
             action = self.neighbors.index(Agent.agents[self.index](Agent.G, self.index, obs[0])[1])
         elif self.agent_type == "opt":
@@ -562,7 +559,7 @@ class Agent():
         Args:
             neighbor_idx (int): neighbor index for this node
         """
-        Agent.agents[self.index].sync_neighbor_target_q_network(neighbor_idx, with_temp=with_temp, lock=Agent.train_lock)
+        Agent.agents[self.index].sync_neighbor_target_q_network(neighbor_idx, with_temp=with_temp)
 
     def _sync_upcoming(self, neighbor_num, neighbor_idx):
         """
@@ -582,8 +579,8 @@ class Agent():
         Args:
             upcoming (bool): if True, update the upcoming nn with neighbor nn, else, update target with upcoming
         """
-        if self.signaling_type == "target":                
-            Agent.agents[self.index].update_target(lock=Agent.train_lock)
+        if self.signaling_type == "target":
+            Agent.agents[self.index].update_target()
         else:
             if update_upcoming:
                 for indx, neighbor in enumerate(self.neighbors): 
@@ -724,9 +721,9 @@ class Agent():
                                                                             element["action"])
                     else:
                         Agent.replay_buffer[self.index].add(element["obs"],
-                                                            element["action"], 
+                                                            element["action"],
                                                             element["target"],
-                                                            element["new_obs"], 
+                                                            element["new_obs"],
                                                             element["flag"])
                     Agent.upcoming_events[self.index].pop(idx)
                     break
@@ -771,34 +768,35 @@ class Agent():
                 action_indices_all.append(action_indices)
                 if len(action_indices):
                     if Agent.signaling_type in ("NN", "ideal"):
-                        next_obses_temp = np.array(np.vstack(next_obses_t[action_indices]), dtype=float)
-                        targets_t.append(Agent.agents[self.index].get_neighbor_target_value(indx,
-                                                                                            rewards_t[action_indices],
-                                                                                            tf.constant(next_obses_temp, shape=(len(action_indices), next_obses_temp.shape[1])), 
-                                                                                            dones_t[action_indices], filtered_indices,
-                                                                                            lock=Agent.train_lock))
+                        targets_t.append(Agent.agents[self.index].get_neighbor_target_value(indx, 
+                                                                                            rewards_t[action_indices], 
+                                                                                            tf.constant(np.array(np.vstack(next_obses_t[action_indices]),
+                                                                                                                dtype=float)), 
+                                                                                            dones_t[action_indices],
+                                                                                            filtered_indices))
                     elif Agent.signaling_type == "digital_twin":
-                        targets_t.append(Agent.agents[self.index].get_neighbor_d_t_value(indx, rewards_t[action_indices], tf.constant(
-                            np.array(np.vstack(next_obses_t[action_indices]), dtype=float)), dones_t[action_indices], filtered_indices, lock=Agent.train_lock))
+                        targets_t.append(Agent.agents[self.index].get_neighbor_d_t_value(indx,
+                                                                                         rewards_t[action_indices], 
+                                                                                         tf.constant(np.array(np.vstack(next_obses_t[action_indices]), dtype=float)),
+                                                                                         dones_t[action_indices],
+                                                                                         filtered_indices))
             action_indices_all = np.concatenate(action_indices_all)
 
             ### prepare tf variables
             try:
-                obses_t = tf.constant(obses_t[action_indices_all,], shape=(Agent.batch_size, obses_t.shape[1]))
+                obses_t = tf.constant(obses_t[action_indices_all,])
             except:
                 print("ERROR")
                 print("Node: ", self.index)
                 print(obses_t[0], obses_t.shape, type(obses_t[0]))
                 raise(1)
-            # with Agent.train_lock:
-            actions_t = tf.constant(actions_t[action_indices_all], shape=(Agent.batch_size, 1))
-            targets_t = tf.constant(tf.concat(targets_t, axis=0), shape=(Agent.batch_size, 1))
+            actions_t = tf.constant(actions_t[action_indices_all], shape=(Agent.batch_size))
+            targets_t = tf.constant(tf.concat(targets_t, axis=0), shape=(Agent.batch_size))
         
-        weights = tf.constant(weights, dtype=float, shape=(Agent.batch_size, 1))
+        weights = tf.constant(weights, dtype=float)
 
         ### Make a gradient step
-        # with Agent.train_lock:
-        td_errors = Agent.agents[self.index].train(obses_t, actions_t, targets_t, weights, lock=Agent.nodes_q_network_lock[self.index])
+        td_errors = Agent.agents[self.index].train(obses_t, actions_t, targets_t, weights)
         #print("Node", self.index, "td error: ", np.mean(td_errors**2))    
         self.episode_mean_td_error.append(np.mean(td_errors))
         # print(self.index, Agent.curr_time, self.gradient_step_idx, np.mean(td_errors))
@@ -813,7 +811,6 @@ class Agent():
             tf.summary.scalar('replay_buffer_length_over_steps', len(Agent.replay_buffer[self.index]), step=self.gradient_step_idx)
             tf.summary.scalar('replay_buffer_length_over_time', len(Agent.replay_buffer[self.index]), step=int(Agent.curr_time*1e6))
         self.gradient_step_idx += 1
-        Agent.barrier.wait()
 
     def train_d_ts_(self):
         """
@@ -1030,7 +1027,10 @@ class Agent():
                     elif Agent.signaling_type == "target":
                         ## compute the target value
                         filtered_index = np.where(np.array(list(Agent.G.neighbors(self.index)))!=int(states_info["node"]))[0] # filter the net interface from where the pkt comes 
-                        target = Agent.agents[self.index].get_target_value(np.array([hop_time_real]), np.array([self.obs]), np.array([self.done]), filtered_index, lock=Agent.train_lock)
+                        target = Agent.agents[self.index].get_target_value(np.array([hop_time_real]),
+                                                                           np.array([self.obs]),
+                                                                           np.array([self.done]), 
+                                                                           filtered_index)
                         # target = hop_time_ideal + Agent.gamma * (1- int(self.done)) * tf.reduce_min(Agent.agents[self.index].q_network(np.array([self.obs], dtype=float)), 1)
                         
                         self._push_upcoming_event(int(states_info["node"]), {   "time": Agent.curr_time + self.small_signaling_delay,
@@ -1046,7 +1046,6 @@ class Agent():
                             Agent.small_signaling_overhead_counter += self.small_signaling_pkt_size
                             Agent.small_signaling_pkt_counter += 1
                     elif Agent.signaling_type == "digital_twin":
-                        # with Agent.train_lock:
                         ## compute the target values
                         targets = Agent.agents[self.index].q_network(np.array([self.obs], dtype=float))
                         # target = hop_time_ideal + Agent.gamma * (1- int(self.done)) * tf.reduce_min(Agent.agents[self.index].q_network(np.array([self.obs], dtype=float)), 1)

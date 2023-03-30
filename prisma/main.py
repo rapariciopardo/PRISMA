@@ -28,16 +28,36 @@ import shlex
 import pathlib
 from tensorboard.plugins.custom_scalar import summary as cs_summary
 from tensorboard.plugins.custom_scalar import layout_pb2
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
-# os.environ["CUDA_VISIBLE_DEVICES"]="-1"
-# tf.config.threading.set_intra_op_parallelism_threads(11)
-# tf.config.threading.set_inter_op_parallelism_threads(11)
-# tf.debugging.set_log_device_placement(True)
 
+# check the available gpu device //from https://stackoverflow.com/questions/67707828/how-to-get-every-seconds-gpu-usage-in-python
+import subprocess as sp
+# set the margin of the gpu memory
+gpu_memory_margin = 1500 # required memory but a train instance in MB
+COMMAND = "nvidia-smi --query-gpu=utilization.gpu,memory.free --format=csv"
+output = sp.check_output(COMMAND, shell=True).decode('utf-8').split('\n')[1:-1]
+gpu_usage = [int(x.split(' ')[0]) for x in output]
+available_memory = [int(x.split(' ')[2]) for x in output]
+# get the gpu with the most available memory
+if np.max(available_memory) < gpu_memory_margin:
+    print("No gpu available")
+    gpu_index = -1
+else:
+    if np.diff(available_memory).item() < gpu_memory_margin:
+        print("More than one gpu available")
+        gpu_index = np.argmin(gpu_usage)
+    else:
+        print("One gpu available :")
+        gpu_index = np.argmax(available_memory)
+# allocate the gpu
+os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu_index)
+print("GPU index : ", gpu_index)
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 gpus = tf.config.experimental.list_physical_devices('GPU')
 if gpus:
     try:
-        tf.config.experimental.set_virtual_device_configuration(gpus[0], [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=1024)])
+        for gpu in gpus:
+            tf.config.experimental.set_memory_growth(gpu, True)
     except RuntimeError as e:
         print(e)
 
@@ -153,7 +173,6 @@ def arguments_parser():
     params["logs_parent_folder"] = os.path.abspath(params["logs_parent_folder"])
     if params["load_path"]:
         params["load_path"] = os.path.abspath(params["load_path"])
-        
     if params["d_t_load_path"]:
         params["d_t_load_path"] = os.path.abspath(params["d_t_load_path"])
     #if params["save_models"]:
@@ -189,7 +208,7 @@ def arguments_parser():
     params["nb_arrived_pkts_path"] = f'{params["logs_folder"]}/nb_arrived_pkts'
     params["nb_new_pkts_path"] = f'{params["logs_folder"]}/nb_new_pkts'
     params["nb_lost_pkts_path"] = f'{params["logs_folder"]}/nb_lost_pkts'
-            
+
     ## Add optimal solution path
     topology_name = params["adjacency_matrix_path"].split("/")[-2]
     # params["optimal_soltion_path"] = f"examples/{topology_name}/optimal_solution/11Nodes/{params['traffic_matrix_index']}_norm_matrix_uniform/{int(params['load_factor']*100)}_ut_minCostMCF.json"
@@ -414,8 +433,6 @@ def main():
                 except:
                     pass
                             
-    # if params["train"] == 0:
-    #     params["signalingSim"] = 0
     ## Setup writer for the global stats
     if params["train"] == 1:
         summary_writer_parent = tf.summary.create_file_writer(logdir=params["logs_folder"] )
@@ -444,7 +461,6 @@ def main():
     ## setup the agents (fix the static variables)
     print(f'python3 -m tensorboard.main --logdir={params["logs_folder"]} --port={params["tensorboard_port"]} --bind_all')
     Agent.init_static_vars(params)
-    
     
     print("running ns-3")
     ## run ns3 simulator
@@ -506,28 +522,6 @@ def main():
             nbBytesOverlaySignalingBack = {Agent.sim_bytes_overlay_signaling_back},
             OverheadRatio = {(Agent.sim_bytes_big_signaling+Agent.sim_bytes_small_signaling+Agent.sim_bytes_overlay_signaling_forward+Agent.sim_bytes_overlay_signaling_back)/Agent.sim_bytes_data}
             """)
-    
-    # print(f""" Summary of the episode :
-    #         Total Iterations = {Agent.currIt},
-    #         Total number of Transitions = {Agent.nb_transitions},
-    #         Simulation time = {Agent.curr_time},
-    #         Total e2e delay = {Agent.total_e2e_delay}, 
-    #         Total number of packets = {Agent.total_new_rcv_pkts}, 
-    #         Number of arrived packets = {Agent.total_arrived_pkts},
-    #         Number of lost packets = {Agent.node_lost_pkts},
-    #         Loss ratio = {Agent.node_lost_pkts/Agent.total_new_rcv_pkts}
-    #         Delay_ideal = {np.array(Agent.delays_ideal).mean()}
-    #         Delay_real = {np.array(Agent.delays_real).mean()}
-    #         total cost = {Agent.total_rewards_with_loss}
-    #         theoretical cost = {((Agent.node_lost_pkts * Agent.loss_penalty) + np.array(Agent.delays_ideal).sum())/(Agent.node_lost_pkts + Agent.total_arrived_pkts)}
-    #         Avg cost = {Agent.total_rewards_with_loss/Agent.total_new_rcv_pkts}
-    #         Reward = {np.array(Agent.rewards).mean()} 
-    #         Signaling overhead = {Agent.small_signaling_overhead_counter + Agent.big_signaling_overhead_counter}
-    #         small nb Signaling pkts = {Agent.small_signaling_overhead_counter}
-    #         big nb Signaling pkts ideal = {Agent.big_signaling_overhead_counter}
-    #         Data pkts size = {Agent.total_data_size}
-    
-    #         """)
     if Agent.total_arrived_pkts:
         print(f"Average delay per arrived packets = {Agent.total_e2e_delay/(Agent.total_arrived_pkts*1000)}")
         
