@@ -527,9 +527,9 @@ int main (int argc, char *argv[])
     packetRoutingEnv->setNetDevicesContainer(&switch_nd);
     packetRoutingEnv->setPingAsObs(pingAsObs);
 
-    if(i==0 && groundTruthFrequence>0){
-      packetRoutingEnv->setGroundTruthFrequence(groundTruthFrequence);
-    }
+    // if(i==0 && groundTruthFrequence>0){
+    //   packetRoutingEnv->setGroundTruthFrequence(groundTruthFrequence);
+    // }
 
 
     for(size_t j = 1;j<nodes_switch.Get(overlayNodes[i])->GetNDevices();j++){
