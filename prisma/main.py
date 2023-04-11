@@ -22,7 +22,7 @@ import csv
 import json
 from tensorboard.plugins.hparams import api as hp
 from source.agent import Agent
-from source.utils import save_model, convert_tb_data
+from source.utils import save_model, save_all_models, convert_tb_data
 import subprocess, signal
 import shlex
 import pathlib
@@ -151,6 +151,7 @@ def arguments_parser():
     group3.add_argument('--load_path', type=str, help='Path to DQN models, if not None, loads the models from the given files', default=None)
     group3.add_argument('--d_t_load_path', type=str, help='Path to the Digital Twin of the DQN models, if None, use the DQN models instead', default=None)
     group3.add_argument('--save_models', type=int, help='if True, store the models at the end of the training', default=0)
+    group3.add_argument('--snapshot_interval', type=int, help='Number of seconds between each snapshot of the models. If 0, desactivate snapshot', default=0)
     group3.add_argument('--training_trigger_type', type=str, choices=["event", "time"], help='Type of the training trigger, can be "event" (for event based) or "time" (for time based) (used when training)', default="time")
     group3.add_argument('--training_step', type=float, help='Number of steps or seconds to train (used when training)', default=0.05)
     group3.add_argument('--sync_step', type=float, help='Number of seconds to sync NN if signaling_type is "NN". if -1, then compute it to have control/data of 10% (used when training)', default=1.0)
@@ -612,7 +613,7 @@ def main():
 
     ## save models        
     if params["save_models"] and Agent.curr_time >= params["simTime"]-5:
-        save_model(Agent.agents, params["G"].nodes(), params["session_name"], 1, 1, root=params["logs_parent_folder"] + "/saved_models/")
+        save_all_models(Agent.agents, params["G"].nodes(), params["session_name"], 1, 1, root=params["logs_parent_folder"] + "/saved_models/", snapshot=False)
         if params["agent_type"] == "dqn_buffer_fp":
             for item in agent_instances:
                 np.savetxt(f'{params["logs_parent_folder"].rstrip("/")}/saved_models/{params["session_name"]}/node_{item.index}_final_params.txt',  [item.update_eps.numpy().item(), item.gradient_step_idx])

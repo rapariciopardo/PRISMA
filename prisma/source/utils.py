@@ -11,9 +11,44 @@ __license__ = "GPL"
 __email__ = "alliche,raparicio,sassatelli@i3s.unice.fr, tiago.da-silva-barros@inria.fr"
 
 
-def save_model(actors, overlay_nodes, path, t, num_episodes, root="saved_models/"):
+def save_model(actor, node_index, path, t, num_episodes, root="saved_models/", snapshot=False):
     """
-    Save the DQN model for each node into a folder.
+    Save the DQN model for a node into a folder.
+
+    Parameters
+    ----------
+    actors : DQN model
+        DQN model (for a network node).
+    node_index : int
+        index of the node.
+    path : str
+        name of the folder where to store the model.
+    t : int
+        number of passed train iterations
+    num_episodes : int
+        number of passed episodes
+    root : str, optional
+        root folder where to store the model. The default is "saved_models/".
+    snapshot : bool, optional
+        if True, the model is saved in a folder named "episode_{num_episodes}_step_{t}". The default is False.
+    
+    Returns
+    -------
+    None.
+
+    """
+    if not(path in os.listdir(root)):
+        os.mkdir(root + path)
+    path = path.rstrip('/') + '/'
+    if snapshot: 
+        folder_name = root + path + f"episode_{num_episodes}_step_{t}"
+    else:
+        folder_name = root + path
+    actor.q_network.save(f"{folder_name}/node{node_index}")
+
+def save_all_models(actors, overlay_nodes, path, t, num_episodes, root="saved_models/", snapshot=False):
+    """
+    Save all DQN models for each node into a folder.
 
     Parameters
     ----------
@@ -31,18 +66,9 @@ def save_model(actors, overlay_nodes, path, t, num_episodes, root="saved_models/
     None.
 
     """
-    # if root not in os.listdir():
-    #     os.mkdir(root)
-    # if(path in os.listdir(root)):
-    #     shutil.rmtree(root + path)
-    if not(path in os.listdir(root)):
-        os.mkdir(root + path)
-    path = path.rstrip('/') + '/'
-    folder_name = root + path
     for i in overlay_nodes:
-        actors[i].q_network.save(f"{folder_name}/node{i}")
-
-
+        save_model(actor[i], i, path, t, num_episodes, root, snapshot)
+        
 def load_model(path, node_index=-1):
     """
     Loads the list of agents from a directory

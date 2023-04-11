@@ -210,6 +210,8 @@ class Agent():
         cl.nodes_target_q_network_lock = [threading.Lock() for _ in range(cl.numNodes)]
         cl.smart_exploration = params_dict["smart_exploration"]
         cl.sessionName=params_dict["session_name"]
+        cl.logs_parent_folder = params_dict["logs_parent_folder"]
+        cl.snapshot_interval=params_dict["snapshot_interval"]
         cl.total_rewards_with_loss=0
         cl.max_nb_arrived_pkts = params_dict["max_nb_arrived_pkts"]
         if params_dict["agent_type"] == "opt":
@@ -455,6 +457,7 @@ class Agent():
         self.count_arrived_packets = 0
         self.count_new_pkts = 0
         self.last_training_time = 0
+        self.snapshot_index = 1
         self.last_d_t_training_time = 0
         self.last_sync_time = 0
         self.last_training_step = 0
@@ -1141,12 +1144,13 @@ class Agent():
                     self._train()
         elif train_type == "time":
             while True :
-                time.sleep(np.random.uniform(0.1, 0.7))
+                time.sleep(np.random.uniform(0.1, 1.5))
                 ## check if there are signaling pkts arrived if signaling type NN
                 if Agent.signaling_type in ("NN", "target") and Agent.signalingSim == 0:
                     self._get_upcoming_events()
                 ## check if it is time to syncronize nn
                 self._check_sync()
+                
                 ## check if it is time to train the digital twin 
                 if Agent.signaling_type == "digital_twin" and Agent.curr_time > (self.last_d_t_training_time + Agent.d_t_max_time):
                     self.train_d_ts_()
@@ -1154,3 +1158,8 @@ class Agent():
                 ## check if it is time to train
                 if Agent.curr_time > (self.last_training_time + Agent.training_step) and Agent.replay_buffer[self.index].total_samples>= Agent.batch_size:
                     self._train()
+                    
+                ## check if it is time to save the model
+                if Agent.curr_time > (self.snapshot_index * Agent.snapshot_interval):
+                    save_model(Agent.agents[self.index], self.index, Agent.sessionName, self.snapshot_index, 1, Agent.logs_parent_folder + "/saved_models/", snapshot=True)
+                    self.snapshot_index += 1
