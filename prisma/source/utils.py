@@ -38,7 +38,7 @@ def save_model(actors, overlay_nodes, path, t, num_episodes, root="saved_models/
     if not(path in os.listdir(root)):
         os.mkdir(root + path)
     path = path.rstrip('/') + '/'
-    folder_name = root + path + f"iteration{t}_episode{num_episodes}"
+    folder_name = root + path
     for i in overlay_nodes:
         actors[i].q_network.save(f"{folder_name}/node{i}")
 

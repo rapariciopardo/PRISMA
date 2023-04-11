@@ -96,7 +96,6 @@ class Agent():
     ## net topology
     G = None
     numNodes = 0
-    maxNumNodes = 0
     ## learning params
     lr = 1e-3
     batch_size = 128
@@ -118,6 +117,8 @@ class Agent():
     big_signaling_pkt_counter =0
     prioritizedReplayBuffer = None
     nn_max_seg_index = 68
+    smart_exploration = False
+    loss_aware = True
 
     nb_transitions = 0
     @classmethod
@@ -127,7 +128,6 @@ class Agent():
         """
         cl.G = params_dict["G"]
         cl.numNodes = params_dict["numNodes"]
-        cl.maxNumNodes = params_dict["maxNumNodes"]
         cl.stepTime = params_dict["stepTime"]
         cl.startSim = params_dict["startSim"]
         cl.seed = params_dict["seed"]
@@ -169,6 +169,7 @@ class Agent():
         cl.link_cap = params_dict["link_cap"]
         cl.packet_size = params_dict["packet_size"]
         cl.signalingSim = params_dict["signalingSim"]
+        cl.loss_aware = params_dict["loss_aware"]
         cl.nn_max_seg_index = (params_dict["bigSignalingSize"]/cl.packet_size)-1
         cl.currIt = 0
         cl.sim_injected_packets=0
@@ -207,6 +208,7 @@ class Agent():
         cl.nodes_q_network_lock = [threading.Lock() for _ in range(cl.numNodes)]
         cl.nodes_neighbors_copy_lock = [[threading.Lock() for _ in range(cl.numNodes)] for _ in range(cl.numNodes)]
         cl.nodes_target_q_network_lock = [threading.Lock() for _ in range(cl.numNodes)]
+        cl.smart_exploration = params_dict["smart_exploration"]
         cl.sessionName=params_dict["session_name"]
         cl.total_rewards_with_loss=0
         cl.max_nb_arrived_pkts = params_dict["max_nb_arrived_pkts"]
@@ -322,8 +324,7 @@ class Agent():
                 neighbors_degrees=[len(list(Agent.G.neighbors(x))) for x in self.neighbors],
                 d_t_max_time=Agent.d_t_max_time,
                 d_q_func=d_q_func,
-            )
-            
+            )        
         elif self.agent_type == "dqn_buffer_lighter_2":
             ## declare the DQN buffer lighter_2 model
             Agent.agents[self.index] = DQN_AGENT(
@@ -356,7 +357,6 @@ class Agent():
                 d_t_max_time=Agent.d_t_max_time,
                 d_q_func=d_q_func,
             )
-        
         elif self.agent_type == "dqn_buffer_ff":
             ## declare the DQN buffer ff model
             Agent.agents[self.index] = DQN_AGENT(
@@ -372,8 +372,7 @@ class Agent():
                 neighbors_degrees=[len(list(Agent.G.neighbors(x))) for x in self.neighbors],
                 d_t_max_time=Agent.d_t_max_time,
                 d_q_func=d_q_func,
-            )
-        
+            )       
         elif self.agent_type == "dqn_buffer_with_throughputs":
             ## declare the DQN buffer with throughputs model
             Agent.agents[self.index] = DQN_AGENT(
@@ -463,6 +462,10 @@ class Agent():
         self.update_eps = 0
         self.sync_counter = -1
         
+        ## define action history and nb_actions
+        self.action_history = np.ones(self.env.action_space.n)
+        self.nb_actions = np.sum(self.action_history)
+        
         ## load the models
         if Agent.load_path is not None and "dqn" in self.agent_type:
             if Agent.signaling_type == "digital_twin" and self.train: # load digital twin and the model
@@ -514,8 +517,18 @@ class Agent():
             obs (list): observation list
         """
         if "dqn" in self.agent_type:
+            actions_probs = None
+            if Agent.smart_exploration:
+                actions_probs = 1-(self.action_history/self.nb_actions)
+                actions_probs /=sum(actions_probs)
             ### Take action using the NN
-            action = Agent.agents[self.index].step(np.array([obs]), self.train, self.update_eps).numpy().item()
+            action = Agent.agents[self.index].step(np.array([obs]),
+                                                   self.train,
+                                                   self.update_eps,
+                                                   actions_probs=actions_probs).numpy().item()
+            if Agent.smart_exploration:
+                self.action_history[action] += 1
+                self.nb_actions += 1
         elif self.agent_type == "sp":
             action = self.neighbors.index(Agent.agents[self.index](Agent.G, self.index, obs[0])[1])
         elif self.agent_type == "opt":
@@ -530,6 +543,9 @@ class Agent():
         ## schedule the exploration
         if self.train:
             self.update_eps = tf.constant(self.exploration.value(self.stepIdx))
+            with self.summary_writer_exploration.as_default():
+                tf.summary.scalar('exploaration_value_over_steps', self.update_eps, step=self.stepIdx)
+                tf.summary.scalar('exploaration_value_over_time', self.update_eps, step=int(Agent.curr_time*1e6))
 
         ## take the action
         if self.obs[0] == self.index or self.stepIdx < 1 or self.signaling: # pkt arrived to dst or it is a train step, ignore the action
@@ -601,9 +617,10 @@ class Agent():
         Check the time to sync the NN depending on the signaling mode
         """
         ### Sync target NN
-        if Agent.curr_time > (self.last_sync_time + self.sync_step):
+        if Agent.curr_time > ((self.sync_counter+1)*self.sync_step):
                 self._sync_all(update_upcoming=True)
                 self.sync_counter += 1
+                # print("sync all at %s" % Agent.curr_time, "for node:", self.index, "sync counter:", self.sync_counter)
                 if Agent.signaling_type in ("ideal"):
                     self._sync_all(update_upcoming=False)
                 self.last_sync_time = Agent.curr_time
@@ -804,9 +821,6 @@ class Agent():
             if len(td_errors):
                 tf.summary.scalar('MSE_loss_over_steps', np.mean(td_errors**2), step=self.gradient_step_idx)
                 tf.summary.scalar('MSE_loss_over_time', np.mean(td_errors**2), step=int(Agent.curr_time*1e6))
-        with self.summary_writer_exploration.as_default():
-            tf.summary.scalar('exploaration_value_over_steps', self.update_eps, step=self.gradient_step_idx)
-            tf.summary.scalar('exploaration_value_over_time', self.update_eps, step=int(Agent.curr_time*1e6))
         with self.summary_writer_replay_buffer_length.as_default():
             tf.summary.scalar('replay_buffer_length_over_steps', len(Agent.replay_buffer[self.index]), step=self.gradient_step_idx)
             tf.summary.scalar('replay_buffer_length_over_time', len(Agent.replay_buffer[self.index]), step=int(Agent.curr_time*1e6))
@@ -889,23 +903,24 @@ class Agent():
                         obs_shape = next_hop_degree*2
                     else:
                         obs_shape = next_hop_degree
-                    if(Agent.prioritizedReplayBuffer):
-                        Agent.replay_buffer[self.index].add(np.array(lost_packet_info["obs"], dtype=float).squeeze(),
-                                    lost_packet_info["action"], 
-                                    rew,
-                                    np.array([lost_packet_info["obs"][0]] + [0]*(obs_shape), dtype=float).squeeze(), 
-                                    True,
-                                    Agent.replay_buffer[self.index].latest_gradient_step[lost_packet_info["action"]])
-                    else:
-                        if(self.train):
-                            outputFile = open(f"{Agent.logs_folder}/rew_{self.index}_{lost_packet_info['action']}.txt", 'a+')
-                            outputFile.write(str(Agent.curr_time)+"  "+str(rew)+'\n')
-                            outputFile.close()
-                        Agent.replay_buffer[self.index].add(np.array(lost_packet_info["obs"], dtype=float).squeeze(),
-                                    lost_packet_info["action"], 
-                                    rew,
-                                    np.array([lost_packet_info["obs"][0]] + [0]*(obs_shape), dtype=float).squeeze(), 
-                                    True)
+                    if Agent.loss_aware:
+                        if(Agent.prioritizedReplayBuffer):
+                            Agent.replay_buffer[self.index].add(np.array(lost_packet_info["obs"], dtype=float).squeeze(),
+                                        lost_packet_info["action"], 
+                                        rew,
+                                        np.array([lost_packet_info["obs"][0]] + [0]*(obs_shape), dtype=float).squeeze(), 
+                                        True,
+                                        Agent.replay_buffer[self.index].latest_gradient_step[lost_packet_info["action"]])
+                        else:
+                            if(self.train):
+                                outputFile = open(f"{Agent.logs_folder}/rew_{self.index}_{lost_packet_info['action']}.txt", 'a+')
+                                outputFile.write(str(Agent.curr_time)+"  "+str(rew)+'\n')
+                                outputFile.close()
+                                Agent.replay_buffer[self.index].add(np.array(lost_packet_info["obs"], dtype=float).squeeze(),
+                                            lost_packet_info["action"], 
+                                            rew,
+                                            np.array([lost_packet_info["obs"][0]] + [0]*(obs_shape), dtype=float).squeeze(), 
+                                            True)
                 pkt_size = float(tokens[3].split('=')[-1])
                 Agent.curr_time = float(tokens[4].split('=')[-1])
                 self.pkt_id = float(tokens[5].split('=')[-1])
@@ -921,7 +936,7 @@ class Agent():
                         if segIndex > Agent.nn_max_seg_index:
                             raise("segIndex > {}".format(Agent.nn_max_seg_index))
                         if segIndex == Agent.nn_max_seg_index: ## NN signaling complete
-                            # print(f"sync {self.index} with neighbor {self.neighbors.index(NodeIdSignaled)}")
+                            # print(f"sync {self.index} with neighbor {self.neighbors.index(NodeIdSignaled)} at time {Agent.curr_time} {self.sync_counter} {NNIndex}")
                             if NNIndex ==self.sync_counter - 1:
                                 self._sync_current(self.neighbors.index(NodeIdSignaled), with_temp=True)
                             else:

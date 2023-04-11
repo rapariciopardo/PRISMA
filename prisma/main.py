@@ -118,8 +118,8 @@ def arguments_parser():
     group4 = parser.add_argument_group('Network parameters')
     group4.add_argument('--load_factor', type=float, help='scale of the traffic matrix', default=1)
     group4.add_argument('--load_factor_trainning', type=float, help='scale of the traffic matrix', default=1)
-    group4.add_argument('--adjacency_matrix_path', type=str, help='Path to the adjacency matrix', default="examples/abilene/adjacency_matrix.txt")
-    group4.add_argument('--agent_adjacency_matrix_path', type=str, help='Path to the adjacency matrix', default="examples/abilene/adjacency_matrix_2_5n.txt")
+    group4.add_argument('--physical_adjacency_matrix_path', type=str, help='Path to the adjacency matrix', default="examples/abilene/adjacency_matrix.txt")
+    group4.add_argument('--overlay_adjacency_matrix_path', type=str, help='Path to the adjacency matrix', default="examples/abilene/adjacency_matrix_2_5n.txt")
     group4.add_argument('--traffic_matrix_root_path', type=str, help='Path to the traffic matrix folder', default="examples/abilene/traffic_matrices/")
     group4.add_argument('--traffic_matrix_index', type=int, help='Index of the traffic matrix', default=0)
     group4.add_argument('--node_coordinates_path', type=str, help='Path to the nodes coordinates', default="examples/abilene/node_coordinates.txt")
@@ -127,12 +127,14 @@ def arguments_parser():
     group4.add_argument('--link_delay', type=str, help='Network links delay', default="0ms")
     group4.add_argument('--packet_size', type=int, help='Size of the packets in bytes', default=512)
     group4.add_argument('--link_cap', type=int, help='Network links capacity in bits per seconds', default=500000)
+    group4.add_argument('--loss_aware', type=int, help='If 1, the loss penalty is applied to the reward', default=1)
 
 
     group2 = parser.add_argument_group('Storing session logs arguments')
     group2.add_argument('--session_name', type=str, help='Name of the folder where to save the logs of the session', default=None)
     group2.add_argument('--logs_parent_folder', type=str, help='Name of the root folder where to save the logs of the sessions', default="examples/abilene/")
     group2.add_argument('--logging_timestep', type=int, help='Time delay (in real time) between each logging in seconds', default=5)
+    group2.add_argument('--profile_session', type=int, help='If 1, the session is profiled', default=0)
     
     group3 = parser.add_argument_group('DRL Agent arguments')
     group3.add_argument('--agent_type', choices=["dqn_buffer", "dqn_routing", "dqn_buffer_fp", "dqn_buffer_lite", "dqn_buffer_lighter", "dqn_buffer_lighter_2", "dqn_buffer_lighter_3", "dqn_buffer_ff", "dqn_buffer_with_throughputs", "sp", "opt"], type=str, help='The type of the agent. Can be dqn_buffer, dqn_routing, dqn_buffer_fp, sp or opt', default="dqn_buffer")
@@ -140,7 +142,7 @@ def arguments_parser():
     group3.add_argument('--lr', type=float, help='Learning rate (used when training)', default=1e-4)
     group3.add_argument('--bigSignalingSize', type=int, help='Size of the neural network in bytes (used when signaling type is NN)', default=200)
     group3.add_argument('--prioritizedReplayBuffer', type=int, help='if true, use prioritized replay buffer using the gradient step as weights (used when training)', default=0)
-    
+    group3.add_argument('--smart_exploration', type=int, help='if true, explore using probability proportional to the inverse of the number of time the action was taken (used when training and exploration enabled)', default=0)
     group3.add_argument('--batch_size', type=int, help='Size of a batch (used when training)', default=512)
     group3.add_argument('--gamma', type=float, help='Gamma ratio for RL (used when training)', default=1)
     group3.add_argument('--iterationNum', type=int, help='Max iteration number for exploration (used when training)', default=3000)
@@ -177,9 +179,8 @@ def arguments_parser():
         params["d_t_load_path"] = os.path.abspath(params["d_t_load_path"])
     #if params["save_models"]:
     #    params["save_models"] = os.path.abspath(params["save_models"])
-    params["adjacency_matrix_path"] = os.path.abspath(params["adjacency_matrix_path"])
-    params["agent_adjacency_matrix_path"] = os.path.abspath(params["agent_adjacency_matrix_path"])
-    params["opt_rejected_path"] = os.path.abspath("test.txt")
+    params["physical_adjacency_matrix_path"] = os.path.abspath(params["physical_adjacency_matrix_path"])
+    params["overlay_adjacency_matrix_path"] = os.path.abspath(params["overlay_adjacency_matrix_path"])
     params["map_overlay_path"] = os.path.abspath(params["map_overlay_path"])
     params["traffic_matrix_path"] = os.path.abspath(f'{params["traffic_matrix_root_path"].rstrip("/")}/node_intensity_normalized_{params["traffic_matrix_index"]}.txt')
     # params["traffic_matrix_path"] = os.path.abspath(f'{params["traffic_matrix_root_path"].rstrip("/")}/traffic_mat_{params["traffic_matrix_index"]}_adjusted_bps.txt')
@@ -190,8 +191,7 @@ def arguments_parser():
     G=nx.DiGraph(nx.empty_graph())
     for i, element in enumerate(np.loadtxt(open(params["node_coordinates_path"]))):
         G.add_node(i,pos=tuple(element))
-    G = nx.from_numpy_matrix(np.loadtxt(open(params["agent_adjacency_matrix_path"])), parallel_edges=False, create_using=G)
-    params["maxNumNodes"] = 11
+    G = nx.from_numpy_matrix(np.loadtxt(open(params["overlay_adjacency_matrix_path"])), parallel_edges=False, create_using=G)
     params["numNodes"] = G.number_of_nodes()
     print(G.number_of_nodes())
     params["G"] = G
@@ -210,9 +210,16 @@ def arguments_parser():
     params["nb_lost_pkts_path"] = f'{params["logs_folder"]}/nb_lost_pkts'
 
     ## Add optimal solution path
-    topology_name = params["adjacency_matrix_path"].split("/")[-2]
+    topology_name = params["physical_adjacency_matrix_path"].split("/")[-3]
     # params["optimal_soltion_path"] = f"examples/{topology_name}/optimal_solution/11Nodes/{params['traffic_matrix_index']}_norm_matrix_uniform/{int(params['load_factor']*100)}_ut_minCostMCF.json"
-    params["optimal_soltion_path"] = f"examples/{topology_name}/optimal_solution/11Nodes/{params['traffic_matrix_index']}_norm_matrix_uniform/{int(params['load_factor']*100)}_ut_minCostMCF.json"
+    params["optimal_soltion_path"] = f"examples/{topology_name}/optimal_solution/{params['traffic_matrix_index']}_norm_matrix_uniform/{int(params['load_factor']*100)}_ut_minCostMCF.json"
+    params["opt_rejected_path"] = os.path.abspath(f"examples/{topology_name}/optimal_solution/rejected_flows.txt")
+    print(params["optimal_soltion_path"])
+    if os.path.exists(params["optimal_soltion_path"]):
+        np.savetxt(params["opt_rejected_path"], json.load(open(params["optimal_soltion_path"], "r"))["rejected_flows"], fmt='%.6f')
+    else:
+        print(f"WARNING: optimal solution file {params['optimal_soltion_path']} does not exist")
+        np.savetxt(params["opt_rejected_path"], np.zeros((params["numNodes"], params["numNodes"])), fmt='%.6f')
     # params["optimal_soltion_path"] = f"examples/{topology_name}/optimal_solution/{params['traffic_matrix_index']}_adjusted_5_nodes_mesh_norm_matrix_uniform/{int(params['load_factor']*100)}_ut_minCostMCF.json"
     return params
 
@@ -285,7 +292,7 @@ def stats_writer(summary_writer_session, summary_writer_nb_arrived_pkts, summary
         loss_ratio = -1
     if Agent.sim_delivered_packets > 0:
         avg_delay = Agent.sim_avg_e2e_delay
-        avg_cost = Agent.sim_cost/(Agent.sim_delivered_packets+Agent.sim_dropped_packets)
+        avg_cost = Agent.sim_cost
         avg_hops = Agent.total_hops/Agent.sim_delivered_packets
     else:
         avg_delay = -1
@@ -350,7 +357,7 @@ def run_ns3(params):
     current_folder_path = os.getcwd()
 
     ## Copy prisma into ns-3 folder
-    # os.system(f'rsync -r ./ns3/* {params["ns3_sim_path"].rstrip("/")}/scratch/prisma')
+    os.system(f'rsync -r ./ns3/* {params["ns3_sim_path"].rstrip("/")}/scratch/prisma')
     # os.system(f'rsync -r ./ns3_model/ipv4-interface.cc {params["ns3_sim_path"].rstrip("/")}/src/internet/model')
 
     ## go to ns3 dir
@@ -358,7 +365,7 @@ def run_ns3(params):
     
     ## run ns3 configure
     #configure_command = './waf -d optimized configure'
-    # os.system('./waf configure')
+    os.system('./waf configure')
     print(params['agent_type'])
     ## run NS3 simulator
     ns3_params_format = ('prisma --simSeed={} --openGymPort={} --simTime={} --AvgPacketSize={} '
@@ -375,8 +382,8 @@ def run_ns3(params):
                                              str(params["link_cap"]) + "bps",
                                              str(params["max_out_buffer_size"]) + "B",
                                              params["load_factor"],
-                                             params["adjacency_matrix_path"],
-                                             params["agent_adjacency_matrix_path"],
+                                             params["physical_adjacency_matrix_path"],
+                                             params["overlay_adjacency_matrix_path"],
                                              params["node_coordinates_path"],
                                              params["traffic_matrix_path"],
                                              bool(params["signalingSim"]),
@@ -397,7 +404,8 @@ def run_ns3(params):
                                              params["bigSignalingSize"]
                                              ))
     run_ns3_command = shlex.split(f'./waf --run "{ns3_params_format}"')
-    subprocess.Popen(run_ns3_command)
+    proc = subprocess.Popen(run_ns3_command)
+    print(f"Running ns3 simulator with process id: {proc.pid}")
     os.chdir(current_folder_path)
 
 def main():
@@ -406,7 +414,7 @@ def main():
 
     ## compute the loss penalty
     # params["loss_penalty"] = ((((params["max_out_buffer_size"] + 1)*params["packet_size"]*8)/params["link_cap"])) *params["numNodes"]
-    params["loss_penalty"] = ((((params["max_out_buffer_size"] + 512+30)*8)/params["link_cap"])+0.001)*params["maxNumNodes"]
+    params["loss_penalty"] = ((((params["max_out_buffer_size"] + 512+30)*8)/params["link_cap"])+0.001)* params["numNodes"]
 
     ## fix the seed
     tf.random.set_seed(params["seed"])
@@ -461,6 +469,12 @@ def main():
     ## setup the agents (fix the static variables)
     print(f'python3 -m tensorboard.main --logdir={params["logs_folder"]} --port={params["tensorboard_port"]} --bind_all')
     Agent.init_static_vars(params)
+    
+    ## start the profiler
+    if params["profile_session"]:
+        from viztracer import VizTracer
+        tracer = VizTracer(tracer_entries=5000000, min_duration=100, max_stack_depth=20, output_file=f"{params['logs_parent_folder'].rstrip('/')}/{params['session_name']}/viztracer.json")
+        tracer.start()
     
     print("running ns-3")
     ## run ns3 simulator
@@ -573,8 +587,8 @@ def main():
             tf.summary.scalar('test_overlay_injected_pkts', Agent.sim_injected_packets, step=int(params["load_factor"]*100))
             tf.summary.scalar('test_global_lost_pkts', Agent.sim_global_dropped_packets, step=int(params["load_factor"]*100))
             tf.summary.scalar('test_overlay_lost_pkts', Agent.sim_dropped_packets, step=int(params["load_factor"]*100))
-            tf.summary.scalar('test_global_arrived_pkts', Agent.sim_global_dropped_packets, step=int(params["load_factor"]*100))
-            tf.summary.scalar('test_overlay_arrived_pkts', Agent.sim_dropped_packets, step=int(params["load_factor"]*100))
+            tf.summary.scalar('test_global_arrived_pkts', Agent.sim_global_delivered_packets, step=int(params["load_factor"]*100))
+            tf.summary.scalar('test_overlay_arrived_pkts', Agent.sim_delivered_packets, step=int(params["load_factor"]*100))
             tf.summary.scalar('test_global_e2e_delay', Agent.sim_avg_e2e_delay, step=int(params["load_factor"]*100))
             tf.summary.scalar('test_overlay_e2e_delay', Agent.sim_global_avg_e2e_delay, step=int(params["load_factor"]*100))
             tf.summary.scalar('test_global_loss_rate', Agent.sim_global_dropped_packets/Agent.sim_global_injected_packets, step=int(params["load_factor"]*100))
@@ -593,8 +607,8 @@ def main():
     #         writer.writerow(new_fields_stats) 
     
     ## save the throughput dfs
-    for i in range(Agent.numNodes):
-        Agent.throughputs[i].to_csv(f'{params["logs_parent_folder"].rstrip("/")}/{params["session_name"]}/throughputs_node_{i}.txt')
+    # for i in range(Agent.numNodes):
+    #     Agent.throughputs[i].to_csv(f'{params["logs_parent_folder"].rstrip("/")}/{params["session_name"]}/throughputs_node_{i}.txt')
 
     ## save models        
     if params["save_models"] and Agent.curr_time >= params["simTime"]-5:
@@ -603,6 +617,10 @@ def main():
             for item in agent_instances:
                 np.savetxt(f'{params["logs_parent_folder"].rstrip("/")}/saved_models/{params["session_name"]}/node_{item.index}_final_params.txt',  [item.update_eps.numpy().item(), item.gradient_step_idx])
     
+    ## save the profiler results
+    if params["profile_session"]:
+        tracer.stop()
+        tracer.save()  
     
     ## saving the replay buffers
     # for i, rb in enumerate(Agent.replay_buffer):
@@ -617,6 +635,7 @@ def main():
 if __name__ == '__main__':
     ## create a process group
     import traceback
+
     os.setpgrp()
     try:
         print("starting process group")
@@ -626,5 +645,5 @@ if __name__ == '__main__':
     except:
         traceback.print_exc()
     finally:
-        print("kill process group")
+        print("kill process group")       
         os.killpg(0, signal.SIGKILL)
