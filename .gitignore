@@ -46,10 +46,17 @@ build/
 waf3*/*
 venv/
 .vscode/
-prisma/examples/*
+prisma/examples/*/results/*
+prisma/examples/*/optimal_solution/*
+prisma/examples/*/others
+prisma/examples/*/plots
+prisma/examples/*/pre_trained_models/*
+
 prisma/replay_buffer_samples/
-prisma/figures/
+prisma/figures
 *.img
 *.def
 *.sif
 prisma/*.png
+prisma/*.json
+prisma/profiling results

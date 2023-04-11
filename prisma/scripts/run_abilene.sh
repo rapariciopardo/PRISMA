@@ -45,13 +45,13 @@ echo python3 main.py \
 	--agent_type=$4 \
 	--session_name=${14} \
 	--signaling_type=$5 \
-	--logs_parent_folder=examples/$9/${15} \
+	--logs_parent_folder=examples/$9/results/${15} \
 	--traffic_matrix_root_path=examples/$9/traffic_matrices/ \
 	--traffic_matrix_index=$3 \
-	--physical_adjacency_matrix_path=examples/$9/adjacency_matrix_2_11n.txt \
-	--overlay_adjacency_matrix_path=examples/$9/adjacency_matrix.txt \
-	--node_coordinates_path=examples/$9/node_coordinates_11n.txt \
-	--map_overlay_path=mapOverlay_11n.txt \
+	--overlay_adjacency_matrix_path=examples/$9/topology_files/adjacency_matrix.txt \
+	--physical_adjacency_matrix_path=examples/$9/topology_files/adjacency_matrix.txt \
+	--node_coordinates_path=examples/$9/topology_files/node_coordinates.txt \
+	--map_overlay_path=examples/$9/topology_files/map_overlay.txt \
 	--training_step=0.01 \
 	--batch_size=${18} \
 	--lr=${17} \
@@ -78,8 +78,8 @@ echo python3 main.py \
 	--groundTruthFrequence=1 \
 	--pingAsObs=0 \
 	--d_t_max_time=${21} \
-	--load_path=examples/$9/pre_trained_models/${4}_sp_itc_11n_ping_delay \
-	--d_t_load_path=examples/$9/pre_trained_models/${23}_sp_itc_11n_ping_delay
+	--load_path=examples/$9/pre_trained_models/${4} \
+	--d_t_load_path=examples/$9/pre_trained_models/${23}
 
 
 python3 -u main.py \
@@ -90,13 +90,13 @@ python3 -u main.py \
 	--agent_type=$4 \
 	--session_name=${14} \
 	--signaling_type=$5 \
-	--logs_parent_folder=examples/$9/${15} \
+	--logs_parent_folder=examples/$9/results/${15} \
 	--traffic_matrix_root_path=examples/$9/traffic_matrices/ \
 	--traffic_matrix_index=$3 \
-	--physical_adjacency_matrix_path=examples/$9/adjacency_matrix_2_11n.txt \
-	--overlay_adjacency_matrix_path=examples/$9/adjacency_matrix.txt \
-	--node_coordinates_path=examples/$9/node_coordinates_11n.txt \
-	--map_overlay_path=mapOverlay_11n.txt \
+	--overlay_adjacency_matrix_path=examples/$9/topology_files/adjacency_matrix.txt \
+	--physical_adjacency_matrix_path=examples/$9/topology_files/adjacency_matrix.txt \
+	--node_coordinates_path=examples/$9/topology_files/node_coordinates.txt \
+	--map_overlay_path=examples/$9/topology_files/map_overlay.txt \
 	--training_step=0.01 \
 	--batch_size=${18} \
 	--lr=${17} \
@@ -123,8 +123,8 @@ python3 -u main.py \
 	--groundTruthFrequence=1 \
 	--pingAsObs=0 \
 	--d_t_max_time=${21} \
-	--load_path=examples/$9/pre_trained_models/${4}_sp_itc_11n_ping_delay \
-	--d_t_load_path=examples/$9/pre_trained_models/${23}_sp_itc_11n_ping_delay
+	--load_path=examples/$9/pre_trained_models/${4} \
+	--d_t_load_path=examples/$9/pre_trained_models/${23}
 
 array=(
 0.6
@@ -156,13 +156,13 @@ for j in ${array[@]}
 	--agent_type=$4 \
 	--session_name=${14} \
 	--signaling_type=ideal \
-	--logs_parent_folder=examples/$9/${15} \
+	--logs_parent_folder=examples/$9/results/${15} \
 	--traffic_matrix_root_path=examples/$9/traffic_matrices/ \
 	--traffic_matrix_index=$3 \
-	--physical_adjacency_matrix_path=examples/$9/adjacency_matrix_2_11n.txt \
-	--overlay_adjacency_matrix_path=examples/$9/adjacency_matrix.txt \
-	--node_coordinates_path=examples/$9/node_coordinates_11n.txt \
-	--map_overlay_path=mapOverlay_11n.txt \
+	--overlay_adjacency_matrix_path=examples/$9/topology_files/adjacency_matrix.txt \
+	--physical_adjacency_matrix_path=examples/$9/topology_files/adjacency_matrix.txt \
+	--node_coordinates_path=examples/$9/topology_files/node_coordinates.txt \
+	--map_overlay_path=examples/$9/topology_files/map_overlay.txt \
 	--save_models=0 \
 	--start_tensorboard=0 \
 	--link_delay="1ms" \
@@ -174,7 +174,7 @@ for j in ${array[@]}
 	--movingAverageObsSize=${16} \
 	--prioritizedReplayBuffer=${10} \
 	--activateUnderlayTraffic=${12} \
-	--load_path=examples/$9/${15}/saved_models/${14}/iteration1_episode1 \
+	--load_path=examples/$9/results/${15}/saved_models/${14} \
 	--pingAsObs=0 \
 	--bigSignalingSize=${22} \
 	--load_factor_trainning=${11}

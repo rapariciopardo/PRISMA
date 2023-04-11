@@ -21,23 +21,29 @@ if __name__ == '__main__':
     """
     
     ### define the params
-    topology = '11n'#'4n' #'5n'
+    # topology = '22n'#'4n' #'5n'
     size_of_data_per_dst = 10000
-    topology_name = "abilene"
-    buffer_max_length = 30
-    ### load the topology graph
+    topology_name = "geant"
+    buffer_max_length = 16260 # bytes
+    link_cap = 500000 # kbps
+    pkt_size = 512 # bytes
+    link_delay = 0.001 # sec
+    nb_epochs = 50
+    bs = 512
+    ### load the topology graph from the topology folder
+    print("loading the topology graph")
     G=nx.Graph()
-
-    for i, element in enumerate(np.loadtxt(open(f"examples/{topology_name}/node_coordinates_{topology}.txt"))):
+    for i, element in enumerate(np.loadtxt(open(f"examples/{topology_name}/topology_files/node_coordinates.txt"))):
         G.add_node(i,pos=tuple(element))
-    G = nx.from_numpy_matrix(np.loadtxt(open(f"examples/{topology_name}/adjacency_matrix_2_{topology}.txt")), create_using=G)
-    ping_mat = np.loadtxt(open(f"scripts/ping_{topology}_mat.txt"))
+    G = nx.from_numpy_matrix(np.loadtxt(open(f"examples/{topology_name}/topology_files/adjacency_matrix.txt")), create_using=G)
+    # ping_mat = np.loadtxt(open(f"scripts/ping_{topology}_mat.txt"))
     #remove_list = [node for node,degree in dict(G.degree()).items() if degree < 1]
     #G.remove_nodes_from(remove_list)
 
-    print(G.nodes())
-    print(G.edges())
-    types = ["original", "lite", "lighter", "lighter_2", "lighter_3", "ff"]
+    print("number of nodes", len(G.nodes()))
+    print("number of edges", len(G.edges()))
+    types = ["", "_lite", "_lighter", "_lighter_2", "_lighter_3", "_ff"]
+    # types = ["",]
     base_models = [DQN_buffer_model, DQN_buffer_lite_model, DQN_buffer_lighter_model, DQN_buffer_lighter_2_model, DQN_buffer_lighter_3_model, DQN_buffer_ff_model]
     nx.draw_networkx(G, with_labels=True)
     for ix in range(len(types)):
@@ -62,8 +68,8 @@ if __name__ == '__main__':
                 y_dst = []
                 for interface_id, neighbor in enumerate(list(G.neighbors(node))):
                     #print(dst, node, interface_id)
-                    cost = len(nx.shortest_path(G, neighbor, dst)) -1
-                    cost = (ping_mat[node][neighbor]+ping_mat[neighbor][dst])*0.001
+                    cost = (len(nx.shortest_path(G, neighbor, dst)) -1) * (pkt_size * 8 / link_cap + link_delay)
+                    # cost = (ping_mat[node][neighbor]+ping_mat[neighbor][dst])*0.001
                     # print(dst, node, neighbor, cost)
                     y_dst_neighbor = cost * np.ones((size_of_data_per_dst, 1), dtype=int)
                     if len(y_dst) == 0: 
@@ -71,7 +77,6 @@ if __name__ == '__main__':
                     else:
                         y_dst = np.concatenate((y_dst, y_dst_neighbor), axis=1)
                 ### group the data into one tensor
-                
                 if len(x_all) == 0: 
                     x_all = x_dst.copy()
                     y_all = y_dst.copy()
@@ -90,7 +95,7 @@ if __name__ == '__main__':
                         loss=keras.losses.MeanSquaredError(),
                         metrics=[keras.metrics.MeanSquaredError()]
                         )
-            model.fit(x_all, y_all, batch_size=512, epochs=100)
+            model.fit(x_all, y_all, batch_size=bs, epochs=nb_epochs)
             ### saving the model    
-            model.save(f"examples/{topology_name}/pre_trained_models/dqn_buffer_{types[ix]}_sp_itc_{topology}_ping_delay/node{node}")
-            print(f"examples/{topology_name}/pre_trained_models/dqn_buffer_{types[ix]}_sp_itc_{topology}_ping_delay/node{node}")
+            model.save(f"examples/{topology_name}/pre_trained_models/dqn_buffer{types[ix]}/node{node}")
+            print(f"examples/{topology_name}/pre_trained_models/dqn_buffer{types[ix]}/node{node}")

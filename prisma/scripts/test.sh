@@ -1,19 +1,9 @@
-#!/bin/bash  
-
-#Testing DQN-Routing
-cd .. 
-
-#Load factors array. The execution will iterate over the array.
 array=(
 0.6
-0.7
-0.8
-0.9
-1.0
-1.1
-1.2
-1.3
-1.4
+#0.8
+#1.0
+#1.2
+#1.4
 )
 counter=0
 
@@ -22,32 +12,36 @@ counter=0
 for j in ${array[@]}
 	do 
 	echo $j
-	
-    FLOAT=$(echo $j*10000 | bc)
-    res1=${FLOAT/.*}
+	FLOAT=$(echo $j*1000 | bc)
+	res1=${FLOAT/.*}
 	echo $res1
-
-	python3 main.py --simTime=15 \
-		--basePort=$((7655 + (counter*50) )) \
+	python3 main.py \
+		--simTime=15 \
+		--basePort=6000 \
 		--train=0 \
-		--session_name="test_abilene_train_tiago_v29_load_$res1"\
-		--link_delay="0ms" \
+		--seed=100 \
+		--agent_type="sp" \
+		--session_name="test_sp_09_08_v5_load_$res1" \
 		--signaling_type="ideal" \
-		--logs_parent_folder=examples/abilene/ \
-		--traffic_matrix_index=3 \
-		--adjacency_matrix_path=examples/abilene/adjacency_matrix.txt \
-		--node_coordinates_path=examples/abilene/node_coordinates.txt \
-		--load_path=examples/abilene/saved_models/abilene_train_tiago_v29/iteration1_episode1 \
+		--signalingSim=1 \
+		--training_step=0.01 \
+		--batch_size=256 \
+		--lr=0.001 \
+		--gamma=1.0 \
+		--exploration_final_eps=0.01 \
+		--exploration_initial_eps=1.0 \
+		--iterationNum=3000 \
+		--training_trigger_type="time" \
 		--save_models=0 \
 		--start_tensorboard=0 \
-		--load_factor=$j
-	counter=$((counter+1))
-	echo $counter
-	sleep 5
+		--replay_buffer_max_size=15000 \
+   		--link_delay="1ms" \
+		--load_factor=$j \
+		--logs_parent_folder=examples/abilene/ \
+		--traffic_matrix_index=5 \
+		--logging_timestep=1 \
+		--adjacency_matrix_path=examples/abilene/adjacency_matrix.txt \
+		--node_coordinates_path=examples/abilene/node_coordinates.txt \
+		--max_out_buffer_size=16260 \
+		#--load_path=examples/abilene/dqn_buffer_sp_init
 done
-
-
-
-
-
-#rm -r ../ns3-gym/scratch/prisma
