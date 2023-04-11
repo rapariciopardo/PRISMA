@@ -275,7 +275,7 @@ void BigSignalingGeneratorApplication::SendPacket ()
   tag.SetLastHop(m_src-1);
   tag.SetSegIndex(m_segIndex);
   tag.SetNNIndex(m_NNIndex);
-  if(m_srcOverlay-1>11) NS_LOG_UNCOND("ERROR "<<m_src-1);
+  // if(m_srcOverlay-1>11) NS_LOG_UNCOND("ERROR "<<m_src-1);
   tag.SetNodeId(m_srcOverlay-1);
   packet->AddPacketTag(tag);
   m_txTrace (packet);

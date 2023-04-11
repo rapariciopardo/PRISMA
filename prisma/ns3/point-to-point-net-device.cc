@@ -66,7 +66,7 @@ float computeVariance(float mean, std::vector<uint64_t> numbers)
 }
 
 
-std::vector<uint64_t> PointToPointNetDevice::m_e2eDelay[11][11];
+std::vector<uint64_t> PointToPointNetDevice::m_e2eDelay[23][23];
 NS_LOG_COMPONENT_DEFINE ("PointToPointNetDeviceModified");
 
 NS_OBJECT_ENSURE_REGISTERED (PointToPointNetDevice);
@@ -420,7 +420,7 @@ PointToPointNetDevice::Receive (Ptr<Packet> packet)
           m_macPromiscRxTrace (originalPacket);
           m_promiscCallback (this, packet, protocol, GetRemote (), GetAddress (), NetDevice::PACKET_HOST);
         }
-      if(tagcopy.GetSimpleValue()==0 && tagcopy.GetRejectedPacket()==1 && m_node->GetId()<11){
+      if(tagcopy.GetSimpleValue()==0 && tagcopy.GetRejectedPacket()==1 && m_node->GetId()<23){
         //NS_LOG_UNCOND(m_node->GetId()<<"     "<<m_ifIndex<<"    "<<tagcopy.GetFinalDestination()<<"   OPTIMAL REJECT    "<<packet->GetUid());
         m_macTxDropTrace (packet);
         return;
@@ -606,7 +606,7 @@ PointToPointNetDevice::Send (
       m_macTxDropTrace (packet);
       return false;
     }
-  if(tagcopy.GetSimpleValue()==0 && tagcopy.GetRejectedPacket()==1 && m_node->GetId()<11){
+  if(tagcopy.GetSimpleValue()==0 && tagcopy.GetRejectedPacket()==1 && m_node->GetId()<23){
     //NS_LOG_UNCOND(m_node->GetId()<<"     "<<m_ifIndex<<"    "<<tagcopy.GetFinalDestination()<<"   OPTIMAL REJECT    "<<packet->GetUid());
     m_macTxDropTrace (packet);
     return false;
@@ -783,8 +783,8 @@ PointToPointNetDevice::PrintDelayInfo(std::string agent_type, float load_factor)
   std::string filename = "e2e_delay_per_flow_"+agent_type+"_"+std::to_string(int(load_factor*100))+".txt";
   std::ofstream outputFile1(filename);
   if(outputFile1.is_open()){
-    for(size_t i = 0;i<11;i++){
-      for(size_t j = 0; j<11;j++){
+    for(size_t i = 0;i<23;i++){
+      for(size_t j = 0; j<23;j++){
         //if(i==1 && j==9){
         //  for(uint64_t element : m_e2eDelay[i][j]){
         //    NS_LOG_UNCOND(element<< " ");

@@ -263,8 +263,9 @@ int main (int argc, char *argv[])
   LogComponentEnable ("GenericTopologyCreation", LOG_NONE );
 
 
+  // srand ( (unsigned)time ( NULL ) );   // generate different seed each time
 
-  srand ( (unsigned)time ( NULL ) );   // generate different seed each time
+  srand (simSeed);   // fix the seed for the random number generator
 
   std::string tr_name ("n-node-ppp.tr");
   std::string pcap_name ("n-node-ppp");
@@ -311,7 +312,7 @@ int main (int argc, char *argv[])
   Traff_Matrix = readIntensityFile (node_intensity_file_name);
 
   NS_LOG_UNCOND(node_intensity_file_name);
-  int n_nodes = 11; //coord_array.size ();
+  int n_nodes = coord_array.size () ; //coord_array.size ();
   int matrixDimension = Adj_Matrix.size ();
   int overlayMatrixDimension = OverlayAdj_Matrix.size(); 
 
@@ -385,7 +386,7 @@ int main (int argc, char *argv[])
   }  
 
   //Creating the links
-  NS_LOG_UNCOND("Creating link between switch nodes");
+  NS_LOG_UNCOND("Creating link between traffic generator nodes and switch nodes");
   
   for(int i=0;i<n_nodes;i++)
   {
@@ -400,14 +401,13 @@ int main (int argc, char *argv[])
     traffic_nd.Add(n_devs.Get(0));
     switch_nd.Add(n_devs.Get(1));
   }
-
   vector<tuple<int, int>> link_devs;
   Ptr<NetDevice> nds_switch [n_nodes][n_nodes];
-  for (size_t i = 0; i < Adj_Matrix.size (); i++)
+  NS_LOG_UNCOND("Creating link between switch nodes");
+  for (size_t i = 0; i < Adj_Matrix.size(); i++)
       {
-        for (size_t j = i; j < Adj_Matrix[i].size (); j++)
+        for (size_t j = i; j < Adj_Matrix[i].size(); j++)
           {
-
             if (Adj_Matrix[i][j] == 1)
               {
                 PointToPointHelper p2p;
@@ -511,7 +511,7 @@ int main (int argc, char *argv[])
     Ptr<Node> n = nodes_switch.Get (overlayNodes[i]); // ref node
     //nodeOpenGymPort = openGymPort + i;
     Ptr<OpenGymInterface> openGymInterface = CreateObject<OpenGymInterface> (openGymPort + i);
-     Ptr<PacketRoutingEnv> packetRoutingEnv;
+    Ptr<PacketRoutingEnv> packetRoutingEnv;
     if (eventBasedEnv){
       packetRoutingEnv = CreateObject<PacketRoutingEnv> (n, n_nodes, linkRateValue, activateSignaling, smallSignalingSize[overlayNodes[i]], overlayNeighbors[overlayNodes[i]]); // event-driven step
     } else {
@@ -526,13 +526,17 @@ int main (int argc, char *argv[])
     packetRoutingEnv->setLossPenalty(lossPenalty);
     packetRoutingEnv->setNetDevicesContainer(&switch_nd);
     packetRoutingEnv->setPingAsObs(pingAsObs);
+
     if(i==0 && groundTruthFrequence>0){
       packetRoutingEnv->setGroundTruthFrequence(groundTruthFrequence);
     }
+
+
     for(size_t j = 1;j<nodes_switch.Get(overlayNodes[i])->GetNDevices();j++){
       Ptr<NetDevice> dev_switch =DynamicCast<NetDevice> (nodes_switch.Get(overlayNodes[i])->GetDevice(j)); 
       dev_switch->TraceConnectWithoutContext("MacRx", MakeBoundCallback(&PacketRoutingEnv::NotifyPktRcv, packetRoutingEnv, dev_switch, &traffic_nd));
     }
+
     
     myOpenGymInterfaces.push_back (openGymInterface);
     packetRoutingEnvs.push_back (packetRoutingEnv);
@@ -572,7 +576,7 @@ int main (int argc, char *argv[])
   NS_LOG_UNCOND("Setup CBR Traffic Sources.");
   
   
-  uint16_t sinkPortUDP = 11;
+  uint16_t sinkPortUDP = 23;
   
   //int interface = 0;
   for (int i = 0; i < n_nodes; i++)

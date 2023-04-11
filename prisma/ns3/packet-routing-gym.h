@@ -42,8 +42,8 @@
 #include "ospf-tag.h"
 #include <vector>
 
-#define MAX_TUNNELS 11
-#define MAX_NODES 11
+#define MAX_TUNNELS 100
+#define MAX_NODES 100
 
 namespace ns3 {
 

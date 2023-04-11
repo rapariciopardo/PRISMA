@@ -472,7 +472,7 @@ private:
    * \return The corresponding PPP protocol number
    */
   static uint16_t EtherToPpp (uint16_t protocol);
-  static std::vector<uint64_t> m_e2eDelay[11][11];
+  static std::vector<uint64_t> m_e2eDelay[23][23];
 
 };
 
