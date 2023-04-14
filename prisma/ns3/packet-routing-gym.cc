@@ -319,15 +319,15 @@ PacketRoutingEnv::GetObservationSpace()
     m_src = m_node->GetId();
     sendOverlaySignalingUpdate(uint8_t(3));
     m_lastPingOut = Simulator::Now().GetSeconds();
-    // if(m_train){
-    //   std::string filename;
-    //   filename = m_logs_folder+"/"+"tsent_" + std::to_string(mapOverlayNode(m_node->GetId()))+"_"+std::to_string(i)+".txt";
-    //   ofstream outputFile(filename, std::ios_base::app);
-    //   if(outputFile.is_open()){
-    //     outputFile << Simulator::Now().GetSeconds()<< std::endl;
-    //     outputFile.close();
-    //   }
-    // }
+    if(m_train){
+      std::string filename;
+      filename = m_logs_folder+"/"+"tsent_" + std::to_string(mapOverlayNode(m_node->GetId()))+"_"+std::to_string(i)+".txt";
+      ofstream outputFile(filename, std::ios_base::app);
+      if(outputFile.is_open()){
+        outputFile << Simulator::Now().GetSeconds()<< std::endl;
+        outputFile.close();
+      }
+    }
   }
   return space;
 }
@@ -379,15 +379,15 @@ PacketRoutingEnv::dropPacket(Ptr<PacketRoutingEnv> entity, Ptr<const Packet> pac
       entity->m_lost_packets += ";";
     }
   }
-  // if(tagCopy.GetSimpleValue()==3 && entity->m_train){
-  //   std::string filename;
-  //   filename = entity->m_logs_folder+"/"+"delay_" + std::to_string(entity->mapOverlayNode(tagCopy.GetLastHop()))+"_"+std::to_string(tagCopy.GetTunnelOverlaySendingIndex())+".txt";
-  //   ofstream outputFile(filename, std::ios_base::app);
-  //   if(outputFile.is_open()){
-  //     outputFile << Simulator::Now().GetSeconds() <<"   "<< entity->m_pingTimeout[tagCopy.GetTunnelOverlaySendingIndex()]<< std::endl;
-  //     outputFile.close();
-  //   }
-  // }  
+  if(tagCopy.GetSimpleValue()==3 && entity->m_train){
+    std::string filename;
+    filename = entity->m_logs_folder+"/"+"delay_" + std::to_string(entity->mapOverlayNode(tagCopy.GetLastHop()))+"_"+std::to_string(tagCopy.GetTunnelOverlaySendingIndex())+".txt";
+    ofstream outputFile(filename, std::ios_base::app);
+    if(outputFile.is_open()){
+      outputFile << Simulator::Now().GetSeconds() <<"   "<< entity->m_pingTimeout[tagCopy.GetTunnelOverlaySendingIndex()]<< std::endl;
+      outputFile.close();
+    }
+  }  
 }
 
 uint32_t
@@ -456,15 +456,15 @@ PacketRoutingEnv::GetObservation()
         }
       } else value = getAverage(m_tunnelsDelay[i]);
     }
-    // if(m_train){
-    //   std::string filename;
-    //   filename = m_logs_folder+"/"+"tavg_" + std::to_string(mapOverlayNode(m_node->GetId()))+"_"+std::to_string(i)+".txt";
-    //   ofstream outputFile(filename, std::ios_base::app);
-    //   if(outputFile.is_open()){
-    //     outputFile << Simulator::Now().GetSeconds() <<"   "<<getAverage(m_tunnelsDelay[i]) << std::endl;
-    //     outputFile.close();
-    //   }
-    // }
+    if(m_train){
+      std::string filename;
+      filename = m_logs_folder+"/"+"tavg_" + std::to_string(mapOverlayNode(m_node->GetId()))+"_"+std::to_string(i)+".txt";
+      ofstream outputFile(filename, std::ios_base::app);
+      if(outputFile.is_open()){
+        outputFile << Simulator::Now().GetSeconds() <<"   "<<getAverage(m_tunnelsDelay[i]) << std::endl;
+        outputFile.close();
+      }
+    }
     box->AddValue(value);
   }
 
@@ -781,15 +781,15 @@ PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
           m_starting_overlay_packets[i].push_back(start);
           m_fwdDev_idx_overlay = i;
           sendOverlaySignalingUpdate(uint8_t(3));
-          // if(m_train){
-          //   std::string filename;
-          //   filename = m_logs_folder+"/"+"tsent_" + std::to_string(mapOverlayNode(m_node->GetId()))+"_"+std::to_string(i)+".txt";
-          //   ofstream outputFile(filename, std::ios_base::app);
-          //   if(outputFile.is_open()){
-          //     outputFile << Simulator::Now().GetSeconds()<< std::endl;
-          //     outputFile.close();
-          //   }
-          // }
+          if(m_train){
+            std::string filename;
+            filename = m_logs_folder+"/"+"tsent_" + std::to_string(mapOverlayNode(m_node->GetId()))+"_"+std::to_string(i)+".txt";
+            ofstream outputFile(filename, std::ios_base::app);
+            if(outputFile.is_open()){
+              outputFile << Simulator::Now().GetSeconds()<< std::endl;
+              outputFile.close();
+            }
+          }
         }
         m_countSendPackets = 0;
         m_pingDiffs.push_back(Simulator::Now().GetSeconds()-m_lastPingOut);
@@ -1004,15 +1004,15 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
     }
     entity->m_tunnelsDelay[entity->m_overlayRecvIndex].push_back(tagCopy.GetStartTime());
     
-    // if(entity->m_train){
-    //   std::string filename;
-    //   filename = entity->m_logs_folder+"/"+"delay_" + std::to_string(entity->mapOverlayNode(entity->m_node->GetId()))+"_"+std::to_string(entity->m_overlayRecvIndex)+".txt";
-    //   ofstream outputFile(filename, std::ios_base::app);
-    //   if(outputFile.is_open()){
-    //     outputFile << Simulator::Now().GetSeconds() <<"   "<<tagCopy.GetStartTime() << std::endl;
-    //     outputFile.close();
-    //   }
-    // }
+    if(entity->m_train){
+      std::string filename;
+      filename = entity->m_logs_folder+"/"+"delay_" + std::to_string(entity->mapOverlayNode(entity->m_node->GetId()))+"_"+std::to_string(entity->m_overlayRecvIndex)+".txt";
+      ofstream outputFile(filename, std::ios_base::app);
+      if(outputFile.is_open()){
+        outputFile << Simulator::Now().GetSeconds() <<"   "<<tagCopy.GetStartTime() << std::endl;
+        outputFile.close();
+      }
+    }
 
     if(entity->m_first[entity->m_overlayRecvIndex]==false){
       // NS_LOG_UNCOND("Node: "<<entity->m_map_overlay_array[entity->m_node->GetId()]<<"    IF: "<<entity->m_overlayRecvIndex<<"     Ping: "<<tagCopy.GetStartTime());

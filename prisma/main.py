@@ -117,7 +117,6 @@ def arguments_parser():
 
     group4 = parser.add_argument_group('Network parameters')
     group4.add_argument('--load_factor', type=float, help='scale of the traffic matrix', default=1)
-    group4.add_argument('--load_factor_trainning', type=float, help='scale of the traffic matrix', default=1)
     group4.add_argument('--physical_adjacency_matrix_path', type=str, help='Path to the adjacency matrix', default="examples/abilene/adjacency_matrix.txt")
     group4.add_argument('--overlay_adjacency_matrix_path', type=str, help='Path to the adjacency matrix', default="examples/abilene/adjacency_matrix_2_5n.txt")
     group4.add_argument('--traffic_matrix_root_path', type=str, help='Path to the traffic matrix folder', default="examples/abilene/traffic_matrices/")
@@ -425,8 +424,8 @@ def main():
     if params["train"] == 1:
         pathlib.Path(params["logs_parent_folder"] + "/saved_models/").mkdir(parents=True, exist_ok=True)
         ## check if the session already exists
-        if os.path.exists(params["logs_parent_folder"] + "/saved_models/" + params["session_name"] + "/iteration1_episode1"):
-            if len(os.listdir(params["logs_parent_folder"] + "/saved_models/" + params["session_name"] + "/iteration1_episode1")) > 0:
+        if os.path.exists(params["logs_parent_folder"] + "/saved_models/" + params["session_name"] + "/final"):
+            if len(os.listdir(params["logs_parent_folder"] + "/saved_models/" + params["session_name"] + "/final")) > 0:
                 print(f'The couple {params["seed"]} {params["traffic_matrix_index"]} already exists in : {params["logs_parent_folder"] + "/saved_models/" + params["session_name"]}')
                 return 1
     
@@ -637,7 +636,7 @@ if __name__ == '__main__':
     ## create a process group
     import traceback
 
-    os.setpgrp()
+    # os.setpgrp()
     try:
         print("starting process group")
         start_time = time()
@@ -647,4 +646,4 @@ if __name__ == '__main__':
         traceback.print_exc()
     finally:
         print("kill process group")       
-        os.killpg(0, signal.SIGKILL)
+        # os.killpg(0, signal.SIGKILL)

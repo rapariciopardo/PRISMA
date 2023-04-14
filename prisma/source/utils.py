@@ -43,7 +43,7 @@ def save_model(actor, node_index, path, t, num_episodes, root="saved_models/", s
     if snapshot: 
         folder_name = root + path + f"episode_{num_episodes}_step_{t}"
     else:
-        folder_name = root + path
+        folder_name = root + path + "final"
     actor.q_network.save(f"{folder_name}/node{node_index}")
 
 def save_all_models(actors, overlay_nodes, path, t, num_episodes, root="saved_models/", snapshot=False):
