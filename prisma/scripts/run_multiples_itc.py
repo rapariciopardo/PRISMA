@@ -99,42 +99,44 @@ for traff_mat in traff_mats:
                                             session_name = f"sync_{sync_step}_seed_{seed}_traff_mat_{traff_mat}_dqn_buffer{dqn_model}_{signaling_type}_ping_freq_{ping_freq}_rb_size_{rb_size}_{topology_name}_train_load_{training_load}_simTime_{train_duration}_mv_avg_{mv_avg_interval}_lr_{lr}_bs_{bs}_explo_{exploration[0]}_{['natural', 'smart'][smart_exploration]}_{d_t_max_time}_{nn_sizes[idx]}_output_buffer_{max_output_buffer_size}_loss_aware_{loss_aware}"
                                             # launch training
                                             python_command = generate_command(seed=seed,
-                                                                       train=1,
-                                                                       sim_duration=train_duration,
-                                                                       agent_type=f"dqn_buffer{dqn_model}",
-                                                                       session_name=session_name,
-                                                                       traffic_matrix_index=traff_mat,
-                                                                       signaling_type=signaling_type, 
-                                                                       topology_name=topology_name,
-                                                                       experiment_name=experiment_name,
-                                                                       batch_size=bs,
-                                                                       learning_rate=lr,
-                                                                       save_models=1,
-                                                                       exploration_initial_eps=exploration[1],
-                                                                       exploration_final_eps=exploration[2],
-                                                                       replay_buffer_max_size=rb_size,
-                                                                       load_factor=train_load,
-                                                                       sync_step=sync_step,
-                                                                       max_out_buffer_size=max_output_buffer_size,
-                                                                       nPacketsOverlay=ping_freq,
-                                                                       movingAverageObsSize=mv_avg_interval,
-                                                                       prioritizedReplayBuffer=0,
-                                                                       activateUnderlayTraffic=1,
-                                                                       bigSignalingSize=nn_sizes[idx],
-                                                                       d_t_max_time=d_t_max_time,
-                                                                       d_t_agent_type=f"dqn_buffer{dqn_model}",
-                                                                       loss_aware=loss_aware,
-                                                                       snapshot_interval=10,
-                                                                       smart_exploration=smart_exploration,
-                                                                       load_path=f"examples/{topology_name}/pre_trained_models/dqn_buffer{dqn_model}",
-                                                                       d_t_load_path=f"examples/{topology_name}/pre_trained_models/dqn_buffer{dqn_model}")
+                                                                              train=1,
+                                                                              sim_duration=train_duration,
+                                                                              agent_type=f"dqn_buffer{dqn_model}",
+                                                                              session_name=session_name,
+                                                                              traffic_matrix_index=traff_mat,
+                                                                              signaling_type=signaling_type, 
+                                                                              topology_name=topology_name,
+                                                                              experiment_name=experiment_name,
+                                                                              batch_size=bs,
+                                                                              learning_rate=lr,
+                                                                              save_models=1,
+                                                                              exploration_initial_eps=exploration[1],
+                                                                              exploration_final_eps=exploration[2],
+                                                                              replay_buffer_max_size=rb_size,
+                                                                              load_factor=train_load,
+                                                                              sync_step=sync_step,
+                                                                              max_out_buffer_size=max_output_buffer_size,
+                                                                              nPacketsOverlay=ping_freq,
+                                                                              movingAverageObsSize=mv_avg_interval,
+                                                                              prioritizedReplayBuffer=0,
+                                                                              activateUnderlayTraffic=1,
+                                                                              bigSignalingSize=nn_sizes[idx],
+                                                                              d_t_max_time=d_t_max_time,
+                                                                              d_t_agent_type=f"dqn_buffer{dqn_model}",
+                                                                              loss_aware=loss_aware,
+                                                                              snapshot_interval=10,
+                                                                              smart_exploration=smart_exploration,
+                                                                              load_path=f"examples/{topology_name}/pre_trained_models/dqn_buffer{dqn_model}",
+                                                                              d_t_load_path=f"examples/{topology_name}/pre_trained_models/dqn_buffer{dqn_model}")
                                                                        
                                             full_command = f'tsp {command_root} {python_command}'
+                                            print("vs code config args = ", sum([x.split("=") for x in python_command.split(" ")[3:]], []))
                                             task_id = int(subprocess.check_output(full_command, shell=True))
                                             print(task_id, "train", full_command)
                                             sleep(2)
                                             # put the job on the top of the queue
-                                            subprocess.check_output(f"tsp -u {task_id}", shell=True)
+                                            # subprocess.check_output(f"tsp -u {task_id}", shell=True)
+                                            raise(1)
                                             # launch testing
                                             for test_load in test_loads:
                                                 python_command = generate_command(seed=seed,

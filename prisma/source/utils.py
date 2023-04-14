@@ -201,6 +201,48 @@ def optimal_routing_decision(graph, routing_mat, rejected_mat, actual_node, src_
     tag = prob_to_neighbors[neighbors.index(choice)]
     return neighbors.index(choice), tag
 
+def allocate_on_gpu(gpu_memory_margin=1500):
+    """
+    Determine which gpu to use based on the available memory
+    Args:
+        gpu_memory_margin (int, optional): The margin of the gpu memory. Defaults to 1500.
+    """
+    # check the available gpu device //from https://stackoverflow.com/questions/67707828/how-to-get-every-seconds-gpu-usage-in-python
+    import subprocess as sp
+    import os
+    import numpy as np
+    import tensorflow as tf
+    # set the margin of the gpu memory
+    gpu_memory_margin = 1500 # required memory but a train instance in MB
+    COMMAND = "nvidia-smi --query-gpu=utilization.gpu,memory.free --format=csv"
+    output = sp.check_output(COMMAND, shell=True).decode('utf-8').split('\n')[1:-1]
+    gpu_usage = [int(x.split(' ')[0]) for x in output]
+    available_memory = [int(x.split(' ')[2]) for x in output]
+    # get the gpu with the most available memory
+    if np.max(available_memory) < gpu_memory_margin:
+        print("No gpu available")
+        gpu_index = -1
+    else:
+        if np.diff(available_memory).item() < gpu_memory_margin:
+            print("More than one gpu available")
+            gpu_index = np.argmin(gpu_usage)
+        else:
+            print("One gpu available :")
+            gpu_index = np.argmax(available_memory)
+    # allocate the gpu
+    os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu_index)
+    print("GPU index : ", gpu_index)
+
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
+    gpus = tf.config.experimental.list_physical_devices('GPU')
+    if gpus:
+        try:
+            for gpu in gpus:
+                tf.config.experimental.set_memory_growth(gpu, True)
+        except RuntimeError as e:
+            print(e)
+
+    # tf.config.set_soft_device_placement(True)
 
 def convert_tb_data(root_dir, sort_by=None):
     """Convert local TensorBoard data into Pandas DataFrame.
