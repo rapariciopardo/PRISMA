@@ -67,7 +67,7 @@ def save_all_models(actors, overlay_nodes, path, t, num_episodes, root="saved_mo
 
     """
     for i in overlay_nodes:
-        save_model(actor[i], i, path, t, num_episodes, root, snapshot)
+        save_model(actors[i], i, path, t, num_episodes, root, snapshot)
         
 def load_model(path, node_index=-1):
     """
@@ -98,7 +98,6 @@ def load_model(path, node_index=-1):
             print(e)
     return q_functions
 
-
 class LinearSchedule(object):
     def __init__(self, schedule_timesteps, final_p, initial_p=1.0):
         """Linear interpolation between initial_p and final_p over
@@ -123,8 +122,6 @@ class LinearSchedule(object):
         """See Schedule.value"""
         fraction = min(float(t) / self.schedule_timesteps, 1.0)
         return self.initial_p + fraction * (self.final_p - self.initial_p)
-
-
 
 def convert_data_rate_to_bps(data_rate):
     """
@@ -306,3 +303,16 @@ def convert_tb_data(root_dir, sort_by=None):
         all_df = all_df.sort_values(sort_by)
         
     return all_df.reset_index(drop=True)
+
+def fix_seed(seed):
+    """Fix the seed for all random generators.
+    
+    Parameters:
+        seed (int): the seed to use.
+    """
+    import random
+    import numpy as np
+    import tensorflow as tf
+    tf.random.set_seed(seed)
+    np.random.seed(seed)
+    random.seed(seed)

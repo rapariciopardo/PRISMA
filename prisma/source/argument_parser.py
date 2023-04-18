@@ -17,6 +17,7 @@ def parse_arguments():
     import numpy as np
     import os
     import pathlib
+    import json
     
     ## Setup the argparser
     description_txt = """PRISMA : Packet Routing Simulator for Multi-Agent Reinforcement Learning
@@ -41,7 +42,6 @@ def parse_arguments():
                                     --exploration_initial_eps=1.0 \
                                     --iterationNum=3000 \
                                     --gamma=1 \
-                                    --training_trigger_type="time" \
                                     --save_models=1 \
                                     --start_tensorboard=0 \
                                     --load_factor=0.5
@@ -69,6 +69,7 @@ def parse_arguments():
 
     group4 = parser.add_argument_group('Network parameters')
     group4.add_argument('--load_factor', type=float, help='scale of the traffic matrix', default=1)
+    group4.add_argument('--topology_name', type=str, choices=["abilene", "geant"] ,help='Name of the network topology', default="abilene")
     group4.add_argument('--physical_adjacency_matrix_path', type=str, help='Path to the adjacency matrix', default="examples/abilene/adjacency_matrix.txt")
     group4.add_argument('--overlay_adjacency_matrix_path', type=str, help='Path to the adjacency matrix', default="examples/abilene/adjacency_matrix_2_5n.txt")
     group4.add_argument('--traffic_matrix_root_path', type=str, help='Path to the traffic matrix folder', default="examples/abilene/traffic_matrices/")
@@ -78,7 +79,7 @@ def parse_arguments():
     group4.add_argument('--link_delay', type=str, help='Network links delay', default="0ms")
     group4.add_argument('--packet_size', type=int, help='Size of the packets in bytes', default=512)
     group4.add_argument('--link_cap', type=int, help='Network links capacity in bits per seconds', default=500000)
-    group4.add_argument('--loss_aware', type=int, help='If 1, the loss penalty is applied to the reward', default=1)
+    
 
 
     group2 = parser.add_argument_group('Storing session logs arguments')
@@ -100,15 +101,15 @@ def parse_arguments():
     group3.add_argument('--exploration_initial_eps', type=float, help='Exploration intial value (used when training)', default=1.0)
     group3.add_argument('--exploration_final_eps', type=float, help='Exploration final value (used when training)', default=0.1)
     group3.add_argument('--load_path', type=str, help='Path to DQN models, if not None, loads the models from the given files', default=None)
-    group3.add_argument('--d_t_load_path', type=str, help='Path to the Digital Twin of the DQN models, if None, use the DQN models instead', default=None)
     group3.add_argument('--save_models', type=int, help='if True, store the models at the end of the training', default=0)
     group3.add_argument('--snapshot_interval', type=int, help='Number of seconds between each snapshot of the models. If 0, desactivate snapshot', default=0)
-    group3.add_argument('--training_trigger_type', type=str, choices=["event", "time"], help='Type of the training trigger, can be "event" (for event based) or "time" (for time based) (used when training)', default="time")
     group3.add_argument('--training_step', type=float, help='Number of steps or seconds to train (used when training)', default=0.05)
     group3.add_argument('--sync_step', type=float, help='Number of seconds to sync NN if signaling_type is "NN". if -1, then compute it to have control/data of 10% (used when training)', default=1.0)
     group3.add_argument('--sync_ratio', type=float, help=' control/data ratio for computing the sync step automatically (used when training and sync step <0)', default=0.1)
     group3.add_argument('--replay_buffer_max_size', type=int, help='Max size of the replay buffers (used when training)', default=50000)
-
+    group3.add_argument('--loss_penalty_type', type=str, choices=["None", "fixed", "constrained"],
+                        help='Define the type of loss penalty to be added to the reward. If None, no loss penalty. If fixed, use a fixed loss pen. If constrained, use a loss mechanism based on RCPO',
+                        default="fixed")
     group5 = parser.add_argument_group('Other parameters')
     group5.add_argument('--start_tensorboard', type=int, help='if True, starts a tensorboard server to keep track of simulation progress', default=0)
     group5.add_argument('--tensorboard_port', type=int, help='Tensorboard server port', default=16666)
@@ -127,10 +128,6 @@ def parse_arguments():
     params["logs_parent_folder"] = os.path.abspath(params["logs_parent_folder"])
     if params["load_path"]:
         params["load_path"] = os.path.abspath(params["load_path"])
-    if params["d_t_load_path"]:
-        params["d_t_load_path"] = os.path.abspath(params["d_t_load_path"])
-    #if params["save_models"]:
-    #    params["save_models"] = os.path.abspath(params["save_models"])
     params["physical_adjacency_matrix_path"] = os.path.abspath(params["physical_adjacency_matrix_path"])
     params["overlay_adjacency_matrix_path"] = os.path.abspath(params["overlay_adjacency_matrix_path"])
     params["map_overlay_path"] = os.path.abspath(params["map_overlay_path"])

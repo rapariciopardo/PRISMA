@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y gcc g++ bc rsync libzmq5 libzmq5-dev li
 RUN ln -s /usr/bin/python3 /usr/bin/python
 
 # copy files
-COPY --chown=$whoami . /app/.
+COPY . /app/.
 
 WORKDIR /app
 
@@ -19,9 +19,9 @@ RUN cd prisma/ns3gym/ && ./compile_proto.sh && cd ../..
 
 
 # copy ns3 files
-COPY --chown=$whoami prisma/ns3 ns3-gym/scratch/prisma
-COPY --chown=$whoami prisma/ns3_model/ipv4-interface.cc ns3-gym/src/internet/model/.
-COPY --chown=$whoami prisma/ns3_model/ipv4-interface.h ns3-gym/src/internet/model/.
+COPY prisma/ns3 ns3-gym/scratch/prisma
+COPY prisma/ns3_model/ipv4-interface.cc ns3-gym/src/internet/model/.
+COPY prisma/ns3_model/ipv4-interface.h ns3-gym/src/internet/model/.
 
 # compile ns3
 RUN cd ns3-gym && ./waf configure 

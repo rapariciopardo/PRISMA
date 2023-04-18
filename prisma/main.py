@@ -1,5 +1,6 @@
 #!/usr/bin python3
 # -*- coding: utf-8 -*-
+""" -----Main file for the PRISMA project----- """
 
 
 __author__ = "Redha A. Alliche, Tiago Da Silva Barros, Ramon Aparicio-Pardo, Lucile Sassatelli"
@@ -8,213 +9,27 @@ __version__ = "0.1.0"
 __email__ = "alliche,raparicio,sassatelli@i3s.unice.fr, tiago.da-silva-barros@inria.fr"
 
 ### imports
+from source.forwarder import Forwarder
+from source.trainer import Trainer
+from source.agent import Agent
+from source.utils import save_model, save_all_models, convert_tb_data
+from source.run_ns3 import run_ns3
+from source.tb_logger import custom_plots, stats_writer_train, stats_writer_test
 from source.argument_parser import parse_arguments
-from source.utils import allocate_on_gpu
+from source.utils import allocate_on_gpu, fix_seed
 from time import sleep, time
 import numpy as np
 import threading
 import copy
 import tensorflow as tf
-import random
-import networkx as nx
 import os
 import datetime
-import csv
 import json
 from tensorboard.plugins.hparams import api as hp
-from source.agent import Agent
-from source.utils import save_model, save_all_models, convert_tb_data
 import subprocess, signal
 import shlex
 import pathlib
-from tensorboard.plugins.custom_scalar import summary as cs_summary
-from tensorboard.plugins.custom_scalar import layout_pb2
 
-
-def custom_plots():
-    
-    """define the costume plots for tensorboard"
-    """
-    cs = cs_summary.pb(
-            layout_pb2.Layout(
-                category=[
-                    layout_pb2.Category(
-                        title="Main evaluation metrics",
-                        chart=[
-                            layout_pb2.Chart(
-                                title="Avg Delay per arrived pkts",
-                                multiline=layout_pb2.MultilineChartContent(tag=[r"avg_delay_over_time"])),
-                            layout_pb2.Chart(
-                                title="Avg Cost per arrived pkts",
-                                multiline=layout_pb2.MultilineChartContent(tag=[r"avg_cost_over_time"])),
-                            layout_pb2.Chart(
-                                title="Loss Ratio",
-                                multiline=layout_pb2.MultilineChartContent(tag=[r"loss_ratio_over_time"])),
-                        ]),
-                    # layout_pb2.Category(
-                    #     title="Global info about the env",
-                    #     chart=[
-                    #         layout_pb2.Chart(
-                    #             title="Average hops over time",
-                    #             multiline=layout_pb2.MultilineChartContent(tag=[r"avg_hops_over_time"])),
-                    #         layout_pb2.Chart(
-                    #             title="total rewards with and without loss",
-                    #             multiline=layout_pb2.MultilineChartContent(tag=[r"(total_rewards_with_loss_over_time|total_rewards_over_time)"])),
-                    #         layout_pb2.Chart(
-                    #             title="Buffers occupation",
-                    #             multiline=layout_pb2.MultilineChartContent(tag=[r"nb_buffered_pkts_over_time"])),
-                    #         layout_pb2.Chart(
-                    #             title="new pkts vs lost pkts vs arrived pkts",
-                    #             multiline=layout_pb2.MultilineChartContent(tag=[r"(total_new_rcv_pkts_over_time | total_lost_pkts_over_time | total_arrived_pkts_over_time)"])),
-                    #     ]),
-                    layout_pb2.Category(
-                        title="Training metrics",
-                        chart=[
-                            layout_pb2.Chart(
-                                title="Td error",
-                                multiline=layout_pb2.MultilineChartContent(tag=[r"MSE_loss_over_time"])),
-                            layout_pb2.Chart(
-                                title="exploration value",
-                                multiline=layout_pb2.MultilineChartContent(tag=[r"exploaration_value_over_time"])),
-                            layout_pb2.Chart(
-                                title="replay buffers length",
-                                multiline=layout_pb2.MultilineChartContent(tag=[r"replay_buffer_length_over_time"])),
-                        ]),
-                ]
-            )
-        )
-    return cs
-
-def stats_writer(summary_writer_session, summary_writer_nb_arrived_pkts, summary_writer_nb_lost_pkts, summary_writer_nb_new_pkts):
-    """ Write the stats of the session to the logs dir using tensorboard writer
-    Args:
-        summary_writer_session: main session writer for the reward, loss, delay and nb buffered pkts
-        summary_writer_nb_arrived_pkts: writer for nb arrived pkts
-        summary_writer_nb_lost_pkts: writer for nb lost pkts
-        summary_writer_nb_new_pkts: writer for nb new pkts
-    """
-    ## write the global stats
-    if Agent.sim_injected_packets > 0:
-        loss_ratio = Agent.sim_dropped_packets/Agent.sim_injected_packets
-    else:
-        loss_ratio = -1
-    if Agent.sim_delivered_packets > 0:
-        avg_delay = Agent.sim_avg_e2e_delay
-        avg_cost = Agent.sim_cost
-        avg_hops = Agent.total_hops/Agent.sim_delivered_packets
-    else:
-        avg_delay = -1
-        avg_cost = -1
-        avg_hops = -1
-
-    with summary_writer_session.as_default():
-        ## total rewards
-        tf.summary.scalar('total_e2e_delay_over_iterations', Agent.total_e2e_delay, step=Agent.currIt)
-        tf.summary.scalar('total_e2e_delay_over_time', Agent.total_e2e_delay, step=int(Agent.curr_time*1e6))
-        tf.summary.scalar('total_rewards_with_loss_over_iterations', Agent.total_rewards_with_loss, step=Agent.currIt)
-        tf.summary.scalar('total_rewards_with_loss_over_time', Agent.total_rewards_with_loss, step=int(Agent.curr_time*1e6))
-        ## loss ratio
-        tf.summary.scalar('loss_ratio_over_time', loss_ratio, step=int(Agent.curr_time*1e6))
-        tf.summary.scalar('loss_ratio_over_iterations', loss_ratio, step=Agent.currIt)
-        ## total hops and avg hops
-        tf.summary.scalar('total_hops_over_iterations', Agent.total_hops, step=Agent.currIt)
-        tf.summary.scalar('total_hops_over_time', Agent.total_hops, step=int(Agent.curr_time*1e6))
-        tf.summary.scalar('avg_hops_over_iterations', avg_hops, step=Agent.currIt)
-        tf.summary.scalar('avg_hops_over_time', avg_hops, step=int(Agent.curr_time*1e6))
-        tf.summary.scalar('ma_avg_hops_over_iterations', np.array(Agent.nb_hops).mean(), step=Agent.currIt)
-        tf.summary.scalar('ma_avg_hops_over_time', np.array(Agent.nb_hops).mean(), step=int(Agent.curr_time*1e6))
-        ## buffers occupation
-        tf.summary.scalar('nb_buffered_pkts_over_time', Agent.sim_buffered_packets, step=int(Agent.curr_time*1e6))
-        tf.summary.scalar('nb_buffered_pkts_over_iterations', Agent.sim_buffered_packets, step=Agent.currIt)
-        ## signalling overhead
-        tf.summary.scalar('overlay_data_pkts_injected_bytes_time', Agent.sim_bytes_data, step=int(Agent.curr_time*1e6))
-        tf.summary.scalar('overlay_big_signalling_bytes', Agent.sim_bytes_big_signaling, step=int(Agent.curr_time*1e6))
-        tf.summary.scalar('overlay_small_signalling_bytes', Agent.sim_bytes_small_signaling, step=int(Agent.curr_time*1e6))
-        tf.summary.scalar('overlay_ping_signalling_bytes', Agent.sim_bytes_overlay_signaling_back + Agent.sim_bytes_overlay_signaling_forward, step=int(Agent.curr_time*1e6))
-        ## avg cost and avg delay
-        tf.summary.scalar('avg_cost_over_iterations', avg_cost, step=Agent.currIt)
-        tf.summary.scalar('avg_cost_over_time', avg_cost, step=int(Agent.curr_time*1e6))
-        tf.summary.scalar('avg_delay_over_iterations', avg_delay, step=Agent.currIt)
-        tf.summary.scalar('avg_delay_over_time', avg_delay, step=int(Agent.curr_time*1e6))
-        tf.summary.scalar('ma_delays_over_iterations', np.array(Agent.delays).mean(), step=Agent.currIt)
-        tf.summary.scalar('ma_delays_over_time', np.array(Agent.delays).mean(), step=int(Agent.curr_time*1e6))
-
-    with summary_writer_nb_arrived_pkts.as_default():
-        tf.summary.scalar('pkts_over_iterations', Agent.sim_delivered_packets, step=Agent.currIt)
-        tf.summary.scalar('pkts_over_time', Agent.sim_delivered_packets, step=int(Agent.curr_time*1e6))
-
-    with summary_writer_nb_lost_pkts.as_default():
-        tf.summary.scalar('pkts_over_iterations', Agent.sim_dropped_packets, step=Agent.currIt)
-        tf.summary.scalar('pkts_over_time', Agent.sim_dropped_packets, step=int(Agent.curr_time*1e6))
-
-    with summary_writer_nb_new_pkts.as_default():
-        tf.summary.scalar('pkts_over_iterations', Agent.sim_injected_packets, step=Agent.currIt)
-        tf.summary.scalar('pkts_over_time', Agent.sim_injected_packets, step=int(Agent.curr_time*1e6))
-
-def run_ns3(params):
-    """
-    Run the ns3 simulator
-    Args: 
-        params(dict): parameter dict
-    """ 
-    ## check if ns3-gym is in the folder
-    if "waf" not in os.listdir(params["ns3_sim_path"]):
-        raise Exception(f'Unable to locate ns3-gym in the folder : {params["ns3_sim_path"]}')
-        
-    ## store current folder path
-    current_folder_path = os.getcwd()
-
-    ## Copy prisma into ns-3 folder
-    os.system(f'rsync -r ./ns3/* {params["ns3_sim_path"].rstrip("/")}/scratch/prisma')
-    # os.system(f'rsync -r ./ns3_model/ipv4-interface.cc {params["ns3_sim_path"].rstrip("/")}/src/internet/model')
-
-    ## go to ns3 dir
-    os.chdir(params["ns3_sim_path"])
-    
-    ## run ns3 configure
-    #configure_command = './waf -d optimized configure'
-    os.system('./waf configure')
-    print(params['agent_type'])
-    ## run NS3 simulator
-    ns3_params_format = ('prisma --simSeed={} --openGymPort={} --simTime={} --AvgPacketSize={} '
-                        '--LinkDelay={} --LinkRate={} --MaxBufferLength={} --load_factor={} '
-                        '--adj_mat_file_name={} --overlay_mat_file_name={} --node_coordinates_file_name={} '
-                        '--node_intensity_file_name={} --signaling={} --AgentType={} --signalingType={} '
-                        '--syncStep={} --lossPenalty={} --activateOverlaySignaling={} --nPacketsOverlaySignaling={} '
-                        '--train={} --movingAverageObsSize={} --activateUnderlayTraffic={} --opt_rejected_file_name={} '
-                        '--map_overlay_file_name={} --pingAsObs={} --logs_folder={} --groundTruthFrequence={} --bigSignalingSize={}'.format( params["seed"],
-                                             params["basePort"],
-                                             str(params["simTime"]),
-                                             params["packet_size"],
-                                             params["link_delay"],
-                                             str(params["link_cap"]) + "bps",
-                                             str(params["max_out_buffer_size"]) + "B",
-                                             params["load_factor"],
-                                             params["physical_adjacency_matrix_path"],
-                                             params["overlay_adjacency_matrix_path"],
-                                             params["node_coordinates_path"],
-                                             params["traffic_matrix_path"],
-                                             bool(params["signalingSim"]),
-                                             params["agent_type"],
-                                             params["signaling_type"],
-                                             params["sync_step"],
-                                             params["loss_penalty"],
-                                             bool(params["activateOverlay"]),
-                                             params["nPacketsOverlay"],
-                                             bool(params["train"]),
-                                             params["movingAverageObsSize"],
-                                             bool(params["activateUnderlayTraffic"]),
-                                             params["opt_rejected_path"],
-                                             params["map_overlay_path"],
-                                             bool(params["pingAsObs"]),
-                                             params["logs_folder"],
-                                             params["groundTruthFrequence"],
-                                             params["bigSignalingSize"]
-                                             ))
-    run_ns3_command = shlex.split(f'./waf --run "{ns3_params_format}"')
-    proc = subprocess.Popen(run_ns3_command)
-    print(f"Running ns3 simulator with process id: {proc.pid}")
-    os.chdir(current_folder_path)
 
 def main():
     ## Allocate GPU memory as needed
@@ -224,13 +39,11 @@ def main():
     params = parse_arguments()
 
     ## fix the seed
-    tf.random.set_seed(params["seed"])
-    np.random.seed(params["seed"])
-    random.seed(params["seed"])
+    fix_seed(params["seed"])
     
+    ## check if the session already exists and the model is already trained
     if params["train"] == 1:
         pathlib.Path(params["logs_parent_folder"] + "/saved_models/").mkdir(parents=True, exist_ok=True)
-        ## check if the session already exists
         if os.path.exists(params["logs_parent_folder"] + "/saved_models/" + params["session_name"] + "/final"):
             if len(os.listdir(params["logs_parent_folder"] + "/saved_models/" + params["session_name"] + "/final")) > 0:
                 print(f'The couple {params["seed"]} {params["traffic_matrix_index"]} already exists in : {params["logs_parent_folder"] + "/saved_models/" + params["session_name"]}')
@@ -256,13 +69,12 @@ def main():
         summary_writer_nb_new_pkts = tf.summary.create_file_writer(logdir=params["nb_new_pkts_path"] )
         summary_writer_nb_lost_pkts = tf.summary.create_file_writer(logdir=params["nb_lost_pkts_path"] )
 
-        ## write the session info
+        ## write the session info (parameters)
         with tf.summary.create_file_writer(logdir=params["logs_folder"]).as_default():
             ## Adapt the dict to the hparams api
             dict_to_store = copy.deepcopy(params)
             dict_to_store["G"] = str(params["G"])
             dict_to_store["load_path"] = str(params["load_path"])
-            dict_to_store["d_t_load_path"] = str(params["d_t_load_path"])
             dict_to_store["simArgs"] = str(params["simArgs"])
             hp.hparams(dict_to_store)  # record the values used in this trial
     
@@ -273,8 +85,8 @@ def main():
                 )
     else:
         summary_writer_results = tf.summary.create_file_writer(logdir=params["logs_folder"] + "/test_results")
+    
     ## setup the agents (fix the static variables)
-    print(f'python3 -m tensorboard.main --logdir={params["logs_folder"]} --port={params["tensorboard_port"]} --bind_all')
     Agent.init_static_vars(params)
     
     ## start the profiler
@@ -283,42 +95,48 @@ def main():
         tracer = VizTracer(tracer_entries=5000000, min_duration=100, max_stack_depth=20, output_file=f"{params['logs_parent_folder'].rstrip('/')}/{params['session_name']}/viztracer.json")
         tracer.start()
     
-    print("running ns-3")
     ## run ns3 simulator
-    run_ns3(params)
-    
-    
-
+    print("running ns-3")
+    ns3_proc_id = run_ns3(params)
     ## run the agents threads
-    agent_instances = []
-    print(params["G"].nodes())
     for index in params["G"].nodes(): #range(params["numNodes"]):
-        print("Index", index)
-        agent_instance = Agent(index, agent_type=params["agent_type"], train=params["train"])
-        agent_instances.append(agent_instance)
-        th1 = threading.Thread(target=agent_instance.run_forwarder, args=())
+        print("Starting agent", index)
+        ## create the agent class instance
+        forwarder_instance = Forwarder(index, agent_type=params["agent_type"], train=params["train"])
+        ## start the agent forwarder thread
+        th1 = threading.Thread(target=forwarder_instance.run, args=())
         th1.start()
         if params["train"]:
-            th2 = threading.Thread(target=agent_instance.run_trainer, args=(params["training_trigger_type"],))
+            trainer_instance = Trainer(index, agent_type=params["agent_type"], train=params["train"])
+            ## start the agent trainer thread
+            th2 = threading.Thread(target=trainer_instance.run, args=(), daemon=True)
             th2.start()
 
     ## Run tensorboard server
+    tensorboard_process = None
     if params["start_tensorboard"]:
         args = shlex.split(f'python3 -m tensorboard.main --logdir={params["logs_folder"]} --port={params["tensorboard_port"]} --bind_all')
-        subprocess.Popen(args)
+        tensorboard_process = subprocess.Popen(args).pid
+        print(f"Tensorboard server started with pid {tensorboard_process}")
+        
     sleep(1)
     
-    print(params)
+    snapshot_index = 1
     ## wait until simulation complete and update info about the env at each timestep
     while threading.active_count() > params["numNodes"] * (1+ params["train"]):
         sleep(params["logging_timestep"])
         if params["train"] == 1:
-            stats_writer(summary_writer_session, summary_writer_nb_arrived_pkts, summary_writer_nb_lost_pkts, summary_writer_nb_new_pkts)
-
-    print(f"Signaling overhead = {Agent.small_signaling_overhead_counter}")
+            stats_writer_train(summary_writer_session, summary_writer_nb_arrived_pkts, summary_writer_nb_lost_pkts, summary_writer_nb_new_pkts, Agent)
+            
+            ## check if it is time to save a snapshot of the models
+            if Agent.curr_time > (snapshot_index * params["snapshot_interval"]):
+                print(f"Saving model at time {Agent.curr_time} with index {snapshot_index}")
+                save_all_models(Agent.agents, params["G"].nodes(), params["session_name"], snapshot_index, 1, root=params["logs_parent_folder"] + "/saved_models/", snapshot=True)
+                snapshot_index += 1
+                    
     print(f""" Summary of the Simulation:
             Simulation time = {Agent.curr_time},
-            Total Iterations = {Agent.currIt},
+            Total Iterations = {Agent.total_nb_iterations},
             Total number of Transitions = {Agent.nb_transitions},
             Overlay Total injected packets = {Agent.sim_injected_packets}, 
             Global Total injected packets = {Agent.sim_global_injected_packets}, 
@@ -342,115 +160,40 @@ def main():
             nbBytesOverlaySignalingForward = {Agent.sim_bytes_overlay_signaling_forward},
             nbBytesOverlaySignalingBack = {Agent.sim_bytes_overlay_signaling_back},
             OverheadRatio = {(Agent.sim_bytes_big_signaling+Agent.sim_bytes_small_signaling+Agent.sim_bytes_overlay_signaling_forward+Agent.sim_bytes_overlay_signaling_back)/Agent.sim_bytes_data}
-            """)
-    if Agent.total_arrived_pkts:
-        print(f"Average delay per arrived packets = {Agent.total_e2e_delay/(Agent.total_arrived_pkts*1000)}")
-        
-    fields_stats=[params["agent_type"],
-                        params["signaling_type"], 
-                        params["traffic_matrix_index"], 
-                        params["seed"],
-                        params["replay_buffer_max_size"],
-                        params["sync_step"],
-                        Agent.node_lost_pkts/Agent.total_new_rcv_pkts,
-                        np.array(Agent.delays_ideal).mean(),
-                        ((Agent.node_lost_pkts * Agent.loss_penalty) + np.array(Agent.delays_ideal).sum())/(Agent.node_lost_pkts + Agent.total_arrived_pkts),
-                        Agent.total_rewards_with_loss/Agent.total_new_rcv_pkts,
-                        Agent.total_rewards_with_loss,
-                        Agent.small_signaling_overhead_counter + Agent.big_signaling_overhead_counter,
-                        Agent.small_signaling_overhead_counter,
-                        Agent.big_signaling_overhead_counter,
-                        Agent.total_new_rcv_pkts,
-                        Agent.total_arrived_pkts,
-                        Agent.node_lost_pkts,
-                        Agent.total_data_size,
-                        Agent.nb_transitions
-                    ]
-    new_fields_stats=[params["agent_type"],
-                        params["signaling_type"], 
-                        params["traffic_matrix_index"], 
-                        params["seed"],
-                        params["replay_buffer_max_size"],
-                        params["sync_step"],
-                        params["load_factor"],
-                        Agent.sim_dropped_packets/Agent.sim_injected_packets,
-                        Agent.sim_injected_packets,
-                        Agent.sim_delivered_packets,
-                        Agent.sim_dropped_packets,
-                        Agent.sim_avg_e2e_delay,
-                        Agent.sim_cost,
-                        Agent.total_hops/Agent.sim_delivered_packets,
-                        (Agent.sim_bytes_big_signaling+Agent.sim_bytes_small_signaling+Agent.sim_bytes_overlay_signaling_forward+Agent.sim_bytes_overlay_signaling_back)/Agent.sim_bytes_data,
-                        Agent.sim_global_injected_packets,
-                        Agent.sim_global_dropped_packets,
-                        Agent.sim_global_dropped_packets/Agent.sim_global_injected_packets
-                        ]
-                          
-        
-    if params["train"] == 0:
-        ## store test stats
-        with summary_writer_results.as_default():
-            tf.summary.scalar('test_global_injected_pkts', Agent.sim_global_injected_packets, step=int(params["load_factor"]*100))
-            tf.summary.scalar('test_overlay_injected_pkts', Agent.sim_injected_packets, step=int(params["load_factor"]*100))
-            tf.summary.scalar('test_global_lost_pkts', Agent.sim_global_dropped_packets, step=int(params["load_factor"]*100))
-            tf.summary.scalar('test_overlay_lost_pkts', Agent.sim_dropped_packets, step=int(params["load_factor"]*100))
-            tf.summary.scalar('test_global_arrived_pkts', Agent.sim_global_delivered_packets, step=int(params["load_factor"]*100))
-            tf.summary.scalar('test_overlay_arrived_pkts', Agent.sim_delivered_packets, step=int(params["load_factor"]*100))
-            tf.summary.scalar('test_global_e2e_delay', Agent.sim_avg_e2e_delay, step=int(params["load_factor"]*100))
-            tf.summary.scalar('test_overlay_e2e_delay', Agent.sim_global_avg_e2e_delay, step=int(params["load_factor"]*100))
-            tf.summary.scalar('test_global_loss_rate', Agent.sim_global_dropped_packets/Agent.sim_global_injected_packets, step=int(params["load_factor"]*100))
-            tf.summary.scalar('test_overlay_loss_rate', Agent.sim_dropped_packets/Agent.sim_injected_packets, step=int(params["load_factor"]*100))
-            tf.summary.scalar('test_global_cost', Agent.sim_global_cost, step=int(params["load_factor"]*100))
-            tf.summary.scalar('test_overlay_cost', Agent.sim_cost, step=int(params["load_factor"]*100))
-            # tf.summary.scalar('test_global_e2e_delay', Agent.sim_avg_e2e_delay, step=int(params["load_factor"]*100))
-            # tf.summary.scalar('test_global_loss_rate', Agent.sim_global_dropped_packets/Agent.sim_global_injected_packets, step=int(params["load_factor"]*100))
-
-    #     with open(test_results_file_name, 'a') as f: 
-    #         writer = csv.writer(f) 
-    #         writer.writerow(new_fields_stats)
-    # else:   
-    #     with open(train_results_file_name, 'a') as f: 
-    #         writer = csv.writer(f) 
-    #         writer.writerow(new_fields_stats) 
+            """)                     
     
-    ## save the throughput dfs
-    # for i in range(Agent.numNodes):
-    #     Agent.throughputs[i].to_csv(f'{params["logs_parent_folder"].rstrip("/")}/{params["session_name"]}/throughputs_node_{i}.txt')
+    ## write the results for the test session
+    if params["train"] == 0:
+       stats_writer_test(summary_writer_results, Agent)
 
     ## save models        
     if params["save_models"] and Agent.curr_time >= params["simTime"]-5:
         save_all_models(Agent.agents, params["G"].nodes(), params["session_name"], 1, 1, root=params["logs_parent_folder"] + "/saved_models/", snapshot=False)
-        if params["agent_type"] == "dqn_buffer_fp":
-            for item in agent_instances:
-                np.savetxt(f'{params["logs_parent_folder"].rstrip("/")}/saved_models/{params["session_name"]}/node_{item.index}_final_params.txt',  [item.update_eps.numpy().item(), item.gradient_step_idx])
-    
+
     ## save the profiler results
     if params["profile_session"]:
         tracer.stop()
-        tracer.save()  
-    
-    ## saving the replay buffers
-    # for i, rb in enumerate(Agent.replay_buffer):
-    #     rb.save(f"rb_savings/{i}.txt")
-    ## saving the transition array
-    #for node_idx in range(Agent.numNodes):
-    #    if(not os.path.exists(f"lock_files/{params['session_name']}")):  
-    #        os.mkdir(f"lock_files/{params['session_name']}/") 
-    #    np.savetxt(f"lock_files/{params['session_name']}/{node_idx}.txt", np.array(Agent.lock_info_array[node_idx], dtype=object), fmt = "%s", header = "src dst node next_hop ideal_time real_time obs action")
-
+        tracer.save() 
+        
+    return (ns3_proc_id, tensorboard_process)
 
 if __name__ == '__main__':
     ## create a process group
     import traceback
-
+    ns3_pid, tb_process = None, None
     # os.setpgrp()
     try:
         print("starting process group")
         start_time = time()
-        main()
+        ns3_pid, tb_process = main()
         print("Elapsed time = ", str(datetime.timedelta(seconds= time() - start_time)))
     except:
         traceback.print_exc()
     finally:
-        print("kill process group")       
+        print("kill process group")
+        if ns3_pid:
+            os.system(command=f"kill -9 {ns3_pid}")
+        if tb_process:
+            os.system(command=f"kill -9 {tb_process}")
+        SystemExit(0)
         # os.killpg(0, signal.SIGKILL)
