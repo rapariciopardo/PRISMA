@@ -1,11 +1,10 @@
-#!/bin/sh
+#!/bin/bash
+echo "Installing dependencies..."
+apt-get update && apt-get install -y gcc g++ bc rsync libzmq5 libzmq5-dev libprotobuf-dev protobuf-compiler
 
-apt-get install gcc g++ python
+echo "Installing python packages..."
+python3 -m pip install --user --no-cache-dir --upgrade -r requirements.txt
 
-apt-get install libzmq5 libzmq5-dev
-apt-get install libprotobuf-dev
-apt-get install protobuf-compiler
-
-cd prisma/
-cd ns3gym/
+echo "Compiling protobuf..."
+cd prisma/ns3gym/
 sh compile_proto.sh

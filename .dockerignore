@@ -1,0 +1,9 @@
+prisma/examples
+.vscode
+.idea
+.git*
+singularity*
+.ipynb_checkpoints
+*/__pycache__
+*.pyc
+*.Dockerfile

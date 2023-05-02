@@ -1,59 +1,61 @@
-Packet Routing Simulator for Multi-Agent Reinforcement Learning (PRISMA)
+PRISMA-v2: A Packet Routing Simulator for Multi-Agent Reinforcement Learning - Extension to CLoud Overlay Networks
 ============
 
-PRISMA is a network simulation playground for developing and testing Multi-Agent Reinforcement Learning (MARL) solutions for dynamic packet routing (DPR). This framework is based on the OpenAI Gym toolkit and the ns-3 simulator.
+PRISMA-v2 is a network simulation playground for developing and testing Multi-Agent Reinforcement Learning (MARL) solutions for dynamic packet routing (DPR). This framework is based on the OpenAI Gym toolkit and the Ns3 simulator.
 
 The [OpenAI Gym](https://gym.openai.com/) is a toolkit for RL widely used in research. The network simulator [ns–3](https://www.nsnam.org/) is a standard library, which may provide useful simulation tools. It generates discrete events and provide several protocol implementations.
 
-Moreover, the NetSim implementation is based on [ns3-gym](https://github.com/tkn-tub/ns3-gym), which integrates OpenAI Gym and ns-3.
+Overlay networks are virtual networks built on top of a physical network (called underlay networks) utilizing network virtualization technology. Overlay networks provide flexible and dynamic traffic routing between nodes that are not directly connected by physical links, but rather by virtual links that correspond to paths in the underlying network.The PRISMA-v2 is the extension of PRISMA framework and allows the developing of MARL for DPR in overlay networks.
 
 The main contributions of this framework:
-1) A RL framework designed for specifically the DPR problem, serving as a playground where the community can easily validate their own RL approaches and compare them.
-2) A more realistic modelling based on: (i) the well-known ns-3 network simulator, and (ii) a multi-threaded implementation for each agent.
-3) A modular code design, which allows a researcher to test their own RL algorithm for the DPR problem, without needing to work on the implementation of the environment.
-4) Visual tools based on tensorboard allowing to track training and test phases.
+1) Overlay topology simulation and control management.
+2) Ability to add dynamic underlay traffic along with the overlay one.
+3) High reproducibility of results by supplying containerizing capability using docker [Docker](https://www.docker.com/).
+4) Refactoring the code for better readability.
+5) Improve Tensorboard logging by incorporating both training and testing phases.
+6) Implement control packets to realistically simulate the communication between the nodes and evaluate the overhead of running a DRL approach.
+
 
 Installation
 ============
-This tool has been developed and tested under Linux Ubuntu 20.04 LTS (Focal Fossa).
+The PRISMA-v2 installlation can be done using the following methods:
 
-1. We recommend you to clone the repository (to get the .git):
-```
-git clone https://github.com/rapariciopardo/PRISMA.git
-```
+# Downloading and installing locally
 
-2. If you don't have the ns3-gym alrady installed, you could initialize and update the ns3-gym submodule using the information in .git:
+If you don't have the Ns3-gym alrady installed
+
+1. If the submodule was not yet initialized, initialize them.
 ```
 git submodule init
 git submodule update
 ```
 
-3. Run the script install.sh . It will install the ns-3 requirements (minimal requirements for C++, ZMQ and Protocol Buffers libs. For more information, see https://www.nsnam.org/wiki/Installation). Moreover, it will compile the messages.proto file for python. 
+2. Run the script install.sh . It will install the NS3 requirements (minimal requirements for C++, ZMQ and Protocol Buffers libs. For more information, see https://www.nsnam.org/wiki/Installation). Moreover, it will compile the messages.proto file for python. 
 
 The usage of sudo may be required.
 ```
 sudo sh install.sh
 ```
 
-4. Go to my_network directory and install the python packages required using the command below (numpy, networkx, gym, tensorflow, zmq)
+3. Go to my_network directory and install the python packages required using the command below (numpy, networkx, gym, tensorflow, zmq)
 ```
-cd ./prisma/
-pip install .
-```
-
-5. For training, run the script:
-```
-bash train.sh
+cd ./my_network/
+pip install -e .
 ```
 
-6. For testing the agent, run the script:
+4. For training, run the script:
 ```
-bash test.sh
+./train.sh
 ```
 
-7. (Optional) For killing agents, use the script:
+5. For testing the agent, run the script:
 ```
-bash kill_agents.sh
+./test.sh
+```
+
+6. (Optional) For killing agents, use the script:
+```
+./kill_agents.sh
 ```
 
 Usage guide
@@ -69,16 +71,25 @@ basePort: Base TCP Port for agent communication.
 seed: Seed for simulation.
 train: 1, if training; 0, Otherwise.
 ```
-## Network
+## Underlay Network
 ```
 load_factor: Defines a factor multiplied by traffic rate matrix 
-adjacency_matrix_path: Path for adjacency matrix
+physical_adjacency_matrix_path: Path for adjacency matrix
 traffic_matrix_path: Path for traffic rate matrix
 node_coordinates_path: Path for nodes coordinates matrix
-max_out_buffer_size: maximum size of the output buffers
+max_out_buffer_size: maximum size of the output buffers (in bytes)
 link_delay: Defines the delay of the link
 packet_size: Defines the packet size.
 link_cap: Defines the rate a packet is uploaded to the link.
+```
+## Overlay Network
+```
+overlay_adjacency_matrix_path: Path for overlay adjacency matrix
+map_overlay_path: Path for file which maps undelar and overlay node.
+indexes
+nPacketsOverlay: Decides the number of packets as interval for sending the ping packets.
+pingAsObs: If true, we use the tunnel delay info (recovered by the ping packets) as observation state.
+
 ```
 ## Agent
 ```
@@ -125,7 +136,7 @@ Example
 
 We are going to illustrate Prisma usage with a pratical example. We will train a and develop a model for Q-Routing in two different topologies: Abilene and Geant. The Markov Decision Process (MDP) have the following formulation:
 
-**Observation Space**: Packet's destination
+**Observation Space**: Packet's destination and interfaces buffer lenth (or tunnels delay - for overlay networks)
 
 **Action Space**: Output's interface
 
@@ -144,26 +155,3 @@ The training curves are described below. The cost represents the average delay p
 In the figure below, we can evaluate the model performance. We can observe that the DQN-Routing agent is capable of learning a ploicy proximal to a Shortest Path algorithm. In some of the scenarios evaluated, it can performs better than the shortest path algorithm.
 
 ![My Image](images/testing_curves.png)
-
-Contact
-============
-* Redha A. Alliche, Université Côte d’Azur, CNRS, I3S,  alliche@i3s.unice.fr
-* Ramon Aparicio-Pardo, Université Côte d’Azur, CNRS, I3S,  raparicio@i3s.unice.fr
-
-How to reference PRISMA?
-============
-Please use the following bibtex :
-```
-@INPROCEEDINGS{Alli2206:PRISMA,
-AUTHOR="Redha Abderrahmane Alliche and Tiago {Da Silva Barros} and Ramon
-Aparicio-Pardo and Lucile Sassatelli",
-TITLE="{PRISMA:} A Packet Routing Simulator for {Multi-Agent} Reinforcement
-Learning",
-BOOKTITLE="4th Intl Workshop on Network Intelligence collocated with IFIP Networking 2022",
-ADDRESS="Catania, Italy",
-DAYS=12,
-MONTH=jun,
-YEAR=2022,
-}
-
-```

@@ -112,8 +112,12 @@ private:
    */
   void SendPacket ();
 
+  void UpdateAvgTrafficRate();
+
   Ptr<Socket>     m_socket;       //!< Associated socket
   Address         m_peer;         //!< Peer address
+  uint32_t        m_dest;
+  uint32_t        m_src;
   bool            m_connected;    //!< True if connected
   DataRate        m_avgRate;      //!< Rate that data is generated
   DataRate        m_avgRateFailSafe;      //!< Rate that data is generated (check copy)
@@ -124,6 +128,10 @@ private:
   uint64_t        m_totBytes;     //!< Total bytes sent so far
   EventId         m_sendEvent;    //!< Event id of pending "send packet" event
   TypeId          m_tid;          //!< Type of the socket used
+  bool            m_updatable;
+  float           m_updateTrafficRateTime;
+  float           m_trafficValableProbability;
+  float           m_rejectProbability;
 
   /// Traced Callback: transmitted packets.
   TracedCallback<Ptr<const Packet> > m_txTrace;

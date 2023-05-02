@@ -36,6 +36,8 @@
 #include "ns3/string.h"
 #include "ns3/data-rate.h"
 #include "ns3/uinteger.h"
+#include "ns3/boolean.h"
+#include "ns3/double.h"
 #include "ns3/names.h"
 #include "ns3/random-variable-stream.h"
 //#include "ns3/onoff-application.h"
@@ -96,5 +98,31 @@ PoissonAppHelper::SetAverageRate (DataRate dataRate, uint32_t packetSize)
   m_factory.Set ("AvgDataRate", DataRateValue (dataRate));
   m_factory.Set ("AvgPacketSize", UintegerValue (packetSize));
 }
+
+void
+PoissonAppHelper::SetUpdatable(bool updatable, double updateTrafficRateTime){
+  m_factory.Set ("Updatable", BooleanValue(updatable));
+  m_factory.Set ("UpdateTrafficRateTime", DoubleValue(updateTrafficRateTime));
+}
+
+void
+PoissonAppHelper::SetDestination(uint32_t dest, uint32_t src){
+  m_factory.Set ("Dest", UintegerValue(dest));
+  m_factory.Set ("Src", UintegerValue(src));
+}
+void
+PoissonAppHelper::SetTrafficValableProbability(double trafficValableProbability){
+  m_factory.Set ("TrafficValableProbability", DoubleValue(trafficValableProbability));
+}
+void 
+PoissonAppHelper::SetRejectedProbability(bool optimal, double rejectProb){
+  if(optimal){
+    m_factory.Set ("RejectProbability", DoubleValue(rejectProb));
+  } else{
+    m_factory.Set ("RejectProbability", DoubleValue(0.0));
+  }
+}
+
+
 
 } // namespace ns3
