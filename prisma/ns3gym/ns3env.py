@@ -393,11 +393,14 @@ class Ns3Env(gym.Env):
         self.state = None
         self.steps_beyond_done = None
         self.connected = True
-
+        
         self.ns3ZmqBridge = Ns3ZmqBridge(self.port, self.startSim, self.simSeed, self.simArgs, self.debug)
+        
         self.ns3ZmqBridge.initialize_env(self.stepTime)
+        print("debug")
         self.action_space = self.ns3ZmqBridge.get_action_space()
         self.observation_space = self.ns3ZmqBridge.get_observation_space()
+        
         # get first observations
         self.ns3ZmqBridge.rx_env_state()
         self.envDirty = False

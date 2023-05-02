@@ -7,11 +7,13 @@ Created on Thu Jan 20 2022
 """
 import tensorflow as tf
 from tensorflow import keras
-from tensorflow.keras import layers
 import numpy as np
 import networkx as nx
-from source.models import DQN_buffer_model
-from source.utils import save_model
+import sys, os
+sys.path.append('source')
+os.environ["CUDA_VISIBLE_DEVICES"]="1"
+
+from models import *
 
 if __name__ == '__main__':
     """
@@ -19,56 +21,81 @@ if __name__ == '__main__':
     """
     
     ### define the params
-    size_of_data_per_dst = 1000 
-    
-    ### load the topology graph
+    # topology = '22n'#'4n' #'5n'
+    size_of_data_per_dst = 10000
+    topology_name = "geant"
+    buffer_max_length = 16260 # bytes
+    link_cap = 500000 # kbps
+    pkt_size = 512 # bytes
+    link_delay = 0.001 # sec
+    nb_epochs = 50
+    bs = 512
+    ### load the topology graph from the topology folder
+    print("loading the topology graph")
     G=nx.Graph()
-    for i, element in enumerate(np.loadtxt(open("../node_coordinates.txt"))):
+    for i, element in enumerate(np.loadtxt(open(f"examples/{topology_name}/topology_files/node_coordinates.txt"))):
         G.add_node(i,pos=tuple(element))
-    G = nx.from_numpy_matrix(np.loadtxt(open("../adjacency_matrix.txt")), create_using=G)
-    
-    ### loop for nodes
-    models = []
-    for node in range(G.number_of_nodes()):
-    # for node in [6, 10]:
-        number_of_neighbors = len(list(G.neighbors(node)))
-        x_all = []
-        y_all = []
-        for dst in range(G.number_of_nodes()):
-            if dst == node:
-                continue
-            ### generate the random data for each destination
-            x_dst = np.concatenate((dst * np.ones(shape=(size_of_data_per_dst, 1), dtype=int),
-                                np.random.randint(low=0, high=30, size=(size_of_data_per_dst, number_of_neighbors)),
-                                ),
-                                axis=1)
-            y_dst = []
-            for interface_id, neighbor in enumerate(list(G.neighbors(node))):
-                cost = len(nx.shortest_path(G, neighbor, dst)) -1
-                y_dst_neighbor = cost * np.ones((size_of_data_per_dst,1), dtype=int)
-                if len(y_dst) == 0: 
-                    y_dst = y_dst_neighbor
+    G = nx.from_numpy_matrix(np.loadtxt(open(f"examples/{topology_name}/topology_files/adjacency_matrix.txt")), create_using=G)
+    # ping_mat = np.loadtxt(open(f"scripts/ping_{topology}_mat.txt"))
+    #remove_list = [node for node,degree in dict(G.degree()).items() if degree < 1]
+    #G.remove_nodes_from(remove_list)
+
+    print("number of nodes", len(G.nodes()))
+    print("number of edges", len(G.edges()))
+    types = ["", "_lite", "_lighter", "_lighter_2", "_lighter_3", "_ff"]
+    # types = ["",]
+    base_models = [DQN_buffer_model, DQN_buffer_lite_model, DQN_buffer_lighter_model, DQN_buffer_lighter_2_model, DQN_buffer_lighter_3_model, DQN_buffer_ff_model]
+    nx.draw_networkx(G, with_labels=True)
+    for ix in range(len(types)):
+        ### loop for nodes
+        models = []
+        for node in G.nodes():
+        # for node in [6, 10]:
+            number_of_neighbors = len(list(G.neighbors(node)))
+            x_all = []
+            y_all = []
+            for dst in G.nodes():
+                if dst == node:
+                    continue
+                ### generate the random data for each destination
+                x_dst = np.concatenate((dst * np.ones(shape=(size_of_data_per_dst, 1), dtype=int),
+                                    np.random.randint(low=0, high=buffer_max_length, size=(size_of_data_per_dst, number_of_neighbors)),
+                                    # np.random.randint(low=0, high=10000, size=(size_of_data_per_dst, number_of_neighbors)),
+                                    # np.random.uniform(low=0, high=1, size=(size_of_data_per_dst, 1)),
+                                    # np.random.randint(low=0, high=3000, size=(size_of_data_per_dst, 1))
+                                    ),
+                                    axis=1)
+                y_dst = []
+                for interface_id, neighbor in enumerate(list(G.neighbors(node))):
+                    #print(dst, node, interface_id)
+                    cost = (len(nx.shortest_path(G, neighbor, dst)) -1) * (pkt_size * 8 / link_cap + link_delay)
+                    # cost = (ping_mat[node][neighbor]+ping_mat[neighbor][dst])*0.001
+                    # print(dst, node, neighbor, cost)
+                    y_dst_neighbor = cost * np.ones((size_of_data_per_dst, 1), dtype=int)
+                    if len(y_dst) == 0: 
+                        y_dst = y_dst_neighbor
+                    else:
+                        y_dst = np.concatenate((y_dst, y_dst_neighbor), axis=1)
+                ### group the data into one tensor
+                if len(x_all) == 0: 
+                    x_all = x_dst.copy()
+                    y_all = y_dst.copy()
                 else:
-                    y_dst = np.concatenate((y_dst, y_dst_neighbor), axis=1)
-            ### group the data into one tensor
-            if len(x_all) == 0: 
-                x_all = x_dst.copy()
-                y_all = y_dst.copy()
-            else:
-                x_all = np.concatenate((x_all, x_dst), axis=0)
-                y_all = np.concatenate((y_all, y_dst), axis=0)
-            
-        ### load the model
-        model = DQN_buffer_model(observation_shape=(number_of_neighbors+1, ),
-                 num_actions=number_of_neighbors, 
-                 num_nodes=G.number_of_nodes(), 
-                 input_size_splits=[1, number_of_neighbors])
-        model.compile(optimizer=keras.optimizers.Adam(learning_rate=1e-3),
-                      loss=keras.losses.MeanSquaredError(),
-                      metrics=[keras.metrics.MeanSquaredError()]
-                      )
-        model.fit(x_all, y_all, batch_size=128, epochs=20)
-        ### saving the model    
-        model.save(f"../DQN_buffer_sp_init/node{node}")
-        print()
-    raise(1)
+                    x_all = np.concatenate((x_all, x_dst), axis=0)
+                    y_all = np.concatenate((y_all, y_dst), axis=0)
+            # print(x_all, y_all)   
+            ### load the model
+            model = base_models[ix](observation_shape=(1+number_of_neighbors, ),
+                    num_actions=number_of_neighbors, 
+                    num_nodes=G.number_of_nodes(), 
+                    input_size_splits=[1,number_of_neighbors])
+            # print(node, model.summary())
+            print("in bits", np.sum([np.prod(x.shape) for x in model.trainable_weights])*32, "in bytes", np.sum([np.prod(x.shape) for x in model.trainable_weights])*4)
+            model.compile(optimizer=keras.optimizers.Adam(learning_rate=1e-3),
+                        loss=keras.losses.MeanSquaredError(),
+                        metrics=[keras.metrics.MeanSquaredError()]
+                        )
+            model.fit(x_all, y_all, batch_size=bs, epochs=nb_epochs)
+            ### saving the model    
+            model.save(f"examples/{topology_name}/pre_trained_models/dqn_buffer{types[ix]}/node{node}")
+            print(f"examples/{topology_name}/pre_trained_models/dqn_buffer{types[ix]}/node{node}")

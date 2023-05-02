@@ -45,12 +45,14 @@
 #include "ns3/socket-factory.h"
 #include "ns3/packet.h"
 #include "ns3/uinteger.h"
+#include "ns3/boolean.h"
 #include "ns3/double.h"
 #include "ns3/trace-source-accessor.h"
 #include "poisson-application.h"
 #include "ns3/udp-socket-factory.h"
 #include "ns3/string.h"
 #include "ns3/pointer.h"
+#include "my-tag.h"
 
 namespace ns3 {
 
@@ -73,6 +75,30 @@ PoissonGeneratorApplication::GetTypeId (void)
                    UintegerValue (512),
                    MakeUintegerAccessor (&PoissonGeneratorApplication::m_pktSizeMean),
                    MakeUintegerChecker<uint32_t> (1))
+    .AddAttribute ("Dest", "dest",
+                   UintegerValue (1),
+                   MakeUintegerAccessor (&PoissonGeneratorApplication::m_dest),
+                   MakeUintegerChecker<uint32_t> (1))
+    .AddAttribute ("Src", "src",
+                   UintegerValue (1),
+                   MakeUintegerAccessor (&PoissonGeneratorApplication::m_src),
+                   MakeUintegerChecker<uint32_t> (1))
+    .AddAttribute ("Updatable", "The Traffic Rate of node is updatable",
+                   BooleanValue(false),
+                   MakeBooleanAccessor (&PoissonGeneratorApplication::m_updatable),
+                   MakeBooleanChecker())
+    .AddAttribute ("UpdateTrafficRateTime", "The frequency the Traffic Rate of node is updatable",
+                   DoubleValue(10.0),
+                   MakeDoubleAccessor (&PoissonGeneratorApplication::m_updateTrafficRateTime),
+                   MakeDoubleChecker<double>())
+    .AddAttribute ("TrafficValableProbability", "The probability the traffic is valable",
+                   DoubleValue(1.0),
+                   MakeDoubleAccessor (&PoissonGeneratorApplication::m_trafficValableProbability),
+                   MakeDoubleChecker<double>())
+    .AddAttribute ("RejectProbability", "The probability the traffic is rejected",
+                   DoubleValue(0.0),
+                   MakeDoubleAccessor (&PoissonGeneratorApplication::m_rejectProbability),
+                   MakeDoubleChecker<double>())
     .AddAttribute ("Remote", "The address of the destination",
                    AddressValue (),
                    MakeAddressAccessor (&PoissonGeneratorApplication::m_peer),
@@ -204,11 +230,34 @@ void PoissonGeneratorApplication::CancelEvents ()
   Simulator::Cancel (m_sendEvent);
 }
 
+void PoissonGeneratorApplication::UpdateAvgTrafficRate(){
+  double mean = double(m_avgRate.GetBitRate());
+  double variance = mean/2.0;
+ 
+  Ptr<NormalRandomVariable> x = CreateObject<NormalRandomVariable> ();
+  x->SetAttribute ("Mean", DoubleValue (mean));
+  x->SetAttribute ("Variance", DoubleValue (variance));
+ 
+  
+  m_avgRate = DataRate (x->GetValue ());
+  //int min = 100; //in bitsPerSec
+  //int max = 1000; //in bitsPerSec
+  //m_avgRate = DataRate (m_avgRate.GetBitRate() + min + rand() % (( max + 1 ) - min));
+  Simulator::Schedule(Seconds(m_updateTrafficRateTime), &PoissonGeneratorApplication::UpdateAvgTrafficRate, this);
+}
+
 // Event handlers
 void PoissonGeneratorApplication::StartSending ()
 {
   NS_LOG_FUNCTION (this);
   m_lastStartTime = Simulator::Now ();
+  if(m_updatable){
+    UpdateAvgTrafficRate();
+  }
+  //if(m_trafficValableProbability<0.1){
+  //  m_avgRate = DataRate(m_avgRate.GetBitRate()/4.0);
+  //  NS_LOG_UNCOND("Src: "<<m_socket->GetNode()->GetId()-11<<"  Dest: "<<m_dest-1<<"    "<<m_avgRate.GetBitRate());
+  //}
   ScheduleNextTx ();  // Schedule the send packet event
 }
 
@@ -229,16 +278,13 @@ void PoissonGeneratorApplication::ScheduleNextTx ()
       if(m_pktSize<200) m_pktSize=200;
      
       uint32_t bits = m_pktSize * 8;
-      Ptr<ExponentialRandomVariable> ev_rate = CreateObject<ExponentialRandomVariable> ();
-      ev_rate->SetAttribute ("Mean", DoubleValue (static_cast<double>(m_avgRate.GetBitRate ())));
-      //ev_rate->SetAttribute ("Bound", DoubleValue (static_cast<double>(m_avgRate.GetBitRate ())*5)); 
-      double rate_value = ev_rate->GetValue();
-      if(rate_value < static_cast<double>(m_avgRate.GetBitRate ())*0.2) rate_value = rate_value<static_cast<double>(m_avgRate.GetBitRate ())*0.2;
-      if(rate_value > static_cast<double>(m_avgRate.GetBitRate ())*5) rate_value = rate_value<static_cast<double>(m_avgRate.GetBitRate ())*5;
-      double delay = bits/ev_rate->GetValue(); // bits/ static_cast<double>(m_avgRate.GetBitRate ());
+      Ptr<ExponentialRandomVariable> iat = CreateObject<ExponentialRandomVariable> ();
+      
+      iat->SetAttribute ("Mean", DoubleValue (bits/static_cast<double>(m_avgRate.GetBitRate ())));
+      double delay = iat->GetValue(); // bits/ static_cast<double>(m_avgRate.GetBitRate ());
+      //if(m_src==5 && m_dest==10) NS_LOG_UNCOND("VERIFIER: "<<static_cast<double>(m_avgRate.GetBitRate ())<<"    "<<delay);
       //NS_LOG_UNCOND("DELAY:     "<<delay);
       Time nextTime (Seconds (delay)); // Time till next packet
-      //NS_LOG_LOGIC ("nextTime = " << nextTime);
       m_sendEvent = Simulator::Schedule (nextTime,
                                          &PoissonGeneratorApplication::SendPacket, this);
     }
@@ -254,11 +300,35 @@ void PoissonGeneratorApplication::SendPacket ()
 
   NS_ASSERT (m_sendEvent.IsExpired ());
   Ptr<Packet> packet = Create<Packet> (m_pktSize);
+  MyTag tag;
+  tag.SetSimpleValue(0);
+  
+  tag.SetFinalDestination(m_dest-1);
+  tag.SetSource(m_src-1);
+  tag.SetNextHop(m_src-1);
+  tag.SetLastHop(1000);
+  tag.SetStartTime(uint64_t(Simulator::Now().GetSeconds()));
+  Ptr<UniformRandomVariable> x = CreateObject<UniformRandomVariable> ();
+  x->SetAttribute ("Min", DoubleValue (0.0));
+  x->SetAttribute ("Max", DoubleValue (1.0));
+  double value = x->GetValue ();
+  if(value<m_trafficValableProbability){
+    tag.SetTrafficValable(1);
+    //NS_LOG_UNCOND("Sending to "<<m_dest-1);
+  }
+  else {
+    tag.SetTrafficValable(0);
+  }
+  if(value<m_rejectProbability){
+    tag.SetRejectedPacket(1);
+  } else{
+    tag.SetRejectedPacket(0);
+  }
+
+  packet->AddPacketTag(tag);
   m_txTrace (packet);
-  std::string start_time = std::to_string(Simulator::Now().GetMilliSeconds());
-  //NS_LOG_UNCOND("START: "<<start_time<<"   SIZE: "<<m_pktSize);
-  const uint8_t* start_int = reinterpret_cast<const uint8_t*>(&start_time[0]);
-  m_socket->Send(start_int, m_pktSize, 0);
+  m_socket->SetIpTtl(255);
+  m_socket->Send(packet);
   m_totBytes += m_pktSize;
   Address localAddress;
   m_socket->GetSockName (localAddress);

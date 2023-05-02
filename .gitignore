@@ -43,14 +43,20 @@ build/
 *.pb.cc
 *_pb2.py
 *_pb3.py
-prisma/examples/*/saved_models/*
-prisma/examples/*/results/*
-prisma/examples/*/pre_trained_models/*
-
-ns3-gym/*
-
 waf3*/*
 venv/
 .vscode/
+prisma/examples/*/results/*
+prisma/examples/*/optimal_solution/*
+prisma/examples/*/others
+prisma/examples/*/plots
+prisma/examples/*/pre_trained_models/*
 
-tok.txt
+prisma/replay_buffer_samples/
+prisma/figures
+*.img
+*.def
+*.sif
+prisma/*.png
+prisma/*.json
+prisma/profiling results

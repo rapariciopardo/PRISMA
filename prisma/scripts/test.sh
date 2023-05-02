@@ -1,14 +1,9 @@
-#!/bin/bash  
-
-#Testing DQN-Routing
-cd .. 
-
-#Load factors array. The execution will iterate over the array.
 array=(
-0.5
-1
-1.5
-2
+0.6
+#0.8
+#1.0
+#1.2
+#1.4
 )
 counter=0
 
@@ -17,30 +12,36 @@ counter=0
 for j in ${array[@]}
 	do 
 	echo $j
-	
-    FLOAT=$(echo $j*10000 | bc)
-    res1=${FLOAT/.*}
+	FLOAT=$(echo $j*1000 | bc)
+	res1=${FLOAT/.*}
 	echo $res1
-
-	python3 main.py --simTime=60 \
-		--basePort=$((5655 + (counter*50) )) \
+	python3 main.py \
+		--simTime=15 \
+		--basePort=6000 \
 		--train=0 \
-		--session_name="test_load_$res1"\
-		--logs_parent_folder=examples/geant/ \
-		--traffic_matrix_path=examples/geant/traffic_matrices/node_intensity_normalized.txt \
-		--adjacency_matrix_path=examples/geant/adjacency_matrix.txt \
-		--node_coordinates_path=examples/geant/node_coordinates.txt \
-		--load_path=examples/geant/saved_models/q_routing_geant_tiago_lr_1e-4_batch_512_iter_3000_eps_1_step_0_007_load_0_5/iteration1_episode1 \
+		--seed=100 \
+		--agent_type="sp" \
+		--session_name="test_sp_09_08_v5_load_$res1" \
+		--signaling_type="ideal" \
+		--signalingSim=1 \
+		--training_step=0.01 \
+		--batch_size=256 \
+		--lr=0.001 \
+		--gamma=1.0 \
+		--exploration_final_eps=0.01 \
+		--exploration_initial_eps=1.0 \
+		--iterationNum=3000 \
+		--training_trigger_type="time" \
 		--save_models=0 \
 		--start_tensorboard=0 \
-		--load_factor=$j
-	counter=$((counter+1))
-	echo $counter
-	sleep 5
+		--replay_buffer_max_size=15000 \
+   		--link_delay="1ms" \
+		--load_factor=$j \
+		--logs_parent_folder=examples/abilene/ \
+		--traffic_matrix_index=5 \
+		--logging_timestep=1 \
+		--adjacency_matrix_path=examples/abilene/adjacency_matrix.txt \
+		--node_coordinates_path=examples/abilene/node_coordinates.txt \
+		--max_out_buffer_size=16260 \
+		#--load_path=examples/abilene/dqn_buffer_sp_init
 done
-
-
-
-
-
-rm -r ../ns3-gym/scratch/prisma
