@@ -15,14 +15,12 @@ The main contributions of this framework:
 5) Improve Tensorboard logging by incorporating both training and testing phases.
 6) Implement control packets to realistically simulate the communication between the nodes and evaluate the overhead of running a DRL approach.
 
-
 Installation
 ============
-The PRISMA-v2 installlation can be done using the following methods:
+I- Local Installation
+============
 
-# Downloading and installing locally
-
-If you don't have the Ns3-gym alrady installed
+If you don't have the Nse-gym alrady installed
 
 1. If the submodule was not yet initialized, initialize them.
 ```
@@ -39,23 +37,36 @@ sudo sh install.sh
 
 3. Go to my_network directory and install the python packages required using the command below (numpy, networkx, gym, tensorflow, zmq)
 ```
-cd ./my_network/
+cd ./prisma/
 pip install -e .
 ```
 
-4. For training, run the script:
+4. For training or testing, run the main program with the parameters:
 ```
-./train.sh
+python3 main.py $PARAMS
 ```
+II- Using Docker
+============
+## 1. Build the docker image locally
 
-5. For testing the agent, run the script:
-```
-./test.sh
-```
+a) Install docker dependencies
 
-6. (Optional) For killing agents, use the script:
+b) build the docker image using the docker file
 ```
-./kill_agents.sh
+docker build -t prisma .
+```
+c) run the docker image and bind only the examples folder to the container
+```
+sudo docker run --rm --gpus all -v ./prisma/examples:/app/prisma/examples -w /app/prisma prisma /bin/bash -c "python3 main.py $PARAMS"
+```
+## 2. Use an existing environment from DockerHub
+a) Pull the docker image from dockerhub
+```
+docker pull allicheredha/prisma_env
+```
+b) run the docker image and bind the complete folder to the container
+```
+sudo docker run --rm --gpus all -v ./prisma/:/prisma -w /prisma allicheredha/prisma_env /bin/bash -c "python3 main.py $PARAMS"
 ```
 
 Usage guide
