@@ -33,25 +33,37 @@ sudo sh install.sh
 
 3. Go to my_network directory and install the python packages required using the command below (numpy, networkx, gym, tensorflow, zmq)
 ```
-cd ./my_network/
+cd ./prisma/
 pip install -e .
 ```
 
-4. For training, run the script:
+4. For training or testing, run the main program with the parameters:
 ```
-./train.sh
+python3 main.py $PARAMS
 ```
+II- Usage with Docker
+============
+1. Build the docker image locally
 
-5. For testing the agent, run the script:
-```
-./test.sh
-```
+a) Install docker dependencies
 
-6. (Optional) For killing agents, use the script:
+b) build the docker image using the docker file
 ```
-./kill_agents.sh
+docker build -t prisma .
 ```
-
+c) run the docker image and bind only the examples folder to the container
+```
+sudo docker run --rm --gpus all -v ./prisma/examples:/app/prisma/examples -w /app/prisma prisma /bin/bash -c "python3 main.py $PARAMS"
+```
+2- Usage with Dockerhub
+a) Pull the docker image from dockerhub
+```
+docker pull allicheredha/prisma_env
+```
+b) run the docker image and bind the complete folder to the container
+```
+sudo docker run --rm --gpus all -v ./prisma/:/prisma -w /prisma allicheredha/prisma_env /bin/bash -c "python3 main.py $PARAMS"
+```
 Usage guide
 ===========
 
