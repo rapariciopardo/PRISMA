@@ -15,6 +15,8 @@ The main contributions of this framework:
 
 Installation
 ============
+I- Local Installation
+============
 
 If you don't have the Nse-gym alrady installed
 
@@ -41,9 +43,9 @@ pip install -e .
 ```
 python3 main.py $PARAMS
 ```
-II- Usage with Docker
+II- Using Docker
 ============
-1. Build the docker image locally
+## 1. Build the docker image locally
 
 a) Install docker dependencies
 
@@ -55,7 +57,7 @@ c) run the docker image and bind only the examples folder to the container
 ```
 sudo docker run --rm --gpus all -v ./prisma/examples:/app/prisma/examples -w /app/prisma prisma /bin/bash -c "python3 main.py $PARAMS"
 ```
-2- Usage with Dockerhub
+## 2. Use an existing environment from DockerHub
 a) Pull the docker image from dockerhub
 ```
 docker pull allicheredha/prisma_env
