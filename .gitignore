@@ -60,3 +60,5 @@ prisma/figures
 prisma/*.png
 prisma/*.json
 prisma/profiling results
+.test_results/*
+prisma/examples/4n_overlay_full_mesh_abilene/results/*

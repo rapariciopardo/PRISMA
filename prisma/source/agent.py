@@ -71,6 +71,7 @@ class Agent():
         cl.basePort = params_dict["basePort"]
         cl.load_path = params_dict["load_path"]
         cl.logs_folder = params_dict["logs_folder"]
+        cl.load_factor = params_dict["load_factor"]
         cl.loss_penalty = params_dict["loss_penalty"]
         cl.link_delay = 0.00#params_dict["link_delay"]
         cl.link_cap = params_dict["link_cap"]
@@ -127,6 +128,15 @@ class Agent():
         cl.sessionName=params_dict["session_name"]
         cl.logs_parent_folder = params_dict["logs_parent_folder"]
         cl.total_rewards_with_loss=0
+        cl.lambda_train_step = params_dict["lambda_train_step"]
+        cl.buffer_soft_limit = params_dict["buffer_soft_limit"]
+        cl.lamda_training_start_time = params_dict["lamda_training_start_time"]
+        cl.lambda_lr=params_dict["lambda_lr"]
+        cl.constrained_loss_database =  [[DigitalTwinDB(Agent.lambda_train_step) for _ in range(len(list(cl.G.neighbors(n))))] for n in range(cl.numNodes)]
+        cl.lamda_coefs = [[0 for _ in range(len(list(cl.G.neighbors(n))))] for n in range(cl.numNodes)]
+        cl.max_observed_values = [[0 for _ in range(len(list(cl.G.neighbors(n))))] for n in range(cl.numNodes)]
+
+
         cl.sync_counters = [0 for _ in range(cl.numNodes)]
         cl.max_nb_arrived_pkts = params_dict["max_nb_arrived_pkts"]
         if params_dict["agent_type"] == "opt":
@@ -154,6 +164,7 @@ class Agent():
 
         ### define node neighbors
         self.neighbors = list(Agent.G.neighbors(self.index))
+        
         
     
     def _sync_current(self, neighbor_idx, with_temp=False):

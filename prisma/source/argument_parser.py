@@ -110,6 +110,10 @@ def parse_arguments():
     group3.add_argument('--loss_penalty_type', type=str, choices=["None", "fixed", "constrained"],
                         help='Define the type of loss penalty to be added to the reward. If None, no loss penalty. If fixed, use a fixed loss pen. If constrained, use a loss mechanism based on RCPO',
                         default="fixed")
+    group3.add_argument('--lamda_training_start_time', type=float, help='Number of seconds to wait before starting the training (used when training and loss_penalty_type is constrained)', default=60)
+    group3.add_argument('--lambda_lr', type=float, help='Learning rate for the lambda parameter (used when training and loss_penalty_type is constrained)', default=1e-7)
+    group3.add_argument('--lambda_train_step', type=float, help='Number of seconds to train (used when training)', default=1)
+    group3.add_argument('--buffer_soft_limit', type=float, help='Buffer soft limit ratio (used when training and loss_penalty_type is constrained)', default=0.6)
     group5 = parser.add_argument_group('Other parameters')
     group5.add_argument('--start_tensorboard', type=int, help='if True, starts a tensorboard server to keep track of simulation progress', default=0)
     group5.add_argument('--tensorboard_port', type=int, help='Tensorboard server port', default=16666)
@@ -168,7 +172,8 @@ def parse_arguments():
         np.savetxt(params["opt_rejected_path"], json.load(open(params["optimal_soltion_path"], "r"))["rejected_flows"], fmt='%.6f')
     else:
         print(f"WARNING: optimal solution file {params['optimal_soltion_path']} does not exist")
-        np.savetxt(params["opt_rejected_path"], np.zeros((params["numNodes"], params["numNodes"])), fmt='%.6f')
+        K_size = np.loadtxt(open(params["physical_adjacency_matrix_path"])).shape
+        np.savetxt(params["opt_rejected_path"], np.zeros(K_size), fmt='%.6f')
     # params["optimal_soltion_path"] = f"examples/{topology_name}/optimal_solution/{params['traffic_matrix_index']}_adjusted_5_nodes_mesh_norm_matrix_uniform/{int(params['load_factor']*100)}_ut_minCostMCF.json"
     
     ## compute the loss penalty

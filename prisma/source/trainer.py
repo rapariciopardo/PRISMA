@@ -21,9 +21,11 @@ class Trainer(Agent):
         self.last_sync_time = 0
         self.gradient_step_idx = 1
         
-        ## define the log file for td error 
+        ## define the log file for trainer 
         self.tb_writer_dict = {"td_error": tf.summary.create_file_writer(logdir=f'{Agent.logs_folder}/td_error/node_{self.index}'),
-                               "replay_buffer_length": tf.summary.create_file_writer(logdir=f'{Agent.logs_folder}/replay_buffer_length/node_{self.index}')}
+                               "replay_buffer_length": tf.summary.create_file_writer(logdir=f'{Agent.logs_folder}/replay_buffer_length/node_{self.index}'),
+                               "summary_writer_lambdas" : [tf.summary.create_file_writer(logdir=f'{Agent.logs_folder}/lambdas/node_{self.index}_{idx}') for idx in range(len(self.neighbors))]
+                               }
         
     def run(self):
         """
@@ -40,6 +42,10 @@ class Trainer(Agent):
                 
             ## check if it is time to train
             if Agent.curr_time > (self.last_training_time + Agent.training_step) and Agent.replay_buffer[self.index].total_samples>= Agent.batch_size:
+                ## train lambda coefficient if loss penalty type is "constrained"
+                if Agent.loss_penalty_type == "constrained":
+                    if Agent.curr_time > Agent.lamda_training_start_time:
+                        self._update_lambda_coefs()
                 self.step()
 
     def step(self):
@@ -64,6 +70,9 @@ class Trainer(Agent):
                 action_indices_all.append(action_indices)
                 if len(action_indices):
                     if Agent.signaling_type in ("NN", "ideal"):
+                        penalty = 0
+                        if Agent.loss_penalty_type == "constrained":
+                            penalty = Agent.lamda_coefs[self.index][indx] * ((obses_t[action_indices, indx]/Agent.max_observed_values[self.index][self.action]) - Agent.buffer_soft_limit)
                         targets_t.append(Agent.agents[self.index].get_neighbor_target_value(indx, 
                                                                                             rewards_t[action_indices], 
                                                                                             tf.constant(np.array(np.vstack(next_obses_t[action_indices]),
@@ -169,3 +178,17 @@ class Trainer(Agent):
             else:
                 for indx, neighbor in enumerate(self.neighbors): 
                     self._sync_current(indx)
+                    
+    def _update_lambda_coefs(self):
+        """
+            update the lambda coefficients for the current agent
+        """
+        for neighbor_idx in range(len(self.neighbors)):
+            data = (Agent.constrained_loss_database[self.index][neighbor_idx].get_data()[0]/Agent.max_observed_values[self.index][self.action]) - Agent.buffer_soft_limit
+            if len(data) > 0:
+                constraint_grad = np.mean(data)
+                Agent.lamda_coefs[self.index][neighbor_idx] = np.max((Agent.lamda_coefs[self.index][neighbor_idx] + (Agent.lambda_lr * constraint_grad), 0))
+                
+            with self.tb_writer_dict["summary_writer_lambdas"][neighbor_idx].as_default():
+                tf.summary.scalar('lambda_coefs_over_step', Agent.lamda_coefs[self.index][neighbor_idx], step=self.gradient_step_idx)
+                tf.summary.scalar('lambda_coefs_over_time', Agent.lamda_coefs[self.index][neighbor_idx], step=int(Agent.curr_time*1e6))

@@ -47,17 +47,18 @@ def main():
         if os.path.exists(params["logs_parent_folder"] + "/saved_models/" + params["session_name"] + "/final"):
             if len(os.listdir(params["logs_parent_folder"] + "/saved_models/" + params["session_name"] + "/final")) > 0:
                 print(f'The couple {params["seed"]} {params["traffic_matrix_index"]} already exists in : {params["logs_parent_folder"] + "/saved_models/" + params["session_name"]}')
-                return 1
+                return None, None
     
     ## check if the test is already done   
     else:
-        if os.path.exists(f"{params['logs_parent_folder']}/{params['session_name']}/test_results"):
-            if len(os.listdir(f"{params['logs_parent_folder']}/{params['session_name']}/test_results")) > 0:
+        model_version = params["load_path"].split("/")[-1]
+        if os.path.exists(f"{params['logs_parent_folder']}/{params['session_name']}/test_results/{model_version}"):
+            if len(os.listdir(f"{params['logs_parent_folder']}/{params['session_name']}/test_results/{model_version}")) > 0:
                 ## check if the test load factor is already in the tensorboard file
                 try: 
-                    if int(100 * params["load_factor"]) in convert_tb_data(f"{params['logs_parent_folder']}/{params['session_name']}/test_results")["step"].values:
-                        print(f'The test session with load factor {params["load_factor"]} already exists in the {params["session_name"]}')
-                        return 1
+                    if int(100 * params["load_factor"]) in convert_tb_data(f"{params['logs_parent_folder']}/{params['session_name']}/test_results/{model_version}")["step"].values:
+                        print(f'The test session with load factor {params["load_factor"]} already exists in the {params["session_name"]}/test_results/{model_version} folder')
+                        return None, None
                 except:
                     pass
                             
@@ -83,8 +84,6 @@ def main():
             tf.summary.experimental.write_raw_pb(
                     custom_plots().SerializeToString(), step=0
                 )
-    else:
-        summary_writer_results = tf.summary.create_file_writer(logdir=params["logs_folder"] + "/test_results")
     
     ## setup the agents (fix the static variables)
     Agent.init_static_vars(params)
@@ -164,7 +163,7 @@ def main():
     
     ## write the results for the test session
     if params["train"] == 0:
-       stats_writer_test(summary_writer_results, Agent)
+       stats_writer_test(params["logs_folder"] + "/test_results", Agent)
 
     ## save models        
     if params["save_models"] and Agent.curr_time >= params["simTime"]-5:

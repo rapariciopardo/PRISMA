@@ -23,7 +23,7 @@ if __name__ == '__main__':
     ### define the params
     # topology = '22n'#'4n' #'5n'
     size_of_data_per_dst = 10000
-    topology_name = "geant"
+    topology_name = "overlay_full_mesh_10n_geant"
     buffer_max_length = 16260 # bytes
     link_cap = 500000 # kbps
     pkt_size = 512 # bytes
@@ -35,7 +35,7 @@ if __name__ == '__main__':
     G=nx.Graph()
     for i, element in enumerate(np.loadtxt(open(f"examples/{topology_name}/topology_files/node_coordinates.txt"))):
         G.add_node(i,pos=tuple(element))
-    G = nx.from_numpy_matrix(np.loadtxt(open(f"examples/{topology_name}/topology_files/adjacency_matrix.txt")), create_using=G)
+    G = nx.from_numpy_matrix(np.loadtxt(open(f"examples/{topology_name}/topology_files/overlay_adjacency_matrix.txt")), create_using=G)
     # ping_mat = np.loadtxt(open(f"scripts/ping_{topology}_mat.txt"))
     #remove_list = [node for node,degree in dict(G.degree()).items() if degree < 1]
     #G.remove_nodes_from(remove_list)
