@@ -247,7 +247,6 @@ void BigSignalingGeneratorApplication::ScheduleNextTx ()
       double dataRate = (m_pktSizeMean*8)/m_syncStep;
       double delay = ((m_segSize*8)/dataRate);
       //iat->GetValue(); // bits/ static_cast<double>(m_avgRate.GetBitRate ());
-      //NS_LOG_UNCOND("DELAY:     "<<delay);
       Time nextTime (Seconds (delay)); // Time till next packet
       //NS_LOG_LOGIC ("nextTime = " << nextTime);
       m_sendEvent = Simulator::Schedule (nextTime,
@@ -272,7 +271,7 @@ void BigSignalingGeneratorApplication::SendPacket ()
   tag.SetFinalDestination(m_dest-1);
   tag.SetSource(m_src-1);
   tag.SetNextHop(m_dest-1);
-  tag.SetLastHop(m_src-1);
+  tag.SetLastHop(1000);//(m_src-1);
   tag.SetSegIndex(m_segIndex);
   tag.SetNNIndex(m_NNIndex);
   // if(m_srcOverlay-1>11) NS_LOG_UNCOND("ERROR "<<m_src-1);

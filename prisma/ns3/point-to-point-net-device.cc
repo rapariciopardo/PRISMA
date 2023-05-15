@@ -215,6 +215,7 @@ PointToPointNetDevice::PointToPointNetDevice ()
     m_linkUp (false),
     m_currentPkt (0)
 {
+  m_computeStats = new ComputeStats();
   NS_LOG_FUNCTION (this);
 }
 
@@ -430,9 +431,29 @@ PointToPointNetDevice::Receive (Ptr<Packet> packet)
       m_rxCallback (this, packet, protocol, GetRemote ());
      
       if(tagcopy.GetSimpleValue()==0 && tagcopy.GetFinalDestination()==m_node->GetId()){
-        m_e2eDelay[tagcopy.GetSource()][tagcopy.GetFinalDestination()].push_back( Simulator::Now().GetMilliSeconds() - tagcopy.GetStartTime());
-        //PrintDelayInfo();
+        if(tagcopy.GetTrafficValable()){
+          m_computeStats->incrementOverlayPacketsArrived();
+          m_computeStats->addCost(Simulator::Now().GetSeconds() - tagcopy.GetStartTime());
+          m_computeStats->addE2eDelay(Simulator::Now().GetSeconds() - tagcopy.GetStartTime());
+        } else {
+          m_computeStats->incrementUnderlayPacketsArrived();
+        }
       }
+
+      if(tagcopy.GetSimpleValue()>0 && tagcopy.GetFinalDestination()==m_node->GetId()){
+        m_computeStats->addGlobalBytesSignaling(packet->GetSize());
+      }
+
+      if(tagcopy.GetLastHop()==1000){
+        if(tagcopy.GetSimpleValue()==0){
+          m_computeStats->addGlobalBytesData(packet->GetSize());
+        }
+      } 
+
+      if(tagcopy.GetSimpleValue()==0 && tagcopy.GetLastHop()==1000){
+        if(tagcopy.GetTrafficValable()) m_computeStats->incrementOverlayPacketsInjected();
+        else m_computeStats->incrementUnderlayPacketsInjected();
+      } 
       
 
     }
@@ -570,76 +591,49 @@ PointToPointNetDevice::Send (
   uint16_t protocolNumber)
 {
   NS_LOG_FUNCTION (this << packet << dest << protocolNumber);
-  //if(m_node->GetId()<=10){
-  //NS_LOG_UNCOND ("Node: "<<m_node->GetId()<<"    IF: "<<m_ifIndex);
-  //NS_LOG_UNCOND ("UID is " << packet->GetUid ());
-  //}
-  //NS_LOG_UNCOND ("p=" << packet->ToString() << ", dest=" << &dest);
-  //NS_LOG_UNCOND ("UID is " << packet->GetUid ());
-
-  //MyTag tagCopy;
-  //packet->PeekPacketTag(tagCopy);
-  //
-  //if(tagCopy.GetLastHop()==7 && tagCopy.GetSimpleValue()==0 && m_node->GetId()==3){
-  //  NS_LOG_UNCOND("Node: "<<m_node->GetId()<<"   "<<m_ifIndex);
-  //  NS_LOG_UNCOND(m_queue->GetNBytes()<<"   "<<Simulator::Now().GetSeconds());
-  //}
-
-  //
-  // If IsLinkUp() is false it means there is no channel to send any packet 
-  // over so we just hit the drop trace on the packet and return an error.
-  //
+  
+  //Get packet tag
   MyTag tagcopy;
   packet->PeekPacketTag(tagcopy);
 
+  //Check if the packet is valid
   if(tagcopy.GetSimpleValue()>4) return false;
-  //if(packet->GetUid()==30){
-  //  NS_LOG_UNCOND("..............");
-  //  NS_LOG_UNCOND("Node: "<<m_node->GetId()<<"    IF: "<<m_ifIndex<<"    ID: "<<packet->GetUid());
-  //  NS_LOG_UNCOND("Queue: "<<m_queue->GetNBytes()<<"    TIME: "<<Simulator::Now().GetMilliSeconds()<<"    SIZE: "<<packet->GetSize()<<"    TAG: "<<uint32_t(tagcopy.GetSimpleValue())<<"   VAL: "<<uint32_t(tagcopy.GetTrafficValable()));
-  //  NS_LOG_UNCOND("Dst: "<<tagcopy.GetFinalDestination()<<"    LastHop: "<<tagcopy.GetLastHop());
-  //  if(tagcopy.GetTrafficValable()==237) NS_LOG_UNCOND(packet->ToString());
-  //}
-
+  
+  // If IsLinkUp() is false it means there is no channel to send any packet 
+  // over so we just hit the drop trace on the packet and return an error.
   if (IsLinkUp () == false)
     {
       m_macTxDropTrace (packet);
       return false;
     }
-  if(tagcopy.GetSimpleValue()==0 && tagcopy.GetRejectedPacket()==1 && m_node->GetId()<23){
-    //NS_LOG_UNCOND(m_node->GetId()<<"     "<<m_ifIndex<<"    "<<tagcopy.GetFinalDestination()<<"   OPTIMAL REJECT    "<<packet->GetUid());
+  //Get if the packet was rejected by the Optimal Algorithm
+  if(tagcopy.GetSimpleValue()==0 && tagcopy.GetRejectedPacket()==1 && m_node->GetId()<11){
+    if(tagcopy.GetTrafficValable()){
+      m_computeStats->incrementOverlayPacketsLost();
+      m_computeStats->addLossPenaltyToCost();
+    } else m_computeStats->incrementUnderlayPacketsLost();
+    
+    
     m_macTxDropTrace (packet);
     return false;
   }
   
+  
 
-  //
+
   // Stick a point to point protocol header on the packet in preparation for
   // shoving it out the door.
-  //
   AddHeader (packet, protocolNumber);
 
   m_macTxTrace (packet);
 
-  //
-  // We should enqueue and dequeue the packet to hit the tracing hooks.
-  //
-  //if(tagcopy.GetSource()==5 && tagcopy.GetFinalDestination()==7 && m_node->GetId()==5){
-  //  if(m_ifIndex==2) NS_LOG_UNCOND("AQUI");
-  //  if(m_ifIndex==3) NS_LOG_UNCOND("LA"); 
-  //  //NS_LOG_UNCOND(m_node->GetId()<<"     "<<m_ifIndex<<"    "<<tagcopy.GetSource()<<"   "<<tagcopy.GetFinalDestination()<<"  "<<uint32_t(tagcopy.GetSimpleValue())<<"     "<<m_queue->GetNBytes()<<"   NORMAL REJECT    "<<packet->GetUid());
-  //}
 
+  // We should enqueue and dequeue the packet to hit the tracing hooks.
   bool enq = m_queue->Enqueue (packet);
+  
   if (enq)
   {
-    //if(tagcopy.GetSimpleValue()==3 || tagcopy.GetSimpleValue()==4){
-    //  NS_LOG_UNCOND("Node: "<<m_node->GetId()<<"   IF: "<<m_ifIndex<<"   Time: "<<Simulator::Now().GetSeconds()<<"   Queue: "<<m_queue->GetNBytes()<<" Uid: "<<packet->GetUid());
-    //  NS_LOG_UNCOND("Tag: "<<uint32_t(tagcopy.GetSimpleValue())<<"   SRC: "<<tagcopy.GetSource()<<"   Dest: "<<tagcopy.GetFinalDestination());
-    //}
-    //
-    // If the channel is ready for transition we send the packet right now
-    // 
+    // If the channel is ready for transition we send the packet right now 
     if (m_txMachineState == READY)
       {
         packet = m_queue->Dequeue ();
@@ -651,13 +645,12 @@ PointToPointNetDevice::Send (
     return true;
   }
 
-  
-
   // Enqueue may fail (overflow)
-
-  
- 
-  if(tagcopy.GetSimpleValue()==0 || tagcopy.GetSimpleValue()==3 || tagcopy.GetSimpleValue()==4){
+  if(tagcopy.GetSimpleValue()==0){
+    if(tagcopy.GetTrafficValable()){
+      m_computeStats->incrementOverlayPacketsLost();
+      m_computeStats->addLossPenaltyToCost();
+    } else m_computeStats->incrementUnderlayPacketsLost();
     m_macTxDropTrace (packet);
   } 
   return false;

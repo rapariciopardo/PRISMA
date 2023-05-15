@@ -47,7 +47,7 @@ MyTag::GetSerializedSize (void) const
     ret += 12;
   }
   else if(m_simpleValue==2){
-    ret += 8;
+    ret += 16;
   }
   else if (m_simpleValue==3){
     ret += 16;
@@ -77,6 +77,7 @@ MyTag::Serialize (TagBuffer i) const
   }
   else if(m_simpleValue==2){
     i.WriteU64 (m_pktId);
+    i.WriteDouble (m_oneHopDelay);
   }
   else if(m_simpleValue==3){
     i.WriteU64 (m_startTime);
@@ -84,7 +85,7 @@ MyTag::Serialize (TagBuffer i) const
     i.WriteU32 (m_tunnelOverlaySendingIndex);
   }
   else if(m_simpleValue==4){
-    i.WriteU64 (m_startTime);
+    i.WriteDouble (m_oneHopDelay);
     i.WriteU32 (m_overlayIndex);
     i.WriteU32 (m_tunnelOverlaySendingIndex);
   }
@@ -112,6 +113,7 @@ MyTag::Deserialize (TagBuffer i)
   }
   else if(m_simpleValue==2){
     m_pktId=i.ReadU64 ();
+    m_oneHopDelay = i.ReadDouble();
   }
   else if(m_simpleValue==3){
     m_startTime=i.ReadU64 ();
@@ -119,7 +121,7 @@ MyTag::Deserialize (TagBuffer i)
     m_tunnelOverlaySendingIndex = i.ReadU32 ();
   }
   else if(m_simpleValue==4){
-    m_startTime=i.ReadU64 ();
+    m_oneHopDelay=i.ReadDouble ();
     m_overlayIndex = i.ReadU32 ();
     m_tunnelOverlaySendingIndex = i.ReadU32 ();
   }
@@ -269,4 +271,14 @@ uint32_t
 MyTag::GetTunnelOverlaySendingIndex (void) const
 {
   return m_tunnelOverlaySendingIndex;
+}
+void
+MyTag::SetOneHopDelay (float value)
+{
+  m_oneHopDelay = value;
+}
+float 
+MyTag::GetOneHopDelay (void) const
+{
+  return m_oneHopDelay;
 }

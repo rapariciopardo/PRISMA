@@ -60,7 +60,6 @@
 #include "poisson-app-helper.h"
 #include "big-signaling-app-helper.h"
 #include "big-signaling-application.h"
-#include "ospf-signaling-app-helper.h"
 #include "tcp-application.h"
 #include "ns3/global-route-manager.h"
 #include "ns3/mobility-module.h"
@@ -70,6 +69,7 @@
 #include "ns3/stats-module.h"
 #include "ns3/opengym-module.h"
 #include "packet-routing-gym.h"
+#include "data-packet-manager.h"
 #include "ipv4-ospf-routing.h"
 #include "conf-loader.h"
 
@@ -240,11 +240,12 @@ int main (int argc, char *argv[])
   NS_LOG_UNCOND("--activateUnderlayTraffic: "<<activateUnderlayTraffic);
   NS_LOG_UNCOND("--RejectedTraffPath: "<<opt_rejected_file_name);
   NS_LOG_UNCOND("--pingAsObs: "<<pingAsObs);
-  NS_LOG_UNCOND("--logs_folder: "<<logs_folder);
-  NS_LOG_UNCOND("--groundTruthFrequence: "<<groundTruthFrequence);
+  NS_LOG_UNCOND("--movingAverageObsSize: "<<movingAverageObsSize);
+  NS_LOG_UNCOND("--nPacketsOverlaySignaling: "<<nPacketsOverlaySignaling);
 
   
-  
+  ComputeStats compStats;
+  compStats.setLossPenalty(lossPenalty);
   //Parameters of the scenario
   double SinkStartTime  = 0.0001;
   double SinkStopTime   = simTime; // - 0.1;//59.90001;
@@ -512,26 +513,22 @@ int main (int argc, char *argv[])
     //nodeOpenGymPort = openGymPort + i;
     Ptr<OpenGymInterface> openGymInterface = CreateObject<OpenGymInterface> (openGymPort + i);
     Ptr<PacketRoutingEnv> packetRoutingEnv;
-    if (eventBasedEnv){
-      packetRoutingEnv = CreateObject<PacketRoutingEnv> (n, n_nodes, linkRateValue, activateSignaling, smallSignalingSize[overlayNodes[i]], overlayNeighbors[overlayNodes[i]]); // event-driven step
-    } else {
-      packetRoutingEnv = CreateObject<PacketRoutingEnv> (Seconds(envStepTime), n); // time-driven step
-    }
+    packetRoutingEnv = CreateObject<PacketRoutingEnv> (n, n_nodes, linkRateValue, activateSignaling, smallSignalingSize[overlayNodes[i]], overlayNeighbors[overlayNodes[i]]); // event-driven step
     packetRoutingEnv->setTrainConfig(train);
-    packetRoutingEnv->setLogsFolder(logs_folder);
-    packetRoutingEnv->setOverlayConfig(overlayNeighbors[overlayNodes[i]], activateOverlaySignaling, nPacketsOverlaySignaling, movingAverageObsSize, map_overlay_array);
+    //packetRoutingEnv->setLogsFolder(logs_folder);
+    //packetRoutingEnv->setOverlayConfig(overlayNeighbors[overlayNodes[i]], activateOverlaySignaling, nPacketsOverlaySignaling, movingAverageObsSize, map_overlay_array);
     packetRoutingEnv->SetOpenGymInterface(openGymInterface);
-    packetRoutingEnv->m_node_container = &nodes_switch;
-    packetRoutingEnv->setPingTimeout(16260, 500000, 1);
-    packetRoutingEnv->setLossPenalty(lossPenalty);
+    packetRoutingEnv->initialize();
+    //packetRoutingEnv->m_node_container = &nodes_switch;
+    //packetRoutingEnv->setPingTimeout(16260, 500000, 1);
+    //packetRoutingEnv->setLossPenalty(lossPenalty);
     packetRoutingEnv->setNetDevicesContainer(&switch_nd);
-    packetRoutingEnv->setPingAsObs(pingAsObs);
-
-    if(i==0 && groundTruthFrequence>0){
-      packetRoutingEnv->setGroundTruthFrequence(groundTruthFrequence);
-    }
-
-
+    packetRoutingEnv->configDataPacketManager(!pingAsObs, nPacketsOverlaySignaling);
+    packetRoutingEnv->configPingBackPacketManager(movingAverageObsSize);
+    //packetRoutingEnv->setPingAsObs(pingAsObs);
+    //if(i==0 && groundTruthFrequence>0){
+    //  packetRoutingEnv->setGroundTruthFrequence(groundTruthFrequence);
+    //}
     for(size_t j = 1;j<nodes_switch.Get(overlayNodes[i])->GetNDevices();j++){
       Ptr<NetDevice> dev_switch =DynamicCast<NetDevice> (nodes_switch.Get(overlayNodes[i])->GetDevice(j)); 
       dev_switch->TraceConnectWithoutContext("MacRx", MakeBoundCallback(&PacketRoutingEnv::NotifyPktRcv, packetRoutingEnv, dev_switch, &traffic_nd));
@@ -693,7 +690,7 @@ int main (int argc, char *argv[])
   {
     NS_LOG_UNCOND("flags" << i);
     packetRoutingEnvs[i]->is_trainStep_flag = 1;
-    packetRoutingEnvs[i]->simulationEnd(activateUnderlayTraffic, load_factor);
+    //packetRoutingEnvs[i]->simulationEnd(activateUnderlayTraffic, load_factor);
     myOpenGymInterfaces[i]->NotifySimulationEnd();
   }
   Simulator::Destroy ();
@@ -1033,7 +1030,7 @@ void printCoordinateArray (const char* description, vector<vector<double> > coor
 void ScheduleNextTrainStep(Ptr<PacketRoutingEnv> openGym)
 {
   // Simulator::Schedule (Seconds(envStepTime), &ScheduleNextTrainStep, envStepTime, openGym);
-  openGym->NotifyTrainStep(openGym);
+  // openGym->NotifyTrainStep(openGym);
 }
 
 void ScheduleHelloMessages(Ipv4OSPFRouting* ospf){

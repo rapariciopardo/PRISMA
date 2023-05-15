@@ -307,7 +307,7 @@ void PoissonGeneratorApplication::SendPacket ()
   tag.SetSource(m_src-1);
   tag.SetNextHop(m_src-1);
   tag.SetLastHop(1000);
-  tag.SetStartTime(uint64_t(Simulator::Now().GetMilliSeconds()));
+  tag.SetStartTime(uint64_t(Simulator::Now().GetSeconds()));
   Ptr<UniformRandomVariable> x = CreateObject<UniformRandomVariable> ();
   x->SetAttribute ("Min", DoubleValue (0.0));
   x->SetAttribute ("Max", DoubleValue (1.0));

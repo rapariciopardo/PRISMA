@@ -30,6 +30,7 @@
 #include "ns3/data-rate.h"
 #include "ns3/ptr.h"
 #include "ns3/mac48-address.h"
+#include "compute-stats-v2.h"
 
 namespace ns3 {
 
@@ -444,6 +445,8 @@ private:
   uint32_t m_ifIndex; //!< Index of the interface
   bool m_linkUp;      //!< Identify if the link is up or not
   TracedCallback<> m_linkChangeCallbacks;  //!< Callback for the link change event
+
+  ComputeStats *m_computeStats;
 
   static const uint16_t DEFAULT_MTU = 1500; //!< Default MTU
 
