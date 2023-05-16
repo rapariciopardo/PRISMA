@@ -149,7 +149,6 @@ class Forwarder(Agent):
                 tf.summary.scalar('exploaration_value_over_time', self.update_eps, step=int(Agent.curr_time*1e6))
 
         ## take the action
-        print(self.index, obs)
         # print("node:", self.index, "obs:", obs, "neighbors:", self.neighbors, "neighbors degrees:", [len(list(Agent.G.neighbors(x))) for x in self.neighbors], "neighbors degrees:", [len(list(Agent.G.neighbors(x))) for x in self.neighbors], "neighbors degrees:", [len(list(Agent.G.neighbors(x))) for x in self.neighbors])
         if obs[0] == self.index or self.transition_number < 1 or self.signaling == True: # pkt arrived to dst or it is a train step, ignore the action
             self.action = 0
@@ -212,7 +211,7 @@ class Forwarder(Agent):
             bool: True if it is a control packet, False otherwise
         """
         tokens = info.split(",")
-        print(tokens)
+        # print(tokens)
         self.delay_time = float(tokens[0].split('=')[-1])
         
         ## treat lost packets
@@ -306,7 +305,8 @@ class Forwarder(Agent):
                 #        self._sync_current(self.neighbors.index(NodeIdSignaled)) 
                 #print("here") 
                 Agent.big_signaling_overhead_counter += self.pkt_size 
-                Agent.big_signaling_pkt_counter += 1 
+                Agent.big_signaling_pkt_counter += 1
+
             return True
             #continue             
         

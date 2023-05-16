@@ -92,16 +92,13 @@ BigSignalingPacketManager::BigSignalingPacketManager (Ptr<Node> node, vector<int
 
 bool 
 BigSignalingPacketManager::receivePacket(Ptr<Packet> packet){
-  NS_LOG_UNCOND("BigSignalingPacketManager::receivePacket before : " << m_source);
   PacketManager::receivePacket(packet);
-  NS_LOG_UNCOND("BigSignalingPacketManager::receivePacket after : " << m_source);
-
 
   //Check if the node is not the packet source
   if(m_source == m_node->GetId()){
     return false;
   }
-
+  m_computeStats->addGlobalBytesSignaling(packet->GetSize());
   //Get extra info from packet
   MyTag tagCopy;
   m_packet->PeekPacketTag(tagCopy);

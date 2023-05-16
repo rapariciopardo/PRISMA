@@ -242,7 +242,6 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
   entity->m_packetType = PacketType(tagCopy.GetSimpleValue());
   
   bool valid = true;
-  NS_LOG_INFO("Packet type: " << entity->m_packetType);
   if(entity->m_packetType==DATA_PACKET){
     valid = entity->m_dataPacketManager->receivePacket(p, netDev);
   } else if(entity->m_packetType==BIG_SIGN_PACKET){

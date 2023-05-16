@@ -446,12 +446,15 @@ PointToPointNetDevice::Receive (Ptr<Packet> packet)
 
       if(tagcopy.GetLastHop()==1000){
         if(tagcopy.GetSimpleValue()==0){
-          m_computeStats->addGlobalBytesData(packet->GetSize());
         }
       } 
 
       if(tagcopy.GetSimpleValue()==0 && tagcopy.GetLastHop()==1000){
-        if(tagcopy.GetTrafficValable()) m_computeStats->incrementOverlayPacketsInjected();
+        if(tagcopy.GetTrafficValable()){
+        m_computeStats->incrementOverlayPacketsInjected();
+            NS_LOG_UNCOND("add data bytes " << packet->GetSize());
+          m_computeStats->addGlobalBytesData(packet->GetSize());
+        } 
         else m_computeStats->incrementUnderlayPacketsInjected();
       } 
       
