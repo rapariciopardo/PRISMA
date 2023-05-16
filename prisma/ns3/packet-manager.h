@@ -44,8 +44,8 @@
 
 
 
-#define MAX_TUNNELS 11
-#define MAX_NODES 11
+#define MAX_TUNNELS 100
+#define MAX_NODES 100
 
 using namespace std;
 
@@ -73,6 +73,7 @@ public:
   void writeStats();
   std::string getLostPackets();
   void setNetDevContainer(NetDeviceContainer netDevs);
+  vector<int> m_map_overlay_array;
 
 
   Ptr<Node> m_node;

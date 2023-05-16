@@ -52,7 +52,7 @@ public:
   SmallSignalingPacketManager();
   SmallSignalingPacketManager(Ptr<Node> node, vector<int> neighbors);
 
-  void receivePacket(Ptr<Packet> packet);
+  bool receivePacket(Ptr<Packet> packet);
 
   string getInfo();
   void losePacket();

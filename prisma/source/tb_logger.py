@@ -142,7 +142,7 @@ def stats_writer_test(summary_writer_results_path, Agent):
         summary_writer_results_path: str. Should be the same as the one used during training
         Agent: the agent class object to retrieve static variables and log them
     """
-    model_version = Agent.load_path.split("/")[-1]
+    model_version = Agent.model_version
     ## create the writer
     summary_writer_results = tf.summary.create_file_writer(logdir=f"{summary_writer_results_path}/{model_version}")
     ## store test stats

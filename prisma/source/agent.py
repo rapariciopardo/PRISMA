@@ -135,6 +135,7 @@ class Agent():
         cl.constrained_loss_database =  [[DigitalTwinDB(Agent.lambda_train_step) for _ in range(len(list(cl.G.neighbors(n))))] for n in range(cl.numNodes)]
         cl.lamda_coefs = [[0 for _ in range(len(list(cl.G.neighbors(n))))] for n in range(cl.numNodes)]
         cl.max_observed_values = [[0 for _ in range(len(list(cl.G.neighbors(n))))] for n in range(cl.numNodes)]
+        cl.model_version = params_dict["model_version"]
 
 
         cl.sync_counters = [0 for _ in range(cl.numNodes)]

@@ -151,19 +151,25 @@ DataPacketManager::getActionSpace()
   return space;
 }
 
-void 
+bool 
 DataPacketManager::receivePacket(Ptr<Packet> packet, Ptr<NetDevice> receivingNetDev){
+  NS_LOG_UNCOND("DataPacketManager::receivePacket before " << m_destination);
   PacketManager::receivePacket(packet);
+  NS_LOG_UNCOND("DataPacketManager::receivePacket after " << m_destination);
+
   m_receivingNetDev = receivingNetDev;
+  MyTag tagCopy;
+  m_packet->PeekPacketTag(tagCopy);
+  return tagCopy.GetTrafficValable();
 }
 
 Ptr<OpenGymDataContainer>
 DataPacketManager::getObservation()
 {
   Ptr<OpenGymBoxContainer<uint32_t> > box = CreateObject<OpenGymBoxContainer<uint32_t> >(m_obs_shape);
-  
+  NS_LOG_UNCOND("DataPacketManager::getObservation " << m_destination << " " << m_map_overlay_array[m_destination]);
   //Adding destination to obs
-  box->AddValue(m_destination);
+  box->AddValue(m_map_overlay_array[m_destination]);
   
 
   //Preparing the config

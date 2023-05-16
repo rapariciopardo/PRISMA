@@ -89,7 +89,7 @@ SmallSignalingPacketManager::SmallSignalingPacketManager (Ptr<Node> node, vector
   NS_LOG_FUNCTION (this);
 }
 
-void 
+bool 
 SmallSignalingPacketManager::receivePacket(Ptr<Packet> packet){
   PacketManager::receivePacket(packet);
   
@@ -98,6 +98,7 @@ SmallSignalingPacketManager::receivePacket(Ptr<Packet> packet){
   m_packet->PeekPacketTag(tagCopy);
   m_packetIdSignaled = tagCopy.GetIdValue();
   m_oneHopDelay = tagCopy.GetOneHopDelay();
+  return m_arrivedAtFinalDest;
 }
 
 float

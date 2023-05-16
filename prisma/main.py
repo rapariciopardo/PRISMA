@@ -41,6 +41,12 @@ def main():
     ## fix the seed
     fix_seed(params["seed"])
     
+    ## fill model version
+    if "dqn_buffer" not in params["agent_type"] or params["train"] == 1:
+        params["model_version"] = ""
+    else:
+        params["model_version"] = params["load_path"].split("/")[-1]
+    
     ## check if the session already exists and the model is already trained
     if params["train"] == 1:
         pathlib.Path(params["logs_parent_folder"] + "/saved_models/").mkdir(parents=True, exist_ok=True)
@@ -51,13 +57,12 @@ def main():
     
     ## check if the test is already done   
     else:
-        model_version = params["load_path"].split("/")[-1]
-        if os.path.exists(f"{params['logs_parent_folder']}/{params['session_name']}/test_results/{model_version}"):
-            if len(os.listdir(f"{params['logs_parent_folder']}/{params['session_name']}/test_results/{model_version}")) > 0:
+        if os.path.exists(f"{params['logs_parent_folder']}/{params['session_name']}/test_results/{params['model_version']}"):
+            if len(os.listdir(f"{params['logs_parent_folder']}/{params['session_name']}/test_results/{params['model_version']}")) > 0:
                 ## check if the test load factor is already in the tensorboard file
                 try: 
-                    if int(100 * params["load_factor"]) in convert_tb_data(f"{params['logs_parent_folder']}/{params['session_name']}/test_results/{model_version}")["step"].values:
-                        print(f'The test session with load factor {params["load_factor"]} already exists in the {params["session_name"]}/test_results/{model_version} folder')
+                    if int(100 * params["load_factor"]) in convert_tb_data(f"{params['logs_parent_folder']}/{params['session_name']}/test_results/{params['model_version']}")["step"].values:
+                        print(f'The test session with load factor {params["load_factor"]} already exists in the {params["session_name"]}/test_results/{params["model_version"]} folder')
                         return None, None
                 except:
                     pass

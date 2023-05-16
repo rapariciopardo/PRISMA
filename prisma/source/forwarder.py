@@ -151,7 +151,7 @@ class Forwarder(Agent):
         ## take the action
         print(self.index, obs)
         # print("node:", self.index, "obs:", obs, "neighbors:", self.neighbors, "neighbors degrees:", [len(list(Agent.G.neighbors(x))) for x in self.neighbors], "neighbors degrees:", [len(list(Agent.G.neighbors(x))) for x in self.neighbors], "neighbors degrees:", [len(list(Agent.G.neighbors(x))) for x in self.neighbors])
-        if obs[0] == self.index or self.transition_number < 1 or self.signaling != 1: # pkt arrived to dst or it is a train step, ignore the action
+        if obs[0] == self.index or self.transition_number < 1 or self.signaling == True: # pkt arrived to dst or it is a train step, ignore the action
             self.action = 0
         else:
             self.action = self.take_action(obs)
@@ -177,9 +177,7 @@ class Forwarder(Agent):
         if Agent.loss_penalty_type == "fixed":
             return Agent.loss_penalty
 
-                
 
-    
     def take_action(self, obs):
         """ Take an action given obs
 

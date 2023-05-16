@@ -55,7 +55,7 @@ public:
   void setSmallSignalingPacketSize(uint32_t signPacketSize);
   void setPingBackPacketManager(PingBackPacketManager *pingBackPacketManager);
 
-  void receivePacket(Ptr<Packet> packet, Ptr<NetDevice> receivingNetDev);
+  bool receivePacket(Ptr<Packet> packet, Ptr<NetDevice> receivingNetDev);
 
   string getInfo();
   static void dropPacket(DataPacketManager *entity, Ptr<const Packet> packet);
@@ -72,7 +72,7 @@ public:
   void sendPingForwardPacket(uint32_t overlayIndex);
   void setObsBufferLength(bool value);
   void setPacketsIntervalForSendingPingBack(uint32_t value);
-
+  
 private:
   bool m_obs_bufferLength = false;
   uint32_t m_packetsIntervalForSendingPingPacket=5;

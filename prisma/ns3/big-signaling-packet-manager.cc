@@ -92,7 +92,10 @@ BigSignalingPacketManager::BigSignalingPacketManager (Ptr<Node> node, vector<int
 
 bool 
 BigSignalingPacketManager::receivePacket(Ptr<Packet> packet){
+  NS_LOG_UNCOND("BigSignalingPacketManager::receivePacket before : " << m_source);
   PacketManager::receivePacket(packet);
+  NS_LOG_UNCOND("BigSignalingPacketManager::receivePacket after : " << m_source);
+
 
   //Check if the node is not the packet source
   if(m_source == m_node->GetId()){
@@ -104,8 +107,7 @@ BigSignalingPacketManager::receivePacket(Ptr<Packet> packet){
   m_packet->PeekPacketTag(tagCopy);
   m_NNIndex = tagCopy.GetNNIndex();
   m_segIndex = tagCopy.GetSegIndex();
-  
-  return true;
+  return m_arrivedAtFinalDest;
 }
 
 string
@@ -117,7 +119,7 @@ BigSignalingPacketManager::getInfo()
   myInfo += ", segment Index="; //17
   myInfo += std::to_string(m_segIndex);
   myInfo += ", NodeId Signaled="; //18
-  myInfo += std::to_string(m_source); 
+  myInfo += std::to_string(m_map_overlay_array[m_source]); 
   
   return myInfo;
 }

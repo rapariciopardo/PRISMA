@@ -67,6 +67,7 @@ public:
   void setTrainConfig(bool train);
   void configDataPacketManager(bool obs_bufferLength, uint32_t packetsIntervalForSendingPingPacket);
   void configPingBackPacketManager(uint32_t movingAverageSize);
+  void mapOverlayNodes(std::vector <int> map_overlay_array);
   
   virtual ~PacketRoutingEnv ();
   static TypeId GetTypeId (void);

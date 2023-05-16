@@ -147,7 +147,10 @@ Ptr<OpenGymDataContainer>
 PacketRoutingEnv::GetObservation()
 {
   Ptr<OpenGymBoxContainer<int32_t> > box = CreateObject<OpenGymBoxContainer<int32_t> >(m_dataPacketManager->getObsShape());
-  if(is_trainStep_flag==0) return m_dataPacketManager->getObservation();
+  if(is_trainStep_flag==0) {
+    if (m_packetType==DATA_PACKET) return m_dataPacketManager->getObservation();
+    else box->AddValue(1000);
+  }
   else {
     box->AddValue(-1);
   }
@@ -214,6 +217,12 @@ PacketRoutingEnv::initialize()
   
 }
 
+void
+PacketRoutingEnv::mapOverlayNodes(std::vector <int> map_overlay_array)
+{
+  m_dataPacketManager->m_map_overlay_array = map_overlay_array;
+  m_bigSignalingPacketManager->m_map_overlay_array = map_overlay_array;
+}
 
 void
 PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netDev, NetDeviceContainer* nd, Ptr<const Packet> packet)
@@ -233,13 +242,13 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
   entity->m_packetType = PacketType(tagCopy.GetSimpleValue());
   
   bool valid = true;
-  
+  NS_LOG_INFO("Packet type: " << entity->m_packetType);
   if(entity->m_packetType==DATA_PACKET){
-    entity->m_dataPacketManager->receivePacket(p, netDev);
+    valid = entity->m_dataPacketManager->receivePacket(p, netDev);
   } else if(entity->m_packetType==BIG_SIGN_PACKET){
     valid = entity->m_bigSignalingPacketManager->receivePacket(p);
   } else if(entity->m_packetType==SMALL_SIGN_PACKET){
-    entity->m_smallSignalingPacketManager->receivePacket(p);
+    valid = entity->m_smallSignalingPacketManager->receivePacket(p);
   } else if(entity->m_packetType==PING_FORWARD_PACKET){
     entity->m_pingForwardPacketManager->receivePacket(p, netDev);
     return ;

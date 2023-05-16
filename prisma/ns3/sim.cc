@@ -515,6 +515,7 @@ int main (int argc, char *argv[])
     Ptr<PacketRoutingEnv> packetRoutingEnv;
     packetRoutingEnv = CreateObject<PacketRoutingEnv> (n, n_nodes, linkRateValue, activateSignaling, smallSignalingSize[overlayNodes[i]], overlayNeighbors[overlayNodes[i]]); // event-driven step
     packetRoutingEnv->setTrainConfig(train);
+    packetRoutingEnv->mapOverlayNodes(map_overlay_array);
     //packetRoutingEnv->setLogsFolder(logs_folder);
     //packetRoutingEnv->setOverlayConfig(overlayNeighbors[overlayNodes[i]], activateOverlaySignaling, nPacketsOverlaySignaling, movingAverageObsSize, map_overlay_array);
     packetRoutingEnv->SetOpenGymInterface(openGymInterface);
