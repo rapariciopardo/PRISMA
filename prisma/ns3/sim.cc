@@ -515,6 +515,7 @@ int main (int argc, char *argv[])
     Ptr<PacketRoutingEnv> packetRoutingEnv;
     packetRoutingEnv = CreateObject<PacketRoutingEnv> (n, n_nodes, linkRateValue, activateSignaling, smallSignalingSize[overlayNodes[i]], overlayNeighbors[overlayNodes[i]]); // event-driven step
     packetRoutingEnv->setTrainConfig(train);
+    packetRoutingEnv->m_nodes = nodes_switch;
     packetRoutingEnv->mapOverlayNodes(map_overlay_array);
     //packetRoutingEnv->setLogsFolder(logs_folder);
     //packetRoutingEnv->setOverlayConfig(overlayNeighbors[overlayNodes[i]], activateOverlaySignaling, nPacketsOverlaySignaling, movingAverageObsSize, map_overlay_array);
@@ -531,6 +532,7 @@ int main (int argc, char *argv[])
     //  packetRoutingEnv->setGroundTruthFrequence(groundTruthFrequence);
     //}
     for(size_t j = 1;j<nodes_switch.Get(overlayNodes[i])->GetNDevices();j++){
+      NS_LOG_UNCOND("Device: "<<overlayNodes[i] << "   Port: "<<nodes_switch.Get(overlayNodes[i])->GetDevice(j)->GetIfIndex());
       Ptr<NetDevice> dev_switch =DynamicCast<NetDevice> (nodes_switch.Get(overlayNodes[i])->GetDevice(j)); 
       dev_switch->TraceConnectWithoutContext("MacRx", MakeBoundCallback(&PacketRoutingEnv::NotifyPktRcv, packetRoutingEnv, dev_switch, &traffic_nd));
     }

@@ -86,14 +86,19 @@ DataPacketManager::DataPacketManager ()
 
 void
 DataPacketManager::dropPacket(DataPacketManager *entity, Ptr<const Packet> packet){
+  NS_LOG_UNCOND("DataPacketManager::dropPacket");
   MyTag tagCopy;
   packet->PeekPacketTag(tagCopy);
+  if ((PacketType(tagCopy.GetSimpleValue()) == DATA_PACKET) and (tagCopy.GetTrafficValable()==1) and (tagCopy.GetFinalDestination() != entity->m_node->GetId())){
+  NS_LOG_UNCOND("Packet dropped: " << packet->GetUid() << " " << tagCopy.GetSource() << " " << tagCopy.GetFinalDestination() << " " << entity->m_node->GetId());
+    SentPacket packetLost;
+    packetLost.start_time = tagCopy.GetStartTime();
+    packetLost.type = DATA_PACKET;
+    packetLost.uid = packet->GetUid();
+    entity->m_lostPackets.push_back(packetLost);
+
+  }
   
-  SentPacket packetLost;
-  packetLost.start_time = tagCopy.GetStartTime();
-  packetLost.type = DATA_PACKET;
-  packetLost.uid = packet->GetUid();
-  entity->m_lostPackets.push_back(packetLost);
 }
 
 DataPacketManager::DataPacketManager (Ptr<Node> node, vector<int> neighbors ) : PacketManager(node, neighbors)
@@ -153,6 +158,7 @@ DataPacketManager::getActionSpace()
 
 bool 
 DataPacketManager::receivePacket(Ptr<Packet> packet, Ptr<NetDevice> receivingNetDev){
+  NS_LOG_UNCOND("DataPacketManager::receivePacket");
   PacketManager::receivePacket(packet);
   m_receivingNetDev = receivingNetDev;
   MyTag tagCopy;
@@ -162,7 +168,7 @@ DataPacketManager::receivePacket(Ptr<Packet> packet, Ptr<NetDevice> receivingNet
 
 Ptr<OpenGymDataContainer>
 DataPacketManager::getObservation()
-{
+{ NS_LOG_UNCOND("DataPacketManager::getObservation");
   Ptr<OpenGymBoxContainer<uint32_t> > box = CreateObject<OpenGymBoxContainer<uint32_t> >(m_obs_shape);
   //Adding destination to obs
   box->AddValue(m_map_overlay_array[m_destination]);
@@ -201,6 +207,7 @@ DataPacketManager::getObservation()
 uint32_t
 DataPacketManager::getQueueLengthInBytes(Ptr<Node> node, uint32_t netDev_idx)
 {
+  NS_LOG_UNCOND("DataPacketManager::getQueueLengthInBytes");
   Ptr<NetDevice> netDev = node->GetDevice (netDev_idx);
   Ptr<PointToPointNetDevice> p2p_netDev = DynamicCast<PointToPointNetDevice> (netDev);
   Ptr<Queue<Packet> > queue = p2p_netDev->GetQueue ();
@@ -222,6 +229,7 @@ DataPacketManager::getGameOver(){
 string
 DataPacketManager::getInfo()
 {
+  NS_LOG_UNCOND("DataPacketManager::getInfo");
   string myInfo = PacketManager::getInfo();
   myInfo += ", Packet Lost="; //16
   while (!m_lostPackets.empty())
@@ -230,30 +238,40 @@ DataPacketManager::getInfo()
     myInfo += std::to_string(lostPacket.uid) + ";";
     m_lostPackets.pop_back();
   }
+  myInfo += ", Source="; //20
+  myInfo += std::to_string(m_map_overlay_array[m_source]);
+  myInfo += ", Destination="; //24
+  myInfo += std::to_string(m_map_overlay_array[m_destination]);
+  myInfo += ", node="; //30
+  myInfo += std::to_string(m_map_overlay_array[m_node->GetId()]);
   return myInfo;
 }
 
 bool 
 DataPacketManager::sendPacket(Ptr<OpenGymDataContainer> action){
   
-    
+  NS_LOG_UNCOND("DataPacketManager::sendPacket");
   //Get discrete action
   Ptr<OpenGymDiscreteContainer> discrete = DynamicCast<OpenGymDiscreteContainer>(action);
   uint32_t fwdDev_idx = discrete->GetValue();
-  
   if(m_arrivedAtFinalDest){
+    NS_LOG_UNCOND("DataPacketManager::sendPacket: arrived at final destination " << m_node->GetId() << " " << m_destination << " " << m_packet->GetUid());
+    // string string_ip = "0.0.0.0";
+    // Ipv4Address ip_dest(string_ip.c_str());
+    // m_receivingNetDev->Send(m_packet, ip_dest, 0x0800);
     // Do Not Here
   } else if (fwdDev_idx < m_neighbors.size()){
     //Setting packet Tag
     MyTag sendingTag;
     m_packet->PeekPacketTag(sendingTag);
     sendingTag.SetLastHop(m_node->GetId());
+    NS_LOG_UNCOND("DataPacketManager::sendPacket: " << m_node->GetId() << " " << m_destination << " " << m_packet->GetUid() << " " << fwdDev_idx << " " << m_neighbors[fwdDev_idx] << " " << m_neighbors.size());
     sendingTag.SetNextHop(m_neighbors[fwdDev_idx]);
     m_packet->ReplacePacketTag(sendingTag);
     
     //Adding Headers
     m_packet->AddHeader(m_packetUdpHeader);
-    string string_ip= "10.2.2."+std::to_string(m_neighbors[fwdDev_idx]+1);
+    string string_ip= "10.1.1."+std::to_string(m_neighbors[fwdDev_idx]+1);
     Ipv4Address ip_dest(string_ip.c_str());
     m_packetIpHeader.SetDestination(ip_dest);
     m_packet->AddHeader(m_packetIpHeader);
@@ -265,6 +283,7 @@ DataPacketManager::sendPacket(Ptr<OpenGymDataContainer> action){
     Ptr<Ipv4RoutingProtocol> routing = ipv4->GetRoutingProtocol( );
     Ptr<Ipv4Route> route = routing->RouteOutput (m_packet, m_packetIpHeader, 0, sockerr);
     Ptr<PointToPointNetDevice> dev = DynamicCast<PointToPointNetDevice>(route->GetOutputDevice());
+    NS_LOG_UNCOND("DataPacketManager::sendPacket: check routing " << route->GetOutputDevice()->GetNode()->GetId() << " " << dev->GetIfIndex() << " " << dev->GetAddress());
     
     //Send and verify if the Packet was dropped
     m_counterSentPackets += 1;
@@ -286,7 +305,7 @@ DataPacketManager::sendPacket(Ptr<OpenGymDataContainer> action){
     }
     
   } else{
-    //TODO: Implement DopPacket Function
+    //TODO: Implement DropPacket Function
     //dropPacket(this, m_pckt);
   }
   return true;
@@ -298,7 +317,7 @@ DataPacketManager::sendSmallSignalingPacket(){
   if(m_source == m_node->GetId()){
     return ;
   }
-  
+  NS_LOG_UNCOND("DataPacketManager::sendSmallSignalingPacket");
   //Define Tag
   MyTag tagSmallSignaling;
 
@@ -343,7 +362,7 @@ DataPacketManager::sendSmallSignalingPacket(){
 
 void 
 DataPacketManager::sendPingForwardPacket(uint32_t overlayIndex){
-  
+  NS_LOG_UNCOND("DataPacketManager::sendPingForwardPacket");
   //Define Tag
   MyTag tagPingForward;
 

@@ -83,7 +83,7 @@ public:
   static void dropPacket(Ptr<PacketRoutingEnv> entity, Ptr<const Packet> packet);
   void initialize();
   static std::vector<uint32_t> m_rxPkts;
-
+  ns3::NodeContainer m_nodes;  
   // the function has to be static to work with MakeBoundCallback
   // that is why we pass pointer to PacketRoutingEnv instance to be able to store the context (node, etc)
  

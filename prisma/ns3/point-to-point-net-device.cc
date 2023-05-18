@@ -370,10 +370,11 @@ PointToPointNetDevice::SetReceiveErrorModel (Ptr<ErrorModel> em)
 void
 PointToPointNetDevice::Receive (Ptr<Packet> packet)
 {
+  MyTag t;
+  packet->PeekPacketTag(t);
+  NS_LOG_UNCOND("PointToPointNetDevice::Receive "<<m_node->GetId()<<"   "<< packet->GetUid() << "," << t.GetSource() << "," << t.GetFinalDestination() << "," << t.GetLastHop() <<"," << packet->GetSize());
   NS_LOG_FUNCTION (this << packet);
   //if(m_node->GetId()!=0) NS_LOG_UNCOND("RECEIVE "<<m_node->GetId()<<"   "<<packet->ToString());
-  //MyTag tagCopy;
-  //packet->PeekPacketTag(tagCopy);
   //
   //if(tagCopy.GetLastHop()==7 && tagCopy.GetSimpleValue()==0 && m_node->GetId()==3){
   //  NS_LOG_UNCOND("Recv: Node: "<<m_node->GetId()<<"   "<<m_ifIndex);
@@ -435,6 +436,8 @@ PointToPointNetDevice::Receive (Ptr<Packet> packet)
           m_computeStats->incrementOverlayPacketsArrived();
           m_computeStats->addCost(Simulator::Now().GetSeconds() - tagcopy.GetStartTime());
           m_computeStats->addE2eDelay(Simulator::Now().GetSeconds() - tagcopy.GetStartTime());
+          NS_LOG_UNCOND("packet dropped "<<m_node->GetId()<<"   "<<packet->GetUid()<<"   "<<Simulator::Now().GetSeconds());
+          // m_macTxDropTrace (packet);
         } else {
           m_computeStats->incrementUnderlayPacketsArrived();
         }
@@ -452,7 +455,7 @@ PointToPointNetDevice::Receive (Ptr<Packet> packet)
       if(tagcopy.GetSimpleValue()==0 && tagcopy.GetLastHop()==1000){
         if(tagcopy.GetTrafficValable()){
         m_computeStats->incrementOverlayPacketsInjected();
-            NS_LOG_UNCOND("add data bytes " << packet->GetSize());
+            // NS_LOG_UNCOND("add data bytes " << packet->GetSize());
           m_computeStats->addGlobalBytesData(packet->GetSize());
         } 
         else m_computeStats->incrementUnderlayPacketsInjected();
@@ -610,7 +613,7 @@ PointToPointNetDevice::Send (
       return false;
     }
   //Get if the packet was rejected by the Optimal Algorithm
-  if(tagcopy.GetSimpleValue()==0 && tagcopy.GetRejectedPacket()==1 && m_node->GetId()<11){
+  if(tagcopy.GetSimpleValue()==0 && tagcopy.GetRejectedPacket()==1 && m_node->GetId()<23){
     if(tagcopy.GetTrafficValable()){
       m_computeStats->incrementOverlayPacketsLost();
       m_computeStats->addLossPenaltyToCost();

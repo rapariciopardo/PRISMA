@@ -146,6 +146,26 @@ PacketRoutingEnv::GetGameOver()
 Ptr<OpenGymDataContainer>
 PacketRoutingEnv::GetObservation()
 {
+  NS_LOG_UNCOND("PacketRoutingEnv::GetObservation");
+  NS_LOG_UNCOND("start printing all the packet id in all the queues");
+  for (uint32_t i=0; i<m_nodes.GetN(); i++){
+    Ptr<Node> node = m_nodes.Get(i);
+    NS_LOG_UNCOND("node " << i);
+    for (uint32_t k=1; k<node->GetNDevices(); k++){
+      NS_LOG_UNCOND("  device " << k);
+      Ptr<NetDevice> netDev = node->GetDevice (k);
+      Ptr<PointToPointNetDevice> p2p_netDev = DynamicCast<PointToPointNetDevice> (netDev);
+      Ptr<Queue<Packet> > queue = p2p_netDev->GetQueue();
+
+      for (uint32_t j = 0; j < queue->GetNPackets (); j++){
+        Ptr<Packet> packet = queue->Dequeue();
+        MyTag tag;
+        packet->PeekPacketTag (tag);
+        NS_LOG_UNCOND("     " << packet->GetUid() << " " << packet->GetSize() <<" " << tag.GetSource() << " " << tag.GetFinalDestination() << " "<< int(tag.GetTrafficValable()));
+        queue->Enqueue(packet);
+      }
+    }
+  }
   Ptr<OpenGymBoxContainer<int32_t> > box = CreateObject<OpenGymBoxContainer<int32_t> >(m_dataPacketManager->getObsShape());
   if(is_trainStep_flag==0) {
     if (m_packetType==DATA_PACKET) return m_dataPacketManager->getObservation();
@@ -167,6 +187,7 @@ PacketRoutingEnv::GetReward()
 std::string
 PacketRoutingEnv::GetExtraInfo()
 {
+  NS_LOG_UNCOND("PacketRoutingEnv::GetExtraInfo");
   std::string myInfo;
   myInfo="-2";
   
@@ -193,7 +214,7 @@ bool
 PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
 {
   bool sent = true;
-  
+  NS_LOG_UNCOND("PacketRoutingEnv::ExecuteActions");
   if(m_packetType==DATA_PACKET){
     if (is_trainStep_flag==1){
       return true;
@@ -227,6 +248,7 @@ PacketRoutingEnv::mapOverlayNodes(std::vector <int> map_overlay_array)
 void
 PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netDev, NetDeviceContainer* nd, Ptr<const Packet> packet)
 {  
+  NS_LOG_UNCOND("PacketRoutingEnv::NotifyPktRcv");
   //Redefine is train step flag
   entity->is_trainStep_flag = 0;
   

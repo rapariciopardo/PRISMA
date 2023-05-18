@@ -67,7 +67,7 @@ nn_sizes = [35328, 9728, 5120, 1536, 512, 1024]
 nn_sizes = [35328, 9728, 5120, 1536, 512]
 nn_sizes = [35328]
 d_t_max_time = 10
-topology_name = "overlay_full_mesh_3n_geant"
+topology_name = "overlay_full_mesh_10n_geant"
 # variable parameters
 training_load = 0.4
 bs = 1024

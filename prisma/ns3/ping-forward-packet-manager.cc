@@ -92,9 +92,12 @@ PingForwardPacketManager::PingForwardPacketManager (Ptr<Node> node, vector<int> 
 
 bool 
 PingForwardPacketManager::receivePacket(Ptr<Packet> packet, Ptr<NetDevice> receivingNetDev){
+  NS_LOG_UNCOND("PingForwardPacketManager::receivePacket");
   //Get extra info from packet
     MyTag tagCopy;
   packet->PeekPacketTag(tagCopy);
+  if (packet->GetUid()== 4533) NS_LOG_UNCOND("It's a ping forward packet");
+
   m_lastHop = tagCopy.GetLastHop();
   m_receivingNetDev = receivingNetDev;
   float delay = Simulator::Now().GetSeconds()-(tagCopy.GetStartTime()*0.001);
@@ -109,7 +112,7 @@ PingForwardPacketManager::receivePacket(Ptr<Packet> packet, Ptr<NetDevice> recei
 }
 void
 PingForwardPacketManager::sendPingBackPacket(float delay,  uint32_t overlayTunnelIndex, uint32_t pingPacketIndex){
-  
+  NS_LOG_UNCOND("PingForwardPacketManager::sendPingBackPacket");
   //Define Tag
   MyTag tagPingBack;
 
