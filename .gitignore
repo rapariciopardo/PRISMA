@@ -47,7 +47,7 @@ waf3*/*
 venv/
 .vscode/
 prisma/examples/*/results/*
-prisma/examples/*/optimal_solution/*
+# prisma/examples/*/optimal_solution/*
 prisma/examples/*/others
 prisma/examples/*/plots
 prisma/examples/*/pre_trained_models/*
