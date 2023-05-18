@@ -209,6 +209,12 @@ def allocate_on_gpu(gpu_memory_margin=1500):
     import os
     import numpy as np
     import tensorflow as tf
+
+    # check if gpu is available
+    if len(tf.config.list_physical_devices('GPU')) == 0:
+        print("No gpu available")
+        gpu_index = -1
+        return
     # set the margin of the gpu memory
     gpu_memory_margin = 1500 # required memory but a train instance in MB
     COMMAND = "nvidia-smi --query-gpu=utilization.gpu,memory.free --format=csv"
@@ -230,7 +236,7 @@ def allocate_on_gpu(gpu_memory_margin=1500):
     os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu_index)
     print("GPU index : ", gpu_index)
 
-    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
     gpus = tf.config.experimental.list_physical_devices('GPU')
     if gpus:
         try:
