@@ -101,11 +101,12 @@ DataPacketManager::dropPacket(DataPacketManager *entity, Ptr<const Packet> packe
   
 }
 
-DataPacketManager::DataPacketManager (Ptr<Node> node, vector<int> neighbors ) : PacketManager(node, neighbors)
+DataPacketManager::DataPacketManager (Ptr<Node> node, vector<int> neighbors, int *nodes_starting_address) : PacketManager(node, neighbors)
 {
   for(uint32_t i=0;i<m_node->GetNDevices();i++){
     m_node->GetDevice(i)->TraceConnectWithoutContext("MacTxDrop", MakeBoundCallback(&dropPacket, this));
   }
+  m_nodes_starting_address = nodes_starting_address;
   NS_LOG_FUNCTION (this);
 }
 
@@ -126,6 +127,7 @@ DataPacketManager::setObsBufferLength(bool value){
 
 void
 DataPacketManager::setPacketsIntervalForSendingPingBack(uint32_t value){
+  NS_LOG_UNCOND("DataPacketManager::setPacketsIntervalForSendingPingBack");
   m_packetsIntervalForSendingPingPacket = value;
 }
 
@@ -250,7 +252,7 @@ DataPacketManager::getInfo()
 bool 
 DataPacketManager::sendPacket(Ptr<OpenGymDataContainer> action){
   
-  NS_LOG_UNCOND("DataPacketManager::sendPacket");
+  // NS_LOG_UNCOND("DataPacketManager::sendPacket");
   //Get discrete action
   Ptr<OpenGymDiscreteContainer> discrete = DynamicCast<OpenGymDiscreteContainer>(action);
   uint32_t fwdDev_idx = discrete->GetValue();
@@ -271,9 +273,10 @@ DataPacketManager::sendPacket(Ptr<OpenGymDataContainer> action){
     
     //Adding Headers
     m_packet->AddHeader(m_packetUdpHeader);
-    string string_ip= "10.1.1."+std::to_string(m_neighbors[fwdDev_idx]+1);
+    string string_ip= "10.2.2."+std::to_string(m_neighbors[fwdDev_idx]+1);
     Ipv4Address ip_dest(string_ip.c_str());
     m_packetIpHeader.SetDestination(ip_dest);
+    m_packetIpHeader.SetSource(string("10.1.1."+std::to_string(m_nodes_starting_address[m_node->GetId()]+1)).c_str());
     m_packet->AddHeader(m_packetIpHeader);
     
     //Discovering the output buffer based on the routing table
@@ -281,10 +284,10 @@ DataPacketManager::sendPacket(Ptr<OpenGymDataContainer> action){
     Ptr<Ipv4> ipv4 = m_node->GetObject<Ipv4>();
     ns3::Socket::SocketErrno sockerr;
     Ptr<Ipv4RoutingProtocol> routing = ipv4->GetRoutingProtocol( );
-    Ptr<Ipv4Route> route = routing->RouteOutput (m_packet, m_packetIpHeader, 0, sockerr);
+    Ptr<Ipv4Route> route = routing->RouteOutput (m_packet, m_packetIpHeader, 0, sockerr); 
+    route->SetSource(string("10.1.1."+std::to_string(m_nodes_starting_address[m_node->GetId()]+1)).c_str());
     Ptr<PointToPointNetDevice> dev = DynamicCast<PointToPointNetDevice>(route->GetOutputDevice());
-    NS_LOG_UNCOND("DataPacketManager::sendPacket: check routing " << route->GetOutputDevice()->GetNode()->GetId() << " " << dev->GetIfIndex() << " " << dev->GetAddress());
-    
+    NS_LOG_UNCOND("DataPacketManager::sendPacket: check routing " << route->GetOutputDevice()->GetNode()->GetId() << " " << dev->GetIfIndex() << " " << dev->GetAddress() << " " << m_destAddr << " source " << route->GetSource() << " " << route->GetDestination() << " packet info " << m_packet->GetUid() << " " << m_packet->GetSize() << " " << m_packet->GetUid() << " " << sendingTag.GetSource() << " " << sendingTag.GetFinalDestination() << " " << sendingTag.GetLastHop() << " " << sendingTag.GetNextHop() << " " <<Simulator::Now().GetMilliSeconds() << dev->GetAddress() << " " << dev->GetQueue()->GetNPackets());
     //Send and verify if the Packet was dropped
     m_counterSentPackets += 1;
     SentPacket sent;
@@ -306,7 +309,7 @@ DataPacketManager::sendPacket(Ptr<OpenGymDataContainer> action){
     
   } else{
     //TODO: Implement DropPacket Function
-    //dropPacket(this, m_pckt);
+    // dropPacket(this, m_packet);
   }
   return true;
 }

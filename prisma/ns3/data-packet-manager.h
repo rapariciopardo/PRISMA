@@ -51,7 +51,7 @@ class DataPacketManager : public PacketManager
 {
 public:
   DataPacketManager();
-  DataPacketManager(Ptr<Node> node, vector<int> neighbors);
+  DataPacketManager(Ptr<Node> node, vector<int> neighbors, int *nodes_starting_address);
   void setSmallSignalingPacketSize(uint32_t signPacketSize);
   void setPingBackPacketManager(PingBackPacketManager *pingBackPacketManager);
 
@@ -82,6 +82,7 @@ private:
   uint32_t m_signPacketSize;
   uint32_t m_counterSentPackets;
   uint32_t m_pingPacketIndex = 0;
+  int *m_nodes_starting_address;
   
 };
 

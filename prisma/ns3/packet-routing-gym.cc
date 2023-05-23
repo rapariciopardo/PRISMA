@@ -61,7 +61,7 @@ PacketRoutingEnv::PacketRoutingEnv ()
   NS_LOG_FUNCTION (this);
 }
   
-PacketRoutingEnv::PacketRoutingEnv (Ptr<Node> node, uint32_t numberOfNodes, uint64_t linkRateValue, bool activateSignaling, double signPacketSize, vector<int> overlayNeighbors)
+PacketRoutingEnv::PacketRoutingEnv (Ptr<Node> node, uint32_t numberOfNodes, uint64_t linkRateValue, bool activateSignaling, double signPacketSize, vector<int> overlayNeighbors, int *nodes_starting_address)
 {
   NS_LOG_FUNCTION (this);
   
@@ -69,7 +69,7 @@ PacketRoutingEnv::PacketRoutingEnv (Ptr<Node> node, uint32_t numberOfNodes, uint
   m_smallSignalingPacketManager = new SmallSignalingPacketManager(node, overlayNeighbors);
   m_pingForwardPacketManager = new PingForwardPacketManager(node, overlayNeighbors);
   m_pingBackPacketmanager = new PingBackPacketManager(node, overlayNeighbors);
-  m_dataPacketManager = new DataPacketManager(node, overlayNeighbors);
+  m_dataPacketManager = new DataPacketManager(node, overlayNeighbors, nodes_starting_address);
   m_dataPacketManager->setSmallSignalingPacketSize(signPacketSize);
   m_dataPacketManager->setPingBackPacketManager(m_pingBackPacketmanager);
 }
@@ -147,12 +147,12 @@ Ptr<OpenGymDataContainer>
 PacketRoutingEnv::GetObservation()
 {
   NS_LOG_UNCOND("PacketRoutingEnv::GetObservation");
-  NS_LOG_UNCOND("start printing all the packet id in all the queues");
+  // NS_LOG_UNCOND("start printing all the packet id in all the queues");
   for (uint32_t i=0; i<m_nodes.GetN(); i++){
     Ptr<Node> node = m_nodes.Get(i);
-    NS_LOG_UNCOND("node " << i);
+    // NS_LOG_UNCOND("node " << i);
     for (uint32_t k=1; k<node->GetNDevices(); k++){
-      NS_LOG_UNCOND("  device " << k);
+      // NS_LOG_UNCOND("  device " << k);
       Ptr<NetDevice> netDev = node->GetDevice (k);
       Ptr<PointToPointNetDevice> p2p_netDev = DynamicCast<PointToPointNetDevice> (netDev);
       Ptr<Queue<Packet> > queue = p2p_netDev->GetQueue();
@@ -161,7 +161,7 @@ PacketRoutingEnv::GetObservation()
         Ptr<Packet> packet = queue->Dequeue();
         MyTag tag;
         packet->PeekPacketTag (tag);
-        NS_LOG_UNCOND("     " << packet->GetUid() << " " << packet->GetSize() <<" " << tag.GetSource() << " " << tag.GetFinalDestination() << " "<< int(tag.GetTrafficValable()));
+        // NS_LOG_UNCOND("     " << packet->GetUid() << " " << packet->GetSize() <<" " << tag.GetSource() << " " << tag.GetFinalDestination() << " "<< int(tag.GetTrafficValable()));
         queue->Enqueue(packet);
       }
     }
