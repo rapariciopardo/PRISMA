@@ -91,14 +91,14 @@ SmallSignalingPacketManager::SmallSignalingPacketManager (Ptr<Node> node, vector
 
 bool 
 SmallSignalingPacketManager::receivePacket(Ptr<Packet> packet){
-  PacketManager::receivePacket(packet);
+  bool ret = PacketManager::receivePacket(packet);
   m_computeStats->addGlobalBytesSignaling(packet->GetSize());
   //Get extra packet Info
   MyTag tagCopy;
   m_packet->PeekPacketTag(tagCopy);
   m_packetIdSignaled = tagCopy.GetIdValue();
   m_oneHopDelay = tagCopy.GetOneHopDelay();
-  return m_arrivedAtFinalDest;
+  return m_arrivedAtFinalDest && ret;
 }
 
 float

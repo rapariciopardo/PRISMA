@@ -68,7 +68,7 @@ public:
   
 
   void step(Ptr<Packet> packet);
-  void receivePacket(Ptr<Packet> packet);
+  bool receivePacket(Ptr<Packet> packet);
   std::string getInfo();
   void writeStats();
   std::string getLostPackets();

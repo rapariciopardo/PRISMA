@@ -72,7 +72,7 @@ void PacketManager::step(Ptr<Packet> packet){
     this->getInfo();
 }
 
-void PacketManager::receivePacket(Ptr<Packet> packet){
+bool PacketManager::receivePacket(Ptr<Packet> packet){
     //Packet copy
     Ptr<Packet> p;
     p = packet->Copy();
@@ -112,6 +112,7 @@ void PacketManager::receivePacket(Ptr<Packet> packet){
       m_arrivedAtFinalDest = false;
     }
 
+    return m_nextHop == m_node->GetId();
 
 }
 

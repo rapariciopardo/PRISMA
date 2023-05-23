@@ -92,7 +92,7 @@ BigSignalingPacketManager::BigSignalingPacketManager (Ptr<Node> node, vector<int
 
 bool 
 BigSignalingPacketManager::receivePacket(Ptr<Packet> packet){
-  PacketManager::receivePacket(packet);
+  bool ret = PacketManager::receivePacket(packet);
 
   //Check if the node is not the packet source
   if(m_source == m_node->GetId()){
@@ -104,7 +104,7 @@ BigSignalingPacketManager::receivePacket(Ptr<Packet> packet){
   m_packet->PeekPacketTag(tagCopy);
   m_NNIndex = tagCopy.GetNNIndex();
   m_segIndex = tagCopy.GetSegIndex();
-  return m_arrivedAtFinalDest;
+  return m_arrivedAtFinalDest && ret;
 }
 
 string

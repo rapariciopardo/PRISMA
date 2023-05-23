@@ -630,8 +630,8 @@ int main (int argc, char *argv[])
               x->SetAttribute ("Max", DoubleValue (1));
               Address sinkAddress;
               string string_ip_dest;
-              // if(OverlayMaskTrafficRate[i][j]==1.0) string_ip_dest= "10.1.1."+std::to_string(nodes_starting_address[i]+1);
-              string_ip_dest= "10.2.2."+std::to_string(j+1);
+              if(OverlayMaskTrafficRate[i][j]==1.0) string_ip_dest= "10.1.1."+std::to_string(i+1);
+              else string_ip_dest= "10.2.2."+std::to_string(j+1);
               Ipv4Address ip_dest(string_ip_dest.c_str());
               sinkAddress = InetSocketAddress (ip_dest, sinkPortUDP);
               if(true){ //((i==10 && j==5) || (i==5 && j==0)){
