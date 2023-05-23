@@ -18,7 +18,7 @@ Installation
 I- Local Installation
 ============
 
-If you don't have the Nse-gym alrady installed
+If you don't have the Ns3-gym already installed
 
 1. If the submodule was not yet initialized, initialize them.
 ```
