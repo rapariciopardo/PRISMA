@@ -127,7 +127,7 @@ DataPacketManager::setObsBufferLength(bool value){
 
 void
 DataPacketManager::setPacketsIntervalForSendingPingBack(uint32_t value){
-  NS_LOG_UNCOND("DataPacketManager::setPacketsIntervalForSendingPingBack");
+  // NS_LOG_UNCOND("DataPacketManager::setPacketsIntervalForSendingPingBack");
   m_packetsIntervalForSendingPingPacket = value;
 }
 
@@ -160,7 +160,7 @@ DataPacketManager::getActionSpace()
 
 bool 
 DataPacketManager::receivePacket(Ptr<Packet> packet, Ptr<NetDevice> receivingNetDev){
-  NS_LOG_UNCOND("DataPacketManager::receivePacket "<<packet->GetUid()<<"  in "<<m_node->GetId());
+  // NS_LOG_UNCOND("DataPacketManager::receivePacket "<<packet->GetUid()<<"  in "<<m_node->GetId());
   bool ret = PacketManager::receivePacket(packet);
   m_receivingNetDev = receivingNetDev;
   MyTag tagCopy;
@@ -232,7 +232,7 @@ DataPacketManager::getGameOver(){
 string
 DataPacketManager::getInfo()
 {
-  NS_LOG_UNCOND("DataPacketManager::getInfo "<<m_packet->GetUid()<<"  in "<<m_node->GetId());
+  // NS_LOG_UNCOND("DataPacketManager::getInfo "<<m_packet->GetUid()<<"  in "<<m_node->GetId());
   string myInfo = PacketManager::getInfo();
   myInfo += ", Packet Lost="; //16
   while (!m_lostPackets.empty())
@@ -247,7 +247,7 @@ DataPacketManager::getInfo()
   myInfo += std::to_string(m_map_overlay_array[m_destination]);
   myInfo += ", node="; //19
   myInfo += std::to_string(m_map_overlay_array[m_node->GetId()]);
-  NS_LOG_UNCOND(myInfo);
+  // NS_LOG_UNCOND(myInfo);
   return myInfo;
 }
 
@@ -269,7 +269,7 @@ DataPacketManager::sendPacket(Ptr<OpenGymDataContainer> action){
     MyTag sendingTag;
     m_packet->PeekPacketTag(sendingTag);
     sendingTag.SetLastHop(m_node->GetId());
-    NS_LOG_UNCOND("DataPacketManager::sendPacket: " << m_node->GetId() << " " << m_destination << " " << m_packet->GetUid() << " " << fwdDev_idx << " " << m_neighbors[fwdDev_idx] << " " << m_neighbors.size());
+    // NS_LOG_UNCOND("DataPacketManager::sendPacket: " << m_node->GetId() << " " << m_destination << " " << m_packet->GetUid() << " " << fwdDev_idx << " " << m_neighbors[fwdDev_idx] << " " << m_neighbors.size());
     sendingTag.SetNextHop(m_neighbors[fwdDev_idx]);
     m_packet->ReplacePacketTag(sendingTag);
     

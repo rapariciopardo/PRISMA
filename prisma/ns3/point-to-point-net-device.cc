@@ -372,7 +372,7 @@ PointToPointNetDevice::Receive (Ptr<Packet> packet)
 {
   MyTag t;
   packet->PeekPacketTag(t);
-  NS_LOG_UNCOND("PointToPointNetDevice::Receive "<<m_node->GetId()<<"   "<< packet->GetUid() << "," << t.GetSource() << "," << t.GetFinalDestination() << "," << t.GetLastHop() <<"," << packet->GetSize() << " " << Simulator::Now().GetMilliSeconds());
+  // NS_LOG_UNCOND("PointToPointNetDevice::Receive "<<m_node->GetId()<<"   "<< packet->GetUid() << "," << t.GetSource() << "," << t.GetFinalDestination() << "," << t.GetLastHop() <<"," << packet->GetSize() << " " << Simulator::Now().GetMilliSeconds());
   NS_LOG_FUNCTION (this << packet);
   //if(m_node->GetId()!=0) NS_LOG_UNCOND("RECEIVE "<<m_node->GetId()<<"   "<<packet->ToString());
   //
@@ -436,7 +436,7 @@ PointToPointNetDevice::Receive (Ptr<Packet> packet)
           m_computeStats->incrementOverlayPacketsArrived();
           m_computeStats->addCost(Simulator::Now().GetSeconds() - tagcopy.GetStartTime());
           m_computeStats->addE2eDelay(Simulator::Now().GetSeconds() - tagcopy.GetStartTime());
-          NS_LOG_UNCOND("packet dropped "<<m_node->GetId()<<"   "<<packet->GetUid()<<"   "<<Simulator::Now().GetSeconds());
+          // NS_LOG_UNCOND("packet dropped "<<m_node->GetId()<<"   "<<packet->GetUid()<<"   "<<Simulator::Now().GetSeconds());
           // m_macTxDropTrace (packet);
         // m_phyRxDropTrace (packet);
 
@@ -456,8 +456,7 @@ PointToPointNetDevice::Receive (Ptr<Packet> packet)
 
       if(tagcopy.GetSimpleValue()==0 && tagcopy.GetLastHop()==1000){
         if(tagcopy.GetTrafficValable()){
-        m_computeStats->incrementOverlayPacketsInjected();
-            // NS_LOG_UNCOND("add data bytes " << packet->GetSize());
+          m_computeStats->incrementOverlayPacketsInjected();
           m_computeStats->addGlobalBytesData(packet->GetSize());
         } 
         else m_computeStats->incrementUnderlayPacketsInjected();
@@ -599,7 +598,7 @@ PointToPointNetDevice::Send (
   uint16_t protocolNumber)
 {
   NS_LOG_FUNCTION (this << packet << dest << protocolNumber);
-  NS_LOG_UNCOND ("PointToPointNetDevice::Send() to " << packet->GetSize() << " from " << m_node->GetId() << " " << m_ifIndex);
+  // NS_LOG_UNCOND ("PointToPointNetDevice::Send() to " << packet->GetSize() << " from " << m_node->GetId() << " " << m_ifIndex);
   //Get packet tag
   MyTag tagcopy;
   packet->PeekPacketTag(tagcopy);

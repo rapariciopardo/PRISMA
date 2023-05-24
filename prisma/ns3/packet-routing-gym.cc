@@ -146,7 +146,7 @@ PacketRoutingEnv::GetGameOver()
 Ptr<OpenGymDataContainer>
 PacketRoutingEnv::GetObservation()
 {
-  NS_LOG_UNCOND("PacketRoutingEnv::GetObservation");
+  // NS_LOG_UNCOND("PacketRoutingEnv::GetObservation");
   // NS_LOG_UNCOND("start printing all the packet id in all the queues");
   for (uint32_t i=0; i<m_nodes.GetN(); i++){
     Ptr<Node> node = m_nodes.Get(i);
@@ -187,7 +187,7 @@ PacketRoutingEnv::GetReward()
 std::string
 PacketRoutingEnv::GetExtraInfo()
 {
-  NS_LOG_UNCOND("PacketRoutingEnv::GetExtraInfo");
+  // NS_LOG_UNCOND("PacketRoutingEnv::GetExtraInfo");
   std::string myInfo;
   myInfo="-2";
   
@@ -214,7 +214,7 @@ bool
 PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
 {
   bool sent = true;
-  NS_LOG_UNCOND("PacketRoutingEnv::ExecuteActions");
+  // NS_LOG_UNCOND("PacketRoutingEnv::ExecuteActions");
   if(m_packetType==DATA_PACKET){
     if (is_trainStep_flag==1){
       return true;
@@ -248,7 +248,7 @@ PacketRoutingEnv::mapOverlayNodes(std::vector <int> map_overlay_array)
 void
 PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netDev, NetDeviceContainer* nd, Ptr<const Packet> packet)
 {  
-  NS_LOG_UNCOND("PacketRoutingEnv::NotifyPktRcv");
+  // NS_LOG_UNCOND("PacketRoutingEnv::NotifyPktRcv");
   //Redefine is train step flag
   entity->is_trainStep_flag = 0;
   

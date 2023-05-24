@@ -165,7 +165,6 @@ string PacketManager::getInfo(){
     
     myInfo += ",Signaling overhead ="; //15
     myInfo += std::to_string(m_computeStats->getSignalingOverhead());
-
     return myInfo;
    
 }

@@ -163,7 +163,7 @@ def main():
             nbBytesSmallSignaling = {Agent.sim_bytes_small_signaling},
             nbBytesOverlaySignalingForward = {Agent.sim_bytes_overlay_signaling_forward},
             nbBytesOverlaySignalingBack = {Agent.sim_bytes_overlay_signaling_back},
-            OverheadRatio = {(Agent.sim_bytes_big_signaling+Agent.sim_bytes_small_signaling+Agent.sim_bytes_overlay_signaling_forward+Agent.sim_bytes_overlay_signaling_back)/Agent.sim_bytes_data}
+            OverheadRatio = {Agent.sim_signaling_overhead}
             """)                     
     
     ## write the results for the test session

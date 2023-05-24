@@ -98,9 +98,6 @@ public:
   int getLocalOverlayPacketsLost();
   int getLocalOverlayPacketsBuffered();
   float getSignalingOverhead();
-
-
-private:
   //Global (static) information
   static vector<float> m_globalE2eDelay;
   static vector<float> m_globalCost;
@@ -120,7 +117,7 @@ private:
 
   static double m_lossPenalty;
 
-
+private:
   //Local (node) Information
   vector<float> m_localE2eDelay;
   vector<float> m_localCost;

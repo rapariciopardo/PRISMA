@@ -110,10 +110,10 @@ def stats_writer_train(summary_writer_session, summary_writer_nb_arrived_pkts, s
         tf.summary.scalar('nb_buffered_pkts_over_time', Agent.sim_buffered_packets, step=int(Agent.curr_time*1e6))
         tf.summary.scalar('nb_buffered_pkts_over_iterations', Agent.sim_buffered_packets, step=Agent.total_nb_iterations)
         ## signalling overhead
-        tf.summary.scalar('overlay_data_pkts_injected_bytes_time', Agent.sim_bytes_data, step=int(Agent.curr_time*1e6))
-        tf.summary.scalar('overlay_big_signalling_bytes', Agent.sim_bytes_big_signaling, step=int(Agent.curr_time*1e6))
-        tf.summary.scalar('overlay_small_signalling_bytes', Agent.sim_bytes_small_signaling, step=int(Agent.curr_time*1e6))
-        tf.summary.scalar('overlay_ping_signalling_bytes', Agent.sim_bytes_overlay_signaling_back + Agent.sim_bytes_overlay_signaling_forward, step=int(Agent.curr_time*1e6))
+        tf.summary.scalar('signalling ratio', Agent.sim_signaling_overhead, step=int(Agent.curr_time*1e6))
+        # tf.summary.scalar('overlay_big_signalling_bytes', Agent.sim_bytes_big_signaling, step=int(Agent.curr_time*1e6))
+        # tf.summary.scalar('overlay_small_signalling_bytes', Agent.sim_bytes_small_signaling, step=int(Agent.curr_time*1e6))
+        # tf.summary.scalar('overlay_ping_signalling_bytes', Agent.sim_bytes_overlay_signaling_back + Agent.sim_bytes_overlay_signaling_forward, step=int(Agent.curr_time*1e6))
         ## avg cost and avg delay
         tf.summary.scalar('avg_cost_over_iterations', avg_cost, step=Agent.total_nb_iterations)
         tf.summary.scalar('avg_cost_over_time', avg_cost, step=int(Agent.curr_time*1e6))

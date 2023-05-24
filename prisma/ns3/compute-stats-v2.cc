@@ -238,6 +238,6 @@ int ComputeStats::getLocalOverlayPacketsBuffered(){
 
 float ComputeStats::getSignalingOverhead(){
     if(m_globalBytesData==0) return 0.0;
-    return float(m_globalBytesSignaling/m_globalBytesData);
+    return float(m_globalBytesSignaling)/float(m_globalBytesData);
 }
 }// ns3 namespace

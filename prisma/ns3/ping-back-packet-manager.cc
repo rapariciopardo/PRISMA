@@ -96,7 +96,7 @@ PingBackPacketManager::setMovingAverageSize(uint32_t value){
 
 void 
 PingBackPacketManager::addSentPingForwardPacket(uint64_t id, uint64_t start_time){
-  NS_LOG_UNCOND("PingBackPacketManager::addSentPingForwardPacket");
+  // NS_LOG_UNCOND("PingBackPacketManager::addSentPingForwardPacket");
   SentPacket sentPacket;
   sentPacket.start_time = start_time;
   sentPacket.uid = id;
@@ -109,7 +109,7 @@ PingBackPacketManager::addSentPingForwardPacket(uint64_t id, uint64_t start_time
 
 float
 PingBackPacketManager::getMaxTimePingForwardPacketSent(uint32_t index){
-  NS_LOG_UNCOND("PingBackPacketManager::getMaxTimePingForwardPacketSent");
+  // NS_LOG_UNCOND("PingBackPacketManager::getMaxTimePingForwardPacketSent");
   if(m_sentPingForwardPackets[index].size()>0){
     return Simulator::Now().GetSeconds() - m_sentPingForwardPackets[index][0].start_time*0.001;
   } else{
@@ -120,7 +120,7 @@ PingBackPacketManager::getMaxTimePingForwardPacketSent(uint32_t index){
 
 bool 
 PingBackPacketManager::receivePacket(Ptr<Packet> packet, Ptr<NetDevice> receivingNetDev){
-  NS_LOG_UNCOND("PingBackPacketManager::receivePacket");
+  // NS_LOG_UNCOND("PingBackPacketManager::receivePacket");
   //Get extra info from packet
   MyTag tagCopy;
   packet->PeekPacketTag(tagCopy); 
@@ -130,22 +130,19 @@ PingBackPacketManager::receivePacket(Ptr<Packet> packet, Ptr<NetDevice> receivin
   m_pingPacketIndex = tagCopy.GetOverlayIndex();
   
   //Erasing sent packets which were acked
-  auto it = m_sentPingForwardPackets[m_overlayTunnelIndex].begin();
-  NS_LOG_UNCOND("PingBackPacketManager::receivePacket 2.1 empt" << int(m_sentPingForwardPackets[m_overlayTunnelIndex].empty()) << " " << m_tunnelsDelay[m_overlayTunnelIndex].size());
-  if (m_sentPingForwardPackets[m_overlayTunnelIndex].empty()==0){
-    while(it->uid != m_pingPacketIndex){
-      it = m_sentPingForwardPackets[m_overlayTunnelIndex].erase(it);
+  for (auto it = m_sentPingForwardPackets[m_overlayTunnelIndex].begin(); it != m_sentPingForwardPackets[m_overlayTunnelIndex].end(); ++it){
+    if (it->uid == m_pingPacketIndex){
+      m_sentPingForwardPackets[m_overlayTunnelIndex].erase(it);
+      break;
     }
-    it = m_sentPingForwardPackets[m_overlayTunnelIndex].erase(it);
   }
+    
   //Adding tunnel delay in a circular array
   if(m_tunnelsDelay[m_overlayTunnelIndex].size()>=m_movingAverageSize){
     assert(!m_tunnelsDelay[m_overlayTunnelIndex].empty());
     m_tunnelsDelay[m_overlayTunnelIndex].erase(m_tunnelsDelay[m_overlayTunnelIndex].begin());
   }
-    NS_LOG_UNCOND("PingBackPacketManager::receivePacket 4");
   m_tunnelsDelay[m_overlayTunnelIndex].push_back(delay);
-    NS_LOG_UNCOND("PingBackPacketManager::receivePacket 5");
   
   return true;
 }

@@ -154,7 +154,7 @@ class Forwarder(Agent):
             self.action = 0
         else:
             self.action = self.take_action(obs)
-            print("node:", self.index, "action:", self.action, obs, "neighbors:", self.neighbors, Agent.curr_time, Agent.pkt_tracking_dict[int(self.pkt_id)]["src"], Agent.pkt_tracking_dict[int(self.pkt_id)]["dst"],max(Agent.max_observed_values[self.index][self.action], obs[self.action+1]))
+            # print("node:", self.index, "action:", self.action, obs, "neighbors:", self.neighbors, Agent.curr_time, Agent.pkt_tracking_dict[int(self.pkt_id)]["src"], Agent.pkt_tracking_dict[int(self.pkt_id)]["dst"],max(Agent.max_observed_values[self.index][self.action], obs[self.action+1]))
             # self.action = 1
             Agent.temp_obs[int(self.pkt_id)]= {"node": self.index,
                                                "obs": obs,
@@ -213,7 +213,7 @@ class Forwarder(Agent):
         """
         tokens = info.split(",")
         Agent.pkt_ids.append(tokens)
-        print(self.index, tokens)
+        # print(self.index, tokens)
         self.delay_time = float(tokens[0].split('=')[-1])
 
         ## retrieve packet info
