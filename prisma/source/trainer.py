@@ -72,7 +72,7 @@ class Trainer(Agent):
                     if Agent.signaling_type in ("NN", "ideal"):
                         penalty = 0
                         if Agent.loss_penalty_type == "constrained":
-                            penalty = Agent.lamda_coefs[self.index][indx] * ((obses_t[action_indices, indx]/Agent.max_observed_values[self.index][self.action]) - Agent.buffer_soft_limit)
+                            penalty = Agent.lamda_coefs[self.index][indx] * ((obses_t[action_indices, indx]/Agent.max_observed_values[self.index][indx]) - Agent.buffer_soft_limit)
                         targets_t.append(Agent.agents[self.index].get_neighbor_target_value(indx, 
                                                                                             rewards_t[action_indices], 
                                                                                             tf.constant(np.array(np.vstack(next_obses_t[action_indices]),
