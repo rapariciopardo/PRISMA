@@ -184,7 +184,7 @@ class Trainer(Agent):
             update the lambda coefficients for the current agent
         """
         for neighbor_idx in range(len(self.neighbors)):
-            data = (Agent.constrained_loss_database[self.index][neighbor_idx].get_data()[0]/Agent.max_observed_values[self.index][self.action]) - Agent.buffer_soft_limit
+            data = (Agent.constrained_loss_database[self.index][neighbor_idx].get_data()[0]/Agent.max_observed_values[self.index][neighbor_idx]) - Agent.buffer_soft_limit
             if len(data) > 0:
                 constraint_grad = np.mean(data)
                 Agent.lamda_coefs[self.index][neighbor_idx] = np.max((Agent.lamda_coefs[self.index][neighbor_idx] + (Agent.lambda_lr * constraint_grad), 0))
