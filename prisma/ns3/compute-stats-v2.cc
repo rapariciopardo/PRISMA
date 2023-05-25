@@ -189,7 +189,7 @@ int ComputeStats::getGlobalOverlayPacketsLost(){
 }
 
 int ComputeStats::getGlobalOverlayPacketsBuffered(){
-    return m_globalOverlayPacketsInjected - m_globalOverlayPacketsArrived - m_globalOverlayPacketsLost;
+    return m_globalOverlayPacketsInjected - (m_globalOverlayPacketsArrived + m_globalOverlayPacketsLost);
 }
 
 int ComputeStats::getGlobalUnderlayPacketsInjected(){
@@ -205,7 +205,7 @@ int ComputeStats::getGlobalUnderlayPacketsLost(){
 }
 
 int ComputeStats::getGlobalUnderlayPacketsBuffered(){
-    return m_globalUnderlayPacketsInjected - m_globalUnderlayPacketsArrived - m_globalUnderlayPacketsLost;
+    return m_globalUnderlayPacketsInjected - (m_globalUnderlayPacketsArrived + m_globalUnderlayPacketsLost);
 }
 
 vector<float> ComputeStats::getLocalE2eDelay(){

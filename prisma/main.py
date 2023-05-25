@@ -157,12 +157,12 @@ def main():
             Overlay Cost = {Agent.sim_cost},
             Global Cost = {Agent.sim_global_cost},
             Hops = {Agent.total_hops/Agent.sim_delivered_packets},
-            Overlay Data packet size = {Agent.sim_bytes_data},
-            Global Data packet size = {Agent.sim_global_bytes_data},
-            nbBytesBigSignaling = {Agent.sim_bytes_big_signaling},
-            nbBytesSmallSignaling = {Agent.sim_bytes_small_signaling},
-            nbBytesOverlaySignalingForward = {Agent.sim_bytes_overlay_signaling_forward},
-            nbBytesOverlaySignalingBack = {Agent.sim_bytes_overlay_signaling_back},
+            # Overlay Data packet size = {Agent.sim_bytes_data},
+            # Global Data packet size = {Agent.sim_global_bytes_data},
+            # nbBytesBigSignaling = {Agent.sim_bytes_big_signaling},
+            # nbBytesSmallSignaling = {Agent.sim_bytes_small_signaling},
+            # nbBytesOverlaySignalingForward = {Agent.sim_bytes_overlay_signaling_forward},
+            # nbBytesOverlaySignalingBack = {Agent.sim_bytes_overlay_signaling_back},
             OverheadRatio = {Agent.sim_signaling_overhead}
             """)                     
     

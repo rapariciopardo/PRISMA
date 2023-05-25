@@ -116,6 +116,9 @@ public:
   static int m_globalBytesSignaling;
 
   static double m_lossPenalty;
+  int m_localOverlayPacketsInjected;
+  int m_localOverlayPacketsArrived;
+  int m_localOverlayPacketsLost;
 
 private:
   //Local (node) Information
@@ -123,9 +126,6 @@ private:
   vector<float> m_localCost;
   float m_localLossRatio;
 
-  int m_localOverlayPacketsInjected;
-  int m_localOverlayPacketsArrived;
-  int m_localOverlayPacketsLost;
   
 };
 

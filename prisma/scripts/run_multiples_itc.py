@@ -52,8 +52,8 @@ from time import sleep
 # traff_mats = [3, 2, 0, 1]
 # traff_mats = [1, 0, 2, 3]
 traff_mats = [0,]
-# sync_steps = list(range(1, 7))
-sync_steps = [1,]
+sync_steps = list(range(1, 7))
+# sync_steps = [1,]
 seed = 100
 rb_sizes = [10000,] 
 # signaling_types = ["NN", "digital_twin", "target"]
@@ -62,15 +62,15 @@ signaling_types = ["NN"]
 dqn_models = ["", "_lite", "_lighter", "_lighter_2", "_lighter_3", "_ff"]
 dqn_models = ["", "_lite", "_lighter", "_lighter_2", "_lighter_3"]
 dqn_models = [""]
-experiment_name = "ITC_NN_size_variations_experiment_rcpo_fixed"
+experiment_name = "ITC_NN_size_variations_experiment_rcpo_final"
 nn_sizes = [35328, 9728, 5120, 1536, 512, 1024]
 nn_sizes = [35328, 9728, 5120, 1536, 512]
 nn_sizes = [35328]
-d_t_max_time = 10
+# d_t_max_time = 10
 topology_name = "overlay_full_mesh_10n_geant"
 # variable parameters
 training_load = 0.4
-bs = 1024
+bs = 128
 lr = 0.0001
 # explorations = [["vary", 1.0, 0.01],
 #                 ["fixed", 0.1, 0.1]]
@@ -83,7 +83,7 @@ test_duration = 20
 max_output_buffer_sizes = [16260,]
 loss_pen_types = ["fixed", "constrained"]
 lambda_waits = [0, 25, 60]
-train_load = 0.4
+train_load = 0.5
 test_loads = [0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2]
 buffer_soft_limits = [0.6, 0.4, 0.1]
 lambda_train_steps = [1,]
@@ -147,7 +147,7 @@ for traff_mat in traff_mats:
                                                                                 
                                                         full_command = f'tsp {command_root} {python_command}'
                                                         print(full_command)
-                                                        raise(0)
+                                                        # raise(0)
                                                         # print("vs code config args = ", sum([x.split("=") for x in python_command.split(" ")[3:]], []))
                                                         task_id = int(subprocess.check_output(full_command, shell=True))
                                                         print(task_id, "train", full_command)
@@ -192,6 +192,7 @@ for traff_mat in traff_mats:
                                                                                                 
                                                                                                 )
                                                                 full_command = f'tsp -D {task_id} {command_root} {python_command}'
+                                                                sleep(1)
                                                                 print(full_command)
                                                                 test_task_id = int(subprocess.check_output(full_command, shell=True))
                                                                 print(task_id, "test", test_load)
