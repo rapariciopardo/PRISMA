@@ -130,7 +130,6 @@ def main():
     while threading.active_count() > params["numNodes"] * (1+ params["train"]):
         sleep(params["logging_timestep"])
         if params["train"] == 1:
-            stats_writer_train(summary_writer_session, summary_writer_nb_arrived_pkts, summary_writer_nb_lost_pkts, summary_writer_nb_new_pkts, Agent)
             print("Time = ", Agent.curr_time, "Overal injected packets = ", Agent.sim_injected_packets, "Overal delivered packets = ", Agent.sim_delivered_packets, "Overal lost packets = ", Agent.sim_dropped_packets, "Overlay buffered packets = ", Agent.sim_buffered_packets)
             ## check if it is time to save a snapshot of the models
             if Agent.curr_time > (snapshot_index * params["snapshot_interval"]):
