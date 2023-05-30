@@ -435,7 +435,9 @@ class Forwarder(Agent):
         Agent.delays_ideal.append(sum(Agent.pkt_tracking_dict[int(self.pkt_id)]["delays_ideal"]))
         Agent.delays_real.append(sum(Agent.pkt_tracking_dict[int(self.pkt_id)]["delays_real"]))
         Agent.delays.append(self.delay_time)
-        Agent.info_debug.append([Agent.pkt_tracking_dict[int(self.pkt_id)]["src"],
+        Agent.info_debug.append([
+                                    self.pkt_id,
+                                    Agent.pkt_tracking_dict[int(self.pkt_id)]["src"],
                                     Agent.pkt_tracking_dict[int(self.pkt_id)]["dst"],
                                     Agent.pkt_tracking_dict[int(self.pkt_id)]["hops"],
                                     len(Agent.pkt_tracking_dict[int(self.pkt_id)]["hops"])-1,

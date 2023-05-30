@@ -170,7 +170,7 @@ PacketRoutingEnv::GetObservation()
       }
     }
   }
-  NS_LOG_UNCOND("Buffered Packets: " << all_buffered );
+  // NS_LOG_UNCOND("Buffered Packets: " << all_buffered );
 
   Ptr<OpenGymBoxContainer<int32_t> > box = CreateObject<OpenGymBoxContainer<int32_t> >(m_dataPacketManager->getObsShape());
   if(is_trainStep_flag==0) {

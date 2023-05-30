@@ -431,14 +431,18 @@ PointToPointNetDevice::Receive (Ptr<Packet> packet)
       m_macRxTrace (originalPacket);
       m_rxCallback (this, packet, protocol, GetRemote ());
      
-      if(tagcopy.GetSimpleValue()==0 && tagcopy.GetFinalDestination()==m_node->GetId()){
+      if(tagcopy.GetSimpleValue()==0 && tagcopy.GetFinalDestination()== m_node->GetId()){
         if(tagcopy.GetTrafficValable()){
+          if (tagcopy.GetNextHop() == tagcopy.GetFinalDestination()){
+
+          // NS_LOG_UNCOND("Packet arrived at destination at "<<m_node->GetId()<<"   id = "<<packet->GetUid()<<"  time =  "<<Simulator::Now().GetSeconds() << "  size = "<<packet->GetSize() << " overlay = " << int(tagcopy.GetTrafficValable())  << " " << int(tagcopy.GetSimpleValue()) << " source = " << tagcopy.GetSource() << " final destination = " << tagcopy.GetFinalDestination() << " last hop = " << tagcopy.GetLastHop() << " " << tagcopy.GetNextHop()) ;
           m_computeStats->incrementOverlayPacketsArrived();
           m_computeStats->addCost(Simulator::Now().GetSeconds() - tagcopy.GetStartTime());
           m_computeStats->addE2eDelay(Simulator::Now().GetSeconds() - tagcopy.GetStartTime());
           // NS_LOG_UNCOND("packet dropped "<<m_node->GetId()<<"   "<<packet->GetUid()<<"   "<<Simulator::Now().GetSeconds());
           // m_macTxDropTrace (packet);
         // m_phyRxDropTrace (packet);
+          }
 
         } else {
           m_computeStats->incrementUnderlayPacketsArrived();
@@ -653,6 +657,7 @@ PointToPointNetDevice::Send (
   // Enqueue may fail (overflow)
   if(tagcopy.GetSimpleValue()==0){
     if(tagcopy.GetTrafficValable()){
+
       m_computeStats->incrementOverlayPacketsLost();
       m_computeStats->addLossPenaltyToCost();
     } else m_computeStats->incrementUnderlayPacketsLost();
