@@ -98,7 +98,7 @@ BigSignalingPacketManager::receivePacket(Ptr<Packet> packet){
   if(m_source == m_node->GetId()){
     return false;
   }
-  m_computeStats->addGlobalBytesSignaling(packet->GetSize());
+  //m_computeStats->addGlobalBytesSignaling(packet->GetSize());
   //Get extra info from packet
   MyTag tagCopy;
   m_packet->PeekPacketTag(tagCopy);
