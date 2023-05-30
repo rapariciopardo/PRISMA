@@ -616,6 +616,7 @@ PointToPointNetDevice::Send (
   //Get if the packet was rejected by the Optimal Algorithm
   if(tagcopy.GetSimpleValue()==0 && tagcopy.GetRejectedPacket()==1 && m_node->GetId()<23){
     if(tagcopy.GetTrafficValable()){
+      NS_LOG_UNCOND("*********************************************");
       m_computeStats->incrementOverlayPacketsLost();
       m_computeStats->addLossPenaltyToCost();
     } else m_computeStats->incrementUnderlayPacketsLost();

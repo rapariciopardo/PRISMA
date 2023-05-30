@@ -235,6 +235,7 @@ class Forwarder(Agent):
                 next_hop_degree = len(list(Agent.G.neighbors(self.neighbors[lost_packet_info["action"]])))
                 rew = self._get_reward_lost_pkt()
                 obs_shape = next_hop_degree
+                ## Add the lost packet to the replay buffer
                 if Agent.loss_penalty_type == "fixed":
                     if(Agent.prioritizedReplayBuffer):
                         Agent.replay_buffer[self.index].add(np.array(lost_packet_info["obs"], dtype=float).squeeze(),
@@ -250,6 +251,10 @@ class Forwarder(Agent):
                                         rew,
                                         np.array([lost_packet_info["obs"][0]] + [0]*(obs_shape), dtype=float).squeeze(), 
                                         True)
+                ## Increment the loss counter
+                Agent.node_lost_pkts += 1
+                ## Remove the lost packet from the pkt tracking dict
+                Agent.pkt_tracking_dict.pop(int(lost_packet_id))
         else: 
             if(pkt_type==2): # small signaling packet
                 id_signaled = float(tokens[16].split('=')[-1]) 
@@ -281,7 +286,7 @@ class Forwarder(Agent):
         Agent.sim_global_avg_e2e_delay = Agent.sim_avg_e2e_delay 
         Agent.sim_cost = float(tokens[6].split('=')[-1]) 
         Agent.sim_global_cost = Agent.sim_cost 
-        Agent.sim_dropped_packets = float(tokens[7].split('=')[-1]) + Agent.node_lost_pkts 
+        Agent.sim_dropped_packets = float(tokens[7].split('=')[-1]) 
         Agent.sim_delivered_packets = float(tokens[8].split('=')[-1]) 
         Agent.sim_injected_packets = float(tokens[9].split('=')[-1]) 
         Agent.sim_buffered_packets = float(tokens[10].split('=')[-1]) 

@@ -147,7 +147,8 @@ Ptr<OpenGymDataContainer>
 PacketRoutingEnv::GetObservation()
 {
   // NS_LOG_UNCOND("PacketRoutingEnv::GetObservation");
-  // NS_LOG_UNCOND("start printing all the packet id in all the queues");
+  // NS_LOG_UNCOND("start printing all the packet id in all the queues");*
+  int all_buffered = 0;
   for (uint32_t i=0; i<m_nodes.GetN(); i++){
     Ptr<Node> node = m_nodes.Get(i);
     // NS_LOG_UNCOND("node " << i);
@@ -156,16 +157,21 @@ PacketRoutingEnv::GetObservation()
       Ptr<NetDevice> netDev = node->GetDevice (k);
       Ptr<PointToPointNetDevice> p2p_netDev = DynamicCast<PointToPointNetDevice> (netDev);
       Ptr<Queue<Packet> > queue = p2p_netDev->GetQueue();
-
+      // NS_LOG_UNCOND("    queue size " << queue->GetNPackets() << " " << queue->GetMaxSize() << " " << queue->GetNBytes());
       for (uint32_t j = 0; j < queue->GetNPackets (); j++){
         Ptr<Packet> packet = queue->Dequeue();
         MyTag tag;
         packet->PeekPacketTag (tag);
-        // NS_LOG_UNCOND("     " << packet->GetUid() << " " << packet->GetSize() <<" " << tag.GetSource() << " " << tag.GetFinalDestination() << " "<< int(tag.GetTrafficValable()));
+      //   // NS_LOG_UNCOND("     " << packet->GetUid() << " " << packet->GetSize() <<" " << tag.GetSource() << " " << tag.GetFinalDestination() << " "<< int(tag.GetTrafficValable()));
+        if (tag.GetTrafficValable() == 1){
+          all_buffered = all_buffered + 1;
+        }
         queue->Enqueue(packet);
       }
     }
   }
+  NS_LOG_UNCOND("Buffered Packets: " << all_buffered );
+
   Ptr<OpenGymBoxContainer<int32_t> > box = CreateObject<OpenGymBoxContainer<int32_t> >(m_dataPacketManager->getObsShape());
   if(is_trainStep_flag==0) {
     if (m_packetType==DATA_PACKET) return m_dataPacketManager->getObservation();
