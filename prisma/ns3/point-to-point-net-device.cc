@@ -656,8 +656,8 @@ PointToPointNetDevice::Send (
 
   // Enqueue may fail (overflow)
   if(tagcopy.GetSimpleValue()==0){
-    if(tagcopy.GetTrafficValable()){
-
+    if(tagcopy.GetTrafficValable() && tagcopy.GetFinalDestination()!=m_node->GetId()){
+      //NS_LOG_UNCOND("packet lost "<<packet->GetUid());
       m_computeStats->incrementOverlayPacketsLost();
       m_computeStats->addLossPenaltyToCost();
     } else m_computeStats->incrementUnderlayPacketsLost();

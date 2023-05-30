@@ -61,7 +61,7 @@ class PacketRoutingEnv : public OpenGymEnv
 {
 public:
   PacketRoutingEnv ();
-  PacketRoutingEnv (Ptr<Node> node, uint32_t numberOfNodes, uint64_t linkRateValue, bool activateSignaling, double signPacketSize, vector<int> overlayNeighbors, int *nodes_starting_address);
+  PacketRoutingEnv (Ptr<Node> node, NodeContainer nodes, uint64_t linkRateValue, bool activateSignaling, double signPacketSize, vector<int> overlayNeighbors, int *nodes_starting_address);
   void ScheduleNextStateRead ();
   void setNetDevicesContainer(NetDeviceContainer* nd);
   void setTrainConfig(bool train);

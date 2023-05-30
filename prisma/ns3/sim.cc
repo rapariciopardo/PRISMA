@@ -550,7 +550,7 @@ int main (int argc, char *argv[])
     //nodeOpenGymPort = openGymPort + i;
     Ptr<OpenGymInterface> openGymInterface = CreateObject<OpenGymInterface> (openGymPort + i);
     Ptr<PacketRoutingEnv> packetRoutingEnv;
-    packetRoutingEnv = CreateObject<PacketRoutingEnv> (n, n_nodes, linkRateValue, activateSignaling, smallSignalingSize[i], overlayNeighbors[i], nodes_starting_address); // event-driven step
+    packetRoutingEnv = CreateObject<PacketRoutingEnv> (n, nodes_switch, linkRateValue, activateSignaling, smallSignalingSize[i], overlayNeighbors[i], nodes_starting_address); // event-driven step
     packetRoutingEnv->setTrainConfig(train);
     packetRoutingEnv->m_nodes = nodes_switch;
     packetRoutingEnv->mapOverlayNodes(underlay_to_overlay_map);

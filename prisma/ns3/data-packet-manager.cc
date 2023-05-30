@@ -89,8 +89,9 @@ DataPacketManager::dropPacket(DataPacketManager *entity, Ptr<const Packet> packe
   //NS_LOG_UNCOND("DataPacketManager::dropPacket");
   MyTag tagCopy;
   packet->PeekPacketTag(tagCopy);
-  if ((PacketType(tagCopy.GetSimpleValue()) == DATA_PACKET) and (tagCopy.GetTrafficValable()==1) and (tagCopy.GetFinalDestination() != entity->m_node->GetId())){
-  //NS_LOG_UNCOND("Packet dropped: " << packet->GetUid() << " " << tagCopy.GetSource() << " " << tagCopy.GetFinalDestination() << " " << entity->m_node->GetId());
+  //NS_LOG_UNCOND(tagCopy.GetTrafficValable());
+  if ((PacketType(tagCopy.GetSimpleValue()) == DATA_PACKET) && (tagCopy.GetTrafficValable()) && (tagCopy.GetFinalDestination() != entity->m_node->GetId()) && tagCopy.GetLastHop()==entity->m_node->GetId()){
+    //NS_LOG_UNCOND("Packet dropped: " << packet->GetUid() << " " << tagCopy.GetSource() << " " << tagCopy.GetFinalDestination() << " " << entity->m_node->GetId());
     SentPacket packetLost;
     packetLost.start_time = tagCopy.GetStartTime();
     packetLost.type = DATA_PACKET;
@@ -101,12 +102,15 @@ DataPacketManager::dropPacket(DataPacketManager *entity, Ptr<const Packet> packe
   
 }
 
-DataPacketManager::DataPacketManager (Ptr<Node> node, vector<int> neighbors, int *nodes_starting_address) : PacketManager(node, neighbors)
+DataPacketManager::DataPacketManager (Ptr<Node> node, vector<int> neighbors, int *nodes_starting_address, NodeContainer nodes_switch) : PacketManager(node, neighbors)
 {
-  for(uint32_t i=0;i<m_node->GetNDevices();i++){
-    m_node->GetDevice(i)->TraceConnectWithoutContext("MacTxDrop", MakeBoundCallback(&dropPacket, this));
+  for(uint32_t j=0;j<nodes_switch.GetN();j++){
+    for(uint32_t i=2;i<nodes_switch.Get(j)->GetNDevices();i++){
+      nodes_switch.Get(j)->GetDevice(i)->TraceConnectWithoutContext("MacTxDrop", MakeBoundCallback(&dropPacket, this));
+    }
   }
   m_nodes_starting_address = nodes_starting_address;
+  m_nodes_switch = nodes_switch;
   NS_LOG_FUNCTION (this);
 }
 

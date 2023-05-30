@@ -27,7 +27,7 @@ def run_ns3(params, configure=True):
 
     ## Copy prisma into ns-3 folder
     os.system(f'rsync -r ./ns3/* {params["ns3_sim_path"].rstrip("/")}/scratch/prisma')
-    # os.system(f'rsync -r ./ns3_model/ipv4-interface.cc {params["ns3_sim_path"].rstrip("/")}/src/internet/model')
+    os.system(f'rsync -r ./ns3_model/ipv4-interface.cc {params["ns3_sim_path"].rstrip("/")}/src/internet/model')
 
     ## go to ns3 dir
     os.chdir(params["ns3_sim_path"])

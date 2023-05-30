@@ -51,7 +51,7 @@ class DataPacketManager : public PacketManager
 {
 public:
   DataPacketManager();
-  DataPacketManager(Ptr<Node> node, vector<int> neighbors, int *nodes_starting_address);
+  DataPacketManager(Ptr<Node> node, vector<int> neighbors, int *nodes_starting_address, ns3::NodeContainer nodes_switch);
   void setSmallSignalingPacketSize(uint32_t signPacketSize);
   void setPingBackPacketManager(PingBackPacketManager *pingBackPacketManager);
 
@@ -74,6 +74,7 @@ public:
   void setPacketsIntervalForSendingPingBack(uint32_t value);
   
 private:
+  NodeContainer m_nodes_switch;
   bool m_obs_bufferLength = false;
   uint32_t m_packetsIntervalForSendingPingPacket=5;
   PingBackPacketManager *m_pingBackPacketManager;
