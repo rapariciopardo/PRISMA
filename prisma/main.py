@@ -179,7 +179,8 @@ def main():
     ## save the replay buffers
     if params["train"] == 1:
         for idxx, rb in enumerate(Agent.replay_buffer):
-            os.mkdir(path=params["logs_folder"] + "/replay_buffers")
+            if not os.path.exists(params["logs_folder"] + "/replay_buffers"):
+                os.mkdir(path=params["logs_folder"] + "/replay_buffers")
             rb.save(params["logs_folder"] + "/replay_buffers/" + str(idxx) + ".pkl")
             
     ## save the profiler results
