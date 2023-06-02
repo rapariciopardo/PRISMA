@@ -240,8 +240,8 @@ def allocate_on_gpu(gpu_memory_margin=1500):
     gpus = tf.config.experimental.list_physical_devices('GPU')
     if gpus:
         try:
-            for gpu in gpus:
-                tf.config.experimental.set_memory_growth(gpu, True)
+            tf.config.set_visible_devices(gpus[gpu_index], 'GPU')
+            tf.config.experimental.set_memory_growth(gpus[gpu_index], True)
         except RuntimeError as e:
             print(e)
 
