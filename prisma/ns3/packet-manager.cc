@@ -139,31 +139,37 @@ string PacketManager::getInfo(){
     myInfo += ", Avg Cost ="; //6
     myInfo += std::to_string(m_computeStats->getAverage(m_computeStats->getGlobalCost()));
 
-    myInfo += ", Packets dropped ="; //7
+    myInfo += ", Avg Underlay End to End Delay ="; //7
+    myInfo += std::to_string(m_computeStats->getAverage(m_computeStats->getGlobalUnderlayE2eDelay()));
+
+    myInfo += ", Avg Underlay Cost ="; //8
+    myInfo += std::to_string(m_computeStats->getAverage(m_computeStats->getGlobalUnderlayCost()));
+
+    myInfo += ", Packets dropped ="; //9
     myInfo += std::to_string(m_computeStats->getGlobalOverlayPacketsLost());
 
-    myInfo += ", Packets delivered ="; //8
+    myInfo += ", Packets delivered ="; //10
     myInfo += std::to_string(m_computeStats->getGlobalOverlayPacketsArrived());
 
-    myInfo += ", Packets injected ="; //9
+    myInfo += ", Packets injected ="; //11
     myInfo += std::to_string(m_computeStats->getGlobalOverlayPacketsInjected());
 
-    myInfo += ",Packets Buffered ="; //10
+    myInfo += ",Packets Buffered ="; //12
     myInfo += std::to_string(m_computeStats->getGlobalOverlayPacketsBuffered());
 
-    myInfo += ", Packets dropped Underlay ="; //11
+    myInfo += ", Packets dropped Underlay ="; //13
     myInfo += std::to_string(m_computeStats->getGlobalUnderlayPacketsLost());
 
-    myInfo += ", Packets delivered Underlay="; //12
+    myInfo += ", Packets delivered Underlay="; //14
     myInfo += std::to_string(m_computeStats->getGlobalUnderlayPacketsArrived());
 
-    myInfo += ", Packets injected Underlay="; //13
+    myInfo += ", Packets injected Underlay="; //15
     myInfo += std::to_string(m_computeStats->getGlobalUnderlayPacketsInjected());
 
-    myInfo += ",Packets Buffered Underlay="; //14
+    myInfo += ",Packets Buffered Underlay="; //16
     myInfo += std::to_string(m_computeStats->getGlobalUnderlayPacketsBuffered());
     
-    myInfo += ",Signaling overhead ="; //15
+    myInfo += ",Signaling overhead ="; //17
     myInfo += std::to_string(m_computeStats->getSignalingOverhead());
     return myInfo;
    

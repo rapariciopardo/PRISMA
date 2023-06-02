@@ -130,7 +130,9 @@ def main():
     while threading.active_count() > params["numNodes"] * (1+ params["train"]):
         sleep(params["logging_timestep"])
         if params["train"] == 1:
-            print(f"Time = {Agent.curr_time}, Overal injected packets = {Agent.sim_injected_packets}({Agent.total_new_rcv_pkts}), Overal delivered packets = {Agent.sim_delivered_packets}({Agent.total_arrived_pkts}), Overal lost packets = {Agent.sim_dropped_packets}({Agent.node_lost_pkts}), Overlay buffered packets = {Agent.sim_buffered_packets}({len(Agent.pkt_tracking_dict.keys())})")
+            stats_writer_train(summary_writer_session, summary_writer_nb_arrived_pkts, summary_writer_nb_lost_pkts, summary_writer_nb_new_pkts, Agent)
+
+            # print(f"Time = {Agent.curr_time}, Overal injected packets = {Agent.sim_injected_packets}({Agent.total_new_rcv_pkts}), Overal delivered packets = {Agent.sim_delivered_packets}({Agent.total_arrived_pkts}), Overal lost packets = {Agent.sim_dropped_packets}({Agent.node_lost_pkts}), Overlay buffered packets = {Agent.sim_buffered_packets}({len(Agent.pkt_tracking_dict.keys())})")
             ## check if it is time to save a snapshot of the models
             if Agent.curr_time > (snapshot_index * params["snapshot_interval"]):
                 print(f"Saving model at time {Agent.curr_time} with index {snapshot_index}")
@@ -173,6 +175,13 @@ def main():
     if params["save_models"] and Agent.curr_time >= params["simTime"]-5:
         save_all_models(Agent.agents, params["G"].nodes(), params["session_name"], 1, 1, root=params["logs_parent_folder"] + "/saved_models/", snapshot=False)
 
+
+    ## save the replay buffers
+    if params["train"] == 1:
+        for idxx, rb in enumerate(Agent.replay_buffer):
+            os.mkdir(path=params["logs_folder"] + "/replay_buffers")
+            rb.save(params["logs_folder"] + "/replay_buffers/" + str(idxx) + ".pkl")
+            
     ## save the profiler results
     if params["profile_session"]:
         tracer.stop()
@@ -192,6 +201,9 @@ if __name__ == '__main__':
         print("Elapsed time = ", str(datetime.timedelta(seconds= time() - start_time)))
     except:
         traceback.print_exc()
+        # write the error in the log file
+        with open("examples/error.log", "a") as f:
+            traceback.print_exc(file=f)
     finally:
         print("kill process group")
         if ns3_pid:

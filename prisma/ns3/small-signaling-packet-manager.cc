@@ -111,9 +111,9 @@ string
 SmallSignalingPacketManager::getInfo()
 {
   string myInfo = PacketManager::getInfo();
-  myInfo += ", PacketIdSignaled="; //16
+  myInfo += ", PacketIdSignaled="; //18
   myInfo += std::to_string(m_packetIdSignaled); 
-  myInfo += ", Arrived at final dest="; //16
+  myInfo += ", Arrived at final dest="; //19
   myInfo += std::to_string(m_arrivedAtFinalDest);
   return myInfo;
 }

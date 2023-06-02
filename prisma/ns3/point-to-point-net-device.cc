@@ -446,6 +446,8 @@ PointToPointNetDevice::Receive (Ptr<Packet> packet)
 
         } else {
           m_computeStats->incrementUnderlayPacketsArrived();
+          m_computeStats->addUnderlayCost(Simulator::Now().GetSeconds() - tagcopy.GetStartTime());
+          m_computeStats->addUnderlayE2eDelay(Simulator::Now().GetSeconds() - tagcopy.GetStartTime());
         }
       }
 
@@ -623,7 +625,11 @@ PointToPointNetDevice::Send (
       NS_LOG_UNCOND("*********************************************");
       m_computeStats->incrementOverlayPacketsLost();
       m_computeStats->addLossPenaltyToCost();
-    } else m_computeStats->incrementUnderlayPacketsLost();
+    } else {
+      m_computeStats->addLossPenaltyToUnderlayCost();
+
+      m_computeStats->incrementUnderlayPacketsLost();
+    }
     
     
     m_macTxDropTrace (packet);
@@ -660,7 +666,10 @@ PointToPointNetDevice::Send (
       //NS_LOG_UNCOND("packet lost "<<packet->GetUid());
       m_computeStats->incrementOverlayPacketsLost();
       m_computeStats->addLossPenaltyToCost();
-    } else m_computeStats->incrementUnderlayPacketsLost();
+    } else {
+      m_computeStats->addLossPenaltyToUnderlayCost();
+      m_computeStats->incrementUnderlayPacketsLost();
+    }
     m_macTxDropTrace (packet);
   } 
   return false;

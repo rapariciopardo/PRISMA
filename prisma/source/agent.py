@@ -87,6 +87,7 @@ class Agent():
         cl.sim_delivered_packets = 0
         cl.sim_global_delivered_packets = 0
         cl.sim_buffered_packets = 0
+        cl.sim_signaling_overhead = 0
         cl.sim_global_buffered_packets = 0
         cl.sim_avg_e2e_delay = 0.0
         cl.sim_sum_e2e_delay = 0.0
@@ -132,6 +133,8 @@ class Agent():
         cl.buffer_soft_limit = params_dict["buffer_soft_limit"]
         cl.lamda_training_start_time = params_dict["lamda_training_start_time"]
         cl.lambda_lr=params_dict["lambda_lr"]
+        cl.d_t_max_time = params_dict["d_t_max_time"]
+
         cl.constrained_loss_database =  [[DigitalTwinDB(Agent.lambda_train_step) for _ in range(len(list(cl.G.neighbors(n))))] for n in range(cl.numNodes)]
         cl.lamda_coefs = [[0 for _ in range(len(list(cl.G.neighbors(n))))] for n in range(cl.numNodes)]
         cl.max_observed_values = [[0 for _ in range(len(list(cl.G.neighbors(n))))] for n in range(cl.numNodes)]

@@ -20,7 +20,7 @@ class Trainer(Agent):
         self.last_training_time = 0
         self.last_sync_time = 0
         self.gradient_step_idx = 1
-        
+        self.last_d_t_training_time = 0
         ## define the log file for trainer 
         self.tb_writer_dict = {"td_error": tf.summary.create_file_writer(logdir=f'{Agent.logs_folder}/td_error/node_{self.index}'),
                                "replay_buffer_length": tf.summary.create_file_writer(logdir=f'{Agent.logs_folder}/replay_buffer_length/node_{self.index}'),
@@ -39,6 +39,9 @@ class Trainer(Agent):
                 self._get_upcoming_events()
             ## check if it is time to syncronize nn
             self._check_sync()
+            
+            if Agent.signaling_type == "digital_twin" and Agent.curr_time > (self.last_d_t_training_time + Agent.d_t_max_time):
+                self.train_d_ts_()
                 
             ## check if it is time to train
             if Agent.curr_time > (self.last_training_time + Agent.training_step) and Agent.replay_buffer[self.index].total_samples>= Agent.batch_size:
@@ -74,11 +77,20 @@ class Trainer(Agent):
                         if Agent.loss_penalty_type == "constrained":
                             penalty = Agent.lamda_coefs[self.index][indx] * ((obses_t[action_indices, indx]/Agent.max_observed_values[self.index][indx]) - Agent.buffer_soft_limit)
                         targets_t.append(Agent.agents[self.index].get_neighbor_target_value(indx, 
-                                                                                            rewards_t[action_indices], 
+                                                                                            rewards_t[action_indices] + penalty, 
                                                                                             tf.constant(np.array(np.vstack(next_obses_t[action_indices]),
                                                                                                                 dtype=float)), 
                                                                                             dones_t[action_indices],
                                                                                             filtered_indices))
+                    elif Agent.signaling_type == "digital_twin":
+                        penalty = 0
+                        if Agent.loss_penalty_type == "constrained":
+                            penalty = Agent.lamda_coefs[self.index][indx] * ((obses_t[action_indices, indx]/Agent.max_observed_values[self.index][indx]) - Agent.buffer_soft_limit)
+                        targets_t.append(Agent.agents[self.index].get_neighbor_d_t_value(indx,
+                                                                                         rewards_t[action_indices] + penalty, 
+                                                                                         tf.constant(np.array(np.vstack(next_obses_t[action_indices]), dtype=float)),
+                                                                                         dones_t[action_indices],
+                                                                                         filtered_indices))
             action_indices_all = np.concatenate(action_indices_all)
             ### prepare tf variables
             try:
@@ -192,3 +204,26 @@ class Trainer(Agent):
             with self.tb_writer_dict["summary_writer_lambdas"][neighbor_idx].as_default():
                 tf.summary.scalar('lambda_coefs_over_step', Agent.lamda_coefs[self.index][neighbor_idx], step=self.gradient_step_idx)
                 tf.summary.scalar('lambda_coefs_over_time', Agent.lamda_coefs[self.index][neighbor_idx], step=int(Agent.curr_time*1e6))
+                
+    def train_d_ts_(self):
+        """
+        Train all the neighbors digital twins
+        """
+        self.last_d_t_training_time = Agent.curr_time
+        print("start supervised learning for node ", self.index, " at time ", Agent.curr_time, " with ", len(self.neighbors), " neighbors", self.last_d_t_training_time, Agent.d_t_max_time)
+        for neighbor_idx, neighbor in enumerate(self.neighbors):
+            self.train_d_t_(neighbor_idx)
+        
+    
+    def train_d_t_(self, neighbor_idx):
+        """
+        Train the digital twin for a given neighbor
+        """
+        x, y = Agent.agents[self.index].neighbors_d_t_database[neighbor_idx].get_data()
+        if len(y) == 0 or len(x) == 0:
+            return
+        size = min(len(x), len(y))
+        # with Agent.train_lock:
+        loss = Agent.agents[self.index].neighbors_d_t_network[neighbor_idx].fit(x[:size], y[:size], batch_size=Agent.batch_size, epochs=int(10*Agent.d_t_max_time), verbose=0)
+        print("supervised training; node = ", self.index, " neighbor = ", neighbor_idx, " loss = ", loss.history["loss"][-1] , " time = ", Agent.curr_time, " len = ", len(y), len(x))
+    

@@ -23,7 +23,7 @@ if __name__ == '__main__':
     ### define the params
     # topology = '22n'#'4n' #'5n'
     size_of_data_per_dst = 10000
-    topology_name = "overlay_full_mesh_10n_geant"
+    topology_name = "5n_overlay_full_mesh_abilene"
     buffer_max_length = 16260 # bytes
     link_cap = 500000 # kbps
     pkt_size = 512 # bytes
@@ -42,7 +42,7 @@ if __name__ == '__main__':
 
     print("number of nodes", len(G.nodes()))
     print("number of edges", len(G.edges()))
-    types = ["", "_lite", "_lighter", "_lighter_2", "_lighter_3", "_ff"]
+    types = ["", ]
     # types = ["",]
     base_models = [DQN_buffer_model, DQN_buffer_lite_model, DQN_buffer_lighter_model, DQN_buffer_lighter_2_model, DQN_buffer_lighter_3_model, DQN_buffer_ff_model]
     nx.draw_networkx(G, with_labels=True)

@@ -91,7 +91,7 @@ class DQN_AGENT(tf.Module):
 
     def __init__(self, q_func, observation_shape, num_actions, num_nodes, lr,
                  input_size_splits, neighbors_degrees,
-                 grad_norm_clipping=None, gamma=1.0, double_q=False):
+                 grad_norm_clipping=None, gamma=1.0, double_q=False, d_t_max_time=10, d_q_func=None):
 
       self.num_actions = num_actions
       self.q_func = q_func
@@ -113,12 +113,19 @@ class DQN_AGENT(tf.Module):
       self.eps = tf.Variable(0., name="eps")
       
       self.loss = tf.keras.losses.MeanSquaredError()
+      ### define digital twin max time in seconds for the database
+      self.d_t_max_time = d_t_max_time
       
       ### define the neighbors target q networks
       self.neighbors_target_q_networks = []
       self.neighbors_target_upcoming_q_networks = []
       self.neighbors_target_temp_upcoming_q_networks = []
+    
+      ### define the digital twin q networks
+      self.neighbors_d_t_network = []
       
+      ### define the digital twin database
+      self.neighbors_d_t_database = []
       for neighbor in range(num_actions):
         with tf.name_scope(f'neighbor_target_q_network_{neighbor}'):
                 self.neighbors_target_q_networks.append(q_func((neighbors_degrees[neighbor]+observation_shape[0]-num_actions,), 
@@ -138,7 +145,14 @@ class DQN_AGENT(tf.Module):
                                                                             num_nodes, 
                                                                             [1, neighbors_degrees[neighbor],
                                                                              observation_shape[0]-num_actions -1]))
-
+        if d_q_func is not None:       
+            with tf.name_scope(f'neighbor_d_t_network_{neighbor}'):
+                    self.neighbors_d_t_network.append(d_q_func((neighbors_degrees[neighbor]+observation_shape[0]-num_actions,), neighbors_degrees[neighbor], num_nodes, 
+                                        [1, neighbors_degrees[neighbor]]))
+                    self.neighbors_d_t_network[-1].compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001),loss=tf.keras.losses.MeanSquaredError(),
+                        metrics=[tf.keras.metrics.MeanSquaredError()]
+                        )
+            self.neighbors_d_t_database.append(DigitalTwinDB(self.d_t_max_time))
     #@tf.function
     def step(self, obs, stochastic=True, update_eps=-1, actions_probs=None):
         q_values = self.q_network(obs)
@@ -272,7 +286,29 @@ class DQN_AGENT(tf.Module):
             target_q_vars = self.neighbors_target_q_networks[neighbor_idx].trainable_variables
             for var, var_target in zip(q_vars, target_q_vars):
                 var_target.assign(var)
-    
+                
+    def get_neighbor_d_t_value(self, neighbor_idx, rewards, obs1, dones, filtered_indices):
+        """Return the target values using the digital twin of the neighbor target q network.
+
+        Args:
+            neighbor_idx (int): neighbor index
+            rewards (tf or np array): values of the reward
+            obs1 (tf or np array): the states at the neighbor (s')
+            dones (list of bool): if the neighbor is the destination
+            filtered_indices (list): indices to filter from s'
+        Returns:
+            tf tensor: the target values
+        """
+        q_tp1 = tf.gather(self.neighbors_d_t_network[neighbor_idx](obs1), filtered_indices, axis=1)
+
+        q_tp1_best = tf.reduce_min(q_tp1, 1)
+
+        dones = tf.cast(dones, q_tp1_best.dtype)
+        q_tp1_best_masked = (1.0 - dones) * q_tp1_best
+
+        q_t_selected_targets = rewards + self.gamma * q_tp1_best_masked
+
+        return q_t_selected_targets
     def sync_neighbor_upcoming_target_q_network(self, agent_nn, neighbor_idx):
         """Copy nn network into neighbor upcoming target q network attribute
 

@@ -162,11 +162,11 @@ string
 PingForwardPacketManager::getInfo()
 {
   string myInfo = PacketManager::getInfo();
-  myInfo += ", NN Index="; //16
+  myInfo += ", NN Index="; //18
   myInfo += std::to_string(m_NNIndex);
-  myInfo += ", segment Index="; //17
+  myInfo += ", segment Index="; //19
   myInfo += std::to_string(m_segIndex);
-  myInfo += ", NodeId Signaled="; //18
+  myInfo += ", NodeId Signaled="; //20
   myInfo += std::to_string(m_source); 
   
   return myInfo;
