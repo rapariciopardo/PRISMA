@@ -63,6 +63,7 @@ def parse_arguments():
     group1.add_argument('--activateUnderlayTrafficTrain', type=int, help="sets if there is underlay traffic", default=0)
     group1.add_argument('--map_overlay_path', type=str, help='Path to the map overlay file', default="mapOverlay_4n.txt")
     group1.add_argument('--pingAsObs', type=int, help="dets if ping value is used as observation", default=1)
+    group1.add_argument('--pingPacketIntervalTime', type=float, help="Ping packet interval time (in seconds)", default=0.2)
     group1.add_argument('--groundTruthFrequence', type=float, help="groundTruthFrequence", default=0.1)
     group1.add_argument('--d_t_max_time', type=float, help="The maximum length in seconds of the digital twin database", default=5)
 

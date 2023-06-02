@@ -176,6 +176,8 @@ int main (int argc, char *argv[])
   uint32_t movingAverageObsSize = 5;
 
   bool activateUnderlayTraffic = true;
+
+  float pingPacketIntervalTime;
   
   CommandLine cmd;
   // required parameters for OpenGym interface
@@ -217,6 +219,7 @@ int main (int argc, char *argv[])
   cmd.AddValue ("logs_folder", "Logs folder", logs_folder);
   cmd.AddValue ("groundTruthFrequence", "ground truth freq", groundTruthFrequence);
   cmd.AddValue ("bigSignalingSize", "total size of the weights of the NN in bytes", bigSignalingSize);
+  cmd.AddValue ("pingPacketIntervalTime", "ping packet interval time", pingPacketIntervalTime);
 
   cmd.Parse (argc, argv);
     
@@ -554,6 +557,7 @@ int main (int argc, char *argv[])
     packetRoutingEnv->setTrainConfig(train);
     packetRoutingEnv->m_nodes = nodes_switch;
     packetRoutingEnv->mapOverlayNodes(underlay_to_overlay_map);
+    packetRoutingEnv->setPingPacketIntervalTime(pingPacketIntervalTime);
     //packetRoutingEnv->setLogsFolder(logs_folder);
     //packetRoutingEnv->setOverlayConfig(overlayNeighbors[overlay_to_underlay_map[i]], activateOverlaySignaling, nPacketsOverlaySignaling, movingAverageObsSize, underlay_to_overlay_map);
     packetRoutingEnv->SetOpenGymInterface(openGymInterface);

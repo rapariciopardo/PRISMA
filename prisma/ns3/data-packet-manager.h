@@ -53,6 +53,7 @@ public:
   DataPacketManager();
   DataPacketManager(Ptr<Node> node, vector<int> neighbors, int *nodes_starting_address, ns3::NodeContainer nodes_switch);
   void setSmallSignalingPacketSize(uint32_t signPacketSize);
+  void setPingPacketIntervalTime(float pingBackIntervalTime);
   void setPingBackPacketManager(PingBackPacketManager *pingBackPacketManager);
 
   bool receivePacket(Ptr<Packet> packet, Ptr<NetDevice> receivingNetDev);
@@ -70,10 +71,12 @@ public:
   bool sendPacket(Ptr<OpenGymDataContainer> action);
   void sendSmallSignalingPacket();
   void sendPingForwardPacket(uint32_t overlayIndex);
+  void sendPingPackets();
   void setObsBufferLength(bool value);
   void setPacketsIntervalForSendingPingBack(uint32_t value);
   
 private:
+  Time m_pingPacketInterval = Seconds(1.0);
   NodeContainer m_nodes_switch;
   bool m_obs_bufferLength = false;
   uint32_t m_packetsIntervalForSendingPingPacket=5;

@@ -120,6 +120,13 @@ DataPacketManager::setSmallSignalingPacketSize(uint32_t signPacketSize){
 }
 
 void 
+DataPacketManager::setPingPacketIntervalTime(float pingBackIntervalTime){
+  m_pingPacketInterval = Seconds(pingBackIntervalTime);
+  Simulator::Schedule(m_pingPacketInterval, &DataPacketManager::sendPingPackets, this);
+
+}
+
+void 
 DataPacketManager::setPingBackPacketManager(PingBackPacketManager *pingBackPacketManager){
   m_pingBackPacketManager = pingBackPacketManager;
 }
@@ -303,15 +310,16 @@ DataPacketManager::sendPacket(Ptr<OpenGymDataContainer> action){
     m_sentPackets.push_back(sent);
     dev->Send(m_packet, m_destAddr, 0x0800);
 
+
     //Send Overlay Packets
-    if(m_counterSentPackets >= m_packetsIntervalForSendingPingPacket && m_obs_bufferLength==false){
-      m_counterSentPackets = 0;
-      m_pingBackPacketManager->addSentPingForwardPacket(uint64_t(m_pingPacketIndex), Simulator::Now().GetMilliSeconds());
-      for(uint32_t i = 0; i<m_neighbors.size();i++){
-        sendPingForwardPacket(i);
-      }
-      m_pingPacketIndex += 1;
-    }
+    //if(m_counterSentPackets >= m_packetsIntervalForSendingPingPacket && m_obs_bufferLength==false){
+    //  m_counterSentPackets = 0;
+    //  m_pingBackPacketManager->addSentPingForwardPacket(uint64_t(m_pingPacketIndex), Simulator::Now().GetMilliSeconds());
+    //  for(uint32_t i = 0; i<m_neighbors.size();i++){
+    //    sendPingForwardPacket(i);
+    //  }
+    //  m_pingPacketIndex += 1;
+    //}
     
   } else{
     //TODO: Implement DropPacket Function
@@ -367,6 +375,17 @@ DataPacketManager::sendSmallSignalingPacket(){
 
   //Send the sign packet
   m_receivingNetDev->Send(smallSignalingPckt, m_destAddr, 0x800);
+}
+
+void
+DataPacketManager::sendPingPackets(){
+  //NS_LOG_UNCOND("Test ping packet, node: "<<m_node->GetId()<<"   Time: "<<Simulator::Now().GetSeconds());
+  m_pingBackPacketManager->addSentPingForwardPacket(uint64_t(m_pingPacketIndex), Simulator::Now().GetMilliSeconds());
+  for(uint32_t i = 0; i<m_neighbors.size();i++){
+    sendPingForwardPacket(i);
+  }
+  m_pingPacketIndex += 1;
+  Simulator::Schedule(m_pingPacketInterval, &DataPacketManager::sendPingPackets, this);
 }
 
 void 

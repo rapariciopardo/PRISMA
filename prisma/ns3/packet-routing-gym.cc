@@ -95,6 +95,11 @@ PacketRoutingEnv::setTrainConfig(bool train){
   m_train = train;
 }
 
+void 
+PacketRoutingEnv::setPingPacketIntervalTime(float pingPacketIntervalTime){
+  m_dataPacketManager->setPingPacketIntervalTime(pingPacketIntervalTime);
+}
+
 void
 PacketRoutingEnv::ScheduleNextStateRead ()
 {
