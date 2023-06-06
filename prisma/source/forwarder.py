@@ -180,7 +180,7 @@ class Forwarder(Agent):
                                                "src" :Agent.pkt_tracking_dict[int(self.pkt_id)]["src"],
                                                "dst" :Agent.pkt_tracking_dict[int(self.pkt_id)]["dst"],
                                                }
-            Agent.max_observed_values[self.index][self.action] = max(Agent.max_observed_values[self.index][self.action], obs[self.action+1])
+            Agent.max_observed_values[self.index] = list(np.max([Agent.max_observed_values[self.index], obs[1:]], axis=0))
             if Agent.loss_penalty_type == "constrained":
                 Agent.constrained_loss_database[self.index][self.action].add(obs[self.action],
                                                                     Agent.lamda_coefs[self.index][self.action],
@@ -229,7 +229,6 @@ class Forwarder(Agent):
             bool: True if it is a control packet, False otherwise
         """
         tokens = info.split(",")
-        Agent.pkt_ids.append(tokens)
         # print(self.index, tokens)
         self.delay_time = float(tokens[0].split('=')[-1])
 
@@ -332,7 +331,7 @@ class Forwarder(Agent):
                 if(not self.env.connected):
                     break
                 obs, _, done_flag, info = self.step(obs)
-                
+                # print(Agent.curr_time, Agent.max_observed_values)
                 ## check if episode is done_flag
                 if done_flag and obs[0] == -1:
                     break

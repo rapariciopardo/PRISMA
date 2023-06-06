@@ -111,7 +111,7 @@ float
 PingBackPacketManager::getMaxTimePingForwardPacketSent(uint32_t index){
   // NS_LOG_UNCOND("PingBackPacketManager::getMaxTimePingForwardPacketSent");
   if(m_sentPingForwardPackets[index].size()>0){
-    return Simulator::Now().GetSeconds() - m_sentPingForwardPackets[index][0].start_time*0.001;
+    return std::min(Simulator::Now().GetSeconds() - m_sentPingForwardPackets[index][0].start_time*0.001, 2.60);
   } else{
     return 0.0;
   }

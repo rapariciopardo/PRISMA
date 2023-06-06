@@ -140,7 +140,6 @@ class Agent():
         cl.max_observed_values = [[0 for _ in range(len(list(cl.G.neighbors(n))))] for n in range(cl.numNodes)]
         cl.model_version = params_dict["model_version"]
 
-        cl.pkt_ids = []
         cl.sync_counters = [0 for _ in range(cl.numNodes)]
         cl.max_nb_arrived_pkts = params_dict["max_nb_arrived_pkts"]
         if params_dict["agent_type"] == "opt":

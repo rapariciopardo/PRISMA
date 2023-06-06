@@ -200,7 +200,7 @@ class Trainer(Agent):
             if len(data) > 0:
                 constraint_grad = np.mean(data)
                 Agent.lamda_coefs[self.index][neighbor_idx] = np.max((Agent.lamda_coefs[self.index][neighbor_idx] + (Agent.lambda_lr * constraint_grad), 0))
-                
+
             with self.tb_writer_dict["summary_writer_lambdas"][neighbor_idx].as_default():
                 tf.summary.scalar('lambda_coefs_over_step', Agent.lamda_coefs[self.index][neighbor_idx], step=self.gradient_step_idx)
                 tf.summary.scalar('lambda_coefs_over_time', Agent.lamda_coefs[self.index][neighbor_idx], step=int(Agent.curr_time*1e6))
