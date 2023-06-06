@@ -176,8 +176,7 @@ for traff_mat in traff_mats:
                                                             print(full_command)
                                                             # raise(0)
                                                             # print("vs code config args = ", sum([x.split("=") for x in python_command.split(" ")[3:]], []))
-                                                            # task_id = int(subprocess.check_output(full_command, shell=True))
-                                                            task_id = 0
+                                                            task_id = int(subprocess.check_output(full_command, shell=True))
                                                             print(task_id, "train", full_command)
                                                             sleep(0.3)
                                                             # put the job on the top of the queue
@@ -186,7 +185,7 @@ for traff_mat in traff_mats:
                                                             saved_models_path = f"examples/{topology_name}/results/{experiment_name}/saved_models/{session_name}"
                                                             for test_load in test_loads:
                                                                 # for model_version in ["final"] + [f"episode_1_step_{i}" for i in range(2, 10, 4)]:
-                                                                for model_version in ["episode_1_step_15"]:
+                                                                for model_version in ["final"]:
                                                                     python_command = generate_command(seed=seed,
                                                                                                     train=0,
                                                                                                     sim_duration=test_duration,
@@ -222,7 +221,7 @@ for traff_mat in traff_mats:
                                                                                                     d_t_max_time=d_m_max_time,
                                                                                                     numEpisodes=1,
                                                                                                     )
-                                                                    full_command = f'tsp {command_root} {python_command}'
+                                                                    full_command = f'tsp -D {task_id} {command_root} {python_command}'
                                                                     sleep(0.3)
                                                                     # raise(0)
                                                                     print(full_command)
