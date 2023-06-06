@@ -93,48 +93,48 @@ def stats_writer_train(summary_writer_session, summary_writer_nb_arrived_pkts, s
     with summary_writer_session.as_default():
         ## total rewards
         tf.summary.scalar('total_e2e_delay_over_iterations', Agent.total_e2e_delay, step=Agent.total_nb_iterations)
-        tf.summary.scalar('total_e2e_delay_over_time', Agent.total_e2e_delay, step=int(Agent.curr_time*1e6))
+        tf.summary.scalar('total_e2e_delay_over_time', Agent.total_e2e_delay, step=int((Agent.base_curr_time + Agent.curr_time)*1e6))
         tf.summary.scalar('total_rewards_with_loss_over_iterations', Agent.total_rewards_with_loss, step=Agent.total_nb_iterations)
-        tf.summary.scalar('total_rewards_with_loss_over_time', Agent.total_rewards_with_loss, step=int(Agent.curr_time*1e6))
+        tf.summary.scalar('total_rewards_with_loss_over_time', Agent.total_rewards_with_loss, step=int((Agent.base_curr_time + Agent.curr_time)*1e6))
         ## loss ratio
-        tf.summary.scalar('loss_ratio_over_time', loss_ratio, step=int(Agent.curr_time*1e6))
+        tf.summary.scalar('loss_ratio_over_time', loss_ratio, step=int((Agent.base_curr_time + Agent.curr_time)*1e6))
         tf.summary.scalar('loss_ratio_over_iterations', loss_ratio, step=Agent.total_nb_iterations)
         ## total hops and avg hops
         tf.summary.scalar('total_hops_over_iterations', Agent.total_hops, step=Agent.total_nb_iterations)
-        tf.summary.scalar('total_hops_over_time', Agent.total_hops, step=int(Agent.curr_time*1e6))
+        tf.summary.scalar('total_hops_over_time', Agent.total_hops, step=int((Agent.base_curr_time + Agent.curr_time)*1e6))
         tf.summary.scalar('avg_hops_over_iterations', avg_hops, step=Agent.total_nb_iterations)
-        tf.summary.scalar('avg_hops_over_time', avg_hops, step=int(Agent.curr_time*1e6))
+        tf.summary.scalar('avg_hops_over_time', avg_hops, step=int((Agent.base_curr_time + Agent.curr_time)*1e6))
         tf.summary.scalar('ma_avg_hops_over_iterations', np.array(Agent.nb_hops).mean(), step=Agent.total_nb_iterations)
-        tf.summary.scalar('ma_avg_hops_over_time', np.array(Agent.nb_hops).mean(), step=int(Agent.curr_time*1e6))
+        tf.summary.scalar('ma_avg_hops_over_time', np.array(Agent.nb_hops).mean(), step=int((Agent.base_curr_time + Agent.curr_time)*1e6))
         ## buffers occupation
-        tf.summary.scalar('nb_buffered_pkts_over_time', Agent.sim_buffered_packets, step=int(Agent.curr_time*1e6))
+        tf.summary.scalar('nb_buffered_pkts_over_time', Agent.sim_buffered_packets, step=int((Agent.base_curr_time + Agent.curr_time)*1e6))
         tf.summary.scalar('nb_buffered_pkts_over_iterations', Agent.sim_buffered_packets, step=Agent.total_nb_iterations)
         ## signalling overhead
-        tf.summary.scalar('signalling ratio', Agent.sim_signaling_overhead, step=int(Agent.curr_time*1e6))
-        # tf.summary.scalar('overlay_big_signalling_bytes', Agent.sim_bytes_big_signaling, step=int(Agent.curr_time*1e6))
-        # tf.summary.scalar('overlay_small_signalling_bytes', Agent.sim_bytes_small_signaling, step=int(Agent.curr_time*1e6))
-        # tf.summary.scalar('overlay_ping_signalling_bytes', Agent.sim_bytes_overlay_signaling_back + Agent.sim_bytes_overlay_signaling_forward, step=int(Agent.curr_time*1e6))
+        tf.summary.scalar('signalling ratio', Agent.sim_signaling_overhead, step=int((Agent.base_curr_time + Agent.curr_time)*1e6))
+        # tf.summary.scalar('overlay_big_signalling_bytes', Agent.sim_bytes_big_signaling, step=int((Agent.base_curr_time + Agent.curr_time)*1e6))
+        # tf.summary.scalar('overlay_small_signalling_bytes', Agent.sim_bytes_small_signaling, step=int((Agent.base_curr_time + Agent.curr_time)*1e6))
+        # tf.summary.scalar('overlay_ping_signalling_bytes', Agent.sim_bytes_overlay_signaling_back + Agent.sim_bytes_overlay_signaling_forward, step=int((Agent.base_curr_time + Agent.curr_time)*1e6))
         ## avg cost and avg delay
         tf.summary.scalar('avg_cost_over_iterations', avg_cost, step=Agent.total_nb_iterations)
-        tf.summary.scalar('avg_cost_over_time', avg_cost, step=int(Agent.curr_time*1e6))
+        tf.summary.scalar('avg_cost_over_time', avg_cost, step=int((Agent.base_curr_time + Agent.curr_time)*1e6))
         tf.summary.scalar('avg_delay_over_iterations', avg_delay, step=Agent.total_nb_iterations)
-        tf.summary.scalar('avg_delay_over_time', avg_delay, step=int(Agent.curr_time*1e6))
+        tf.summary.scalar('avg_delay_over_time', avg_delay, step=int((Agent.base_curr_time + Agent.curr_time)*1e6))
         tf.summary.scalar('ma_delays_over_iterations', np.array(Agent.delays).mean(), step=Agent.total_nb_iterations)
-        tf.summary.scalar('ma_delays_over_time', np.array(Agent.delays).mean(), step=int(Agent.curr_time*1e6))
+        tf.summary.scalar('ma_delays_over_time', np.array(Agent.delays).mean(), step=int((Agent.base_curr_time + Agent.curr_time)*1e6))
         ## simulation time / real time
-        tf.summary.scalar('sim_second_per_real_seconds', (time()-Agent.start_time)/Agent.curr_time, step=int(Agent.curr_time*1e6))
+        tf.summary.scalar('sim_second_per_real_seconds', (time()-Agent.start_time)/(Agent.base_curr_time + Agent.curr_time), step=int((Agent.base_curr_time + Agent.curr_time)*1e6))
 
     with summary_writer_nb_arrived_pkts.as_default():
         tf.summary.scalar('pkts_over_iterations', Agent.sim_delivered_packets, step=Agent.total_nb_iterations)
-        tf.summary.scalar('pkts_over_time', Agent.sim_delivered_packets, step=int(Agent.curr_time*1e6))
+        tf.summary.scalar('pkts_over_time', Agent.sim_delivered_packets, step=int((Agent.base_curr_time + Agent.curr_time)*1e6))
 
     with summary_writer_nb_lost_pkts.as_default():
         tf.summary.scalar('pkts_over_iterations', Agent.sim_dropped_packets, step=Agent.total_nb_iterations)
-        tf.summary.scalar('pkts_over_time', Agent.sim_dropped_packets, step=int(Agent.curr_time*1e6))
+        tf.summary.scalar('pkts_over_time', Agent.sim_dropped_packets, step=int((Agent.base_curr_time + Agent.curr_time)*1e6))
 
     with summary_writer_nb_new_pkts.as_default():
         tf.summary.scalar('pkts_over_iterations', Agent.sim_injected_packets, step=Agent.total_nb_iterations)
-        tf.summary.scalar('pkts_over_time', Agent.sim_injected_packets, step=int(Agent.curr_time*1e6))
+        tf.summary.scalar('pkts_over_time', Agent.sim_injected_packets, step=int((Agent.base_curr_time + Agent.curr_time)*1e6))
         
 def stats_writer_test(summary_writer_results_path, Agent):
     """ Write the stats of the session to the logs dir using tensorboard writer during test phase

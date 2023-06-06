@@ -37,7 +37,7 @@ class Forwarder(Agent):
         ## reset the env
         self.reset()
         
-    def reset(self):
+    def reset(self, init=True):
         """ Reset the ns3gym env 
         """
         if Agent.G == None or Agent.numNodes == 0:
@@ -47,75 +47,93 @@ class Forwarder(Agent):
         self.env = ns3env.Ns3Env(port=int(self.port), stepTime=Agent.stepTime, startSim=Agent.startSim, simSeed=Agent.seed, simArgs=Agent.simArgs, debug=Agent.debug)
         obs = self.env.reset()
         Agent.envs[self.index] = self.env
+        if init:
+            ## define the agent
+            if self.agent_type == "dqn_buffer":
+                ## declare the DQN buffer model
+                model = DQN_buffer_model
+            elif self.agent_type == "dqn_buffer_lite":
+                ## declare the DQN buffer lite model
+                model = DQN_buffer_lite_model
+            elif self.agent_type == "dqn_buffer_lighter":
+                ## declare the DQN buffer lighter model
+                model = DQN_buffer_lighter_model    
+            elif self.agent_type == "dqn_buffer_lighter_2":
+                ## declare the DQN buffer lighter_2 model
+                model = DQN_buffer_lighter_2_model
+            elif self.agent_type == "dqn_buffer_lighter_3":
+                ## declare the DQN buffer lighter_3 model
+                model = DQN_buffer_lighter_3_model
+            elif self.agent_type == "dqn_buffer_ff":
+                ## declare the DQN buffer ff model
+                model = DQN_buffer_ff_model
+            elif self.agent_type == "dqn_routing":
+                ## declare the DQN buffer model
+                model = DQN_routing_model
+                
+            if "dqn" in self.agent_type:
+                Agent.agents[self.index] = DQN_AGENT(
+                    q_func=model,
+                    observation_shape=self.env.observation_space.shape,
+                    num_actions=self.env.action_space.n,
+                    num_nodes=Agent.numNodes,
+                    input_size_splits = [1,
+                                        self.env.action_space.n,
+                                        ],
+                    lr=Agent.lr,
+                    gamma=Agent.gamma,
+                    neighbors_degrees=[len(list(Agent.G.neighbors(x))) for x in self.neighbors],
+                    d_t_max_time=Agent.d_t_max_time,
+                    d_q_func=model,
+
+
+                )
+            elif self.agent_type == "opt":
+                Agent.agents[self.index] = optimal_routing_decision
+            elif self.agent_type == "sp":
+                Agent.agents[self.index] = nx.shortest_path
+            else:
+                raise ValueError("Unknown agent type")
+
+            ## compute big signaling delay
+            if "dqn" in self.agent_type:
+                self.nn_size = np.sum([np.prod(x.shape) for x in Agent.agents[self.index].q_network.trainable_weights])*32
+                self.big_signaling_delay = (self.nn_size/ Agent.link_cap) + Agent.link_delay
+                print("node:", self.index, "big signaling delay: ", self.big_signaling_delay, self.nn_size)
         
-        ## define the agent
-        if self.agent_type == "dqn_buffer":
-            ## declare the DQN buffer model
-            model = DQN_buffer_model
-        elif self.agent_type == "dqn_buffer_lite":
-            ## declare the DQN buffer lite model
-            model = DQN_buffer_lite_model
-        elif self.agent_type == "dqn_buffer_lighter":
-            ## declare the DQN buffer lighter model
-            model = DQN_buffer_lighter_model    
-        elif self.agent_type == "dqn_buffer_lighter_2":
-            ## declare the DQN buffer lighter_2 model
-            model = DQN_buffer_lighter_2_model
-        elif self.agent_type == "dqn_buffer_lighter_3":
-            ## declare the DQN buffer lighter_3 model
-            model = DQN_buffer_lighter_3_model
-        elif self.agent_type == "dqn_buffer_ff":
-            ## declare the DQN buffer ff model
-            model = DQN_buffer_ff_model
-        elif self.agent_type == "dqn_routing":
-            ## declare the DQN buffer model
-            model = DQN_routing_model
+            ### compute small signaling delay
+            if Agent.signaling_type == "NN":
+                self.small_signaling_pkt_size = 64 + 8 + (8 * (len(self.neighbors)+1)) # header + reward (float) + s' (double)
+                self.small_signaling_delay = (self.small_signaling_pkt_size / Agent.link_cap) + Agent.link_delay
+                if self.sync_step < 0:
+                    self.sync_step = self._compute_sync_step(ratio=Agent.sync_ratio)
+            elif Agent.signaling_type == "target":
+                self.small_signaling_pkt_size = 64 + 8  +8 # header + target (float)
+                self.small_signaling_delay = (self.small_signaling_pkt_size / Agent.link_cap) + Agent.link_delay
+            elif Agent.signaling_type == "digital_twin":
+                self.small_signaling_pkt_size = 64 + (8 * len(self.neighbors)) + (8 * (len(self.neighbors)+1)) + 8 # header + targets vector (float) +  s' vector (float) + current time (double)
+                self.small_signaling_delay = (self.small_signaling_pkt_size / Agent.link_cap) + Agent.link_delay
+                # self._sync_all() # intialize target networks
+
+            ## load the dt models
+            if Agent.load_path is not None and "dqn" in self.agent_type:
+                if Agent.signaling_type == "digital_twin" and self.train: # load digital twin and the model
+                    d_t_loaded_models = load_model(Agent.load_path, -1)
+                    for neighbor_idx, neighbor in enumerate(self.neighbors):
+                        Agent.agents[self.index].neighbors_d_t_network[neighbor_idx].set_weights(d_t_loaded_models[neighbor].get_weights())
+                    print("Restoring Digital Twin from {} for node {}".format(Agent.load_path, self.index))                    
+
+            ## load the models
+            if Agent.load_path is not None and "dqn" in self.agent_type:
+                # load the model
+                loaded_models = load_model(Agent.load_path, self.index)
+                if loaded_models is not None:
+                    print("Restoring from {} for node {}".format(Agent.load_path, self.index))
+                    Agent.agents[self.index].q_network.set_weights(loaded_models[self.index].get_weights())
+        
+            ## define the log file for exploration value
+            self.tb_writer_dict = {"exploration":  tf.summary.create_file_writer(logdir=f'{Agent.logs_folder}/exploration/node_{self.index}')}
             
-        if "dqn" in self.agent_type:
-            Agent.agents[self.index] = DQN_AGENT(
-                q_func=model,
-                observation_shape=self.env.observation_space.shape,
-                num_actions=self.env.action_space.n,
-                num_nodes=Agent.numNodes,
-                input_size_splits = [1,
-                                    self.env.action_space.n,
-                                    ],
-                lr=Agent.lr,
-                gamma=Agent.gamma,
-                neighbors_degrees=[len(list(Agent.G.neighbors(x))) for x in self.neighbors],
-                d_t_max_time=Agent.d_t_max_time,
-                d_q_func=model,
-
-
-            )
-        elif self.agent_type == "opt":
-            Agent.agents[self.index] = optimal_routing_decision
-        elif self.agent_type == "sp":
-            Agent.agents[self.index] = nx.shortest_path
-        else:
-            raise ValueError("Unknown agent type")
-
-        ## compute big signaling delay
-        if "dqn" in self.agent_type:
-            self.nn_size = np.sum([np.prod(x.shape) for x in Agent.agents[self.index].q_network.trainable_weights])*32
-            self.big_signaling_delay = (self.nn_size/ Agent.link_cap) + Agent.link_delay
-            print("node:", self.index, "big signaling delay: ", self.big_signaling_delay, self.nn_size)
-        
-        ### compute small signaling delay
-        if Agent.signaling_type == "NN":
-            self.small_signaling_pkt_size = 64 + 8 + (8 * (len(self.neighbors)+1)) # header + reward (float) + s' (double)
-            self.small_signaling_delay = (self.small_signaling_pkt_size / Agent.link_cap) + Agent.link_delay
-            if self.sync_step < 0:
-                self.sync_step = self._compute_sync_step(ratio=Agent.sync_ratio)
-        elif Agent.signaling_type == "target":
-            self.small_signaling_pkt_size = 64 + 8  +8 # header + target (float)
-            self.small_signaling_delay = (self.small_signaling_pkt_size / Agent.link_cap) + Agent.link_delay
-        elif Agent.signaling_type == "digital_twin":
-            self.small_signaling_pkt_size = 64 + (8 * len(self.neighbors)) + (8 * (len(self.neighbors)+1)) + 8 # header + targets vector (float) +  s' vector (float) + current time (double)
-            self.small_signaling_delay = (self.small_signaling_pkt_size / Agent.link_cap) + Agent.link_delay
-            # self._sync_all() # intialize target networks
-
-        
         ## env trackers definition
         self.count_arrived_packets = 0
         self.count_new_pkts = 0
@@ -126,31 +144,13 @@ class Forwarder(Agent):
         self.action_history = np.ones(self.env.action_space.n)
         self.nb_actions = np.sum(self.action_history)
             
-        ## load the dt models
-        if Agent.load_path is not None and "dqn" in self.agent_type:
-            if Agent.signaling_type == "digital_twin" and self.train: # load digital twin and the model
-                d_t_loaded_models = load_model(Agent.load_path, -1)
-                for neighbor_idx, neighbor in enumerate(self.neighbors):
-                    Agent.agents[self.index].neighbors_d_t_network[neighbor_idx].set_weights(d_t_loaded_models[neighbor].get_weights())
-                print("Restoring Digital Twin from {} for node {}".format(Agent.load_path, self.index))                    
-
-        ## load the models
-        if Agent.load_path is not None and "dqn" in self.agent_type:
-            # load the model
-            loaded_models = load_model(Agent.load_path, self.index)
-            if loaded_models is not None:
-                print("Restoring from {} for node {}".format(Agent.load_path, self.index))
-                Agent.agents[self.index].q_network.set_weights(loaded_models[self.index].get_weights())
 
         # Create the schedule for exploration.
         self.exploration = LinearSchedule(schedule_timesteps=int(Agent.iterationNum),
                                     initial_p=Agent.exploration_initial_eps,
                                     final_p=Agent.exploration_final_eps)
 
-        ## define the log file for exploration value
-        self.tb_writer_dict = {"exploration":  tf.summary.create_file_writer(logdir=f'{Agent.logs_folder}/exploration/node_{self.index}')}
         
-    
 
     def step(self, obs):
         """
@@ -163,7 +163,7 @@ class Forwarder(Agent):
             ## log the exploration value
             with self.tb_writer_dict["exploration"].as_default():
                 tf.summary.scalar('exploaration_value_over_steps', self.update_eps, step=self.transition_number)
-                tf.summary.scalar('exploaration_value_over_time', self.update_eps, step=int(Agent.curr_time*1e6))
+                tf.summary.scalar('exploaration_value_over_time', self.update_eps, step=int((Agent.base_curr_time + Agent.curr_time)*1e6))
 
         ## take the action
         # print("node:", self.index, "obs:", obs, "neighbors:", self.neighbors, "neighbors degrees:", [len(list(Agent.G.neighbors(x))) for x in self.neighbors], "neighbors degrees:", [len(list(Agent.G.neighbors(x))) for x in self.neighbors], "neighbors degrees:", [len(list(Agent.G.neighbors(x))) for x in self.neighbors])
@@ -475,13 +475,13 @@ class Forwarder(Agent):
         Agent.delays_ideal.append(sum(Agent.pkt_tracking_dict[int(self.pkt_id)]["delays_ideal"]))
         Agent.delays_real.append(sum(Agent.pkt_tracking_dict[int(self.pkt_id)]["delays_real"]))
         Agent.delays.append(self.delay_time)
-        Agent.info_debug.append([
-                                    self.pkt_id,
-                                    Agent.pkt_tracking_dict[int(self.pkt_id)]["src"],
-                                    Agent.pkt_tracking_dict[int(self.pkt_id)]["dst"],
-                                    Agent.pkt_tracking_dict[int(self.pkt_id)]["hops"],
-                                    len(Agent.pkt_tracking_dict[int(self.pkt_id)]["hops"])-1,
-                                    self.delay_time])
+        # Agent.info_debug.append([
+        #                             self.pkt_id,
+        #                             Agent.pkt_tracking_dict[int(self.pkt_id)]["src"],
+        #                             Agent.pkt_tracking_dict[int(self.pkt_id)]["dst"],
+        #                             Agent.pkt_tracking_dict[int(self.pkt_id)]["hops"],
+        #                             len(Agent.pkt_tracking_dict[int(self.pkt_id)]["hops"])-1,
+        #                             self.delay_time])
         Agent.nb_hops.append(hops)
         if(len(Agent.nb_hops)>50):
             Agent.nb_hops = Agent.nb_hops[-50:]

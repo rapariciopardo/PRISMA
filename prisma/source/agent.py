@@ -39,6 +39,7 @@ class Agent():
         cl.numNodes = params_dict["numNodes"]
         cl.stepTime = params_dict["stepTime"]
         cl.startSim = params_dict["startSim"]
+        cl.numEpisodes = params_dict["numEpisodes"]
         cl.seed = params_dict["seed"]
         cl.iterationNum = params_dict["iterationNum"]
         cl.prioritizedReplayBuffer=params_dict["prioritizedReplayBuffer"]
@@ -67,7 +68,6 @@ class Agent():
         else:
             cl.replay_buffer = [ReplayBuffer(cl.replay_buffer_max_size) for n in range(cl.numNodes)]
         ## transition array to be saved for each node
-        cl.lock_info_array = [[] for n in range(cl.numNodes)]
         cl.basePort = params_dict["basePort"]
         cl.load_path = params_dict["load_path"]
         cl.logs_folder = params_dict["logs_folder"]
@@ -112,12 +112,12 @@ class Agent():
         cl.small_signaling_pkt_counter=0
         cl.nb_transitions=0
         cl.curr_time=0
+        cl.base_curr_time=0
         cl.total_hops=0
         cl.nb_hops=[]
         cl.delays=[]
         cl.delays_ideal=[]
         cl.delays_real=[]
-        cl.info_debug=[]
         cl.rewards=[]
         cl.pkt_tracking_dict = {}
         cl.temp_obs = {}
@@ -147,6 +147,13 @@ class Agent():
             cl.optimal_rejected_mat = np.array(json.load(open(params_dict["optimal_soltion_path"]))["rejected_flows"])
             with open("test.txt" , 'wb') as f:
                 np.savetxt(f, cl.optimal_rejected_mat, delimiter=' ', newline='\n', header='', footer='', fmt='%1.2f', comments='# ')
+    @classmethod
+    def reset(cl):
+        cl.pkt_tracking_dict = {}
+        cl.temp_obs = {}
+        cl.upcoming_events = [[] for n in range(cl.numNodes)]
+        cl.constrained_loss_database =  [[DigitalTwinDB(cl.lambda_train_step) for _ in range(len(list(cl.G.neighbors(n))))] for n in range(cl.numNodes)]
+        cl.sync_counters = [0 for _ in range(cl.numNodes)]
 
     def __init__(self, index, agent_type="dqn", train=True):
         """ Init the agent
@@ -180,6 +187,8 @@ class Agent():
         Agent.agents[self.index].sync_neighbor_target_q_network(neighbor_idx, with_temp=with_temp)
 
 
+
+        
     def run(self):
         pass
 

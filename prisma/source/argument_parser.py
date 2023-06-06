@@ -50,6 +50,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(prog='main.py', usage='python3 %(prog)s [options]', description=description_txt, epilog=epilog_txt, allow_abbrev=False)
     group1 = parser.add_argument_group('Global simulation arguments')
     group1.add_argument('--simTime', type=float, help='Simulation duration in seconds', default=60.0)
+    group1.add_argument('--numEpisodes', type=int, help='Number of episodes', default=1)
     group1.add_argument('--basePort', type=int, help='Starting port number', default=6555)
     group1.add_argument('--seed', type=int, help='Random seed used for the simulation', default=100)
     group1.add_argument('--train', type=int, help='If 1, train the model.Else, test it', default=1)

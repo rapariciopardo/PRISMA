@@ -561,11 +561,11 @@ class DigitalTwinDB(object):
         self.data.append(data)
         self.labels.append(label)
         self.times.append(time)
-        while self.times[-1] - self.times[0] > self.max_time:
-            self.length -= 1
-            self.data.pop(0)
-            self.labels.pop(0)
-            self.times.pop(0)
+        # while self.times[-1] - self.times[0] > self.max_time:
+        #     self.length -= 1
+        #     self.data.pop(0)
+        #     self.labels.pop(0)
+        #     self.times.pop(0)
         self.freeze = False
         
     def get_data(self):

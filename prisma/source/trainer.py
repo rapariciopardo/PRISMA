@@ -17,15 +17,18 @@ class Trainer(Agent):
     
     def __init__(self, index, agent_type="dqn", train=True):
         Agent.__init__(self, index, agent_type, train)
-        self.last_training_time = 0
-        self.last_sync_time = 0
-        self.gradient_step_idx = 1
-        self.last_d_t_training_time = 0
+        self.reset()
         ## define the log file for trainer 
         self.tb_writer_dict = {"td_error": tf.summary.create_file_writer(logdir=f'{Agent.logs_folder}/td_error/node_{self.index}'),
                                "replay_buffer_length": tf.summary.create_file_writer(logdir=f'{Agent.logs_folder}/replay_buffer_length/node_{self.index}'),
                                "summary_writer_lambdas" : [tf.summary.create_file_writer(logdir=f'{Agent.logs_folder}/lambdas/node_{self.index}_{idx}') for idx in range(len(self.neighbors))]
                                }
+
+    def reset(self):
+        self.last_training_time = 0
+        self.last_sync_time = 0
+        self.gradient_step_idx = 1
+        self.last_d_t_training_time = 0
         
     def run(self):
         """
@@ -46,10 +49,11 @@ class Trainer(Agent):
             ## check if it is time to train
             if Agent.curr_time > (self.last_training_time + Agent.training_step) and Agent.replay_buffer[self.index].total_samples>= Agent.batch_size:
                 ## train lambda coefficient if loss penalty type is "constrained"
-                if Agent.loss_penalty_type == "constrained":
-                    if Agent.curr_time > Agent.lamda_training_start_time:
-                        self._update_lambda_coefs()
+                # if Agent.loss_penalty_type == "constrained":
+                #     if Agent.curr_time > Agent.lamda_training_start_time:
+                #         self._update_lambda_coefs()
                 self.step()
+
 
     def step(self):
         """
@@ -75,7 +79,7 @@ class Trainer(Agent):
                     if Agent.signaling_type in ("NN", "ideal"):
                         penalty = 0
                         if Agent.loss_penalty_type == "constrained":
-                            penalty = Agent.lamda_coefs[self.index][indx] * ((obses_t[action_indices, indx]/Agent.max_observed_values[self.index][indx]) - Agent.buffer_soft_limit)
+                            penalty = Agent.lamda_coefs[self.index][indx] * (obses_t[action_indices, indx]/Agent.max_observed_values[self.index][indx])
                         targets_t.append(Agent.agents[self.index].get_neighbor_target_value(indx, 
                                                                                             rewards_t[action_indices] + penalty, 
                                                                                             tf.constant(np.array(np.vstack(next_obses_t[action_indices]),
@@ -112,10 +116,10 @@ class Trainer(Agent):
         if len(td_errors):
             with self.tb_writer_dict["td_error"].as_default():
                 tf.summary.scalar('MSE_loss_over_steps', np.mean(td_errors**2), step=self.gradient_step_idx)
-                tf.summary.scalar('MSE_loss_over_time', np.mean(td_errors**2), step=int(Agent.curr_time*1e6))
+                tf.summary.scalar('MSE_loss_over_time', np.mean(td_errors**2), step=int((Agent.base_curr_time  + Agent.curr_time)*1e6))
         with self.tb_writer_dict["replay_buffer_length"].as_default():
             tf.summary.scalar('replay_buffer_length_over_steps', len(Agent.replay_buffer[self.index]), step=self.gradient_step_idx)
-            tf.summary.scalar('replay_buffer_length_over_time', len(Agent.replay_buffer[self.index]), step=int(Agent.curr_time*1e6))
+            tf.summary.scalar('replay_buffer_length_over_time', len(Agent.replay_buffer[self.index]), step=int((Agent.base_curr_time + Agent.curr_time)*1e6))
         
         self.gradient_step_idx += 1
     
@@ -203,7 +207,7 @@ class Trainer(Agent):
 
             with self.tb_writer_dict["summary_writer_lambdas"][neighbor_idx].as_default():
                 tf.summary.scalar('lambda_coefs_over_step', Agent.lamda_coefs[self.index][neighbor_idx], step=self.gradient_step_idx)
-                tf.summary.scalar('lambda_coefs_over_time', Agent.lamda_coefs[self.index][neighbor_idx], step=int(Agent.curr_time*1e6))
+                tf.summary.scalar('lambda_coefs_over_time', Agent.lamda_coefs[self.index][neighbor_idx], step=int((Agent.base_curr_time + Agent.curr_time)*1e6))
                 
     def train_d_ts_(self):
         """
