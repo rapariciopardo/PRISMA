@@ -58,29 +58,28 @@ traff_mats = [0,]
 sync_steps = list((3, 6, 10))
 sync_steps = [1,2, 4, 6, 8 ,10]
 sync_steps = [2, 4, 6]
-sync_steps = [2, 4,]
+# sync_steps = [1,]
 seed = 100
 rb_sizes = [10000,] 
 # signaling_types = ["NN", "digital_twin", "target"]
 signaling_types = ["ideal", "digital_twin", "NN"]
-signaling_types = ["NN"]
+# signaling_types = ["digital_twin"]
 # signaling_types = ["ideal"]
 dqn_models = ["", "_lite", "_lighter", "_lighter_2", "_lighter_3", "_ff"]
 dqn_models = ["", "_lite", "_lighter", "_lighter_2", "_lighter_3"]
 dqn_models = ["sp", "opt"]
 dqn_models = [""]
-experiment_name = "ITC_NN_size_variations_experiment_rcpo_final_05_june_rcpo"
+experiment_name = "ITC_NN_size_variations_experiment_rcpo_final_06_june_rcpo"
 nn_sizes = [35328, 9728, 5120, 1536, 512, 1024]
 nn_sizes = [35328, 9728, 5120, 1536, 512]
 nn_sizes = [35328,]
 # d_t_max_time = 10
-topology_name = "5n_overlay_full_mesh_abilene"
+topology_name = "overlay_full_mesh_10n_geant"
 # variable parameters
 training_load = 0.4
 bs = 512
 lr = 0.00001
-explorations = [["vary", 1.0, 0.01],
-                ["fixed", 0.1, 0.1]]
+explorations = [["vary", 1.0, 0.01],]
 # explorations = [["vary", 1.0, 0.01]]
 smart_explorations = [0,]
 ping_freq = 5
@@ -89,22 +88,21 @@ train_duration = 15
 test_duration = 25
 max_output_buffer_sizes = [16260,]
 loss_pen_types = ["fixed", "constrained"]
-loss_pen_types = ["constrained"]
+# loss_pen_types = ["constrained"]
 lambda_waits = [0, 25, 80]
 lambda_waits = [0, 80, train_duration]
 lambda_waits = [0, 40]
-lambda_waits = [0]
+lambda_waits = [0, 10000]
 train_load = 0.4
 test_loads = [0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2]
 buffer_soft_limits = [0.6, 0.4, 0.1]
 buffer_soft_limits = [0.6,]
 lambda_train_steps = [1, 5, 10]
-lambda_train_steps = [1,]
+lambda_train_steps = [-1,]
 max_num_episodes = 30
-d_t_max_times = [1, 5, 10]
 pingPacketIntervalTimes = [0.1,]
 # [0.16, 0.05, 0.03, 0.01]
-d_t_max_times = [1, 5, 10]
+d_t_max_times = [1, 5, 10, ]
 
 inc = 0
 command_root = "docker run --rm --gpus all -v /home/redha/PRISMA_copy/prisma/examples:/app/prisma/examples -w /app/prisma allicheredha/prismacopy_episodes"
@@ -116,7 +114,7 @@ for traff_mat in traff_mats:
                     for pingPacketIntervalTime in pingPacketIntervalTimes:
                         for buffer_soft_limit in buffer_soft_limits:
                             if loss_penalty_type != "constrained":
-                                if not(lambda_train_step == 1 and buffer_soft_limit == 0.6 and lambda_wait==0):
+                                if not(lambda_train_step == -1 and buffer_soft_limit == 0.6 and lambda_wait==0):
                                     continue
                             else:
                                 if lambda_wait == 100 and (buffer_soft_limit!=0.6):

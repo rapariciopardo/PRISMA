@@ -200,7 +200,7 @@ def optimal_routing_decision(graph, routing_mat, rejected_mat, actual_node, src_
 
 def allocate_on_gpu(gpu_memory_margin=1500):
     """
-    Determine which gpu to use based on the available memory
+    Determine which gpu to use based on the available memory (works only for nvidia gpus)
     Args:
         gpu_memory_margin (int, optional): The margin of the gpu memory. Defaults to 1500.
     """
@@ -215,10 +215,14 @@ def allocate_on_gpu(gpu_memory_margin=1500):
         print("No gpu available")
         gpu_index = -1
         return
-    # set the margin of the gpu memory
-    gpu_memory_margin = 1500 # required memory but a train instance in MB
-    COMMAND = "nvidia-smi --query-gpu=utilization.gpu,memory.free --format=csv"
-    output = sp.check_output(COMMAND, shell=True).decode('utf-8').split('\n')[1:-1]
+    try:
+        # set the margin of the gpu memory
+        gpu_memory_margin = 1500 # required memory but a train instance in MB
+        COMMAND = "nvidia-smi --query-gpu=utilization.gpu,memory.free --format=csv"
+        output = sp.check_output(COMMAND, shell=True).decode('utf-8').split('\n')[1:-1]
+    except:
+        print("Not able to get the gpu usage")
+        return
     gpu_usage = [int(x.split(' ')[0]) for x in output]
     available_memory = [int(x.split(' ')[2]) for x in output]
     # get the gpu with the most available memory
