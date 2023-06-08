@@ -220,22 +220,22 @@ def allocate_on_gpu(gpu_memory_margin=1500):
         gpu_memory_margin = 1500 # required memory but a train instance in MB
         COMMAND = "nvidia-smi --query-gpu=utilization.gpu,memory.free --format=csv"
         output = sp.check_output(COMMAND, shell=True).decode('utf-8').split('\n')[1:-1]
+        gpu_usage = [int(x.split(' ')[0]) for x in output]
+        available_memory = [int(x.split(' ')[2]) for x in output]
+        # get the gpu with the most available memory
+        if np.max(available_memory) < gpu_memory_margin:
+            print("No gpu available")
+            gpu_index = -1
+        else:
+            if np.diff(available_memory).item() < gpu_memory_margin:
+                print("More than one gpu available")
+                gpu_index = np.argmin(gpu_usage)
+            else:
+                print("One gpu available :")
+                gpu_index = np.argmax(available_memory)
     except:
         print("Not able to get the gpu usage")
         return
-    gpu_usage = [int(x.split(' ')[0]) for x in output]
-    available_memory = [int(x.split(' ')[2]) for x in output]
-    # get the gpu with the most available memory
-    if np.max(available_memory) < gpu_memory_margin:
-        print("No gpu available")
-        gpu_index = -1
-    else:
-        if np.diff(available_memory).item() < gpu_memory_margin:
-            print("More than one gpu available")
-            gpu_index = np.argmin(gpu_usage)
-        else:
-            print("One gpu available :")
-            gpu_index = np.argmax(available_memory)
     # allocate the gpu
     os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu_index)
     print("GPU index : ", gpu_index)

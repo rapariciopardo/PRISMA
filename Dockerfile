@@ -15,7 +15,7 @@ WORKDIR /app
 RUN python3 -m pip install --user --no-cache-dir --upgrade -r requirements.txt
 
 # compile protobuf
-RUN cd prisma/ns3gym/ && ./compile_proto.sh && cd ../..
+RUN cd prisma/ns3_model/ && ./compile_proto.sh && cd ../..
 
 
 # copy ns3 files

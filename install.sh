@@ -6,5 +6,5 @@ echo "Installing python packages..."
 python3 -m pip install --user --no-cache-dir --upgrade -r requirements.txt
 
 echo "Compiling protobuf..."
-cd prisma/ns3gym/
+cd prisma/ns3_model/
 sh compile_proto.sh
