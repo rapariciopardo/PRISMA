@@ -66,7 +66,7 @@ docker pull allicheredha/prisma_env
 ```
 b) run the docker image and bind the complete folder to the container
 ```
-sudo docker run --rm --gpus all -v $(pwd)/prisma/:/prisma -w /prisma allicheredha/prisma_env /bin/bash -c "python3 main.py $PARAMS"
+sudo docker run --rm --gpus all -v $(pwd)/prisma:/app/prisma -w /app/prisma allicheredha/prisma_env /bin/bash -c "python3 main.py $PARAMS"
 ```
 
 Usage guide
