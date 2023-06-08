@@ -61,12 +61,14 @@ class PacketRoutingEnv : public OpenGymEnv
 {
 public:
   PacketRoutingEnv ();
-  PacketRoutingEnv (Ptr<Node> node, uint32_t numberOfNodes, uint64_t linkRateValue, bool activateSignaling, double signPacketSize, vector<int> overlayNeighbors);
+  PacketRoutingEnv (Ptr<Node> node, NodeContainer nodes, uint64_t linkRateValue, bool activateSignaling, double signPacketSize, vector<int> overlayNeighbors, int *nodes_starting_address);
   void ScheduleNextStateRead ();
   void setNetDevicesContainer(NetDeviceContainer* nd);
   void setTrainConfig(bool train);
-  void configDataPacketManager(bool obs_bufferLength, uint32_t packetsIntervalForSendingPingPacket);
+  void setPingPacketIntervalTime(float pingPacketIntervalTime);
+  void configDataPacketManager(bool obs_bufferLength);
   void configPingBackPacketManager(uint32_t movingAverageSize);
+  void mapOverlayNodes(std::vector <int> map_overlay_array);
   
   virtual ~PacketRoutingEnv ();
   static TypeId GetTypeId (void);
@@ -82,7 +84,7 @@ public:
   static void dropPacket(Ptr<PacketRoutingEnv> entity, Ptr<const Packet> packet);
   void initialize();
   static std::vector<uint32_t> m_rxPkts;
-
+  ns3::NodeContainer m_nodes;  
   // the function has to be static to work with MakeBoundCallback
   // that is why we pass pointer to PacketRoutingEnv instance to be able to store the context (node, etc)
  

@@ -37,7 +37,7 @@ class Forwarder(Agent):
         ## reset the env
         self.reset()
         
-    def reset(self):
+    def reset(self, init=True):
         """ Reset the ns3gym env 
         """
         if Agent.G == None or Agent.numNodes == 0:
@@ -47,66 +47,75 @@ class Forwarder(Agent):
         self.env = ns3env.Ns3Env(port=int(self.port), stepTime=Agent.stepTime, startSim=Agent.startSim, simSeed=Agent.seed, simArgs=Agent.simArgs, debug=Agent.debug)
         obs = self.env.reset()
         Agent.envs[self.index] = self.env
-        
-        ## define the agent
-        if self.agent_type == "dqn_buffer":
-            ## declare the DQN buffer model
-            model = DQN_buffer_model
-        elif self.agent_type == "dqn_buffer_lite":
-            ## declare the DQN buffer lite model
-            model = DQN_buffer_lite_model
-        elif self.agent_type == "dqn_buffer_lighter":
-            ## declare the DQN buffer lighter model
-            model = DQN_buffer_lighter_model    
-        elif self.agent_type == "dqn_buffer_lighter_2":
-            ## declare the DQN buffer lighter_2 model
-            model = DQN_buffer_lighter_2_model
-        elif self.agent_type == "dqn_buffer_lighter_3":
-            ## declare the DQN buffer lighter_3 model
-            model = DQN_buffer_lighter_3_model
-        elif self.agent_type == "dqn_buffer_ff":
-            ## declare the DQN buffer ff model
-            model = DQN_buffer_ff_model
-        elif self.agent_type == "dqn_routing":
-            ## declare the DQN buffer model
-            model = DQN_routing_model
-            
-        if "dqn" in self.agent_type:
-            Agent.agents[self.index] = DQN_AGENT(
-                q_func=model,
-                observation_shape=self.env.observation_space.shape,
-                num_actions=self.env.action_space.n,
-                num_nodes=Agent.numNodes,
-                input_size_splits = [1,
-                                    self.env.action_space.n,
-                                    ],
-                lr=Agent.lr,
-                gamma=Agent.gamma,
-                neighbors_degrees=[len(list(Agent.G.neighbors(x))) for x in self.neighbors],
-            )
-        elif self.agent_type == "opt":
-            Agent.agents[self.index] = optimal_routing_decision
-        elif self.agent_type == "sp":
-            Agent.agents[self.index] = nx.shortest_path
-        else:
-            raise ValueError("Unknown agent type")
+        if init:
+            ## define the agent
+            if self.agent_type == "dqn_buffer":
+                ## declare the DQN buffer model
+                model = DQN_buffer_model
+            elif self.agent_type == "dqn_buffer_lite":
+                ## declare the DQN buffer lite model
+                model = DQN_buffer_lite_model
+            elif self.agent_type == "dqn_buffer_lighter":
+                ## declare the DQN buffer lighter model
+                model = DQN_buffer_lighter_model    
+            elif self.agent_type == "dqn_buffer_lighter_2":
+                ## declare the DQN buffer lighter_2 model
+                model = DQN_buffer_lighter_2_model
+            elif self.agent_type == "dqn_buffer_lighter_3":
+                ## declare the DQN buffer lighter_3 model
+                model = DQN_buffer_lighter_3_model
+            elif self.agent_type == "dqn_buffer_ff":
+                ## declare the DQN buffer ff model
+                model = DQN_buffer_ff_model
+            elif self.agent_type == "dqn_routing":
+                ## declare the DQN buffer model
+                model = DQN_routing_model
+                
+            if "dqn" in self.agent_type:
+                Agent.agents[self.index] = DQN_AGENT(
+                    q_func=model,
+                    observation_shape=self.env.observation_space.shape,
+                    num_actions=self.env.action_space.n,
+                    num_nodes=Agent.numNodes,
+                    input_size_splits = [1,
+                                        self.env.action_space.n,
+                                        ],
+                    lr=Agent.lr,
+                    gamma=Agent.gamma,
+                    neighbors_degrees=[len(list(Agent.G.neighbors(x))) for x in self.neighbors],
+                )
+            elif self.agent_type == "opt":
+                Agent.agents[self.index] = optimal_routing_decision
+            elif self.agent_type == "sp":
+                Agent.agents[self.index] = nx.shortest_path
+            else:
+                raise ValueError("Unknown agent type")
 
-        ## compute big signaling delay
-        if "dqn" in self.agent_type:
-            self.nn_size = np.sum([np.prod(x.shape) for x in Agent.agents[self.index].q_network.trainable_weights])*32
-            self.big_signaling_delay = (self.nn_size/ Agent.link_cap) + Agent.link_delay
-            print("node:", self.index, "big signaling delay: ", self.big_signaling_delay, self.nn_size)
+            ## compute big signaling delay
+            if "dqn" in self.agent_type:
+                self.nn_size = np.sum([np.prod(x.shape) for x in Agent.agents[self.index].q_network.trainable_weights])*32
+                self.big_signaling_delay = (self.nn_size/ Agent.link_cap) + (Agent.link_delay*0.001)
+                print("node:", self.index, "big signaling delay: ", self.big_signaling_delay, self.nn_size)
         
-        ### compute small signaling delay
-        if Agent.signaling_type == "NN":
-            self.small_signaling_pkt_size = 64 + 8 + (8 * (len(self.neighbors)+1)) # header + reward (float) + s' (double)
-            self.small_signaling_delay = (self.small_signaling_pkt_size / Agent.link_cap) + Agent.link_delay
-            if self.sync_step < 0:
-                self.sync_step = self._compute_sync_step(ratio=Agent.sync_ratio)
-        elif Agent.signaling_type == "target":
-            self.small_signaling_pkt_size = 64 + 8  +8 # header + target (float)
-            self.small_signaling_delay = (self.small_signaling_pkt_size / Agent.link_cap) + Agent.link_delay
-
+            ### compute small signaling delay
+            if Agent.signaling_type == "NN":
+                self.small_signaling_pkt_size = 64 + 8 + (8 * (len(self.neighbors)+1)) # header + reward (float) + s' (double)
+                self.small_signaling_delay = (self.small_signaling_pkt_size / Agent.link_cap) + (Agent.link_delay*0.001)
+                if self.sync_step < 0:
+                    self.sync_step = self._compute_sync_step(ratio=Agent.sync_ratio)
+            elif Agent.signaling_type == "target":
+                self.small_signaling_pkt_size = 64 + 8  +8 # header + target (float)
+                self.small_signaling_delay = (self.small_signaling_pkt_size / Agent.link_cap) + (Agent.link_delay*0.001)
+            ## load the models
+            if Agent.load_path is not None and "dqn" in self.agent_type:
+                # load the model
+                loaded_models = load_model(Agent.load_path, self.index)
+                if loaded_models is not None:
+                    print("Restoring from {} for node {}".format(Agent.load_path, self.index))
+                    Agent.agents[self.index].q_network.set_weights(loaded_models[self.index].get_weights())
+        
+            ## define the log file for exploration value
+            self.tb_writer_dict = {"exploration":  tf.summary.create_file_writer(logdir=f'{Agent.logs_folder}/exploration/node_{self.index}')}
         ## env trackers definition
         self.count_arrived_packets = 0
         self.count_new_pkts = 0
@@ -116,23 +125,12 @@ class Forwarder(Agent):
         ## define action history and nb_actions
         self.action_history = np.ones(self.env.action_space.n)
         self.nb_actions = np.sum(self.action_history)
-        
-        ## load the models
-        if Agent.load_path is not None and "dqn" in self.agent_type:
-            # load the model
-            loaded_models = load_model(Agent.load_path, self.index)
-            if loaded_models is not None:
-                print("Restoring from {} for node {}".format(Agent.load_path, self.index))
-                Agent.agents[self.index].q_network.set_weights(loaded_models[self.index].get_weights())
-
         # Create the schedule for exploration.
         self.exploration = LinearSchedule(schedule_timesteps=int(Agent.iterationNum),
                                     initial_p=Agent.exploration_initial_eps,
                                     final_p=Agent.exploration_final_eps)
 
-        ## define the log file for exploration value
-        self.tb_writer_dict = {"exploration":  tf.summary.create_file_writer(logdir=f'{Agent.logs_folder}/exploration/node_{self.index}')}
-    
+  
 
     def step(self, obs):
         """
@@ -145,13 +143,13 @@ class Forwarder(Agent):
             ## log the exploration value
             with self.tb_writer_dict["exploration"].as_default():
                 tf.summary.scalar('exploaration_value_over_steps', self.update_eps, step=self.transition_number)
-                tf.summary.scalar('exploaration_value_over_time', self.update_eps, step=int(Agent.curr_time*1e6))
+                tf.summary.scalar('exploaration_value_over_time', self.update_eps, step=int((Agent.base_curr_time + Agent.curr_time)*1e6))
 
         ## take the action
-        if obs[0] == self.index or self.transition_number < 1 or self.signaling: # pkt arrived to dst or it is a train step, ignore the action
+        if obs[0] == self.index or self.transition_number < 1 or self.signaling == True or obs[0] in(-1, 1000): # pkt arrived to dst or it is a train step, ignore the action
             self.action = 0
         else:
-            self.action = self.take_action(obs)         
+            self.action = self.take_action(obs)
             Agent.temp_obs[int(self.pkt_id)]= {"node": self.index,
                                                "obs": obs,
                                                "action": self.action,
@@ -204,48 +202,16 @@ class Forwarder(Agent):
             bool: True if it is a control packet, False otherwise
         """
         tokens = info.split(",")
-        self.delay_time = float(tokens[0].split('=')[-1]) 
-        #lost_packets = tokens[1].split('=')[-1].split(';')[:-1] 
-        # 
-        #for lost_packet in lost_packets: 
-        #    lost_packet_id, lost_packet_time = lost_packet.split("/") 
-        #    lost_packet_info = Agent.temp_obs.get(int(lost_packet_id)) 
-        #    if(lost_packet_info==None): 
-        #        continue 
-        #    if(int(lost_packet_time)!= int(lost_packet_info["time"]*1000)): 
-        #        continue 
-        #    next_hop_degree = len(list(Agent.G.neighbors(self.neighbors[lost_packet_info["action"]]))) 
-        #    rew = self._get_reward() 
-        #    if self.agent_type=="dqn_buffer_with_throughputs": 
-        #        obs_shape = next_hop_degree*2 
-        #    else: 
-        #        obs_shape = next_hop_degree 
-        #    if(Agent.prioritizedReplayBuffer): 
-        #        Agent.replay_buffer[self.index].add(np.array(lost_packet_info["obs"], dtype=float).squeeze(), 
-        #                    lost_packet_info["action"],  
-        #                    rew, 
-        #                    np.array([lost_packet_info["obs"][0]] + [0]*(obs_shape), dtype=float).squeeze(),  
-        #                    True, 
-        #                    Agent.replay_buffer[self.index].latest_gradient_step[lost_packet_info["action"]]) 
-        #    else: 
-        #        if(self.train): 
-        #            outputFile = open(f"{Agent.logs_folder}/rew_{self.index}_{lost_packet_info['action']}.txt", 'a+') 
-        #            outputFile.write(str(Agent.curr_time)+"  "+str(rew)+'\n') 
-        #            outputFile.close() 
-        #        Agent.replay_buffer[self.index].add(np.array(lost_packet_info["obs"], dtype=float).squeeze(), 
-        #                    lost_packet_info["action"],  
-        #                    rew, 
-        #                    np.array([lost_packet_info["obs"][0]] + [0]*(obs_shape), dtype=float).squeeze(),  
-        #                    True) 
-        # 
-        ##print(lost_packets) 
-        self.pkt_size = float(tokens[1].split('=')[-1]) 
-        Agent.curr_time = float(tokens[2].split('=')[-1]) 
-        self.pkt_id = float(tokens[3].split('=')[-1]) 
-        pkt_type = float(tokens[4].split('=')[-1]) 
+        self.delay_time = float(tokens[0].split('=')[-1])
+        ## retrieve packet info
+        self.pkt_size = float(tokens[1].split('=')[-1])
+        Agent.curr_time = float(tokens[2].split('=')[-1])
+        self.pkt_id = int(tokens[3].split('=')[-1])
+        pkt_type = int(tokens[4].split('=')[-1]) 
         self.signaling = pkt_type != 0 
-        if(pkt_type==0): 
-            lost_packets_id = tokens[16].split('=')[-1].split(';')[:-1] 
+        if(pkt_type==0): # data packet
+            # treat lost packets
+            lost_packets_id = tokens[18].split('=')[-1].split(';')[:-1] 
             for lost_packet_id in lost_packets_id: 
                 lost_packet_info = Agent.temp_obs.get(int(lost_packet_id)) 
                 if(lost_packet_info==None): 
@@ -256,6 +222,7 @@ class Forwarder(Agent):
                 next_hop_degree = len(list(Agent.G.neighbors(self.neighbors[lost_packet_info["action"]])))
                 rew = self._get_reward_lost_pkt()
                 obs_shape = next_hop_degree
+                ## Add the lost packet to the replay buffer
                 if Agent.loss_penalty_type == "fixed":
                     if(Agent.prioritizedReplayBuffer):
                         Agent.replay_buffer[self.index].add(np.array(lost_packet_info["obs"], dtype=float).squeeze(),
@@ -271,39 +238,20 @@ class Forwarder(Agent):
                                         rew,
                                         np.array([lost_packet_info["obs"][0]] + [0]*(obs_shape), dtype=float).squeeze(), 
                                         True)
-                #next_hop_degree = len(list(Agent.G.neighbors(self.neighbors[lost_packet_info["action"]]))) 
-                #rew = self._get_reward() 
-                #if self.agent_type=="dqn_buffer_with_throughputs": 
-                #    obs_shape = next_hop_degree*2 
-                #else: 
-                #    obs_shape = next_hop_degree 
-                #if(Agent.prioritizedReplayBuffer): 
-                #    Agent.replay_buffer[self.index].add(np.array(lost_packet_info["obs"], dtype=float).squeeze(), 
-                #                lost_packet_info["action"],  
-                #                rew, 
-                #                np.array([lost_packet_info["obs"][0]] + [0]*(obs_shape), dtype=float).squeeze(),  
-                #                True, 
-                #                Agent.replay_buffer[self.index].latest_gradient_step[lost_packet_info["action"]]) 
-                #else: 
-                #    #if(self.train): 
-                #    #    outputFile = open(f"{Agent.logs_folder}/rew_{self.index}_{lost_packet_info['action']}.txt", 'a+') 
-                #    #    outputFile.write(str(Agent.curr_time)+"  "+str(rew)+'\n') 
-                #    #    outputFile.close() 
-                #    Agent.replay_buffer[self.index].add(np.array(lost_packet_info["obs"], dtype=float).squeeze(), 
-                #                lost_packet_info["action"],  
-                #                rew, 
-                #                np.array([lost_packet_info["obs"][0]] + [0]*(obs_shape), dtype=float).squeeze(),  
-                #                True) 
-        if(self.signaling): 
-            if(pkt_type==2): 
-                id_signaled = float(tokens[16].split('=')[-1]) 
+                ## Increment the loss counter
+                Agent.node_lost_pkts += 1
+                ## Remove the lost packet from the pkt tracking dict
+                Agent.pkt_tracking_dict.pop(int(lost_packet_id))
+        else: 
+            if(pkt_type==2): # small signaling packet
+                id_signaled = int(tokens[18].split('=')[-1]) 
                 self._get_upcoming_events_real(id_signaled) 
                 Agent.small_signaling_overhead_counter += self.pkt_size 
                 Agent.small_signaling_pkt_counter += 1 
-            if(pkt_type==1): 
-                NNIndex = float(tokens[16].split('=')[-1]) 
-                segIndex= float(tokens[17].split('=')[-1]) 
-                NodeIdSignaled = float(tokens[18].split('=')[-1]) 
+            if(pkt_type==1): # big signaling packet
+                NNIndex = int(tokens[18].split('=')[-1]) 
+                segIndex= int(tokens[19].split('=')[-1]) 
+                NodeIdSignaled = int(tokens[20].split('=')[-1]) 
                 if segIndex > Agent.nn_max_seg_index:
                     raise("segIndex > {}".format(Agent.nn_max_seg_index))
                 if segIndex == Agent.nn_max_seg_index: ## NN signaling complete
@@ -313,33 +261,31 @@ class Forwarder(Agent):
                     else:
                         #print(self.index, NodeIdSignaled)
                         self._sync_current(self.neighbors.index(NodeIdSignaled))
-                #if segIndex > 68: 
-                #    raise("segIndex > 68") 
-                #if segIndex == 68: ## NN signaling complete 
-                #    print(f"sync {self.index} with neighbor {self.neighbors.index(NodeIdSignaled)}") 
-                #    if NNIndex ==self.sync_counter - 1: 
-                #        self._sync_current(self.neighbors.index(NodeIdSignaled), with_temp=True) 
-                #    else: 
-                #        #print(self.index, NodeIdSignaled) 
-                #        self._sync_current(self.neighbors.index(NodeIdSignaled)) 
                 #print("here") 
                 Agent.big_signaling_overhead_counter += self.pkt_size 
-                Agent.big_signaling_pkt_counter += 1 
-            #continue 
+                Agent.big_signaling_pkt_counter += 1
+
+            return True
+            #continue             
+        
+        ## update stats in static variables
         Agent.sim_avg_e2e_delay =  float(tokens[5].split('=')[-1])  
-        Agent.sim_global_avg_e2e_delay = Agent.sim_avg_e2e_delay 
         Agent.sim_cost = float(tokens[6].split('=')[-1]) 
-        Agent.sim_global_cost = Agent.sim_cost 
-        Agent.sim_dropped_packets = float(tokens[7].split('=')[-1]) + Agent.node_lost_pkts 
-        Agent.sim_delivered_packets = float(tokens[8].split('=')[-1]) 
-        Agent.sim_injected_packets = float(tokens[9].split('=')[-1]) 
-        Agent.sim_buffered_packets = float(tokens[10].split('=')[-1]) 
-         
-        Agent.sim_global_injected_packets = float(tokens[11].split("=")[-1]) + Agent.sim_injected_packets 
-        Agent.sim_global_dropped_packets = float(tokens[12].split("=")[-1]) + Agent.sim_dropped_packets 
-        Agent.sim_global_delivered_packets = float(tokens[13].split("=")[-1]) + Agent.sim_delivered_packets 
-        Agent.sim_global_buffered_packets = float(tokens[14].split('=')[-1]) + Agent.sim_buffered_packets 
-        Agent.sim_signaling_overhead = float(tokens[15].split('=')[-1])
+        Agent.sim_global_avg_e2e_delay = float(tokens[7].split('=')[-1])  
+        Agent.sim_global_cost = float(tokens[8].split('=')[-1])  
+        Agent.sim_dropped_packets = float(tokens[9].split('=')[-1]) 
+        Agent.sim_delivered_packets = float(tokens[10].split('=')[-1]) 
+        Agent.sim_injected_packets = float(tokens[11].split('=')[-1]) 
+        Agent.sim_buffered_packets = float(tokens[12].split('=')[-1]) 
+        Agent.sim_global_dropped_packets = float(tokens[13].split("=")[-1]) + Agent.sim_dropped_packets 
+        Agent.sim_global_delivered_packets = float(tokens[14].split("=")[-1]) + Agent.sim_delivered_packets 
+        Agent.sim_global_injected_packets = float(tokens[15].split("=")[-1]) + Agent.sim_injected_packets 
+        Agent.sim_global_buffered_packets = float(tokens[16].split('=')[-1]) + Agent.sim_buffered_packets 
+        Agent.sim_signaling_overhead = float(tokens[17].split('=')[-1])
+        if Agent.sim_global_delivered_packets > 0:
+            Agent.sim_global_avg_e2e_delay = ((Agent.sim_global_avg_e2e_delay * float(tokens[13].split("=")[-1])) + (Agent.sim_avg_e2e_delay * Agent.sim_delivered_packets))/(Agent.sim_global_delivered_packets)
+        if Agent.sim_global_delivered_packets + Agent.sim_global_dropped_packets > 0:
+            Agent.sim_global_cost = ((Agent.sim_global_cost * (float(tokens[13].split("=")[-1]) + float(tokens[13].split("=")[-1]))) + (Agent.sim_cost * (Agent.sim_dropped_packets + Agent.sim_delivered_packets)))/(Agent.sim_global_dropped_packets + Agent.sim_global_delivered_packets)
         return False
 
     def run(self):
@@ -354,7 +300,6 @@ class Forwarder(Agent):
                 if(not self.env.connected):
                     break
                 obs, _, done_flag, info = self.step(obs)
-                
                 ## check if episode is done_flag
                 if done_flag and obs[0] == -1:
                     break
@@ -413,7 +358,7 @@ class Forwarder(Agent):
         states_info = Agent.temp_obs.pop(self.pkt_id)
 
         hop_time_real =  Agent.curr_time - states_info["time"]
-        hop_time_ideal = ((states_info["obs"][states_info["action"] + 1] + 512 ) * 8 / Agent.link_cap) + Agent.link_delay
+        hop_time_ideal = ((states_info["obs"][states_info["action"] + 1] + 512 ) * 8 / Agent.link_cap) + (Agent.link_delay*0.001)
         Agent.total_rewards_with_loss += hop_time_real
         ## add to tracked pkts
         Agent.pkt_tracking_dict[int(self.pkt_id)]["hops"].append(self.index)                        
@@ -478,11 +423,6 @@ class Forwarder(Agent):
         Agent.delays_ideal.append(sum(Agent.pkt_tracking_dict[int(self.pkt_id)]["delays_ideal"]))
         Agent.delays_real.append(sum(Agent.pkt_tracking_dict[int(self.pkt_id)]["delays_real"]))
         Agent.delays.append(self.delay_time)
-        Agent.info_debug.append([Agent.pkt_tracking_dict[int(self.pkt_id)]["src"],
-                                    Agent.pkt_tracking_dict[int(self.pkt_id)]["dst"],
-                                    Agent.pkt_tracking_dict[int(self.pkt_id)]["hops"],
-                                    len(Agent.pkt_tracking_dict[int(self.pkt_id)]["hops"])-1,
-                                    self.delay_time])
         Agent.nb_hops.append(hops)
         if(len(Agent.nb_hops)>50):
             Agent.nb_hops = Agent.nb_hops[-50:]

@@ -27,7 +27,7 @@ ping_freqs = [10, 100]
 batch_sizes = [512]
 learning_rates = [0.0001]
 state_with_throughputs = [""]
-explorations = [["fixed", 0.1, 0.1]]
+explorations = [["vary", 1.0, 0.01]]
 
 inc = 0
 for bs in batch_sizes:

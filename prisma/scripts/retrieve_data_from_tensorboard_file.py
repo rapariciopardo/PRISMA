@@ -337,3 +337,55 @@ def plot_3d_contour(df, column1, column2, column3):
 
 # %%
 # compute fast fourier transformation of the "mse" column and plot the result in a bar plot, add the xlabel and ylabel and add the title "fast fourier transformation of the mse column"
+
+#%%
+## plot each model + sp and opt for each ping freq, the average over the rest of the parameters
+# imports
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import sys
+sys.path.append('../')
+from source.utils import convert_tb_data
+
+# parent log dir
+parent_log_dir = "/home/redha/PRISMA_copy/prisma/examples/5n_overlay_full_mesh_abilene/results/ITC_NN_size_variations_experiment_rcpo_final_03_june_rcpo"
+
+# models 
+models = {"RCPO_0": ["constrained", 0],
+          "RCPO_25": ["constrained", 25],
+          "Loss blind": ["constrained", 100], 
+          "Loss Aware": ["fixed", 0]}
+
+# params to loop over
+sync_steps = [1, 2, 4, 6, 8 ,10]
+
+# param to watch
+pingPacketIntervalTimes = [0.1,0.3]
+
+# results dict 
+results_dict = {}
+
+for pingPacketIntervalTime in pingPacketIntervalTimes:
+    plt.figure(figsize=(16,7))
+    for model in list(models.keys()) + ["sp", "opt"]:
+        over_steps = []
+        # plt.figure(figsize=(16,7))
+        for sync_step in sync_steps:
+            if model in ["sp", "opt"]:
+               session_name = f"{parent_log_dir}/{model}_0_25_final_ping_{pingPacketIntervalTime}/test_results"
+            else: 
+                # load the data for this model 
+                session_name = f"{parent_log_dir}/sync_{sync_step}_mat_0_dqn__NN_size_35328_5n_overlay_full_mesh_abilene_tr_0.4_sim_100_lr_0.0001_bs_512_outb_16260_losspen_{models[model][0]}_lambda_step_1_soft_ratio_0.6_wait_{models[model][1]}_lambda_lr_1e5_dt_time_1_ping_{pingPacketIntervalTime}/test_results/final"
+            df = convert_tb_data(session_name)
+            data = df[df.name=="test_global_cost"].value.values[np.argsort(df[df.name=="test_global_cost"].step.values)]
+            over_steps.append(data[:])
+        #     plt.plot(np.sort(df[df.name=="test_global_cost"].step.values), data, label=f"{model} {sync_step}")
+        # plt.title(f"{pingPacketIntervalTime} {model}")
+        # plt.legend()
+        results_dict[f"{model}_{pingPacketIntervalTime}"] = np.mean(np.array(over_steps), axis=0)
+        plt.plot(np.sort(df[df.name=="test_global_loss_rate"].step.values),  np.min(np.array(over_steps), axis=0), label=f"{model}")
+    plt.title(f"{pingPacketIntervalTime}")
+    plt.legend()
+# %%
+# sudo docker run --rm --gpus all -v /home/redha/PRISMA_copy/prisma/examples:/app/prisma/examples -w /app/prisma allicheredha/prismacopy python3 -u main.py --seed=100 --simTime=25 --train=0 --basePort=7000 --agent_type=sp --session_name=sp_0_25_final_ping_0.1 --signaling_type=ideal --logs_parent_folder=examples/5n_overlay_full_mesh_abilene/results/ITC_NN_size_variations_experiment_rcpo_final_03_june_rcpo__ --traffic_matrix_root_path=examples/5n_overlay_full_mesh_abilene/traffic_matrices/ --traffic_matrix_index=0 --overlay_adjacency_matrix_path=examples/5n_overlay_full_mesh_abilene/topology_files/overlay_adjacency_matrix.txt --physical_adjacency_matrix_path=examples/5n_overlay_full_mesh_abilene/topology_files/physical_adjacency_matrix.txt --node_coordinates_path=examples/5n_overlay_full_mesh_abilene/topology_files/node_coordinates.txt --map_overlay_path=examples/5n_overlay_full_mesh_abilene/topology_files/map_overlay.txt --training_step=0.01 --batch_size=512 --lr=0.0001 --exploration_final_eps=0.01 --exploration_initial_eps=1.0 --iterationNum=5000 --gamma=1.0 --save_models=0 --start_tensorboard=0 --replay_buffer_max_size=10000 --link_delay=1ms --load_factor=0.8 --sync_step=1 --max_out_buffer_size=16260 --sync_ratio=0.2 --signalingSim=1 --nPacketsOverlay=5 --movingAverageObsSize=5 --prioritizedReplayBuffer=0 --activateUnderlayTraffic=1 --bigSignalingSize=35328 --groundTruthFrequence=1 --pingAsObs=1 --load_path=None --loss_penalty_type=constrained --snapshot_interval=0 --smart_exploration=0 --lambda_train_step=1 --buffer_soft_limit=0.6 --lambda_lr=1e-06 --lamda_training_start_time=100 --d_t_max_time=10 --pingPacketIntervalTime=0.1

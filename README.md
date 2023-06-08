@@ -77,7 +77,8 @@ For training the agent, run the script train.sh. In order to test a model, run t
 In the script, you can change several parameters. The parameters are divided into 4 categories. The main parameters are the following:
 ## Global Simulation
 ```
-simTime: Simulation time (in seconds).
+numEpisodes: Number of episodes.
+simTime: Simulation time (in seconds) of one episode.
 basePort: Base TCP Port for agent communication. 
 seed: Seed for simulation.
 train: 1, if training; 0, Otherwise.
@@ -87,7 +88,6 @@ train: 1, if training; 0, Otherwise.
 load_factor: Defines a factor multiplied by traffic rate matrix 
 physical_adjacency_matrix_path: Path for adjacency matrix
 traffic_matrix_path: Path for traffic rate matrix
-node_coordinates_path: Path for nodes coordinates matrix
 max_out_buffer_size: maximum size of the output buffers (in bytes)
 link_delay: Defines the delay of the link
 packet_size: Defines the packet size.
@@ -98,19 +98,19 @@ link_cap: Defines the rate a packet is uploaded to the link.
 overlay_adjacency_matrix_path: Path for overlay adjacency matrix
 map_overlay_path: Path for file which maps undelar and overlay node.
 indexes
-nPacketsOverlay: Decides the number of packets as interval for sending the ping packets.
 pingAsObs: If true, we use the tunnel delay info (recovered by the ping packets) as observation state.
+pingPacketIntervalTime: The period between two ping packets (active when pingAsObs is true).
 
 ```
 ## Agent
 ```
 lr: Learning rate used for training
-agent_type: "dqn", "dq_routing", "sp" (Shostest Path), "opt"
+agent_type: "dqn", "dq_routing", "sp" (Shostest Path), "opt" (oracle policy routing)
 gamma: Discount factor $\gamma$. 
 load_path: Path to load a model (optional)
-training_trigger_type: "time" or "event". Defines what triggers training.
-training_step: Defines the step in training in secs (if training_trigger_type is "time").
+training_step: Defines the step in training in secs.
 replay_buffer_max_size: Maximum replay buffer size.
+snapshot_interval: Defines the interval between two snapshots model saving.
 ```
 ## Session logging 
 ```

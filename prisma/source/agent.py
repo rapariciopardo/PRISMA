@@ -9,7 +9,7 @@ import os
 from ns3gym import ns3env
 from source.learner import DQN_AGENT
 from source.utils import save_model, load_model, LinearSchedule, convert_bps_to_data_rate, optimal_routing_decision
-from source.replay_buffer import PrioritizedReplayBuffer, ReplayBuffer, DigitalTwinDB
+from source.replay_buffer import PrioritizedReplayBuffer, ReplayBuffer
 from source.models import *
 import threading
 import operator
@@ -39,6 +39,7 @@ class Agent():
         cl.numNodes = params_dict["numNodes"]
         cl.stepTime = params_dict["stepTime"]
         cl.startSim = params_dict["startSim"]
+        cl.numEpisodes = params_dict["numEpisodes"]
         cl.seed = params_dict["seed"]
         cl.iterationNum = params_dict["iterationNum"]
         cl.prioritizedReplayBuffer=params_dict["prioritizedReplayBuffer"]
@@ -67,12 +68,12 @@ class Agent():
         else:
             cl.replay_buffer = [ReplayBuffer(cl.replay_buffer_max_size) for n in range(cl.numNodes)]
         ## transition array to be saved for each node
-        cl.lock_info_array = [[] for n in range(cl.numNodes)]
         cl.basePort = params_dict["basePort"]
         cl.load_path = params_dict["load_path"]
         cl.logs_folder = params_dict["logs_folder"]
+        cl.load_factor = params_dict["load_factor"]
         cl.loss_penalty = params_dict["loss_penalty"]
-        cl.link_delay = 0.00#params_dict["link_delay"]
+        cl.link_delay = params_dict["link_delay"]
         cl.link_cap = params_dict["link_cap"]
         cl.packet_size = params_dict["packet_size"]
         cl.signalingSim = params_dict["signalingSim"]
@@ -86,6 +87,7 @@ class Agent():
         cl.sim_delivered_packets = 0
         cl.sim_global_delivered_packets = 0
         cl.sim_buffered_packets = 0
+        cl.sim_signaling_overhead = 0
         cl.sim_global_buffered_packets = 0
         cl.sim_avg_e2e_delay = 0.0
         cl.sim_sum_e2e_delay = 0.0
@@ -99,7 +101,6 @@ class Agent():
         cl.sim_bytes_small_signaling = 0
         cl.sim_bytes_overlay_signaling_forward = 0
         cl.sim_bytes_overlay_signaling_back = 0
-        cl.sim_signaling_overhead = 0.0 
         cl.total_new_rcv_pkts=0
         cl.total_data_size=0
         cl.total_arrived_pkts=0
@@ -111,12 +112,12 @@ class Agent():
         cl.small_signaling_pkt_counter=0
         cl.nb_transitions=0
         cl.curr_time=0
+        cl.base_curr_time=0
         cl.total_hops=0
         cl.nb_hops=[]
         cl.delays=[]
         cl.delays_ideal=[]
         cl.delays_real=[]
-        cl.info_debug=[]
         cl.rewards=[]
         cl.pkt_tracking_dict = {}
         cl.temp_obs = {}
@@ -128,6 +129,7 @@ class Agent():
         cl.sessionName=params_dict["session_name"]
         cl.logs_parent_folder = params_dict["logs_parent_folder"]
         cl.total_rewards_with_loss=0
+        cl.model_version = params_dict["model_version"]
         cl.sync_counters = [0 for _ in range(cl.numNodes)]
         cl.max_nb_arrived_pkts = params_dict["max_nb_arrived_pkts"]
         if params_dict["agent_type"] == "opt":
@@ -135,6 +137,12 @@ class Agent():
             cl.optimal_rejected_mat = np.array(json.load(open(params_dict["optimal_soltion_path"]))["rejected_flows"])
             with open("test.txt" , 'wb') as f:
                 np.savetxt(f, cl.optimal_rejected_mat, delimiter=' ', newline='\n', header='', footer='', fmt='%1.2f', comments='# ')
+    @classmethod
+    def reset(cl):
+        cl.pkt_tracking_dict = {}
+        cl.temp_obs = {}
+        cl.upcoming_events = [[] for n in range(cl.numNodes)]
+        cl.sync_counters = [0 for _ in range(cl.numNodes)]
 
     def __init__(self, index, agent_type="dqn", train=True):
         """ Init the agent

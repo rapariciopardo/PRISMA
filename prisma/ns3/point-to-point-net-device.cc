@@ -370,10 +370,10 @@ PointToPointNetDevice::SetReceiveErrorModel (Ptr<ErrorModel> em)
 void
 PointToPointNetDevice::Receive (Ptr<Packet> packet)
 {
+  MyTag t;
+  packet->PeekPacketTag(t);
   NS_LOG_FUNCTION (this << packet);
   //if(m_node->GetId()!=0) NS_LOG_UNCOND("RECEIVE "<<m_node->GetId()<<"   "<<packet->ToString());
-  //MyTag tagCopy;
-  //packet->PeekPacketTag(tagCopy);
   //
   //if(tagCopy.GetLastHop()==7 && tagCopy.GetSimpleValue()==0 && m_node->GetId()==3){
   //  NS_LOG_UNCOND("Recv: Node: "<<m_node->GetId()<<"   "<<m_ifIndex);
@@ -422,7 +422,6 @@ PointToPointNetDevice::Receive (Ptr<Packet> packet)
           m_promiscCallback (this, packet, protocol, GetRemote (), GetAddress (), NetDevice::PACKET_HOST);
         }
       if(tagcopy.GetSimpleValue()==0 && tagcopy.GetRejectedPacket()==1 && m_node->GetId()<23){
-        //NS_LOG_UNCOND(m_node->GetId()<<"     "<<m_ifIndex<<"    "<<tagcopy.GetFinalDestination()<<"   OPTIMAL REJECT    "<<packet->GetUid());
         m_macTxDropTrace (packet);
         return;
       }
@@ -430,13 +429,19 @@ PointToPointNetDevice::Receive (Ptr<Packet> packet)
       m_macRxTrace (originalPacket);
       m_rxCallback (this, packet, protocol, GetRemote ());
      
-      if(tagcopy.GetSimpleValue()==0 && tagcopy.GetFinalDestination()==m_node->GetId()){
+      if(tagcopy.GetSimpleValue()==0 && tagcopy.GetFinalDestination()== m_node->GetId()){
         if(tagcopy.GetTrafficValable()){
+          if (tagcopy.GetNextHop() == tagcopy.GetFinalDestination()){
+
           m_computeStats->incrementOverlayPacketsArrived();
           m_computeStats->addCost(Simulator::Now().GetSeconds() - tagcopy.GetStartTime());
           m_computeStats->addE2eDelay(Simulator::Now().GetSeconds() - tagcopy.GetStartTime());
+          }
+
         } else {
           m_computeStats->incrementUnderlayPacketsArrived();
+          m_computeStats->addUnderlayCost(Simulator::Now().GetSeconds() - tagcopy.GetStartTime());
+          m_computeStats->addUnderlayE2eDelay(Simulator::Now().GetSeconds() - tagcopy.GetStartTime());
         }
       }
 
@@ -446,12 +451,14 @@ PointToPointNetDevice::Receive (Ptr<Packet> packet)
 
       if(tagcopy.GetLastHop()==1000){
         if(tagcopy.GetSimpleValue()==0){
-          m_computeStats->addGlobalBytesData(packet->GetSize());
         }
       } 
 
       if(tagcopy.GetSimpleValue()==0 && tagcopy.GetLastHop()==1000){
-        if(tagcopy.GetTrafficValable()) m_computeStats->incrementOverlayPacketsInjected();
+        if(tagcopy.GetTrafficValable()){
+          m_computeStats->incrementOverlayPacketsInjected();
+          m_computeStats->addGlobalBytesData(packet->GetSize());
+        } 
         else m_computeStats->incrementUnderlayPacketsInjected();
       } 
       
@@ -591,7 +598,6 @@ PointToPointNetDevice::Send (
   uint16_t protocolNumber)
 {
   NS_LOG_FUNCTION (this << packet << dest << protocolNumber);
-  
   //Get packet tag
   MyTag tagcopy;
   packet->PeekPacketTag(tagcopy);
@@ -607,19 +613,19 @@ PointToPointNetDevice::Send (
       return false;
     }
   //Get if the packet was rejected by the Optimal Algorithm
-  if(tagcopy.GetSimpleValue()==0 && tagcopy.GetRejectedPacket()==1 && m_node->GetId()<11){
+  if(tagcopy.GetSimpleValue()==0 && tagcopy.GetRejectedPacket()==1 && m_node->GetId()<23){
     if(tagcopy.GetTrafficValable()){
       m_computeStats->incrementOverlayPacketsLost();
       m_computeStats->addLossPenaltyToCost();
-    } else m_computeStats->incrementUnderlayPacketsLost();
+    } else {
+      m_computeStats->addLossPenaltyToUnderlayCost();
+      m_computeStats->incrementUnderlayPacketsLost();
+    }
     
     
     m_macTxDropTrace (packet);
     return false;
   }
-  
-  
-
 
   // Stick a point to point protocol header on the packet in preparation for
   // shoving it out the door.
@@ -647,10 +653,13 @@ PointToPointNetDevice::Send (
 
   // Enqueue may fail (overflow)
   if(tagcopy.GetSimpleValue()==0){
-    if(tagcopy.GetTrafficValable()){
+    if(tagcopy.GetTrafficValable() && tagcopy.GetFinalDestination()!=m_node->GetId()){
       m_computeStats->incrementOverlayPacketsLost();
       m_computeStats->addLossPenaltyToCost();
-    } else m_computeStats->incrementUnderlayPacketsLost();
+    } else {
+      m_computeStats->addLossPenaltyToUnderlayCost();
+      m_computeStats->incrementUnderlayPacketsLost();
+    }
     m_macTxDropTrace (packet);
   } 
   return false;

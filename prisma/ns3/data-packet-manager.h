@@ -51,11 +51,12 @@ class DataPacketManager : public PacketManager
 {
 public:
   DataPacketManager();
-  DataPacketManager(Ptr<Node> node, vector<int> neighbors);
+  DataPacketManager(Ptr<Node> node, vector<int> neighbors, int *nodes_starting_address, ns3::NodeContainer nodes_switch);
   void setSmallSignalingPacketSize(uint32_t signPacketSize);
+  void setPingPacketIntervalTime(float pingBackIntervalTime);
   void setPingBackPacketManager(PingBackPacketManager *pingBackPacketManager);
 
-  void receivePacket(Ptr<Packet> packet, Ptr<NetDevice> receivingNetDev);
+  bool receivePacket(Ptr<Packet> packet, Ptr<NetDevice> receivingNetDev);
 
   string getInfo();
   static void dropPacket(DataPacketManager *entity, Ptr<const Packet> packet);
@@ -70,18 +71,20 @@ public:
   bool sendPacket(Ptr<OpenGymDataContainer> action);
   void sendSmallSignalingPacket();
   void sendPingForwardPacket(uint32_t overlayIndex);
+  void sendPingPackets();
   void setObsBufferLength(bool value);
-  void setPacketsIntervalForSendingPingBack(uint32_t value);
-
+  
 private:
+  Time m_pingPacketInterval = Seconds(1.0);
+  NodeContainer m_nodes_switch;
   bool m_obs_bufferLength = false;
-  uint32_t m_packetsIntervalForSendingPingPacket=5;
   PingBackPacketManager *m_pingBackPacketManager;
   vector<uint32_t> m_obs_shape;
   Ptr<NetDevice> m_receivingNetDev;
   uint32_t m_signPacketSize;
   uint32_t m_counterSentPackets;
   uint32_t m_pingPacketIndex = 0;
+  int *m_nodes_starting_address;
   
 };
 

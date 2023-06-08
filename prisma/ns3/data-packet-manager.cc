@@ -88,25 +88,37 @@ void
 DataPacketManager::dropPacket(DataPacketManager *entity, Ptr<const Packet> packet){
   MyTag tagCopy;
   packet->PeekPacketTag(tagCopy);
-  
-  SentPacket packetLost;
-  packetLost.start_time = tagCopy.GetStartTime();
-  packetLost.type = DATA_PACKET;
-  packetLost.uid = packet->GetUid();
-  entity->m_lostPackets.push_back(packetLost);
+  if ((PacketType(tagCopy.GetSimpleValue()) == DATA_PACKET) && (tagCopy.GetTrafficValable()) && (tagCopy.GetFinalDestination() != entity->m_node->GetId()) && tagCopy.GetLastHop()==entity->m_node->GetId()){
+    SentPacket packetLost;
+    packetLost.start_time = tagCopy.GetStartTime();
+    packetLost.type = DATA_PACKET;
+    packetLost.uid = packet->GetUid();
+    entity->m_lostPackets.push_back(packetLost);
+  }
 }
 
-DataPacketManager::DataPacketManager (Ptr<Node> node, vector<int> neighbors ) : PacketManager(node, neighbors)
+DataPacketManager::DataPacketManager (Ptr<Node> node, vector<int> neighbors, int *nodes_starting_address, NodeContainer nodes_switch) : PacketManager(node, neighbors)
 {
-  for(uint32_t i=0;i<m_node->GetNDevices();i++){
-    m_node->GetDevice(i)->TraceConnectWithoutContext("MacTxDrop", MakeBoundCallback(&dropPacket, this));
+  for(uint32_t j=0;j<nodes_switch.GetN();j++){
+    for(uint32_t i=2;i<nodes_switch.Get(j)->GetNDevices();i++){
+      nodes_switch.Get(j)->GetDevice(i)->TraceConnectWithoutContext("MacTxDrop", MakeBoundCallback(&dropPacket, this));
+    }
   }
+  m_nodes_starting_address = nodes_starting_address;
+  m_nodes_switch = nodes_switch;
   NS_LOG_FUNCTION (this);
 }
 
 void 
 DataPacketManager::setSmallSignalingPacketSize(uint32_t signPacketSize){
   m_signPacketSize = signPacketSize;
+}
+
+void 
+DataPacketManager::setPingPacketIntervalTime(float pingBackIntervalTime){
+  m_pingPacketInterval = Seconds(pingBackIntervalTime);
+  Simulator::Schedule(m_pingPacketInterval, &DataPacketManager::sendPingPackets, this);
+
 }
 
 void 
@@ -117,11 +129,6 @@ DataPacketManager::setPingBackPacketManager(PingBackPacketManager *pingBackPacke
 void 
 DataPacketManager::setObsBufferLength(bool value){
   m_obs_bufferLength = value;
-}
-
-void
-DataPacketManager::setPacketsIntervalForSendingPingBack(uint32_t value){
-  m_packetsIntervalForSendingPingPacket = value;
 }
 
 
@@ -151,19 +158,21 @@ DataPacketManager::getActionSpace()
   return space;
 }
 
-void 
+bool 
 DataPacketManager::receivePacket(Ptr<Packet> packet, Ptr<NetDevice> receivingNetDev){
-  PacketManager::receivePacket(packet);
+  bool ret = PacketManager::receivePacket(packet);
   m_receivingNetDev = receivingNetDev;
+  MyTag tagCopy;
+  m_packet->PeekPacketTag(tagCopy);
+  return tagCopy.GetTrafficValable() && ret;
 }
 
 Ptr<OpenGymDataContainer>
 DataPacketManager::getObservation()
-{
+{ 
   Ptr<OpenGymBoxContainer<uint32_t> > box = CreateObject<OpenGymBoxContainer<uint32_t> >(m_obs_shape);
-  
   //Adding destination to obs
-  box->AddValue(m_destination);
+  box->AddValue(m_map_overlay_array[m_destination]);
   
 
   //Preparing the config
@@ -228,18 +237,26 @@ DataPacketManager::getInfo()
     myInfo += std::to_string(lostPacket.uid) + ";";
     m_lostPackets.pop_back();
   }
+  myInfo += ", Source="; //17
+  myInfo += std::to_string(m_map_overlay_array[m_source]);
+  myInfo += ", Destination="; //18
+  myInfo += std::to_string(m_map_overlay_array[m_destination]);
+  myInfo += ", node="; //19
+  myInfo += std::to_string(m_map_overlay_array[m_node->GetId()]);
+  // NS_LOG_UNCOND(myInfo);
   return myInfo;
 }
 
 bool 
 DataPacketManager::sendPacket(Ptr<OpenGymDataContainer> action){
   
-    
   //Get discrete action
   Ptr<OpenGymDiscreteContainer> discrete = DynamicCast<OpenGymDiscreteContainer>(action);
   uint32_t fwdDev_idx = discrete->GetValue();
-  
   if(m_arrivedAtFinalDest){
+    // string string_ip = "0.0.0.0";
+    // Ipv4Address ip_dest(string_ip.c_str());
+    // m_receivingNetDev->Send(m_packet, ip_dest, 0x0800);
     // Do Not Here
   } else if (fwdDev_idx < m_neighbors.size()){
     //Setting packet Tag
@@ -254,6 +271,7 @@ DataPacketManager::sendPacket(Ptr<OpenGymDataContainer> action){
     string string_ip= "10.2.2."+std::to_string(m_neighbors[fwdDev_idx]+1);
     Ipv4Address ip_dest(string_ip.c_str());
     m_packetIpHeader.SetDestination(ip_dest);
+    m_packetIpHeader.SetSource(string("10.1.1."+std::to_string(m_nodes_starting_address[m_node->GetId()]+1)).c_str());
     m_packet->AddHeader(m_packetIpHeader);
     
     //Discovering the output buffer based on the routing table
@@ -261,9 +279,9 @@ DataPacketManager::sendPacket(Ptr<OpenGymDataContainer> action){
     Ptr<Ipv4> ipv4 = m_node->GetObject<Ipv4>();
     ns3::Socket::SocketErrno sockerr;
     Ptr<Ipv4RoutingProtocol> routing = ipv4->GetRoutingProtocol( );
-    Ptr<Ipv4Route> route = routing->RouteOutput (m_packet, m_packetIpHeader, 0, sockerr);
+    Ptr<Ipv4Route> route = routing->RouteOutput (m_packet, m_packetIpHeader, 0, sockerr); 
+    route->SetSource(string("10.1.1."+std::to_string(m_nodes_starting_address[m_node->GetId()]+1)).c_str());
     Ptr<PointToPointNetDevice> dev = DynamicCast<PointToPointNetDevice>(route->GetOutputDevice());
-    
     //Send and verify if the Packet was dropped
     m_counterSentPackets += 1;
     SentPacket sent;
@@ -273,19 +291,9 @@ DataPacketManager::sendPacket(Ptr<OpenGymDataContainer> action){
     m_sentPackets.push_back(sent);
     dev->Send(m_packet, m_destAddr, 0x0800);
 
-    //Send Overlay Packets
-    if(m_counterSentPackets >= m_packetsIntervalForSendingPingPacket && m_obs_bufferLength==false){
-      m_counterSentPackets = 0;
-      m_pingBackPacketManager->addSentPingForwardPacket(uint64_t(m_pingPacketIndex), Simulator::Now().GetMilliSeconds());
-      for(uint32_t i = 0; i<m_neighbors.size();i++){
-        sendPingForwardPacket(i);
-      }
-      m_pingPacketIndex += 1;
-    }
-    
   } else{
-    //TODO: Implement DopPacket Function
-    //dropPacket(this, m_pckt);
+    //TODO: Implement DropPacket Function
+    // dropPacket(this, m_packet);
   }
   return true;
 }
@@ -296,7 +304,6 @@ DataPacketManager::sendSmallSignalingPacket(){
   if(m_source == m_node->GetId()){
     return ;
   }
-  
   //Define Tag
   MyTag tagSmallSignaling;
 
@@ -339,9 +346,18 @@ DataPacketManager::sendSmallSignalingPacket(){
   m_receivingNetDev->Send(smallSignalingPckt, m_destAddr, 0x800);
 }
 
+void
+DataPacketManager::sendPingPackets(){
+  m_pingBackPacketManager->addSentPingForwardPacket(uint64_t(m_pingPacketIndex), Simulator::Now().GetMilliSeconds());
+  for(uint32_t i = 0; i<m_neighbors.size();i++){
+    sendPingForwardPacket(i);
+  }
+  m_pingPacketIndex += 1;
+  Simulator::Schedule(m_pingPacketInterval, &DataPacketManager::sendPingPackets, this);
+}
+
 void 
 DataPacketManager::sendPingForwardPacket(uint32_t overlayIndex){
-  
   //Define Tag
   MyTag tagPingForward;
 

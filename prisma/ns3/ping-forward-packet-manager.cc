@@ -95,6 +95,7 @@ PingForwardPacketManager::receivePacket(Ptr<Packet> packet, Ptr<NetDevice> recei
   //Get extra info from packet
     MyTag tagCopy;
   packet->PeekPacketTag(tagCopy);
+
   m_lastHop = tagCopy.GetLastHop();
   m_receivingNetDev = receivingNetDev;
   float delay = Simulator::Now().GetSeconds()-(tagCopy.GetStartTime()*0.001);
@@ -109,7 +110,6 @@ PingForwardPacketManager::receivePacket(Ptr<Packet> packet, Ptr<NetDevice> recei
 }
 void
 PingForwardPacketManager::sendPingBackPacket(float delay,  uint32_t overlayTunnelIndex, uint32_t pingPacketIndex){
-  
   //Define Tag
   MyTag tagPingBack;
 
@@ -160,11 +160,11 @@ string
 PingForwardPacketManager::getInfo()
 {
   string myInfo = PacketManager::getInfo();
-  myInfo += ", NN Index="; //16
+  myInfo += ", NN Index="; //18
   myInfo += std::to_string(m_NNIndex);
-  myInfo += ", segment Index="; //17
+  myInfo += ", segment Index="; //19
   myInfo += std::to_string(m_segIndex);
-  myInfo += ", NodeId Signaled="; //18
+  myInfo += ", NodeId Signaled="; //20
   myInfo += std::to_string(m_source); 
   
   return myInfo;

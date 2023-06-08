@@ -17,14 +17,14 @@ class Trainer(Agent):
     
     def __init__(self, index, agent_type="dqn", train=True):
         Agent.__init__(self, index, agent_type, train)
-        self.last_training_time = 0
-        self.last_sync_time = 0
-        self.gradient_step_idx = 1
-        
+        self.reset()
         ## define the log file for td error 
         self.tb_writer_dict = {"td_error": tf.summary.create_file_writer(logdir=f'{Agent.logs_folder}/td_error/node_{self.index}'),
                                "replay_buffer_length": tf.summary.create_file_writer(logdir=f'{Agent.logs_folder}/replay_buffer_length/node_{self.index}')}
-        
+    def reset(self):
+        self.last_training_time = 0
+        self.last_sync_time = 0
+        self.gradient_step_idx = 1
     def run(self):
         """
             Start the trainer deamon
@@ -91,10 +91,10 @@ class Trainer(Agent):
         if len(td_errors):
             with self.tb_writer_dict["td_error"].as_default():
                 tf.summary.scalar('MSE_loss_over_steps', np.mean(td_errors**2), step=self.gradient_step_idx)
-                tf.summary.scalar('MSE_loss_over_time', np.mean(td_errors**2), step=int(Agent.curr_time*1e6))
+                tf.summary.scalar('MSE_loss_over_time', np.mean(td_errors**2), step=int((Agent.base_curr_time  + Agent.curr_time)*1e6))
         with self.tb_writer_dict["replay_buffer_length"].as_default():
             tf.summary.scalar('replay_buffer_length_over_steps', len(Agent.replay_buffer[self.index]), step=self.gradient_step_idx)
-            tf.summary.scalar('replay_buffer_length_over_time', len(Agent.replay_buffer[self.index]), step=int(Agent.curr_time*1e6))
+            tf.summary.scalar('replay_buffer_length_over_time', len(Agent.replay_buffer[self.index]), step=int((Agent.base_curr_time + Agent.curr_time)*1e6))
         
         self.gradient_step_idx += 1
     
