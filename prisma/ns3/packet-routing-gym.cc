@@ -61,7 +61,7 @@ PacketRoutingEnv::PacketRoutingEnv ()
   NS_LOG_FUNCTION (this);
 }
   
-PacketRoutingEnv::PacketRoutingEnv (Ptr<Node> node, uint32_t numberOfNodes, uint64_t linkRateValue, bool activateSignaling, double signPacketSize, vector<int> overlayNeighbors)
+PacketRoutingEnv::PacketRoutingEnv (Ptr<Node> node, NodeContainer nodes, uint64_t linkRateValue, bool activateSignaling, double signPacketSize, vector<int> overlayNeighbors, int *nodes_starting_address)
 {
   NS_LOG_FUNCTION (this);
   
@@ -69,15 +69,14 @@ PacketRoutingEnv::PacketRoutingEnv (Ptr<Node> node, uint32_t numberOfNodes, uint
   m_smallSignalingPacketManager = new SmallSignalingPacketManager(node, overlayNeighbors);
   m_pingForwardPacketManager = new PingForwardPacketManager(node, overlayNeighbors);
   m_pingBackPacketmanager = new PingBackPacketManager(node, overlayNeighbors);
-  m_dataPacketManager = new DataPacketManager(node, overlayNeighbors);
+  m_dataPacketManager = new DataPacketManager(node, overlayNeighbors, nodes_starting_address, nodes);
   m_dataPacketManager->setSmallSignalingPacketSize(signPacketSize);
   m_dataPacketManager->setPingBackPacketManager(m_pingBackPacketmanager);
 }
 
 void 
-PacketRoutingEnv::configDataPacketManager(bool obs_bufferLength, uint32_t packetsIntervalForSendingPingPacket){
+PacketRoutingEnv::configDataPacketManager(bool obs_bufferLength){
   m_dataPacketManager->setObsBufferLength(obs_bufferLength);
-  m_dataPacketManager->setPacketsIntervalForSendingPingBack(packetsIntervalForSendingPingPacket);
 }
 
 void
@@ -93,6 +92,11 @@ PacketRoutingEnv::setNetDevicesContainer(NetDeviceContainer* nd){
 void
 PacketRoutingEnv::setTrainConfig(bool train){
   m_train = train;
+}
+
+void 
+PacketRoutingEnv::setPingPacketIntervalTime(float pingPacketIntervalTime){
+  m_dataPacketManager->setPingPacketIntervalTime(pingPacketIntervalTime);
 }
 
 void
@@ -147,7 +151,10 @@ Ptr<OpenGymDataContainer>
 PacketRoutingEnv::GetObservation()
 {
   Ptr<OpenGymBoxContainer<int32_t> > box = CreateObject<OpenGymBoxContainer<int32_t> >(m_dataPacketManager->getObsShape());
-  if(is_trainStep_flag==0) return m_dataPacketManager->getObservation();
+  if(is_trainStep_flag==0) {
+    if (m_packetType==DATA_PACKET) return m_dataPacketManager->getObservation();
+    else box->AddValue(1000);
+  }
   else {
     box->AddValue(-1);
   }
@@ -190,7 +197,6 @@ bool
 PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
 {
   bool sent = true;
-  
   if(m_packetType==DATA_PACKET){
     if (is_trainStep_flag==1){
       return true;
@@ -214,6 +220,12 @@ PacketRoutingEnv::initialize()
   
 }
 
+void
+PacketRoutingEnv::mapOverlayNodes(std::vector <int> map_overlay_array)
+{
+  m_dataPacketManager->m_map_overlay_array = map_overlay_array;
+  m_bigSignalingPacketManager->m_map_overlay_array = map_overlay_array;
+}
 
 void
 PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netDev, NetDeviceContainer* nd, Ptr<const Packet> packet)
@@ -233,13 +245,12 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
   entity->m_packetType = PacketType(tagCopy.GetSimpleValue());
   
   bool valid = true;
-  
   if(entity->m_packetType==DATA_PACKET){
-    entity->m_dataPacketManager->receivePacket(p, netDev);
+    valid = entity->m_dataPacketManager->receivePacket(p, netDev);
   } else if(entity->m_packetType==BIG_SIGN_PACKET){
     valid = entity->m_bigSignalingPacketManager->receivePacket(p);
   } else if(entity->m_packetType==SMALL_SIGN_PACKET){
-    entity->m_smallSignalingPacketManager->receivePacket(p);
+    valid = entity->m_smallSignalingPacketManager->receivePacket(p);
   } else if(entity->m_packetType==PING_FORWARD_PACKET){
     entity->m_pingForwardPacketManager->receivePacket(p, netDev);
     return ;

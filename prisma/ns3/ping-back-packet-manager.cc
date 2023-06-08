@@ -109,7 +109,7 @@ PingBackPacketManager::addSentPingForwardPacket(uint64_t id, uint64_t start_time
 float
 PingBackPacketManager::getMaxTimePingForwardPacketSent(uint32_t index){
   if(m_sentPingForwardPackets[index].size()>0){
-    return Simulator::Now().GetSeconds() - m_sentPingForwardPackets[index][0].start_time*0.001;
+    return std::min(Simulator::Now().GetSeconds() - m_sentPingForwardPackets[index][0].start_time*0.001, 2.60);
   } else{
     return 0.0;
   }
@@ -120,18 +120,19 @@ bool
 PingBackPacketManager::receivePacket(Ptr<Packet> packet, Ptr<NetDevice> receivingNetDev){
   //Get extra info from packet
   MyTag tagCopy;
-  packet->PeekPacketTag(tagCopy);  
+  packet->PeekPacketTag(tagCopy); 
+
   float delay = tagCopy.GetOneHopDelay();
   m_overlayTunnelIndex = tagCopy.GetTunnelOverlaySendingIndex();
   m_pingPacketIndex = tagCopy.GetOverlayIndex();
   
   //Erasing sent packets which were acked
-  auto it = m_sentPingForwardPackets[m_overlayTunnelIndex].begin();
-  while(it->uid != m_pingPacketIndex){
-    it = m_sentPingForwardPackets[m_overlayTunnelIndex].erase(it);
+  for (auto it = m_sentPingForwardPackets[m_overlayTunnelIndex].begin(); it != m_sentPingForwardPackets[m_overlayTunnelIndex].end(); ++it){
+    if (it->uid == m_pingPacketIndex){
+      m_sentPingForwardPackets[m_overlayTunnelIndex].erase(it);
+      break;
+    }
   }
-  it = m_sentPingForwardPackets[m_overlayTunnelIndex].erase(it);
-
   //Adding tunnel delay in a circular array
   if(m_tunnelsDelay[m_overlayTunnelIndex].size()>=m_movingAverageSize){
     assert(!m_tunnelsDelay[m_overlayTunnelIndex].empty());

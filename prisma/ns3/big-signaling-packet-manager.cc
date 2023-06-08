@@ -92,32 +92,31 @@ BigSignalingPacketManager::BigSignalingPacketManager (Ptr<Node> node, vector<int
 
 bool 
 BigSignalingPacketManager::receivePacket(Ptr<Packet> packet){
-  PacketManager::receivePacket(packet);
+  bool ret = PacketManager::receivePacket(packet);
 
   //Check if the node is not the packet source
   if(m_source == m_node->GetId()){
     return false;
   }
-
+  //m_computeStats->addGlobalBytesSignaling(packet->GetSize());
   //Get extra info from packet
   MyTag tagCopy;
   m_packet->PeekPacketTag(tagCopy);
   m_NNIndex = tagCopy.GetNNIndex();
   m_segIndex = tagCopy.GetSegIndex();
-  
-  return true;
+  return m_arrivedAtFinalDest && ret;
 }
 
 string
 BigSignalingPacketManager::getInfo()
 {
   string myInfo = PacketManager::getInfo();
-  myInfo += ", NN Index="; //16
+  myInfo += ", NN Index="; //18
   myInfo += std::to_string(m_NNIndex);
-  myInfo += ", segment Index="; //17
+  myInfo += ", segment Index="; //19
   myInfo += std::to_string(m_segIndex);
-  myInfo += ", NodeId Signaled="; //18
-  myInfo += std::to_string(m_source); 
+  myInfo += ", NodeId Signaled="; //20
+  myInfo += std::to_string(m_map_overlay_array[m_source]); 
   
   return myInfo;
 }

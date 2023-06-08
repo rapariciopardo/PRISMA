@@ -58,6 +58,8 @@ NS_LOG_COMPONENT_DEFINE ("ComputeStats");
 
 vector<float> ComputeStats::m_globalE2eDelay;
 vector<float> ComputeStats::m_globalCost;
+vector<float> ComputeStats::m_globalUnderlayE2eDelay;
+vector<float> ComputeStats::m_globalUnderlayCost;
 float ComputeStats::m_globalLossRatio;
 int ComputeStats::m_globalOverlayPacketsInjected;
 int ComputeStats::m_globalOverlayPacketsArrived;
@@ -120,10 +122,24 @@ void ComputeStats::addCost(float cost){
     m_globalCost.push_back(cost);
 }
 
+void ComputeStats::addUnderlayE2eDelay(float delay){
+    m_globalUnderlayE2eDelay.push_back(delay);
+}
+
+void ComputeStats::addUnderlayCost(float cost){
+    m_globalUnderlayCost.push_back(cost);
+}
+
+
 void ComputeStats::addLossPenaltyToCost(){
     m_localCost.push_back(m_lossPenalty);
     m_globalCost.push_back(m_lossPenalty);
 }
+
+void ComputeStats::addLossPenaltyToUnderlayCost(){
+    m_globalUnderlayCost.push_back(m_lossPenalty);
+}
+
 
 void ComputeStats::incrementOverlayPacketsInjected(){
     m_localOverlayPacketsInjected += 1;
@@ -172,6 +188,14 @@ vector<float> ComputeStats::getGlobalCost(){
     return m_globalCost;
 }
 
+vector<float> ComputeStats::getGlobalUnderlayE2eDelay(){
+    return m_globalUnderlayE2eDelay;
+}
+
+vector<float> ComputeStats::getGlobalUnderlayCost(){
+    return m_globalUnderlayCost;
+}
+
 float ComputeStats::getGlobalLossRatio(){
     return m_globalLossRatio;
 }
@@ -189,7 +213,7 @@ int ComputeStats::getGlobalOverlayPacketsLost(){
 }
 
 int ComputeStats::getGlobalOverlayPacketsBuffered(){
-    return m_globalOverlayPacketsInjected - m_globalOverlayPacketsArrived - m_globalOverlayPacketsLost;
+    return m_globalOverlayPacketsInjected - (m_globalOverlayPacketsArrived + m_globalOverlayPacketsLost);
 }
 
 int ComputeStats::getGlobalUnderlayPacketsInjected(){
@@ -205,7 +229,7 @@ int ComputeStats::getGlobalUnderlayPacketsLost(){
 }
 
 int ComputeStats::getGlobalUnderlayPacketsBuffered(){
-    return m_globalUnderlayPacketsInjected - m_globalUnderlayPacketsArrived - m_globalUnderlayPacketsLost;
+    return m_globalUnderlayPacketsInjected - (m_globalUnderlayPacketsArrived + m_globalUnderlayPacketsLost);
 }
 
 vector<float> ComputeStats::getLocalE2eDelay(){
@@ -238,6 +262,6 @@ int ComputeStats::getLocalOverlayPacketsBuffered(){
 
 float ComputeStats::getSignalingOverhead(){
     if(m_globalBytesData==0) return 0.0;
-    return float(m_globalBytesSignaling/m_globalBytesData);
+    return float(m_globalBytesSignaling)/float(m_globalBytesData);
 }
 }// ns3 namespace

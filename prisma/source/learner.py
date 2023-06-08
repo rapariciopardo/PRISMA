@@ -68,7 +68,6 @@ The functions in this model:
 """
 import tensorflow as tf
 import numpy as np
-from source.replay_buffer import DigitalTwinDB
 
 __author__ = "Redha A. Alliche, Tiago Da Silva Barros, Ramon Aparicio-Pardo, Lucile Sassatelli"
 __copyright__ = "Copyright (c) 2022 Redha A. Alliche, Tiago Da Silva Barros, Ramon Aparicio-Pardo, Lucile Sassatelli"

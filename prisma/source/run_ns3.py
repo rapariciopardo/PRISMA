@@ -27,7 +27,7 @@ def run_ns3(params, configure=True):
 
     ## Copy prisma into ns-3 folder
     os.system(f'rsync -r ./ns3/* {params["ns3_sim_path"].rstrip("/")}/scratch/prisma')
-    # os.system(f'rsync -r ./ns3_model/ipv4-interface.cc {params["ns3_sim_path"].rstrip("/")}/src/internet/model')
+    os.system(f'rsync -r ./ns3_model/ipv4-interface.cc {params["ns3_sim_path"].rstrip("/")}/src/internet/model')
 
     ## go to ns3 dir
     os.chdir(params["ns3_sim_path"])
@@ -40,21 +40,21 @@ def run_ns3(params, configure=True):
     ## run NS3 simulator
     ns3_params_format = ('prisma --simSeed={} --openGymPort={} --simTime={} --AvgPacketSize={} '
                         '--LinkDelay={} --LinkRate={} --MaxBufferLength={} --load_factor={} '
-                        '--adj_mat_file_name={} --overlay_mat_file_name={} --node_coordinates_file_name={} '
+                        '--adj_mat_file_name={} --overlay_mat_file_name={} '
                         '--node_intensity_file_name={} --signaling={} --AgentType={} --signalingType={} '
-                        '--syncStep={} --lossPenalty={} --activateOverlaySignaling={} --nPacketsOverlaySignaling={} '
+                        '--syncStep={} --lossPenalty={} --activateOverlaySignaling={} '
                         '--train={} --movingAverageObsSize={} --activateUnderlayTraffic={} --opt_rejected_file_name={} '
-                        '--map_overlay_file_name={} --pingAsObs={} --logs_folder={} --groundTruthFrequence={} --bigSignalingSize={}'.format( params["seed"],
+                        '--map_overlay_file_name={} --pingAsObs={} --bigSignalingSize={} --pingPacketIntervalTime={}'.format( params["seed"],
                                              params["basePort"],
                                              str(params["simTime"]),
                                              params["packet_size"],
-                                             params["link_delay"],
+                                             str(params["link_delay"])+"ms",
                                              str(params["link_cap"]) + "bps",
                                              str(params["max_out_buffer_size"]) + "B",
                                              params["load_factor"],
                                              params["physical_adjacency_matrix_path"],
                                              params["overlay_adjacency_matrix_path"],
-                                             params["node_coordinates_path"],
+                                            #  params["node_coordinates_path"],
                                              params["traffic_matrix_path"],
                                              bool(params["signalingSim"]),
                                              params["agent_type"],
@@ -62,16 +62,14 @@ def run_ns3(params, configure=True):
                                              params["sync_step"],
                                              params["loss_penalty"],
                                              bool(params["activateOverlay"]),
-                                             params["nPacketsOverlay"],
                                              bool(params["train"]),
                                              params["movingAverageObsSize"],
                                              bool(params["activateUnderlayTraffic"]),
                                              params["opt_rejected_path"],
                                              params["map_overlay_path"],
                                              bool(params["pingAsObs"]),
-                                             params["logs_folder"],
-                                             params["groundTruthFrequence"],
-                                             params["bigSignalingSize"]
+                                             params["bigSignalingSize"],
+                                             params["pingPacketIntervalTime"]
                                              ))
     run_ns3_command = shlex.split(f'./waf --run "{ns3_params_format}"')
     proc = subprocess.Popen(run_ns3_command)

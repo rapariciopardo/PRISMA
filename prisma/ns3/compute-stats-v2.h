@@ -58,7 +58,9 @@ public:
 
   //Adding End-to-end Delay and cost to vectors
   void addE2eDelay(float delay);
-  void addCost(float cost);
+  void addCost(float cost);  
+  void addUnderlayE2eDelay(float delay);
+  void addUnderlayCost(float cost);
 
   //Increment packets Info
   void incrementOverlayPacketsInjected();
@@ -76,11 +78,13 @@ public:
   //Set loss Penalty
   void setLossPenalty(double value);
   void addLossPenaltyToCost();
-
+  void addLossPenaltyToUnderlayCost();
   
   //Get Functions
   vector<float> getGlobalE2eDelay();
-  vector<float> getGlobalCost();
+  vector<float> getGlobalCost();  
+  vector<float> getGlobalUnderlayE2eDelay();
+  vector<float> getGlobalUnderlayCost();
   float getGlobalLossRatio();
   int getGlobalOverlayPacketsInjected();
   int getGlobalOverlayPacketsArrived();
@@ -98,12 +102,11 @@ public:
   int getLocalOverlayPacketsLost();
   int getLocalOverlayPacketsBuffered();
   float getSignalingOverhead();
-
-
-private:
   //Global (static) information
   static vector<float> m_globalE2eDelay;
   static vector<float> m_globalCost;
+  static vector<float> m_globalUnderlayE2eDelay;
+  static vector<float> m_globalUnderlayCost;
   static float m_globalLossRatio;
 
   static int m_globalOverlayPacketsInjected;
@@ -119,16 +122,16 @@ private:
   static int m_globalBytesSignaling;
 
   static double m_lossPenalty;
+  int m_localOverlayPacketsInjected;
+  int m_localOverlayPacketsArrived;
+  int m_localOverlayPacketsLost;
 
-
+private:
   //Local (node) Information
   vector<float> m_localE2eDelay;
   vector<float> m_localCost;
   float m_localLossRatio;
 
-  int m_localOverlayPacketsInjected;
-  int m_localOverlayPacketsArrived;
-  int m_localOverlayPacketsLost;
   
 };
 

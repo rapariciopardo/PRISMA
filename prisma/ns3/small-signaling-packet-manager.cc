@@ -89,15 +89,15 @@ SmallSignalingPacketManager::SmallSignalingPacketManager (Ptr<Node> node, vector
   NS_LOG_FUNCTION (this);
 }
 
-void 
+bool 
 SmallSignalingPacketManager::receivePacket(Ptr<Packet> packet){
-  PacketManager::receivePacket(packet);
-  
+  bool ret = PacketManager::receivePacket(packet);
   //Get extra packet Info
   MyTag tagCopy;
   m_packet->PeekPacketTag(tagCopy);
   m_packetIdSignaled = tagCopy.GetIdValue();
   m_oneHopDelay = tagCopy.GetOneHopDelay();
+  return m_arrivedAtFinalDest && ret;
 }
 
 float
@@ -110,8 +110,10 @@ string
 SmallSignalingPacketManager::getInfo()
 {
   string myInfo = PacketManager::getInfo();
-  myInfo += ", PacketIdSignaled="; //16
+  myInfo += ", PacketIdSignaled="; //18
   myInfo += std::to_string(m_packetIdSignaled); 
+  myInfo += ", Arrived at final dest="; //19
+  myInfo += std::to_string(m_arrivedAtFinalDest);
   return myInfo;
 }
 

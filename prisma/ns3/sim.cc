@@ -94,14 +94,11 @@ void printMatrix (const char* description, vector<vector<bool> > array);
 void ScheduleNextTrainStep(Ptr<PacketRoutingEnv> openGym);
 void ScheduleHelloMessages(Ipv4OSPFRouting* ospf);
 void RestoreLinkRate(NetDeviceContainer *ptp, u_int32_t idx1, u_int32_t idx2) {
-  NS_LOG_UNCOND("tempo: "<<Simulator::Now());
-  NS_LOG_UNCOND(idx1<<"     "<<idx2<< "    aqui    ");
   StaticCast<PointToPointNetDevice>(ptp->Get(idx1))->NotifyLink(true);
   StaticCast<PointToPointNetDevice>(ptp->Get(idx2))->NotifyLink(true);
     
 }
 void ModifyLinkRate(NetDeviceContainer *ptp, u_int32_t idx1, u_int32_t idx2, double duration) {
-  NS_LOG_UNCOND(idx1<<"     "<<idx2<< "    aqui    ");
   StaticCast<PointToPointNetDevice>(ptp->Get(idx1))->NotifyLink(false);
   StaticCast<PointToPointNetDevice>(ptp->Get(idx2))->NotifyLink(false);
   Simulator::Schedule(Seconds(duration), &RestoreLinkRate, ptp, idx1, idx2);
@@ -155,17 +152,13 @@ int main (int argc, char *argv[])
 
   std::string adj_mat_file_name ("scratch/prisma/examples/abilene/adjacency_matrix.txt");
   std::string overlay_mat_file_name ("scratch/prisma/examples/abilene/overlay_matrix.txt");
-  std::string node_coordinates_file_name ("scratch/prisma/examples/abilene/node_coordinates.txt");
+  // std::string node_coordinates_file_name ("scratch/prisma/examples/abilene/node_coordinates.txt");
   std::string node_intensity_file_name("scratch/prisma/examples/abilene/node_intensity.txt");
   std::string opt_rejected_file_name("scratch/prisma/test.txt");
   std::string map_overlay_file_name("scratch/prisma/test2.txt");
-  std::string logs_folder("../prisma/abilene/examples/4n");
-
-  float groundTruthFrequence = -1;
 
 
   bool activateOverlaySignaling = true;
-  uint32_t nPacketsOverlaySignaling = 2;
 
   double lossPenalty = 0.0;
 
@@ -176,6 +169,8 @@ int main (int argc, char *argv[])
   uint32_t movingAverageObsSize = 5;
 
   bool activateUnderlayTraffic = true;
+
+  float pingPacketIntervalTime = 0.1;
   
   CommandLine cmd;
   // required parameters for OpenGym interface
@@ -186,7 +181,7 @@ int main (int argc, char *argv[])
   cmd.AddValue ("simTime", "Simulation time in seconds. Default: 30s", simTime);
   cmd.AddValue ("adj_mat_file_name", "Adjacency matrix file path. Default: scratch/prisma/adjacency_matrix.txt", adj_mat_file_name);
   cmd.AddValue ("overlay_mat_file_name", "Adjacency matrix file path. Default: scratch/prisma/overlay_matrix.txt", overlay_mat_file_name); 
-  cmd.AddValue ("node_coordinates_file_name", "Node coordinates file path. Default: scratch/prisma/node_coordinates.txt", node_coordinates_file_name);
+  // cmd.AddValue ("node_coordinates_file_name", "Node coordinates file path. Default: scratch/prisma/node_coordinates.txt", node_coordinates_file_name);
   cmd.AddValue ("node_intensity_file_name", "Node intensity (traffic matrix) file path. Default: scratch/prisma/node_intensity.txt", node_intensity_file_name);
   cmd.AddValue ("AvgPacketSize", "Packet size. Default: 512", AvgPacketSize);
   cmd.AddValue ("LinkDelay", "Network links delay. Default: 2ms", LinkDelay);
@@ -206,7 +201,6 @@ int main (int argc, char *argv[])
   cmd.AddValue ("signalingType", "Signaling Type", signalingType);
   cmd.AddValue ("syncStep", "synchronization Step (in seconds)", syncStep);
   cmd.AddValue ("activateOverlaySignaling", "activate Overlay Signaling", activateOverlaySignaling);
-  cmd.AddValue ("nPacketsOverlaySignaling", "nb of packets for triggering overlay signaling", nPacketsOverlaySignaling);
   cmd.AddValue ("lossPenalty", "Packet Loss Penalty", lossPenalty);
   cmd.AddValue ("train", "train", train);
   cmd.AddValue ("movingAverageObsSize", "size of MA for collecting the Obs", movingAverageObsSize);
@@ -214,9 +208,8 @@ int main (int argc, char *argv[])
   cmd.AddValue ("opt_rejected_file_name", "Rejected paths in Optimal Algorithm file name", opt_rejected_file_name);
   cmd.AddValue ("map_overlay_file_name", "Map overlay file name", map_overlay_file_name);
   cmd.AddValue ("pingAsObs", "ping as observation variable", pingAsObs);
-  cmd.AddValue ("logs_folder", "Logs folder", logs_folder);
-  cmd.AddValue ("groundTruthFrequence", "ground truth freq", groundTruthFrequence);
   cmd.AddValue ("bigSignalingSize", "total size of the weights of the NN in bytes", bigSignalingSize);
+  cmd.AddValue ("pingPacketIntervalTime", "Interval time between two ping packets", pingPacketIntervalTime);
 
   cmd.Parse (argc, argv);
     
@@ -227,7 +220,7 @@ int main (int argc, char *argv[])
   NS_LOG_UNCOND("--seed: " << simSeed);
   NS_LOG_UNCOND("--testArg: " << testArg);
   NS_LOG_UNCOND("--adj_mat_file_name: " << adj_mat_file_name);
-  NS_LOG_UNCOND("--node_coordinates_file_name: " << node_coordinates_file_name);
+  // NS_LOG_UNCOND("--node_coordinates_file_name: " << node_coordinates_file_name);
   NS_LOG_UNCOND("--node_intensity_file_name: " << node_intensity_file_name);
   NS_LOG_UNCOND("--LinkDelay: " << LinkDelay);
   NS_LOG_UNCOND("--MaxBufferLength: " << MaxBufferLength);
@@ -241,7 +234,6 @@ int main (int argc, char *argv[])
   NS_LOG_UNCOND("--RejectedTraffPath: "<<opt_rejected_file_name);
   NS_LOG_UNCOND("--pingAsObs: "<<pingAsObs);
   NS_LOG_UNCOND("--movingAverageObsSize: "<<movingAverageObsSize);
-  NS_LOG_UNCOND("--nPacketsOverlaySignaling: "<<nPacketsOverlaySignaling);
 
   
   ComputeStats compStats;
@@ -284,9 +276,10 @@ int main (int argc, char *argv[])
 
   vector<vector<bool> > OverlayAdj_Matrix;
   OverlayAdj_Matrix = readNxNMatrix (overlay_mat_file_name);
+  NS_LOG_UNCOND("OverlayAdj_Matrix size: "<<OverlayAdj_Matrix.size() << " name: "<<overlay_mat_file_name );
 
-  vector<int> map_overlay_array;
-  map_overlay_array = readOverlayMatrix(map_overlay_file_name);
+  vector<int> underlay_to_overlay_map;
+  underlay_to_overlay_map = readOverlayMatrix(map_overlay_file_name);
 
   vector<vector<double>> OptRejected;
   OptRejected = readOptRejectedFile(opt_rejected_file_name);
@@ -306,16 +299,13 @@ int main (int argc, char *argv[])
 
 
 
-  vector<vector<double> > coord_array;
-  coord_array = readCordinatesFile (node_coordinates_file_name);
-
   vector<vector<std::string>> Traff_Matrix;
   Traff_Matrix = readIntensityFile (node_intensity_file_name);
 
   NS_LOG_UNCOND(node_intensity_file_name);
-  int n_nodes = coord_array.size () ; //coord_array.size ();
+  int n_nodes = Traff_Matrix.size () ; //coord_array.size ();
+  int overlay_n_nodes = OverlayAdj_Matrix.size() ; //coord_array.size ();
   int matrixDimension = Adj_Matrix.size ();
-  int overlayMatrixDimension = OverlayAdj_Matrix.size(); 
 
   if (matrixDimension != n_nodes)
     {
@@ -346,6 +336,7 @@ int main (int argc, char *argv[])
   NetDeviceContainer traffic_nd;
   NetDeviceContainer switch_nd;
 
+  // Computing node degrees for phyiscal network
   std::vector<NetDeviceContainer> dev_links;
   int nodes_degree[n_nodes] ={0};
   for (size_t i = 0; i < Adj_Matrix.size (); i++)
@@ -358,13 +349,28 @@ int main (int argc, char *argv[])
               } 
           }
       }
+
+  // Computing node degrees for overlay network
+  int overlay_nodes_degree[overlay_n_nodes] ={0};
+  for (size_t i = 0; i < OverlayAdj_Matrix.size (); i++)
+      {
+        for (size_t j = 0; j < OverlayAdj_Matrix[i].size (); j++)
+          {
+            if (OverlayAdj_Matrix[i][j] == 1)
+              {
+                overlay_nodes_degree[i] += 1;
+              } 
+          }
+      }
+
+
   //Creating the IP Stack Helpers
   InternetStackHelper internet;
   internet.Install(nodes_traffic);
   internet.Install(nodes_switch);
 
   //Parameters of signaling
-  double smallSignalingSize[n_nodes] = {0.0};
+  double smallSignalingSize[overlay_n_nodes] = {0.0};
   if(agentType=="sp" || agentType=="opt" || signalingType=="ideal"){
     activateSignaling=false;
   }
@@ -372,22 +378,22 @@ int main (int argc, char *argv[])
   if(agentType=="opt") opt=true;
   if(signalingType=="NN"){
     NS_LOG_UNCOND("SMALL SIGNALING");
-    for(int i=0;i<n_nodes;i++){
-      smallSignalingSize[i] = 8 + (8 * (nodes_degree[i]+1));
+    for(int i=0;i<overlay_n_nodes;i++){
+      smallSignalingSize[i] = 8 + (8 * (overlay_nodes_degree[i]+1));
     }
   } else if(signalingType=="target"){
-    for(int i=0;i<n_nodes;i++){
+    for(int i=0;i<overlay_n_nodes;i++){
       smallSignalingSize[i] = 24;
     }
   }
     else if(signalingType=="digital_twin"){
-      for(int i=0;i<n_nodes;i++){
-        smallSignalingSize[i] = 8 + (8 * (2* nodes_degree[i] + 1));
+      for(int i=0;i<overlay_n_nodes;i++){
+        smallSignalingSize[i] = 8 + (8 * (2* overlay_nodes_degree[i] + 1));
       }
   }  
 
   //Creating the links
-  NS_LOG_UNCOND("Creating link between traffic generator nodes and switch nodes");
+  NS_LOG_UNCOND("Creating link between traffic generator nodes and switch nodes in physical network");
   
   for(int i=0;i<n_nodes;i++)
   {
@@ -404,7 +410,7 @@ int main (int argc, char *argv[])
   }
   vector<tuple<int, int>> link_devs;
   Ptr<NetDevice> nds_switch [n_nodes][n_nodes];
-  NS_LOG_UNCOND("Creating link between switch nodes");
+  NS_LOG_UNCOND("Creating link between switch nodes physical network");
   for (size_t i = 0; i < Adj_Matrix.size(); i++)
       {
         for (size_t j = i; j < Adj_Matrix[i].size(); j++)
@@ -432,42 +438,56 @@ int main (int argc, char *argv[])
   
 
 
-  //Adding Ipv4 Address to the Net Devices
+  //Adding Ipv4 Address to the Net Devices for traffic generator nodes
   Ipv4AddressHelper address;
   address.SetBase ("10.2.2.0", "255.255.255.0");
   Ipv4InterfaceContainer interfaces_traffic = address.Assign (traffic_nd);
-
+  // Adding Ipv4 Address to the Net Devices for switch nodes
   address.SetBase ("10.1.1.0", "255.255.255.0");
   Ipv4InterfaceContainer interfaces_switch = address.Assign (switch_nd);
-
   TrafficControlHelper tch;
   tch.Uninstall (switch_nd);
   
-  // Create the overlay network
+  // Create the overlay network map
   //Specifies the UnderlayIndex of overlay Nodes
-  int overlayNodes[overlayMatrixDimension];
+  int overlay_to_underlay_map[overlay_n_nodes];
 
   //Specifies the underlay indexes of neighbors of overlay nodes (by underlayIndex)
-  vector<int> overlayNeighbors[n_nodes];
+  vector<int> overlayNeighbors[overlay_n_nodes];
 
   //Check by underlayIndex if a node is Overlay
   bool overlayNodesChecker[n_nodes] = {0};
 
-  //Check for a node
+  //Check for a node and store the mapping between overlay to underlay nodes (overlay_to_underlay_map[overlayIndex] = underlayIndex])
   for(int i=0;i<n_nodes;i++){
-    if(map_overlay_array[i]>=0){
+    if(underlay_to_overlay_map[i]>=0){
       overlayNodesChecker[i] = 1;
-      overlayNodes[map_overlay_array[i]]=i;
+      overlay_to_underlay_map[underlay_to_overlay_map[i]]=i;
+    }
+  }
+  // Construct the overlay nodes neighbors 
+  for(int i=0;i<overlay_n_nodes;i++){
+    for(int j=i;j<overlay_n_nodes;j++){
+      if(OverlayAdj_Matrix[i][j]==1){
+        overlayNeighbors[i].push_back(overlay_to_underlay_map[j]);
+        overlayNeighbors[j].push_back(overlay_to_underlay_map[i]);
+      }
     }
   }
 
-  for(int i=0;i<overlayMatrixDimension;i++){
-    for(int j=i;j<overlayMatrixDimension;j++){
-      if(OverlayAdj_Matrix[i][j]==1){
-        overlayNeighbors[overlayNodes[i]].push_back(overlayNodes[j]);
-        overlayNeighbors[overlayNodes[j]].push_back(overlayNodes[i]);
+  // print overlay nodes and neighbors
+  for(int i=0;i<overlay_n_nodes;i++){
+      NS_LOG_UNCOND(" " <<"Overlay Node: "<<i<<"  Neighbors: ");
+      for(int j=0;j<int(overlayNeighbors[i].size());j++){
+        NS_LOG_UNCOND(" " <<overlayNeighbors[i][j]<<" ");
       }
-    }
+      NS_LOG_UNCOND(" ");
+  }
+  // Computing the starting ip address for a node
+  int nodes_starting_address[n_nodes]={0};
+  for (int i=1;i<n_nodes;i++){
+    nodes_starting_address[i] = nodes_starting_address[i-1] + nodes_degree[i];
+    NS_LOG_UNCOND(" printing overlay starting adress for node  " << i << " " <<nodes_starting_address[i]);
   }
 
   //Create The Overlay Mask Traffic rate
@@ -500,41 +520,41 @@ int main (int argc, char *argv[])
   std::vector<Ptr<PacketRoutingEnv> > packetRoutingEnvs;
   
   uint64_t linkRateValue= DataRate(LinkRate).GetBitRate();
-  
-  for (int i = 0; i < overlayMatrixDimension; i++)
+  for (int i = 0; i < n_nodes; i++)
   {
-    NS_LOG_UNCOND("Node: "<<overlayNodes[i]<<"   Port: "<<openGymPort + i);
+    NS_LOG_UNCOND("Physical Node: "<<i);
+    NS_LOG_UNCOND("nb Neighbors: " << nodes_degree[i]);
+  }
+  for (int i = 0; i < overlay_n_nodes; i++)
+  {
+    NS_LOG_UNCOND("Node: "<<overlay_to_underlay_map[i]<<"   Port: "<<openGymPort + i);
     NS_LOG_UNCOND("Neighbors: ");
-    for(int neighbor : overlayNeighbors[overlayNodes[i]]){
+    for(int neighbor : overlayNeighbors[i]){
       NS_LOG_UNCOND(neighbor);
     }
     
-    Ptr<Node> n = nodes_switch.Get (overlayNodes[i]); // ref node
+    Ptr<Node> n = nodes_switch.Get (overlay_to_underlay_map[i]); // ref node
     //nodeOpenGymPort = openGymPort + i;
     Ptr<OpenGymInterface> openGymInterface = CreateObject<OpenGymInterface> (openGymPort + i);
     Ptr<PacketRoutingEnv> packetRoutingEnv;
-    packetRoutingEnv = CreateObject<PacketRoutingEnv> (n, n_nodes, linkRateValue, activateSignaling, smallSignalingSize[overlayNodes[i]], overlayNeighbors[overlayNodes[i]]); // event-driven step
+    packetRoutingEnv = CreateObject<PacketRoutingEnv> (n, nodes_switch, linkRateValue, activateSignaling, smallSignalingSize[i], overlayNeighbors[i], nodes_starting_address); // event-driven step
     packetRoutingEnv->setTrainConfig(train);
-    //packetRoutingEnv->setLogsFolder(logs_folder);
-    //packetRoutingEnv->setOverlayConfig(overlayNeighbors[overlayNodes[i]], activateOverlaySignaling, nPacketsOverlaySignaling, movingAverageObsSize, map_overlay_array);
+    packetRoutingEnv->m_nodes = nodes_switch;
+    packetRoutingEnv->mapOverlayNodes(underlay_to_overlay_map);
+    packetRoutingEnv->setPingPacketIntervalTime(pingPacketIntervalTime);
     packetRoutingEnv->SetOpenGymInterface(openGymInterface);
     packetRoutingEnv->initialize();
     //packetRoutingEnv->m_node_container = &nodes_switch;
     //packetRoutingEnv->setPingTimeout(16260, 500000, 1);
     //packetRoutingEnv->setLossPenalty(lossPenalty);
     packetRoutingEnv->setNetDevicesContainer(&switch_nd);
-    packetRoutingEnv->configDataPacketManager(!pingAsObs, nPacketsOverlaySignaling);
+    packetRoutingEnv->configDataPacketManager(!pingAsObs);
     packetRoutingEnv->configPingBackPacketManager(movingAverageObsSize);
     //packetRoutingEnv->setPingAsObs(pingAsObs);
-    //if(i==0 && groundTruthFrequence>0){
-    //  packetRoutingEnv->setGroundTruthFrequence(groundTruthFrequence);
-    //}
-    for(size_t j = 1;j<nodes_switch.Get(overlayNodes[i])->GetNDevices();j++){
-      Ptr<NetDevice> dev_switch =DynamicCast<NetDevice> (nodes_switch.Get(overlayNodes[i])->GetDevice(j)); 
+    for(size_t j = 1;j<nodes_switch.Get(overlay_to_underlay_map[i])->GetNDevices();j++){
+      Ptr<NetDevice> dev_switch =DynamicCast<NetDevice> (nodes_switch.Get(overlay_to_underlay_map[i])->GetDevice(j)); 
       dev_switch->TraceConnectWithoutContext("MacRx", MakeBoundCallback(&PacketRoutingEnv::NotifyPktRcv, packetRoutingEnv, dev_switch, &traffic_nd));
     }
-
-    
     myOpenGymInterfaces.push_back (openGymInterface);
     packetRoutingEnvs.push_back (packetRoutingEnv);
   }  
@@ -564,7 +584,7 @@ int main (int argc, char *argv[])
   }
   //sum_traffic_rate_mat /= n_nodes;
   //if(activateUnderlayTraffic) sum_masked_traffic_rate_mat /= n_nodes;
-  //else sum_masked_traffic_rate_mat /= overlayNodes.size();
+  //else sum_masked_traffic_rate_mat /= overlay_to_underlay_map.size();
   //float factor_overlay = sum_traffic_rate_mat / sum_masked_traffic_rate_mat;
   ////------------------------------------------------------------------------------------
   float factor_overlay = 1.0;
@@ -612,14 +632,14 @@ int main (int argc, char *argv[])
               }
               
               if(train && activateSignaling && signalingType=="NN" && overlayNodesChecker[i] && overlayNodesChecker[j]){
-                if(OverlayAdj_Matrix[map_overlay_array[i]][map_overlay_array[j]]==1 ){
+                if(OverlayAdj_Matrix[underlay_to_overlay_map[i]][underlay_to_overlay_map[j]]==1 ){
                   string string_ip_bigSignaling= "10.2.2."+std::to_string(j+1);
                   Ipv4Address ip_big_signaling(string_ip_bigSignaling.c_str());
                   sinkAddress = InetSocketAddress (ip_big_signaling, sinkPortUDP);
 
                   BigSignalingAppHelper sign ("ns3::UdpSocketFactory",sinkAddress); 
                   sign.SetAverageStep (syncStep, bigSignalingSize); 
-                  sign.SetSourceDest(i+1, j+1, map_overlay_array[i]+1); 
+                  sign.SetSourceDest(i+1, j+1, underlay_to_overlay_map[i]+1); 
                   ApplicationContainer apps = sign.Install (nodes_traffic.Get (i));  // traffic sources are installed on all nodes 
                   apps.Start (Seconds (AppStartTime )); 
                   apps.Stop (Seconds (AppStopTime)); 
@@ -813,12 +833,6 @@ vector<int> readOverlayMatrix(std::string overlay_file_name)
       //  }
       i++;
     }
-
-  //if (i != n_nodes)
-  //  {
-  //    NS_LOG_ERROR ("There are " << i << " rows and " << n_nodes << " columns.");
-  //    NS_FATAL_ERROR ("ERROR: The number of rows is not equal to the number of columns! in the adjacency matrix");
-  //  }
 
   adj_mat_file.close ();
   return array;

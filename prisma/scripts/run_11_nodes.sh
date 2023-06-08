@@ -127,15 +127,15 @@ python3 -u main.py \
 	--d_t_load_path=examples/$9/pre_trained_models/${23}_sp_itc_11n_ping_delay
 
 array=(
-#0.6
-#0.7
-#0.8
-#0.9
-#1.0
-#1.1
-#1.2
-#1.3
-#1.4
+0.6
+0.7
+0.8
+0.9
+1.0
+1.1
+1.2
+##1.3
+##1.4
 )
 counter=0
 
