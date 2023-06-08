@@ -18,7 +18,7 @@ from source.tb_logger import custom_plots, stats_writer_train, stats_writer_test
 from source.argument_parser import parse_arguments
 from source.utils import allocate_on_gpu, fix_seed
 from time import sleep, time
-from source.replay_buffer import PrioritizedReplayBuffer, ReplayBuffer, DigitalTwinDB
+from source.replay_buffer import DigitalTwinDB
 import numpy as np
 import threading
 import copy
@@ -106,7 +106,7 @@ def main():
         args = shlex.split(f'python3 -m tensorboard.main --logdir={params["logs_folder"]} --port={params["tensorboard_port"]} --bind_all')
         tensorboard_process = subprocess.Popen(args).pid
         print(f"Tensorboard server started with pid {tensorboard_process}")
-            
+
     forwarders = []
     trainers = []
     for episode in range(params["numEpisodes"]):
@@ -115,7 +115,7 @@ def main():
         ns3_proc_id = run_ns3(params)
         Agent.reset()
         ## run the agents threads
-        for index in params["G"].nodes(): #range(params["numNodes"]):
+        for index in params["G"].nodes():
             print("Starting agent", index)
             if episode == 0:
                 ## create the agent class instance
@@ -149,9 +149,6 @@ def main():
                     print(f"Saving model at time {Agent.curr_time} with index {snapshot_index}")
                     save_all_models(Agent.agents, params["G"].nodes(), params["session_name"], snapshot_index, 1, root=params["logs_parent_folder"] + "/saved_models/", snapshot=True)
                     snapshot_index += 1
-
-                # print(f"Time = {Agent.curr_time}, Overal injected packets = {Agent.sim_injected_packets}({Agent.total_new_rcv_pkts}), Overal delivered packets = {Agent.sim_delivered_packets}({Agent.total_arrived_pkts}), Overal lost packets = {Agent.sim_dropped_packets}({Agent.node_lost_pkts}), Overlay buffered packets = {Agent.sim_buffered_packets}({len(Agent.pkt_tracking_dict.keys())})")
-
                         
         print(f""" Summary of the Episode {episode}:
                 Simulation time = {Agent.curr_time},
@@ -172,10 +169,6 @@ def main():
                 Overlay Cost = {Agent.sim_cost},
                 Global Cost = {Agent.sim_global_cost},
                 Hops = {Agent.total_hops/Agent.sim_delivered_packets},
-                # Overlay Data packet size = {Agent.sim_bytes_data},
-                # Global Data packet size = {Agent.sim_global_bytes_data},
-                # nbBytesBigSignaling = {Agent.sim_bytes_big_signaling},
-                # nbBytesSmallSignaling = {Agent.sim_bytes_small_signaling},
                 # nbBytesOverlaySignalingForward = {Agent.sim_bytes_overlay_signaling_forward},
                 # nbBytesOverlaySignalingBack = {Agent.sim_bytes_overlay_signaling_back},
                 OverheadRatio = {Agent.sim_signaling_overhead}

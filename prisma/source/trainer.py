@@ -54,7 +54,6 @@ class Trainer(Agent):
                 #         self._update_lambda_coefs()
                 self.step()
 
-
     def step(self):
         """
         Do a training step

@@ -372,7 +372,6 @@ PointToPointNetDevice::Receive (Ptr<Packet> packet)
 {
   MyTag t;
   packet->PeekPacketTag(t);
-  // NS_LOG_UNCOND("PointToPointNetDevice::Receive "<<m_node->GetId()<<"   "<< packet->GetUid() << "," << t.GetSource() << "," << t.GetFinalDestination() << "," << t.GetLastHop() <<"," << packet->GetSize() << " " << Simulator::Now().GetMilliSeconds());
   NS_LOG_FUNCTION (this << packet);
   //if(m_node->GetId()!=0) NS_LOG_UNCOND("RECEIVE "<<m_node->GetId()<<"   "<<packet->ToString());
   //
@@ -423,7 +422,6 @@ PointToPointNetDevice::Receive (Ptr<Packet> packet)
           m_promiscCallback (this, packet, protocol, GetRemote (), GetAddress (), NetDevice::PACKET_HOST);
         }
       if(tagcopy.GetSimpleValue()==0 && tagcopy.GetRejectedPacket()==1 && m_node->GetId()<23){
-        //NS_LOG_UNCOND(m_node->GetId()<<"     "<<m_ifIndex<<"    "<<tagcopy.GetFinalDestination()<<"   OPTIMAL REJECT    "<<packet->GetUid());
         m_macTxDropTrace (packet);
         return;
       }
@@ -435,13 +433,9 @@ PointToPointNetDevice::Receive (Ptr<Packet> packet)
         if(tagcopy.GetTrafficValable()){
           if (tagcopy.GetNextHop() == tagcopy.GetFinalDestination()){
 
-          // NS_LOG_UNCOND("Packet arrived at destination at "<<m_node->GetId()<<"   id = "<<packet->GetUid()<<"  time =  "<<Simulator::Now().GetSeconds() << "  size = "<<packet->GetSize() << " overlay = " << int(tagcopy.GetTrafficValable())  << " " << int(tagcopy.GetSimpleValue()) << " source = " << tagcopy.GetSource() << " final destination = " << tagcopy.GetFinalDestination() << " last hop = " << tagcopy.GetLastHop() << " " << tagcopy.GetNextHop()) ;
           m_computeStats->incrementOverlayPacketsArrived();
           m_computeStats->addCost(Simulator::Now().GetSeconds() - tagcopy.GetStartTime());
           m_computeStats->addE2eDelay(Simulator::Now().GetSeconds() - tagcopy.GetStartTime());
-          // NS_LOG_UNCOND("packet dropped "<<m_node->GetId()<<"   "<<packet->GetUid()<<"   "<<Simulator::Now().GetSeconds());
-          // m_macTxDropTrace (packet);
-        // m_phyRxDropTrace (packet);
           }
 
         } else {
@@ -604,7 +598,6 @@ PointToPointNetDevice::Send (
   uint16_t protocolNumber)
 {
   NS_LOG_FUNCTION (this << packet << dest << protocolNumber);
-  // NS_LOG_UNCOND ("PointToPointNetDevice::Send() to " << packet->GetSize() << " from " << m_node->GetId() << " " << m_ifIndex);
   //Get packet tag
   MyTag tagcopy;
   packet->PeekPacketTag(tagcopy);
@@ -622,12 +615,10 @@ PointToPointNetDevice::Send (
   //Get if the packet was rejected by the Optimal Algorithm
   if(tagcopy.GetSimpleValue()==0 && tagcopy.GetRejectedPacket()==1 && m_node->GetId()<23){
     if(tagcopy.GetTrafficValable()){
-      NS_LOG_UNCOND("*********************************************");
       m_computeStats->incrementOverlayPacketsLost();
       m_computeStats->addLossPenaltyToCost();
     } else {
       m_computeStats->addLossPenaltyToUnderlayCost();
-
       m_computeStats->incrementUnderlayPacketsLost();
     }
     
@@ -663,7 +654,6 @@ PointToPointNetDevice::Send (
   // Enqueue may fail (overflow)
   if(tagcopy.GetSimpleValue()==0){
     if(tagcopy.GetTrafficValable() && tagcopy.GetFinalDestination()!=m_node->GetId()){
-      //NS_LOG_UNCOND("packet lost "<<packet->GetUid());
       m_computeStats->incrementOverlayPacketsLost();
       m_computeStats->addLossPenaltyToCost();
     } else {

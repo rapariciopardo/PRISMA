@@ -73,7 +73,7 @@ class Agent():
         cl.logs_folder = params_dict["logs_folder"]
         cl.load_factor = params_dict["load_factor"]
         cl.loss_penalty = params_dict["loss_penalty"]
-        cl.link_delay = 0.00#params_dict["link_delay"]
+        cl.link_delay = params_dict["link_delay"]
         cl.link_cap = params_dict["link_cap"]
         cl.packet_size = params_dict["packet_size"]
         cl.signalingSim = params_dict["signalingSim"]
@@ -139,7 +139,6 @@ class Agent():
         cl.lamda_coefs = [[0 for _ in range(len(list(cl.G.neighbors(n))))] for n in range(cl.numNodes)]
         cl.max_observed_values = [[0 for _ in range(len(list(cl.G.neighbors(n))))] for n in range(cl.numNodes)]
         cl.model_version = params_dict["model_version"]
-
         cl.sync_counters = [0 for _ in range(cl.numNodes)]
         cl.max_nb_arrived_pkts = params_dict["max_nb_arrived_pkts"]
         if params_dict["agent_type"] == "opt":
@@ -175,7 +174,6 @@ class Agent():
         ### define node neighbors
         self.neighbors = list(Agent.G.neighbors(self.index))
         
-        
     
     def _sync_current(self, neighbor_idx, with_temp=False):
         """
@@ -187,8 +185,6 @@ class Agent():
         Agent.agents[self.index].sync_neighbor_target_q_network(neighbor_idx, with_temp=with_temp)
 
 
-
-        
     def run(self):
         pass
 

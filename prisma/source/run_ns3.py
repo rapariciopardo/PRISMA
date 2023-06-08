@@ -42,9 +42,9 @@ def run_ns3(params, configure=True):
                         '--LinkDelay={} --LinkRate={} --MaxBufferLength={} --load_factor={} '
                         '--adj_mat_file_name={} --overlay_mat_file_name={} --node_coordinates_file_name={} '
                         '--node_intensity_file_name={} --signaling={} --AgentType={} --signalingType={} '
-                        '--syncStep={} --lossPenalty={} --activateOverlaySignaling={} --nPacketsOverlaySignaling={} '
+                        '--syncStep={} --lossPenalty={} --activateOverlaySignaling={} '
                         '--train={} --movingAverageObsSize={} --activateUnderlayTraffic={} --opt_rejected_file_name={} '
-                        '--map_overlay_file_name={} --pingAsObs={} --logs_folder={} --groundTruthFrequence={} --bigSignalingSize={} --pingPacketIntervalTime={}'.format( params["seed"],
+                        '--map_overlay_file_name={} --pingAsObs={} --groundTruthFrequence={} --bigSignalingSize={} --pingPacketIntervalTime={}'.format( params["seed"],
                                              params["basePort"],
                                              str(params["simTime"]),
                                              params["packet_size"],
@@ -62,14 +62,12 @@ def run_ns3(params, configure=True):
                                              params["sync_step"],
                                              params["loss_penalty"],
                                              bool(params["activateOverlay"]),
-                                             params["nPacketsOverlay"],
                                              bool(params["train"]),
                                              params["movingAverageObsSize"],
                                              bool(params["activateUnderlayTraffic"]),
                                              params["opt_rejected_path"],
                                              params["map_overlay_path"],
                                              bool(params["pingAsObs"]),
-                                             params["logs_folder"],
                                              params["groundTruthFrequence"],
                                              params["bigSignalingSize"],
                                              params["pingPacketIntervalTime"]

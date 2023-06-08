@@ -111,9 +111,12 @@ def stats_writer_train(summary_writer_session, summary_writer_nb_arrived_pkts, s
         tf.summary.scalar('nb_buffered_pkts_over_iterations', Agent.sim_buffered_packets, step=Agent.total_nb_iterations)
         ## signalling overhead
         tf.summary.scalar('signalling ratio', Agent.sim_signaling_overhead, step=int((Agent.base_curr_time + Agent.curr_time)*1e6))
+        
+        # TODO: add the signalling bytes
         # tf.summary.scalar('overlay_big_signalling_bytes', Agent.sim_bytes_big_signaling, step=int((Agent.base_curr_time + Agent.curr_time)*1e6))
         # tf.summary.scalar('overlay_small_signalling_bytes', Agent.sim_bytes_small_signaling, step=int((Agent.base_curr_time + Agent.curr_time)*1e6))
         # tf.summary.scalar('overlay_ping_signalling_bytes', Agent.sim_bytes_overlay_signaling_back + Agent.sim_bytes_overlay_signaling_forward, step=int((Agent.base_curr_time + Agent.curr_time)*1e6))
+        
         ## avg cost and avg delay
         tf.summary.scalar('avg_cost_over_iterations', avg_cost, step=Agent.total_nb_iterations)
         tf.summary.scalar('avg_cost_over_time', avg_cost, step=int((Agent.base_curr_time + Agent.curr_time)*1e6))
@@ -159,5 +162,3 @@ def stats_writer_test(summary_writer_results_path, Agent):
         tf.summary.scalar(f'test_overlay_loss_rate', Agent.sim_dropped_packets/Agent.sim_injected_packets, step=int(Agent.load_factor*100))
         tf.summary.scalar(f'test_global_cost', Agent.sim_global_cost, step=int(Agent.load_factor*100))
         tf.summary.scalar(f'test_overlay_cost', Agent.sim_cost, step=int(Agent.load_factor*100))
-        # tf.summary.scalar('test_global_e2e_delay', Agent.sim_avg_e2e_delay, step=int(Agent.load_factor*100))
-        # tf.summary.scalar('test_global_loss_rate', Agent.sim_global_dropped_packets/Agent.sim_global_injected_packets, step=int(Agent.load_factor*100))     

@@ -58,7 +58,6 @@ def parse_arguments():
     group1.add_argument('--ns3_sim_path', type=str, help='Path to the ns3-gym simulator folder', default="../ns3-gym/")
     group1.add_argument('--signalingSim', type=int, help='Allows the signaling in NS3 Simulation', default=0)
     group1.add_argument('--activateOverlay', type=int, help='Allows the signaling in NS3 Simulation in Overlay', default=1)
-    group1.add_argument('--nPacketsOverlay', type=int, help='Allows the signaling in NS3 Simulation', default=2)
     group1.add_argument('--movingAverageObsSize', type=int, help="Sets the MA size of collecting the obs", default=5)
     group1.add_argument('--activateUnderlayTraffic', type=int, help="sets if there is underlay traffic", default=0)
     group1.add_argument('--activateUnderlayTrafficTrain', type=int, help="sets if there is underlay traffic", default=0)
@@ -67,7 +66,6 @@ def parse_arguments():
     group1.add_argument('--pingPacketIntervalTime', type=float, help="Ping packet interval time (in seconds)", default=0.2)
     group1.add_argument('--groundTruthFrequence', type=float, help="groundTruthFrequence", default=0.1)
     group1.add_argument('--d_t_max_time', type=float, help="The maximum length in seconds of the digital twin database", default=5)
-
 
     group4 = parser.add_argument_group('Network parameters')
     group4.add_argument('--load_factor', type=float, help='scale of the traffic matrix', default=1)
@@ -144,7 +142,12 @@ def parse_arguments():
 
     ## add the network topology to the params
     G=nx.DiGraph(nx.empty_graph())
-    for i, element in enumerate(np.loadtxt(open(params["node_coordinates_path"]))):
+    # if node_coordinates_path exists, use it to set the node positions. Else, generate random positions
+    if os.path.exists(params["node_coordinates_path"]):
+        pos = np.loadtxt(open(params["node_coordinates_path"])
+    else:
+        pos = nx.random_layout(G)
+    for i, element in enumerate(pos.tolist()):
         G.add_node(i,pos=tuple(element))
     G = nx.from_numpy_matrix(np.loadtxt(open(params["overlay_adjacency_matrix_path"])), parallel_edges=False, create_using=G)
     params["numNodes"] = G.number_of_nodes()

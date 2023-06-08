@@ -94,14 +94,11 @@ void printMatrix (const char* description, vector<vector<bool> > array);
 void ScheduleNextTrainStep(Ptr<PacketRoutingEnv> openGym);
 void ScheduleHelloMessages(Ipv4OSPFRouting* ospf);
 void RestoreLinkRate(NetDeviceContainer *ptp, u_int32_t idx1, u_int32_t idx2) {
-  NS_LOG_UNCOND("tempo: "<<Simulator::Now());
-  NS_LOG_UNCOND(idx1<<"     "<<idx2<< "    aqui    ");
   StaticCast<PointToPointNetDevice>(ptp->Get(idx1))->NotifyLink(true);
   StaticCast<PointToPointNetDevice>(ptp->Get(idx2))->NotifyLink(true);
     
 }
 void ModifyLinkRate(NetDeviceContainer *ptp, u_int32_t idx1, u_int32_t idx2, double duration) {
-  NS_LOG_UNCOND(idx1<<"     "<<idx2<< "    aqui    ");
   StaticCast<PointToPointNetDevice>(ptp->Get(idx1))->NotifyLink(false);
   StaticCast<PointToPointNetDevice>(ptp->Get(idx2))->NotifyLink(false);
   Simulator::Schedule(Seconds(duration), &RestoreLinkRate, ptp, idx1, idx2);
@@ -159,13 +156,11 @@ int main (int argc, char *argv[])
   std::string node_intensity_file_name("scratch/prisma/examples/abilene/node_intensity.txt");
   std::string opt_rejected_file_name("scratch/prisma/test.txt");
   std::string map_overlay_file_name("scratch/prisma/test2.txt");
-  std::string logs_folder("../prisma/abilene/examples/4n");
 
   float groundTruthFrequence = -1;
 
 
   bool activateOverlaySignaling = true;
-  uint32_t nPacketsOverlaySignaling = 2;
 
   double lossPenalty = 0.0;
 
@@ -208,7 +203,6 @@ int main (int argc, char *argv[])
   cmd.AddValue ("signalingType", "Signaling Type", signalingType);
   cmd.AddValue ("syncStep", "synchronization Step (in seconds)", syncStep);
   cmd.AddValue ("activateOverlaySignaling", "activate Overlay Signaling", activateOverlaySignaling);
-  cmd.AddValue ("nPacketsOverlaySignaling", "nb of packets for triggering overlay signaling", nPacketsOverlaySignaling);
   cmd.AddValue ("lossPenalty", "Packet Loss Penalty", lossPenalty);
   cmd.AddValue ("train", "train", train);
   cmd.AddValue ("movingAverageObsSize", "size of MA for collecting the Obs", movingAverageObsSize);
@@ -216,10 +210,8 @@ int main (int argc, char *argv[])
   cmd.AddValue ("opt_rejected_file_name", "Rejected paths in Optimal Algorithm file name", opt_rejected_file_name);
   cmd.AddValue ("map_overlay_file_name", "Map overlay file name", map_overlay_file_name);
   cmd.AddValue ("pingAsObs", "ping as observation variable", pingAsObs);
-  cmd.AddValue ("logs_folder", "Logs folder", logs_folder);
   cmd.AddValue ("groundTruthFrequence", "ground truth freq", groundTruthFrequence);
   cmd.AddValue ("bigSignalingSize", "total size of the weights of the NN in bytes", bigSignalingSize);
-  cmd.AddValue ("pingPacketIntervalTime", "ping packet interval time", pingPacketIntervalTime);
 
   cmd.Parse (argc, argv);
     
@@ -244,7 +236,6 @@ int main (int argc, char *argv[])
   NS_LOG_UNCOND("--RejectedTraffPath: "<<opt_rejected_file_name);
   NS_LOG_UNCOND("--pingAsObs: "<<pingAsObs);
   NS_LOG_UNCOND("--movingAverageObsSize: "<<movingAverageObsSize);
-  NS_LOG_UNCOND("--nPacketsOverlaySignaling: "<<nPacketsOverlaySignaling);
 
   
   ComputeStats compStats;
@@ -456,7 +447,6 @@ int main (int argc, char *argv[])
   Ipv4AddressHelper address;
   address.SetBase ("10.2.2.0", "255.255.255.0");
   Ipv4InterfaceContainer interfaces_traffic = address.Assign (traffic_nd);
-  NS_LOG_UNCOND("hhh" << traffic_nd.GetN());
   // Adding Ipv4 Address to the Net Devices for switch nodes
   address.SetBase ("10.1.1.0", "255.255.255.0");
   Ipv4InterfaceContainer interfaces_switch = address.Assign (switch_nd);
@@ -547,7 +537,6 @@ int main (int argc, char *argv[])
     for(int neighbor : overlayNeighbors[i]){
       NS_LOG_UNCOND(neighbor);
     }
-
     
     Ptr<Node> n = nodes_switch.Get (overlay_to_underlay_map[i]); // ref node
     //nodeOpenGymPort = openGymPort + i;
@@ -558,22 +547,19 @@ int main (int argc, char *argv[])
     packetRoutingEnv->m_nodes = nodes_switch;
     packetRoutingEnv->mapOverlayNodes(underlay_to_overlay_map);
     packetRoutingEnv->setPingPacketIntervalTime(pingPacketIntervalTime);
-    //packetRoutingEnv->setLogsFolder(logs_folder);
-    //packetRoutingEnv->setOverlayConfig(overlayNeighbors[overlay_to_underlay_map[i]], activateOverlaySignaling, nPacketsOverlaySignaling, movingAverageObsSize, underlay_to_overlay_map);
     packetRoutingEnv->SetOpenGymInterface(openGymInterface);
     packetRoutingEnv->initialize();
     //packetRoutingEnv->m_node_container = &nodes_switch;
     //packetRoutingEnv->setPingTimeout(16260, 500000, 1);
     //packetRoutingEnv->setLossPenalty(lossPenalty);
     packetRoutingEnv->setNetDevicesContainer(&switch_nd);
-    packetRoutingEnv->configDataPacketManager(!pingAsObs, nPacketsOverlaySignaling);
+    packetRoutingEnv->configDataPacketManager(!pingAsObs);
     packetRoutingEnv->configPingBackPacketManager(movingAverageObsSize);
     //packetRoutingEnv->setPingAsObs(pingAsObs);
     //if(i==0 && groundTruthFrequence>0){
     //  packetRoutingEnv->setGroundTruthFrequence(groundTruthFrequence);
     //}
     for(size_t j = 1;j<nodes_switch.Get(overlay_to_underlay_map[i])->GetNDevices();j++){
-      NS_LOG_UNCOND("Device: "<<overlay_to_underlay_map[i] << "   Port: "<<nodes_switch.Get(overlay_to_underlay_map[i])->GetDevice(j)->GetIfIndex());
       Ptr<NetDevice> dev_switch =DynamicCast<NetDevice> (nodes_switch.Get(overlay_to_underlay_map[i])->GetDevice(j)); 
       dev_switch->TraceConnectWithoutContext("MacRx", MakeBoundCallback(&PacketRoutingEnv::NotifyPktRcv, packetRoutingEnv, dev_switch, &traffic_nd));
     }
@@ -855,12 +841,6 @@ vector<int> readOverlayMatrix(std::string overlay_file_name)
       //  }
       i++;
     }
-
-  //if (i != n_nodes)
-  //  {
-  //    NS_LOG_ERROR ("There are " << i << " rows and " << n_nodes << " columns.");
-  //    NS_FATAL_ERROR ("ERROR: The number of rows is not equal to the number of columns! in the adjacency matrix");
-  //  }
 
   adj_mat_file.close ();
   return array;

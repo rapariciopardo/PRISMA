@@ -150,7 +150,7 @@ class Forwarder(Agent):
                                     initial_p=Agent.exploration_initial_eps,
                                     final_p=Agent.exploration_final_eps)
 
-        
+
 
     def step(self, obs):
         """
@@ -166,13 +166,10 @@ class Forwarder(Agent):
                 tf.summary.scalar('exploaration_value_over_time', self.update_eps, step=int((Agent.base_curr_time + Agent.curr_time)*1e6))
 
         ## take the action
-        # print("node:", self.index, "obs:", obs, "neighbors:", self.neighbors, "neighbors degrees:", [len(list(Agent.G.neighbors(x))) for x in self.neighbors], "neighbors degrees:", [len(list(Agent.G.neighbors(x))) for x in self.neighbors], "neighbors degrees:", [len(list(Agent.G.neighbors(x))) for x in self.neighbors])
         if obs[0] == self.index or self.transition_number < 1 or self.signaling == True or obs[0] in(-1, 1000): # pkt arrived to dst or it is a train step, ignore the action
             self.action = 0
         else:
             self.action = self.take_action(obs)
-            # print("node:", self.index, "action:", self.action, obs, "neighbors:", self.neighbors, Agent.curr_time, Agent.pkt_tracking_dict[int(self.pkt_id)]["src"], Agent.pkt_tracking_dict[int(self.pkt_id)]["dst"],max(Agent.max_observed_values[self.index][self.action], obs[self.action+1]))
-            # self.action = 1
             Agent.temp_obs[int(self.pkt_id)]= {"node": self.index,
                                                "obs": obs,
                                                "action": self.action,
@@ -229,9 +226,7 @@ class Forwarder(Agent):
             bool: True if it is a control packet, False otherwise
         """
         tokens = info.split(",")
-        # print(self.index, tokens)
         self.delay_time = float(tokens[0].split('=')[-1])
-
         ## retrieve packet info
         self.pkt_size = float(tokens[1].split('=')[-1])
         Agent.curr_time = float(tokens[2].split('=')[-1])
@@ -315,9 +310,7 @@ class Forwarder(Agent):
             Agent.sim_global_avg_e2e_delay = ((Agent.sim_global_avg_e2e_delay * float(tokens[13].split("=")[-1])) + (Agent.sim_avg_e2e_delay * Agent.sim_delivered_packets))/(Agent.sim_global_delivered_packets)
         if Agent.sim_global_delivered_packets + Agent.sim_global_dropped_packets > 0:
             Agent.sim_global_cost = ((Agent.sim_global_cost * (float(tokens[13].split("=")[-1]) + float(tokens[13].split("=")[-1]))) + (Agent.sim_cost * (Agent.sim_dropped_packets + Agent.sim_delivered_packets)))/(Agent.sim_global_dropped_packets + Agent.sim_global_delivered_packets)
-
         return False
-    
 
     def run(self):
         """ 
@@ -331,7 +324,6 @@ class Forwarder(Agent):
                 if(not self.env.connected):
                     break
                 obs, _, done_flag, info = self.step(obs)
-                # print(Agent.curr_time, Agent.max_observed_values)
                 ## check if episode is done_flag
                 if done_flag and obs[0] == -1:
                     break
@@ -406,14 +398,14 @@ class Forwarder(Agent):
         if Agent.signaling_type == "ideal":
             Agent.replay_buffer[int(states_info["node"])].add(np.array(states_info["obs"], dtype=float).squeeze(),
                                                         states_info["action"], 
-                                                        hop_time_real ,
+                                                        hop_time_real,
                                                         np.array(obs, dtype=float).squeeze(), 
                                                         done_flag)
         elif Agent.signaling_type == "NN":
             self._push_upcoming_event(int(states_info["node"]), { "time": Agent.curr_time + self.small_signaling_delay,
                                                                         "obs" : np.array(states_info["obs"], dtype=float).squeeze(),
                                                                         "action": states_info["action"], 
-                                                                        "reward": hop_time_real ,
+                                                                        "reward": hop_time_real,
                                                                         "new_obs": np.array(obs, dtype=float).squeeze(), 
                                                                         "flag": done_flag,
                                                                         "pkt_id": self.pkt_id,
@@ -475,13 +467,6 @@ class Forwarder(Agent):
         Agent.delays_ideal.append(sum(Agent.pkt_tracking_dict[int(self.pkt_id)]["delays_ideal"]))
         Agent.delays_real.append(sum(Agent.pkt_tracking_dict[int(self.pkt_id)]["delays_real"]))
         Agent.delays.append(self.delay_time)
-        # Agent.info_debug.append([
-        #                             self.pkt_id,
-        #                             Agent.pkt_tracking_dict[int(self.pkt_id)]["src"],
-        #                             Agent.pkt_tracking_dict[int(self.pkt_id)]["dst"],
-        #                             Agent.pkt_tracking_dict[int(self.pkt_id)]["hops"],
-        #                             len(Agent.pkt_tracking_dict[int(self.pkt_id)]["hops"])-1,
-        #                             self.delay_time])
         Agent.nb_hops.append(hops)
         if(len(Agent.nb_hops)>50):
             Agent.nb_hops = Agent.nb_hops[-50:]

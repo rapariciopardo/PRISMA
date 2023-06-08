@@ -92,7 +92,6 @@ SmallSignalingPacketManager::SmallSignalingPacketManager (Ptr<Node> node, vector
 bool 
 SmallSignalingPacketManager::receivePacket(Ptr<Packet> packet){
   bool ret = PacketManager::receivePacket(packet);
-  //m_computeStats->addGlobalBytesSignaling(packet->GetSize());
   //Get extra packet Info
   MyTag tagCopy;
   m_packet->PeekPacketTag(tagCopy);

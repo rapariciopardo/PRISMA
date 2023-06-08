@@ -73,13 +73,11 @@ public:
   void sendPingForwardPacket(uint32_t overlayIndex);
   void sendPingPackets();
   void setObsBufferLength(bool value);
-  void setPacketsIntervalForSendingPingBack(uint32_t value);
   
 private:
   Time m_pingPacketInterval = Seconds(1.0);
   NodeContainer m_nodes_switch;
   bool m_obs_bufferLength = false;
-  uint32_t m_packetsIntervalForSendingPingPacket=5;
   PingBackPacketManager *m_pingBackPacketManager;
   vector<uint32_t> m_obs_shape;
   Ptr<NetDevice> m_receivingNetDev;

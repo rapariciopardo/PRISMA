@@ -96,7 +96,6 @@ PingBackPacketManager::setMovingAverageSize(uint32_t value){
 
 void 
 PingBackPacketManager::addSentPingForwardPacket(uint64_t id, uint64_t start_time){
-  // NS_LOG_UNCOND("PingBackPacketManager::addSentPingForwardPacket");
   SentPacket sentPacket;
   sentPacket.start_time = start_time;
   sentPacket.uid = id;
@@ -109,7 +108,6 @@ PingBackPacketManager::addSentPingForwardPacket(uint64_t id, uint64_t start_time
 
 float
 PingBackPacketManager::getMaxTimePingForwardPacketSent(uint32_t index){
-  // NS_LOG_UNCOND("PingBackPacketManager::getMaxTimePingForwardPacketSent");
   if(m_sentPingForwardPackets[index].size()>0){
     return std::min(Simulator::Now().GetSeconds() - m_sentPingForwardPackets[index][0].start_time*0.001, 2.60);
   } else{
@@ -120,7 +118,6 @@ PingBackPacketManager::getMaxTimePingForwardPacketSent(uint32_t index){
 
 bool 
 PingBackPacketManager::receivePacket(Ptr<Packet> packet, Ptr<NetDevice> receivingNetDev){
-  // NS_LOG_UNCOND("PingBackPacketManager::receivePacket");
   //Get extra info from packet
   MyTag tagCopy;
   packet->PeekPacketTag(tagCopy); 
@@ -136,7 +133,6 @@ PingBackPacketManager::receivePacket(Ptr<Packet> packet, Ptr<NetDevice> receivin
       break;
     }
   }
-    
   //Adding tunnel delay in a circular array
   if(m_tunnelsDelay[m_overlayTunnelIndex].size()>=m_movingAverageSize){
     assert(!m_tunnelsDelay[m_overlayTunnelIndex].empty());

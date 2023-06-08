@@ -25,7 +25,6 @@ def generate_command(seed,
                      load_factor,
                      sync_step,
                      max_out_buffer_size,
-                     nPacketsOverlay,
                      movingAverageObsSize,
                      prioritizedReplayBuffer,
                      activateUnderlayTraffic,
@@ -45,7 +44,7 @@ def generate_command(seed,
                   ):
     """ Generate the simulation command
     """
-    simulation_command = f'python3 -u main.py --seed={seed} --simTime={sim_duration} --train={train} --basePort=7000 --agent_type={agent_type} --session_name={session_name} --signaling_type={signaling_type} --logs_parent_folder=examples/{topology_name}/results/{experiment_name} --traffic_matrix_root_path=examples/{topology_name}/traffic_matrices/ --traffic_matrix_index={traffic_matrix_index} --overlay_adjacency_matrix_path=examples/{topology_name}/topology_files/overlay_adjacency_matrix.txt --physical_adjacency_matrix_path=examples/{topology_name}/topology_files/physical_adjacency_matrix.txt --node_coordinates_path=examples/{topology_name}/topology_files/node_coordinates.txt --map_overlay_path=examples/{topology_name}/topology_files/map_overlay.txt --training_step=0.01 --batch_size={batch_size} --lr={learning_rate} --exploration_final_eps={exploration_final_eps} --exploration_initial_eps={exploration_initial_eps} --iterationNum=5000 --gamma=1.0 --save_models={save_models} --start_tensorboard=0 --replay_buffer_max_size={replay_buffer_max_size} --link_delay="1ms" --load_factor={load_factor} --sync_step={sync_step} --max_out_buffer_size={max_out_buffer_size} --sync_ratio=0.2 --signalingSim=1 --nPacketsOverlay={nPacketsOverlay} --movingAverageObsSize={movingAverageObsSize} --prioritizedReplayBuffer={prioritizedReplayBuffer} --activateUnderlayTraffic={activateUnderlayTraffic} --bigSignalingSize={bigSignalingSize} --groundTruthFrequence=1 --pingAsObs=1 --load_path={load_path} --loss_penalty_type={loss_penalty_type} --snapshot_interval={snapshot_interval} --smart_exploration={smart_exploration} --lambda_train_step={lambda_train_step} --buffer_soft_limit={buffer_soft_limit} --lambda_lr={lambda_lr} --lamda_training_start_time={lamda_training_start_time} --d_t_max_time={d_t_max_time} --pingPacketIntervalTime={pingPacketIntervalTime} --numEpisodes={numEpisodes}'
+    simulation_command = f'python3 -u main.py --seed={seed} --simTime={sim_duration} --train={train} --basePort=7000 --agent_type={agent_type} --session_name={session_name} --signaling_type={signaling_type} --logs_parent_folder=examples/{topology_name}/results/{experiment_name} --traffic_matrix_root_path=examples/{topology_name}/traffic_matrices/ --traffic_matrix_index={traffic_matrix_index} --overlay_adjacency_matrix_path=examples/{topology_name}/topology_files/overlay_adjacency_matrix.txt --physical_adjacency_matrix_path=examples/{topology_name}/topology_files/physical_adjacency_matrix.txt --node_coordinates_path=examples/{topology_name}/topology_files/node_coordinates.txt --map_overlay_path=examples/{topology_name}/topology_files/map_overlay.txt --training_step=0.01 --batch_size={batch_size} --lr={learning_rate} --exploration_final_eps={exploration_final_eps} --exploration_initial_eps={exploration_initial_eps} --iterationNum=5000 --gamma=1.0 --save_models={save_models} --start_tensorboard=0 --replay_buffer_max_size={replay_buffer_max_size} --link_delay="1ms" --load_factor={load_factor} --sync_step={sync_step} --max_out_buffer_size={max_out_buffer_size} --sync_ratio=0.2 --signalingSim=1 --movingAverageObsSize={movingAverageObsSize} --prioritizedReplayBuffer={prioritizedReplayBuffer} --activateUnderlayTraffic={activateUnderlayTraffic} --bigSignalingSize={bigSignalingSize} --groundTruthFrequence=1 --pingAsObs=1 --load_path={load_path} --loss_penalty_type={loss_penalty_type} --snapshot_interval={snapshot_interval} --smart_exploration={smart_exploration} --lambda_train_step={lambda_train_step} --buffer_soft_limit={buffer_soft_limit} --lambda_lr={lambda_lr} --lamda_training_start_time={lamda_training_start_time} --d_t_max_time={d_t_max_time} --pingPacketIntervalTime={pingPacketIntervalTime} --numEpisodes={numEpisodes}'
     return simulation_command
     
  
@@ -82,7 +81,6 @@ lr = 0.00001
 explorations = [["vary", 1.0, 0.01],]
 # explorations = [["vary", 1.0, 0.01]]
 smart_explorations = [0,]
-ping_freq = 5
 mv_avg_interval = 5
 train_duration = 15
 test_duration = 25
@@ -152,7 +150,6 @@ for traff_mat in traff_mats:
                                                                                             load_factor=train_load,
                                                                                             sync_step=sync_step,
                                                                                             max_out_buffer_size=max_output_buffer_size,
-                                                                                            nPacketsOverlay=ping_freq,
                                                                                             movingAverageObsSize=mv_avg_interval,
                                                                                             prioritizedReplayBuffer=0,
                                                                                             activateUnderlayTraffic=1,
@@ -202,7 +199,6 @@ for traff_mat in traff_mats:
                                                                                                     load_factor=test_load,
                                                                                                     sync_step=sync_step,
                                                                                                     max_out_buffer_size=max_output_buffer_size,
-                                                                                                    nPacketsOverlay=ping_freq,
                                                                                                     movingAverageObsSize=mv_avg_interval,
                                                                                                     prioritizedReplayBuffer=0,
                                                                                                     activateUnderlayTraffic=1,
@@ -254,7 +250,6 @@ for traff_mat in traff_mats:
                                                                                             load_factor=test_load,
                                                                                             sync_step=sync_step,
                                                                                             max_out_buffer_size=max_output_buffer_size,
-                                                                                            nPacketsOverlay=ping_freq,
                                                                                             movingAverageObsSize=mv_avg_interval,
                                                                                             prioritizedReplayBuffer=0,
                                                                                             activateUnderlayTraffic=1,

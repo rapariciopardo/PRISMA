@@ -92,7 +92,6 @@ PingForwardPacketManager::PingForwardPacketManager (Ptr<Node> node, vector<int> 
 
 bool 
 PingForwardPacketManager::receivePacket(Ptr<Packet> packet, Ptr<NetDevice> receivingNetDev){
-  // NS_LOG_UNCOND("PingForwardPacketManager::receivePacket");
   //Get extra info from packet
     MyTag tagCopy;
   packet->PeekPacketTag(tagCopy);
@@ -111,7 +110,6 @@ PingForwardPacketManager::receivePacket(Ptr<Packet> packet, Ptr<NetDevice> recei
 }
 void
 PingForwardPacketManager::sendPingBackPacket(float delay,  uint32_t overlayTunnelIndex, uint32_t pingPacketIndex){
-  // NS_LOG_UNCOND("PingForwardPacketManager::sendPingBackPacket");
   //Define Tag
   MyTag tagPingBack;
 
