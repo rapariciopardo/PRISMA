@@ -6,7 +6,7 @@ import tensorflow as tf
 import networkx as nx
 import numpy as np
 import os
-from ns3gym import ns3env
+from ns3_model import ns3env
 from source.learner import DQN_AGENT
 from source.utils import save_model, load_model, LinearSchedule, convert_bps_to_data_rate, optimal_routing_decision
 from source.replay_buffer import PrioritizedReplayBuffer, ReplayBuffer

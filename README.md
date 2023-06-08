@@ -57,7 +57,7 @@ docker build -t prisma .
 ```
 c) run the docker image and bind only the examples folder to the container
 ```
-sudo docker run --rm --gpus all -v ./prisma/examples:/app/prisma/examples -w /app/prisma prisma /bin/bash -c "python3 main.py $PARAMS"
+sudo docker run --rm --gpus all -v $(pwd)/prisma/examples:/app/prisma/examples -w /app/prisma prisma /bin/bash -c "python3 main.py $PARAMS"
 ```
 ## 2. Use an existing environment from DockerHub
 a) Pull the docker image from dockerhub
@@ -66,7 +66,7 @@ docker pull allicheredha/prisma_env
 ```
 b) run the docker image and bind the complete folder to the container
 ```
-sudo docker run --rm --gpus all -v ./prisma/:/prisma -w /prisma allicheredha/prisma_env /bin/bash -c "python3 main.py $PARAMS"
+sudo docker run --rm --gpus all -v $(pwd)/prisma/:/prisma -w /prisma allicheredha/prisma_env /bin/bash -c "python3 main.py $PARAMS"
 ```
 
 Usage guide

@@ -169,8 +169,6 @@ def main():
                 Overlay Cost = {Agent.sim_cost},
                 Global Cost = {Agent.sim_global_cost},
                 Hops = {Agent.total_hops/Agent.sim_delivered_packets},
-                # nbBytesOverlaySignalingForward = {Agent.sim_bytes_overlay_signaling_forward},
-                # nbBytesOverlaySignalingBack = {Agent.sim_bytes_overlay_signaling_back},
                 OverheadRatio = {Agent.sim_signaling_overhead}
                 """) 
         for forwarder in forwarders:       

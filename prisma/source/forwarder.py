@@ -2,7 +2,7 @@
 import tensorflow as tf
 import networkx as nx
 import numpy as np
-from ns3gym import ns3env
+from ns3_model import ns3env
 from source.learner import DQN_AGENT
 from source.utils import load_model, LinearSchedule, optimal_routing_decision
 from source.models import *
@@ -38,7 +38,7 @@ class Forwarder(Agent):
         self.reset()
         
     def reset(self, init=True):
-        """ Reset the ns3gym env 
+        """ Reset the ns3-gym env 
         """
         if Agent.G == None or Agent.numNodes == 0:
             raise("Please make sure you input the topology")
