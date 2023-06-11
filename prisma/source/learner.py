@@ -309,6 +309,7 @@ class DQN_AGENT(tf.Module):
         q_t_selected_targets = rewards + self.gamma * q_tp1_best_masked
 
         return q_t_selected_targets
+
     def sync_neighbor_upcoming_target_q_network(self, agent_nn, neighbor_idx):
         """Copy nn network into neighbor upcoming target q network attribute
 

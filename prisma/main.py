@@ -109,6 +109,7 @@ def main():
 
     forwarders = []
     trainers = []
+    snapshot_index = 1
     for episode in range(params["numEpisodes"]):
         ## run ns3 simulator
         print("running ns-3")
@@ -138,16 +139,15 @@ def main():
             
         sleep(1)
         
-        snapshot_index = 1
         ## wait until simulation complete and update info about the env at each timestep
         while threading.active_count() > params["numNodes"] * (1+ params["train"]):
             sleep(params["logging_timestep"])
             if params["train"] == 1:
                 stats_writer_train(summary_writer_session, summary_writer_nb_arrived_pkts, summary_writer_nb_lost_pkts, summary_writer_nb_new_pkts, Agent)
                 ## check if it is time to save a snapshot of the models
-                if (Agent.base_curr_time + Agent.curr_time) > (snapshot_index * params["snapshot_interval"]):
+                if ((Agent.base_curr_time + Agent.curr_time) > (snapshot_index * params["snapshot_interval"])) and params["snapshot_interval"] > 0:
                     print(f"Saving model at time {Agent.curr_time} with index {snapshot_index}")
-                    save_all_models(Agent.agents, params["G"].nodes(), params["session_name"], snapshot_index, 1, root=params["logs_parent_folder"] + "/saved_models/", snapshot=True)
+                    save_all_models(Agent.agents, params["G"].nodes(), params["session_name"], snapshot_index, episode, root=params["logs_parent_folder"] + "/saved_models/", snapshot=True)
                     snapshot_index += 1
                         
         print(f""" Summary of the Episode {episode}:
@@ -162,13 +162,13 @@ def main():
                 Global lost packets = {Agent.sim_global_dropped_packets},
                 Overlay buffered packets = {Agent.sim_buffered_packets},
                 Global buffered packets = {Agent.sim_global_buffered_packets},
-                Overlay lost ratio = {Agent.sim_dropped_packets/Agent.sim_injected_packets},
-                Global lost ratio = {Agent.sim_global_dropped_packets/Agent.sim_global_injected_packets},
+                Overlay lost ratio = {Agent.sim_dropped_packets/max(Agent.sim_injected_packets, 1.0)},
+                Global lost ratio = {Agent.sim_global_dropped_packets/max(Agent.sim_global_injected_packets,1.0)},
                 Overlay e2e delay = {Agent.sim_avg_e2e_delay},
                 Global e2e delay = {Agent.sim_global_avg_e2e_delay},
                 Overlay Cost = {Agent.sim_cost},
                 Global Cost = {Agent.sim_global_cost},
-                Hops = {Agent.total_hops/Agent.sim_delivered_packets},
+                Hops = {Agent.total_hops/max(Agent.sim_delivered_packets, 1.0)},
                 # nbBytesOverlaySignalingForward = {Agent.sim_bytes_overlay_signaling_forward},
                 # nbBytesOverlaySignalingBack = {Agent.sim_bytes_overlay_signaling_back},
                 OverheadRatio = {Agent.sim_signaling_overhead}

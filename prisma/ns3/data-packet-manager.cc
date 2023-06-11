@@ -183,6 +183,7 @@ DataPacketManager::getObservation()
 
   
   //Get Neighbors for acessing their respective queues
+  uint32_t value;
   for (size_t i=0 ; i<m_neighbors.size(); i++){
     string string_ip= "10.2.2."+std::to_string(m_neighbors[i]+1);
     Ipv4Address ip_test(string_ip.c_str());
@@ -190,15 +191,12 @@ DataPacketManager::getObservation()
     packet_test->AddHeader(m_packetIpHeader);
     Ptr<Ipv4Route> route = routing->RouteOutput (packet_test, m_packetIpHeader, 0, sockerr);
     Ptr<PointToPointNetDevice> dev = DynamicCast<PointToPointNetDevice>(route->GetOutputDevice());
-    
-    uint32_t value;
-    
+      
     if(m_obs_bufferLength){
       value = this->getQueueLengthInBytes (m_node, dev->GetIfIndex());
     } else{
       value =uint32_t(1000*std::max(getAverage(m_pingBackPacketManager->m_tunnelsDelay[i]), double(m_pingBackPacketManager->getMaxTimePingForwardPacketSent(i))));
-    }
-    
+    }  
     box->AddValue(value);
   }
 

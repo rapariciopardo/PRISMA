@@ -134,10 +134,16 @@ class Agent():
         cl.lamda_training_start_time = params_dict["lamda_training_start_time"]
         cl.lambda_lr=params_dict["lambda_lr"]
         cl.d_t_max_time = params_dict["d_t_max_time"]
+        cl.d_t_send_all_destinations = params_dict["d_t_send_all_destinations"]
 
         cl.constrained_loss_database =  [[DigitalTwinDB(Agent.lambda_train_step) for _ in range(len(list(cl.G.neighbors(n))))] for n in range(cl.numNodes)]
         cl.lamda_coefs = [[0 for _ in range(len(list(cl.G.neighbors(n))))] for n in range(cl.numNodes)]
         cl.max_observed_values = [[0 for _ in range(len(list(cl.G.neighbors(n))))] for n in range(cl.numNodes)]
+        cl.max_observed_values = [[0.52052, 0.26026, 0.78078, 0.52052],
+                                  [0.52052, 1.04104, 1.04104, 1.56156],
+                                  [0.26026, 0.78078, 0.52052, 0.26026],
+                                  [0.78078, 1.04104, 0.78078, 0.52052],
+                                  [0.52052, 1.3013, 0.52052, 0.52052]]
         cl.model_version = params_dict["model_version"]
         cl.sync_counters = [0 for _ in range(cl.numNodes)]
         cl.max_nb_arrived_pkts = params_dict["max_nb_arrived_pkts"]

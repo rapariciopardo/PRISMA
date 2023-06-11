@@ -225,6 +225,7 @@ PacketRoutingEnv::mapOverlayNodes(std::vector <int> map_overlay_array)
 {
   m_dataPacketManager->m_map_overlay_array = map_overlay_array;
   m_bigSignalingPacketManager->m_map_overlay_array = map_overlay_array;
+  m_pingBackPacketmanager->m_map_overlay_array = map_overlay_array;
 }
 
 void

@@ -177,7 +177,7 @@ class Forwarder(Agent):
                                                "src" :Agent.pkt_tracking_dict[int(self.pkt_id)]["src"],
                                                "dst" :Agent.pkt_tracking_dict[int(self.pkt_id)]["dst"],
                                                }
-            Agent.max_observed_values[self.index] = list(np.max([Agent.max_observed_values[self.index], obs[1:]], axis=0))
+            # Agent.max_observed_values[self.index] = list(np.max([Agent.max_observed_values[self.index], obs[1:]], axis=0))
             if Agent.loss_penalty_type == "constrained":
                 Agent.constrained_loss_database[self.index][self.action].add(obs[self.action],
                                                                     Agent.lamda_coefs[self.index][self.action],
@@ -328,13 +328,13 @@ class Forwarder(Agent):
                 if done_flag and obs[0] == -1:
                     break
 
-                ## Increment the simulation and episode counters
-                self.transition_number += 1
-                Agent.total_nb_iterations += 1
-
                 ## Treat the info from the env
                 if self.treat_info(info):
                     continue # if it is a control packet, continue
+
+                ## Increment the simulation and episode counters
+                self.transition_number += 1
+                Agent.total_nb_iterations += 1
                 
                 Agent.nb_transitions += 1
                 if self.pkt_id not in Agent.pkt_tracking_dict.keys(): ## check if the packet is a new arrival
@@ -435,24 +435,34 @@ class Forwarder(Agent):
                 Agent.small_signaling_overhead_counter += self.small_signaling_pkt_size
                 Agent.small_signaling_pkt_counter += 1
                 
-            elif Agent.signaling_type == "digital_twin":
-                ## compute the target values
-                targets = Agent.agents[self.index].q_network(np.array([self.obs], dtype=float))
-                # target = hop_time_ideal + Agent.gamma * (1- int(self.done)) * tf.reduce_min(Agent.agents[self.index].q_network(np.array([self.obs], dtype=float)), 1)
-                
-                self._push_upcoming_event(int(states_info["node"]), {   "time": Agent.curr_time + self.small_signaling_delay,
-                                                                        "obs" : np.array(states_info["obs"], dtype=float).squeeze(),
-                                                                        "action": states_info["action"], 
-                                                                        "targets": targets.numpy().squeeze(),
-                                                                        "gradient_step": self.gradient_step_idx,
-                                                                        "reward": hop_time_real,
-                                                                        "new_obs": np.array(self.obs, dtype=float).squeeze(), 
-                                                                        "flag": self.done,
-                                                                        "pkt_id": self.pkt_id,
-                                                                        })
-                if Agent.signalingSim == 0 and self.train:
-                    Agent.small_signaling_overhead_counter += self.small_signaling_pkt_size
-                    Agent.small_signaling_pkt_counter += 1
+        elif Agent.signaling_type == "digital_twin":
+            ## compute the target values
+            targets = np.array([])
+            dests = []
+            for destination_ in range(Agent.numNodes):
+                if destination_ == self.index or (Agent.d_t_send_all_destinations == 0 and destination_ != obs[0]):
+                    continue
+                if len(targets) ==0 :
+                    targets = Agent.agents[self.index].q_network(np.array([[destination_] + list(obs[1:])], dtype=float)).numpy().reshape(1, -1)
+                else:
+                    targets = tf.concat([targets, Agent.agents[self.index].q_network(np.array([[destination_] + list(obs[1:])], dtype=float)).numpy()], axis=0).numpy().squeeze()
+                dests.append(destination_)
+                # targets = Agent.agents[self.index].q_network(np.array([obs], dtype=float))
+            # target = hop_time_ideal + Agent.gamma * (1- int(self.done)) * tf.reduce_min(Agent.agents[self.index].q_network(np.array([obs], dtype=float)), 1)
+            
+            self._push_upcoming_event(int(states_info["node"]), {   "time": Agent.curr_time + self.small_signaling_delay,
+                                                                    "obs" : np.array(states_info["obs"], dtype=float).squeeze(),
+                                                                    "action": states_info["action"], 
+                                                                    "targets": targets,
+                                                                    "dests": dests,
+                                                                    "reward": hop_time_real,
+                                                                    "new_obs": np.array(obs, dtype=float).squeeze(), 
+                                                                    "flag": done_flag,
+                                                                    "pkt_id": self.pkt_id,
+                                                                    })
+            if Agent.signalingSim == 0 and self.train:
+                Agent.small_signaling_overhead_counter += self.small_signaling_pkt_size
+                Agent.small_signaling_pkt_counter += 1
 
 
     def handle_done(self):
@@ -542,7 +552,7 @@ class Forwarder(Agent):
                                                         element["new_obs"], 
                                                         element["flag"])
                     Agent.upcoming_events[self.index].pop(idx)
-                    break
+                    return
                         
             elif Agent.signaling_type == "target":
                 if element["pkt_id"] == signaling_pkt_id:
@@ -565,7 +575,7 @@ class Forwarder(Agent):
                                                             element["new_obs"],
                                                             element["flag"])
                     Agent.upcoming_events[self.index].pop(idx)
-                    break
+                    return
                 
             elif Agent.signaling_type == "digital_twin":
                 if element["pkt_id"] == signaling_pkt_id:
@@ -574,8 +584,10 @@ class Forwarder(Agent):
                                                         element["reward"],
                                                         element["new_obs"], 
                                                         element["flag"])
-                    Agent.agents[self.index].neighbors_d_t_database[element["action"]].add(element["new_obs"],
-                                                                                           element["targets"],
-                                                                                           element["time"],)
+                    for ix, destination_ in enumerate(element["dests"]):
+                        Agent.agents[self.index].neighbors_d_t_database[element["action"]].add([destination_] + list(element["new_obs"][1:]),
+                                                                                            element["targets"][ix],
+                                                                                            element["time"],)
                     Agent.upcoming_events[self.index].pop(idx)
-                    break
+                    return
+        raise ValueError("signaling pkt id not found")

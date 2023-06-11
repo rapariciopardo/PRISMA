@@ -81,6 +81,7 @@ bool PacketManager::receivePacket(Ptr<Packet> packet){
     MyTag tagCopy;
     p->PeekPacketTag(tagCopy);
     
+  // NS_LOG_UNCOND("PacketManager::receivePacket - Packet received at node " << m_node->GetId() << " from node " << tagCopy.GetLastHop() << " to node " << tagCopy.GetNextHop() << " with source " << tagCopy.GetSource() << " and destination " << tagCopy.GetFinalDestination() << " at time " << Simulator::Now().GetSeconds() << "s" << " with packet type " << int(tagCopy.GetSimpleValue()) << " and traffic variable " << int(tagCopy.GetTrafficValable()) <<" and packet size " << packet->GetSize() << " bytes");
     //Packet's Header
     p->RemoveHeader(m_packetPppHeader);  
     p->RemoveHeader(m_packetIpHeader);

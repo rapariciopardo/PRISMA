@@ -172,7 +172,9 @@ int main (int argc, char *argv[])
 
   bool activateUnderlayTraffic = true;
 
-  float pingPacketIntervalTime;
+  float pingPacketIntervalTime=0.1;
+  
+  bool DT_SendAllDestinations = false;
   
   CommandLine cmd;
   // required parameters for OpenGym interface
@@ -212,6 +214,8 @@ int main (int argc, char *argv[])
   cmd.AddValue ("pingAsObs", "ping as observation variable", pingAsObs);
   cmd.AddValue ("groundTruthFrequence", "ground truth freq", groundTruthFrequence);
   cmd.AddValue ("bigSignalingSize", "total size of the weights of the NN in bytes", bigSignalingSize);
+  cmd.AddValue ("pingPacketIntervalTime", "Time between two ping packets", pingPacketIntervalTime);
+  cmd.AddValue ("DT_SendAllDestinations", "Send all destinations in the signalling pkt for the DT", DT_SendAllDestinations);
 
   cmd.Parse (argc, argv);
     
@@ -393,7 +397,11 @@ int main (int argc, char *argv[])
   }
     else if(signalingType=="digital_twin"){
       for(int i=0;i<overlay_n_nodes;i++){
-        smallSignalingSize[i] = 8 + (8 * (2* overlay_nodes_degree[i] + 1));
+        if (DT_SendAllDestinations){
+          smallSignalingSize[i] = 8 + (8 * (2* overlay_nodes_degree[i] + 1) * (overlay_n_nodes - 1));
+        } else {
+          smallSignalingSize[i] = 8 + (8 * (2* overlay_nodes_degree[i] + 1));
+        }
       }
   }  
 

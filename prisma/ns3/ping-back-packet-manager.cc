@@ -109,7 +109,7 @@ PingBackPacketManager::addSentPingForwardPacket(uint64_t id, uint64_t start_time
 float
 PingBackPacketManager::getMaxTimePingForwardPacketSent(uint32_t index){
   if(m_sentPingForwardPackets[index].size()>0){
-    return std::min(Simulator::Now().GetSeconds() - m_sentPingForwardPackets[index][0].start_time*0.001, 2.60);
+    return std::min((Simulator::Now().GetSeconds() - m_sentPingForwardPackets[index][0].start_time*0.001)/2.0, m_tunnelsMaxDelays[m_map_overlay_array[m_node->GetId()]][index]);
   } else{
     return 0.0;
   }
@@ -121,18 +121,31 @@ PingBackPacketManager::receivePacket(Ptr<Packet> packet, Ptr<NetDevice> receivin
   //Get extra info from packet
   MyTag tagCopy;
   packet->PeekPacketTag(tagCopy); 
+  if (tagCopy.GetFinalDestination() != m_node->GetId()) {
+    return false;
+  }
 
   float delay = tagCopy.GetOneHopDelay();
   m_overlayTunnelIndex = tagCopy.GetTunnelOverlaySendingIndex();
   m_pingPacketIndex = tagCopy.GetOverlayIndex();
-  
-  //Erasing sent packets which were acked
-  for (auto it = m_sentPingForwardPackets[m_overlayTunnelIndex].begin(); it != m_sentPingForwardPackets[m_overlayTunnelIndex].end(); ++it){
-    if (it->uid == m_pingPacketIndex){
-      m_sentPingForwardPackets[m_overlayTunnelIndex].erase(it);
-      break;
-    }
+  if (m_pingPacketIndex == 0){
+    NS_LOG_UNCOND( m_node->GetId() << " " << m_overlayTunnelIndex << " " << delay);
   }
+  // remove the packets until the one that was acked
+  if (m_sentPingForwardPackets[m_overlayTunnelIndex].begin()->uid == m_pingPacketIndex){
+    m_sentPingForwardPackets[m_overlayTunnelIndex].erase(m_sentPingForwardPackets[m_overlayTunnelIndex].begin());
+  }
+  else{
+    while(m_sentPingForwardPackets[m_overlayTunnelIndex].begin()->uid != m_pingPacketIndex){
+      m_sentPingForwardPackets[m_overlayTunnelIndex].erase(m_sentPingForwardPackets[m_overlayTunnelIndex].begin());
+    }
+    m_sentPingForwardPackets[m_overlayTunnelIndex].erase(m_sentPingForwardPackets[m_overlayTunnelIndex].begin());
+
+
+  }
+  
+
+
   //Adding tunnel delay in a circular array
   if(m_tunnelsDelay[m_overlayTunnelIndex].size()>=m_movingAverageSize){
     assert(!m_tunnelsDelay[m_overlayTunnelIndex].empty());

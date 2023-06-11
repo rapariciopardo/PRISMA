@@ -66,6 +66,7 @@ def parse_arguments():
     group1.add_argument('--pingPacketIntervalTime', type=float, help="Ping packet interval time (in seconds)", default=0.2)
     group1.add_argument('--groundTruthFrequence', type=float, help="groundTruthFrequence", default=0.1)
     group1.add_argument('--d_t_max_time', type=float, help="The maximum length in seconds of the digital twin database", default=5)
+    group1.add_argument('--d_t_send_all_destinations', type=int, help="If true, send the logits (output of the neighbor NN) for all the possible destinations", default=0)
 
     group4 = parser.add_argument_group('Network parameters')
     group4.add_argument('--load_factor', type=float, help='scale of the traffic matrix', default=1)
@@ -76,7 +77,7 @@ def parse_arguments():
     group4.add_argument('--traffic_matrix_index', type=int, help='Index of the traffic matrix', default=0)
     group4.add_argument('--node_coordinates_path', type=str, help='Path to the nodes coordinates', default="examples/abilene/node_coordinates.txt")
     group4.add_argument('--max_out_buffer_size', type=int, help='Max nodes output buffer limit', default=30)
-    group4.add_argument('--link_delay', type=str, help='Network links delay', default="0ms")
+    group4.add_argument('--link_delay', type=int, help='Network links delay in ms', default=1)
     group4.add_argument('--packet_size', type=int, help='Size of the packets in bytes', default=512)
     group4.add_argument('--link_cap', type=int, help='Network links capacity in bits per seconds', default=500000)
     
@@ -144,7 +145,7 @@ def parse_arguments():
     G=nx.DiGraph(nx.empty_graph())
     # if node_coordinates_path exists, use it to set the node positions. Else, generate random positions
     if os.path.exists(params["node_coordinates_path"]):
-        pos = np.loadtxt(open(params["node_coordinates_path"])
+        pos = np.loadtxt(open(params["node_coordinates_path"]))
     else:
         pos = nx.random_layout(G)
     for i, element in enumerate(pos.tolist()):
