@@ -61,12 +61,13 @@ public:
   void losePacket();
   string getLostPackets();
   void setMovingAverageSize(uint32_t value);
-  double m_tunnelsMaxDelays[5][4] = {
-    {0.52052, 0.26026, 0.78078, 0.52052},
-    {0.52052, 1.04104, 1.04104, 1.56156}, 
-    {0.26026, 0.78078, 0.52052, 0.26026},
-    {0.78078, 1.04104, 0.78078, 0.52052},
-    {0.52052, 1.3013, 0.52052, 0.52052}};
+  vector<vector<double>> m_tunnelsMaxDelays;
+  //   {0.52052, 0.26026, 0.78078, 0.52052},
+  //   {0.52052, 1.04104, 1.04104, 1.56156}, 
+  //   {0.26026, 0.78078, 0.52052, 0.26026},
+  //   {0.78078, 1.04104, 0.78078, 0.52052},
+  //   {0.52052, 1.3013, 0.52052, 0.52052}};
+  void setTunnelsMaxDelays(vector<vector<double>> values);
 
 
 private:

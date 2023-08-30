@@ -64,9 +64,11 @@ float ComputeStats::m_globalLossRatio;
 int ComputeStats::m_globalOverlayPacketsInjected;
 int ComputeStats::m_globalOverlayPacketsArrived;
 int ComputeStats::m_globalOverlayPacketsLost;
+int ComputeStats::m_globalOverlayPacketsRejected;
 int ComputeStats::m_globalUnderlayPacketsInjected;
 int ComputeStats::m_globalUnderlayPacketsArrived;
 int ComputeStats::m_globalUnderlayPacketsLost;
+int ComputeStats::m_globalUnderlayPacketsRejected;
 int ComputeStats::m_globalBytesData;
 int ComputeStats::m_globalBytesSignaling;
 double ComputeStats::m_lossPenalty;
@@ -156,6 +158,10 @@ void ComputeStats::incrementOverlayPacketsLost(){
     m_globalOverlayPacketsLost += 1;
 }
 
+void ComputeStats::incrementOverlayPacketsRejected(){
+    m_globalOverlayPacketsRejected += 1;
+}
+
 void ComputeStats::incrementUnderlayPacketsInjected(){
     m_globalUnderlayPacketsInjected += 1;
 }
@@ -166,6 +172,10 @@ void ComputeStats::incrementUnderlayPacketsArrived(){
 
 void ComputeStats::incrementUnderlayPacketsLost(){
     m_globalUnderlayPacketsLost += 1;
+}
+
+void ComputeStats::incrementUnderlayPacketsRejected(){
+    m_globalUnderlayPacketsRejected += 1;
 }
 
 void ComputeStats::addGlobalBytesData(int value){
@@ -212,6 +222,10 @@ int ComputeStats::getGlobalOverlayPacketsLost(){
     return m_globalOverlayPacketsLost;
 }
 
+int ComputeStats::getGlobalOverlayPacketsRejected(){
+    return m_globalOverlayPacketsRejected;
+}
+
 int ComputeStats::getGlobalOverlayPacketsBuffered(){
     return m_globalOverlayPacketsInjected - (m_globalOverlayPacketsArrived + m_globalOverlayPacketsLost);
 }
@@ -226,6 +240,10 @@ int ComputeStats::getGlobalUnderlayPacketsArrived(){
 
 int ComputeStats::getGlobalUnderlayPacketsLost(){
     return m_globalUnderlayPacketsLost;
+}
+
+int ComputeStats::getGlobalUnderlayPacketsRejected(){
+    return m_globalUnderlayPacketsRejected;
 }
 
 int ComputeStats::getGlobalUnderlayPacketsBuffered(){

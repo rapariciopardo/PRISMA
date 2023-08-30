@@ -17,6 +17,7 @@ class Trainer(Agent):
     
     def __init__(self, index, agent_type="dqn", train=True):
         Agent.__init__(self, index, agent_type, train)
+        self.nn_size = np.sum([np.prod(x.shape) for x in Agent.agents[self.index].q_network.trainable_weights])*32
         self.reset()
         ## define the log file for trainer 
         self.tb_writer_dict = {"td_error": tf.summary.create_file_writer(logdir=f'{Agent.logs_folder}/td_error/node_{self.index}'),
@@ -75,10 +76,13 @@ class Trainer(Agent):
                 action_indices = np.where(actions_t == indx)[0]
                 action_indices_all.append(action_indices)
                 if len(action_indices):
+                    penalty = 0
+                    if Agent.loss_penalty_type == "constrained":
+                        if Agent.rcpo_use_loss_pkts:
+                            rewards_t[action_indices] = np.where(rewards_t[action_indices] == -1, Agent.lamda_coefs[self.index][indx], rewards_t[action_indices])
+                        else:
+                            penalty = Agent.lamda_coefs[self.index][indx] * ((obses_t[action_indices, indx]/Agent.max_observed_values[self.index][indx]) - Agent.buffer_soft_limit)
                     if Agent.signaling_type in ("NN", "ideal"):
-                        penalty = 0
-                        if Agent.loss_penalty_type == "constrained":
-                            penalty = Agent.lamda_coefs[self.index][indx] * (obses_t[action_indices, indx]/Agent.max_observed_values[self.index][indx])
                         targets_t.append(Agent.agents[self.index].get_neighbor_target_value(indx, 
                                                                                             rewards_t[action_indices] + penalty, 
                                                                                             tf.constant(np.array(np.vstack(next_obses_t[action_indices]),
@@ -86,14 +90,13 @@ class Trainer(Agent):
                                                                                             dones_t[action_indices],
                                                                                             filtered_indices))
                     elif Agent.signaling_type == "digital_twin":
-                        penalty = 0
-                        if Agent.loss_penalty_type == "constrained":
-                            penalty = Agent.lamda_coefs[self.index][indx] * ((obses_t[action_indices, indx]/Agent.max_observed_values[self.index][indx]) - Agent.buffer_soft_limit)
                         targets_t.append(Agent.agents[self.index].get_neighbor_d_t_value(indx,
                                                                                          rewards_t[action_indices] + penalty, 
                                                                                          tf.constant(np.array(np.vstack(next_obses_t[action_indices]), dtype=float)),
                                                                                          dones_t[action_indices],
                                                                                          filtered_indices))
+                    else:
+                        raise NotImplementedError
             action_indices_all = np.concatenate(action_indices_all)
             ### prepare tf variables
             try:
@@ -131,7 +134,7 @@ class Trainer(Agent):
                 self._sync_all(update_upcoming=True)
                 Agent.sync_counters[self.index] += 1
                 # print("sync all at %s" % Agent.curr_time, "for node:", self.index, "sync counter:", self.sync_counter)
-                if Agent.signaling_type in ("ideal"):
+                if Agent.signaling_type in ("ideal", "NN"):
                     self._sync_all(update_upcoming=False)
                 self.last_sync_time = Agent.curr_time
 
@@ -193,13 +196,18 @@ class Trainer(Agent):
             else:
                 for indx, neighbor in enumerate(self.neighbors): 
                     self._sync_current(indx)
+                    Agent.big_signaling_overhead_counter += self.nn_size
+                    Agent.big_signaling_pkt_counter += 1
                     
     def _update_lambda_coefs(self):
         """
             update the lambda coefficients for the current agent
         """
         for neighbor_idx in range(len(self.neighbors)):
-            data = (Agent.constrained_loss_database[self.index][neighbor_idx].get_data()[0]/Agent.max_observed_values[self.index][neighbor_idx]) - Agent.buffer_soft_limit
+            if Agent.rcpo_use_loss_pkts:
+                data = [-np.sum(Agent.constrained_loss_database[self.index][neighbor_idx].get_data()[0]) - Agent.buffer_soft_limit]
+            else:
+                data = (Agent.constrained_loss_database[self.index][neighbor_idx].get_data()[0]/Agent.max_observed_values[self.index][neighbor_idx]) - Agent.buffer_soft_limit
             if len(data) > 0:
                 constraint_grad = np.mean(data)
                 Agent.lamda_coefs[self.index][neighbor_idx] = np.max((Agent.lamda_coefs[self.index][neighbor_idx] + (Agent.lambda_lr * constraint_grad), 0))

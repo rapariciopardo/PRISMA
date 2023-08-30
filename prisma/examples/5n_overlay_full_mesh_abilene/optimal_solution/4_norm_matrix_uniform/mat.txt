@@ -1,0 +1,11 @@
+0bps 25.14Kbps 24.97Kbps 22.85Kbps 1.01Kbps 19.37Kbps 10.61Kbps 14.52Kbps 18.43Kbps 5.43Kbps 7.63Kbps
+20.12Kbps 0bps 23.81Kbps 21.71Kbps 1.03Kbps 3.27Kbps 21.04Kbps 6.7Kbps 7.14Kbps 24.02Kbps 26.6Kbps
+15.73Kbps 5.01Kbps 0bps 58.81Kbps 75.4Kbps 100.27Kbps 12.91Kbps 13.95Kbps 81.15Kbps 18.23Kbps 7.53Kbps
+1.89Kbps 21.6Kbps 57.45Kbps 0bps 60.99Kbps 31.49Kbps 8.7Kbps 17.56Kbps 66.58Kbps 8.92Kbps 11.06Kbps
+7.22Kbps 16.31Kbps 19.31Kbps 71.44Kbps 0bps 18.68Kbps 20.56Kbps 11.44Kbps 93.01Kbps 22.52Kbps 22.01Kbps
+16.59Kbps 18.61Kbps 77.23Kbps 50.84Kbps 61.34Kbps 0bps 1.04Kbps 19.83Kbps 74.11Kbps 21.78Kbps 12.87Kbps
+10.64Kbps 8.17Kbps 15.61Kbps 2.36Kbps 17.68Kbps 26.45Kbps 0bps 24.61Kbps 9.65Kbps 19.69Kbps 14.77Kbps
+18.46Kbps 7.51Kbps 17.02Kbps 1.35Kbps 19.48Kbps 8.38Kbps 4.64Kbps 0bps 4.63Kbps 25.61Kbps 7.95Kbps
+3.01Kbps 3.28Kbps 90.24Kbps 100.2Kbps 4.24Kbps 14.51Kbps 24.95Kbps 14.43Kbps 0bps 16.28Kbps 21.66Kbps
+11.84Kbps 23.12Kbps 10.79Kbps 9.92Kbps 11.99Kbps 11.06Kbps 23.65Kbps 10.47Kbps 10.41Kbps 0bps 11.89Kbps
+18.56Kbps 5.31Kbps 20.23Kbps 7.1Kbps 26.96Kbps 3.72Kbps 22.59Kbps 9.94Kbps 2.37Kbps 20.48Kbps 0bps

@@ -200,6 +200,28 @@ DataPacketManager::getObservation()
     box->AddValue(value);
   }
 
+  // Go through all the nodes and get the number of packets in the queue
+  // int totalPackets = 0;
+  // int totalBytes = 0;
+  // // NS_LOG_UNCOND("Node " << m_node->GetId() << " has " << m_neighbors.size() << " neighbors" << " at time " << Simulator::Now().GetSeconds() << "s : " << m_nodes_switch.GetN());
+  // for(uint32_t j=0;j<m_nodes_switch.GetN();j++){
+  //   for(uint32_t i=2;i<m_nodes_switch.Get(j)->GetNDevices();i++){
+  //       Ptr<NetDevice> netDev = m_nodes_switch.Get(j)->GetDevice(i);
+  //       Ptr<PointToPointNetDevice> p2p_netDev = DynamicCast<PointToPointNetDevice> (netDev);
+  //       Ptr<Queue<Packet> > queue = p2p_netDev->GetQueue ();
+  //       totalPackets = totalPackets + (int) queue->GetNPackets();
+  //       totalBytes = totalBytes + (int) queue->GetNBytes();
+  //       // show the packet id in the queue
+  //       for (int k = 0; k < (int) queue->GetNPackets(); k++) {
+  //         Ptr<Packet> packet = queue->Dequeue();
+  //         // NS_LOG_UNCOND("Node " << m_node->GetId() << " has packet " << packet->GetUid() << " in the queue at time " << Simulator::Now().GetSeconds() << "s" << " with size " << packet->GetSize() << " bytes" );
+  //         queue->Enqueue(packet);
+  //       }
+    
+  //   }
+  // }
+  // NS_LOG_UNCOND("Total Packets in the network: " << totalPackets << " packets and " << totalBytes << " bytes at time " << Simulator::Now().GetSeconds() << "s");
+
   return box;
 }
 
@@ -228,18 +250,18 @@ string
 DataPacketManager::getInfo()
 {
   string myInfo = PacketManager::getInfo();
-  myInfo += ", Packet Lost="; //16
+  myInfo += ", Packet Lost="; //20
   while (!m_lostPackets.empty())
   {
     SentPacket lostPacket = m_lostPackets.back();
     myInfo += std::to_string(lostPacket.uid) + ";";
     m_lostPackets.pop_back();
   }
-  myInfo += ", Source="; //17
+  myInfo += ", Source="; //21
   myInfo += std::to_string(m_map_overlay_array[m_source]);
-  myInfo += ", Destination="; //18
+  myInfo += ", Destination="; //22
   myInfo += std::to_string(m_map_overlay_array[m_destination]);
-  myInfo += ", node="; //19
+  myInfo += ", node="; //23
   myInfo += std::to_string(m_map_overlay_array[m_node->GetId()]);
   // NS_LOG_UNCOND(myInfo);
   return myInfo;
@@ -269,7 +291,7 @@ DataPacketManager::sendPacket(Ptr<OpenGymDataContainer> action){
     string string_ip= "10.2.2."+std::to_string(m_neighbors[fwdDev_idx]+1);
     Ipv4Address ip_dest(string_ip.c_str());
     m_packetIpHeader.SetDestination(ip_dest);
-    m_packetIpHeader.SetSource(string("10.1.1."+std::to_string(m_nodes_starting_address[m_node->GetId()]+1)).c_str());
+    m_packetIpHeader.SetSource(string("10.1.1."+std::to_string(m_node->GetId()+1)).c_str());
     m_packet->AddHeader(m_packetIpHeader);
     
     //Discovering the output buffer based on the routing table
@@ -278,8 +300,11 @@ DataPacketManager::sendPacket(Ptr<OpenGymDataContainer> action){
     ns3::Socket::SocketErrno sockerr;
     Ptr<Ipv4RoutingProtocol> routing = ipv4->GetRoutingProtocol( );
     Ptr<Ipv4Route> route = routing->RouteOutput (m_packet, m_packetIpHeader, 0, sockerr); 
-    route->SetSource(string("10.1.1."+std::to_string(m_nodes_starting_address[m_node->GetId()]+1)).c_str());
+    route->SetSource(string("10.1.1."+std::to_string(m_node->GetId()+1)).c_str());
     Ptr<PointToPointNetDevice> dev = DynamicCast<PointToPointNetDevice>(route->GetOutputDevice());
+    if (sendingTag.GetSimpleValue()==0 && sendingTag.GetSource()==4 && sendingTag.GetFinalDestination()==3 && m_packetUid == 12425)
+
+      NS_LOG_UNCOND("Node " << m_node->GetId() << " is sending packet"<<  m_packet->GetUid()<< " to " << m_neighbors[fwdDev_idx] << " at time " << Simulator::Now().GetSeconds() << "s. The output device is " << dev->GetIfIndex() << " and " << dev->GetNode()->GetId()<< " "<<dev->GetChannel()->GetDevice(0)->GetNode()->GetId() << " " << dev->GetChannel()->GetDevice(1)->GetNode()->GetId() << " " << dev->GetChannel()->GetNDevices());
     //Send and verify if the Packet was dropped
     m_counterSentPackets += 1;
     SentPacket sent;
@@ -287,7 +312,7 @@ DataPacketManager::sendPacket(Ptr<OpenGymDataContainer> action){
     sent.type = DATA_PACKET;
     sent.start_time= Simulator::Now().GetMilliSeconds();
     m_sentPackets.push_back(sent);
-    dev->Send(m_packet, m_destAddr, 0x0800);
+    dev->Send(m_packet, dev->GetBroadcast(), 0x0800);
 
   } else{
     //TODO: Implement DropPacket Function

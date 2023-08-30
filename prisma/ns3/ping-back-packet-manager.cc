@@ -95,6 +95,11 @@ PingBackPacketManager::setMovingAverageSize(uint32_t value){
 }
 
 void 
+PingBackPacketManager::setTunnelsMaxDelays(vector<vector<double>> tunnelsMaxDelays){
+  m_tunnelsMaxDelays = tunnelsMaxDelays;
+}
+
+void 
 PingBackPacketManager::addSentPingForwardPacket(uint64_t id, uint64_t start_time){
   SentPacket sentPacket;
   sentPacket.start_time = start_time;
@@ -129,7 +134,7 @@ PingBackPacketManager::receivePacket(Ptr<Packet> packet, Ptr<NetDevice> receivin
   m_overlayTunnelIndex = tagCopy.GetTunnelOverlaySendingIndex();
   m_pingPacketIndex = tagCopy.GetOverlayIndex();
   if (m_pingPacketIndex == 0){
-    NS_LOG_UNCOND( m_node->GetId() << " " << m_overlayTunnelIndex << " " << delay);
+    NS_LOG_UNCOND( m_map_overlay_array[m_node->GetId()] << " " << m_overlayTunnelIndex << " " << delay);
   }
   // remove the packets until the one that was acked
   if (m_sentPingForwardPackets[m_overlayTunnelIndex].begin()->uid == m_pingPacketIndex){

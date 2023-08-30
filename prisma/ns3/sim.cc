@@ -88,6 +88,7 @@ vector<vector<bool> > readNxNMatrix (std::string adj_mat_file_name);
 vector<vector<double> > readCordinatesFile (std::string node_coordinates_file_name);
 vector<vector<std::string>> readIntensityFile(std::string intensity_file_name);
 vector<vector<double> > readOptRejectedFile (std::string opt_rejected_file_name);
+vector<vector<double> > readMaxDelaysFile (std::string map_overlay_file_name);
 vector<int> readOverlayMatrix(std::string overlay_file_name);
 void printCoordinateArray (const char* description, vector<vector<double> > coord_array);
 void printMatrix (const char* description, vector<vector<bool> > array);
@@ -156,6 +157,7 @@ int main (int argc, char *argv[])
   std::string node_intensity_file_name("scratch/prisma/examples/abilene/node_intensity.txt");
   std::string opt_rejected_file_name("scratch/prisma/test.txt");
   std::string map_overlay_file_name("scratch/prisma/test2.txt");
+  std::string tunnels_max_delays_file_name("scratch/prisma/examples/abilene/max_observed_values.txt");
 
   float groundTruthFrequence = -1;
 
@@ -215,6 +217,7 @@ int main (int argc, char *argv[])
   cmd.AddValue ("groundTruthFrequence", "ground truth freq", groundTruthFrequence);
   cmd.AddValue ("bigSignalingSize", "total size of the weights of the NN in bytes", bigSignalingSize);
   cmd.AddValue ("pingPacketIntervalTime", "Time between two ping packets", pingPacketIntervalTime);
+  cmd.AddValue ("tunnels_max_delays_file_name", "Tunnels max delays file name", tunnels_max_delays_file_name);
   cmd.AddValue ("DT_SendAllDestinations", "Send all destinations in the signalling pkt for the DT", DT_SendAllDestinations);
 
   cmd.Parse (argc, argv);
@@ -272,6 +275,12 @@ int main (int argc, char *argv[])
   std::string anim_name ("n-node-ppp.anim.xml");
 
 
+
+  // read max observed values for the tunnels from file 
+  vector<vector<double>> maxObservedValues;
+  if (pingAsObs){
+    maxObservedValues = readMaxDelaysFile(tunnels_max_delays_file_name);
+  }
 
   // ---------- End of Simulation Variables ----------------------------------
 
@@ -461,6 +470,21 @@ int main (int argc, char *argv[])
   TrafficControlHelper tch;
   tch.Uninstall (switch_nd);
   
+  NS_LOG_UNCOND("*** traffic "<< interfaces_traffic.GetN() << " switch "<< interfaces_switch.GetN());
+  for (uint32_t i = 0; i < interfaces_traffic.GetN(); i++)
+  {
+    NS_LOG_UNCOND("traffic "<< interfaces_traffic.GetAddress(i));
+  }
+  for (uint32_t i = 0; i < interfaces_switch.GetN(); i++)
+  {
+    NS_LOG_UNCOND("switch "<< interfaces_switch.GetAddress(i));
+  }
+
+  for (u_int32_t i=0; i<switch_nd.GetN(); i++){
+    Ptr<NetDevice> nd = switch_nd.Get(i);
+    NS_LOG_UNCOND("switch "<< i << " "<< nd->GetAddress() << " "<< nd->GetChannel()->GetId() << " " << nd->GetNode()->GetId());
+  }
+    
   // Create the overlay network map
   //Specifies the UnderlayIndex of overlay Nodes
   int overlay_to_underlay_map[overlay_n_nodes];
@@ -497,9 +521,9 @@ int main (int argc, char *argv[])
       NS_LOG_UNCOND(" ");
   }
   // Computing the starting ip address for a node
-  int nodes_starting_address[n_nodes]={0};
+  int nodes_starting_address[n_nodes]={1};
   for (int i=1;i<n_nodes;i++){
-    nodes_starting_address[i] = nodes_starting_address[i-1] + nodes_degree[i];
+    nodes_starting_address[i] = nodes_starting_address[i-1] + nodes_degree[i]+1;
     NS_LOG_UNCOND(" printing overlay starting adress for node  " << i << " " <<nodes_starting_address[i]);
   }
 
@@ -557,6 +581,11 @@ int main (int argc, char *argv[])
     packetRoutingEnv->setPingPacketIntervalTime(pingPacketIntervalTime);
     packetRoutingEnv->SetOpenGymInterface(openGymInterface);
     packetRoutingEnv->initialize();
+    if (pingAsObs){
+      packetRoutingEnv->setTunnelsMaxDelays(maxObservedValues);
+    }
+    // Load the max delays from a file stored in node intensity folder
+
     //packetRoutingEnv->m_node_container = &nodes_switch;
     //packetRoutingEnv->setPingTimeout(16260, 500000, 1);
     //packetRoutingEnv->setLossPenalty(lossPenalty);
@@ -647,20 +676,20 @@ int main (int argc, char *argv[])
                 apps.Stop (Seconds (AppStopTime));
               }
               
-              if(train && activateSignaling && signalingType=="NN" && overlayNodesChecker[i] && overlayNodesChecker[j]){
-                if(OverlayAdj_Matrix[underlay_to_overlay_map[i]][underlay_to_overlay_map[j]]==1 ){
-                  string string_ip_bigSignaling= "10.2.2."+std::to_string(j+1);
-                  Ipv4Address ip_big_signaling(string_ip_bigSignaling.c_str());
-                  sinkAddress = InetSocketAddress (ip_big_signaling, sinkPortUDP);
+              // if(train && activateSignaling && signalingType=="NN" && overlayNodesChecker[i] && overlayNodesChecker[j]){
+              //   if(OverlayAdj_Matrix[underlay_to_overlay_map[i]][underlay_to_overlay_map[j]]==1 ){
+              //     string string_ip_bigSignaling= "10.2.2."+std::to_string(j+1);
+              //     Ipv4Address ip_big_signaling(string_ip_bigSignaling.c_str());
+              //     sinkAddress = InetSocketAddress (ip_big_signaling, sinkPortUDP);
 
-                  BigSignalingAppHelper sign ("ns3::UdpSocketFactory",sinkAddress); 
-                  sign.SetAverageStep (syncStep, bigSignalingSize); 
-                  sign.SetSourceDest(i+1, j+1, underlay_to_overlay_map[i]+1); 
-                  ApplicationContainer apps = sign.Install (nodes_traffic.Get (i));  // traffic sources are installed on all nodes 
-                  apps.Start (Seconds (AppStartTime )); 
-                  apps.Stop (Seconds (AppStopTime)); 
-                }      
-              }
+              //     BigSignalingAppHelper sign ("ns3::UdpSocketFactory",sinkAddress); 
+              //     sign.SetAverageStep (syncStep, bigSignalingSize); 
+              //     sign.SetSourceDest(i+1, j+1, underlay_to_overlay_map[i]+1); 
+              //     ApplicationContainer apps = sign.Install (nodes_traffic.Get (i));  // traffic sources are installed on all nodes 
+              //     apps.Start (Seconds (AppStartTime )); 
+              //     apps.Stop (Seconds (AppStopTime)); 
+              //   }      
+              // }
                     
               
             }
@@ -726,6 +755,10 @@ int main (int argc, char *argv[])
   {
     NS_LOG_UNCOND("flags" << i);
     packetRoutingEnvs[i]->is_trainStep_flag = 1;
+    if (i==0){
+      // Notify a node to collect the latest statistics about the environment
+      packetRoutingEnvs[i]->Notify();
+    }
     //packetRoutingEnvs[i]->simulationEnd(activateUnderlayTraffic, load_factor);
     myOpenGymInterfaces[i]->NotifySimulationEnd();
   }
@@ -916,6 +949,45 @@ vector<vector<double> > readOptRejectedFile (std::string opt_rejected_file_name)
 
 }
 
+vector<vector<double> > readMaxDelaysFile (std::string max_delays_file_name)
+{
+  ifstream adj_mat_file;
+  adj_mat_file.open (max_delays_file_name.c_str (), ios::in);
+  if (adj_mat_file.fail ())
+    {
+      NS_FATAL_ERROR ("File " << max_delays_file_name.c_str () << " not found");
+    }
+  vector<vector<double> > array;
+  int i = 0;
+
+  while (!adj_mat_file.eof ())
+    {
+      string line;
+      getline (adj_mat_file, line);
+      if (line == "")
+        {
+          NS_LOG_UNCOND ("WARNING: Ignoring blank row in the array: " << i);
+          break;
+        }
+
+      istringstream iss (line);
+      double element;
+      vector<double> row;
+      int j = 0;
+
+      while (iss >> element)
+        {
+          row.push_back (element);
+          j++;
+        }
+        array.push_back (row);
+      i++;
+    }
+
+  adj_mat_file.close ();
+  return array;
+
+}
 vector<vector<double> > readCordinatesFile (std::string node_coordinates_file_name)
 {
   ifstream node_coordinates_file;

@@ -36,7 +36,8 @@ class Forwarder(Agent):
         
         ## reset the env
         self.reset()
-        
+
+            
     def reset(self, init=True):
         """ Reset the ns3gym env 
         """
@@ -130,9 +131,7 @@ class Forwarder(Agent):
                 if loaded_models is not None:
                     print("Restoring from {} for node {}".format(Agent.load_path, self.index))
                     Agent.agents[self.index].q_network.set_weights(loaded_models[self.index].get_weights())
-        
-            ## define the log file for exploration value
-            self.tb_writer_dict = {"exploration":  tf.summary.create_file_writer(logdir=f'{Agent.logs_folder}/exploration/node_{self.index}')}
+
             
         ## env trackers definition
         self.count_arrived_packets = 0
@@ -143,12 +142,22 @@ class Forwarder(Agent):
         ## define action history and nb_actions
         self.action_history = np.ones(self.env.action_space.n)
         self.nb_actions = np.sum(self.action_history)
+        
+        if Agent.base_curr_time < 1 or Agent.reset_exploration:
+            # Create the schedule for exploration.
+            self.exploration = LinearSchedule(schedule_timesteps=int(Agent.iterationNum),
+                                            initial_p=Agent.exploration_initial_eps,
+                                            final_p=Agent.exploration_final_eps)
+        else:
+            self.exploration = LinearSchedule(schedule_timesteps=int(1),
+                                              initial_p=0,
+                                            final_p=0)
+                    
+        ## define the log file for exploration value
+        self.tb_writer_dict = {"exploration":  tf.summary.create_file_writer(logdir=f'{Agent.logs_folder}/exploration/node_{self.index}')}
             
 
-        # Create the schedule for exploration.
-        self.exploration = LinearSchedule(schedule_timesteps=int(Agent.iterationNum),
-                                    initial_p=Agent.exploration_initial_eps,
-                                    final_p=Agent.exploration_final_eps)
+
 
 
 
@@ -179,9 +188,14 @@ class Forwarder(Agent):
                                                }
             # Agent.max_observed_values[self.index] = list(np.max([Agent.max_observed_values[self.index], obs[1:]], axis=0))
             if Agent.loss_penalty_type == "constrained":
-                Agent.constrained_loss_database[self.index][self.action].add(obs[self.action],
-                                                                    Agent.lamda_coefs[self.index][self.action],
-                                                                    Agent.curr_time)
+                if Agent.rcpo_use_loss_pkts:
+                    Agent.constrained_loss_database[self.index][self.action].add(0,
+                                                                                 Agent.lamda_coefs[self.index][self.action],
+                                                                                 Agent.curr_time)                                                                  
+                else:
+                    Agent.constrained_loss_database[self.index][self.action].add(obs[self.action],
+                                                                                 Agent.lamda_coefs[self.index][self.action],
+                                                                                 Agent.curr_time)
         ### Apply the action
         return self.env.step(self.action)
     
@@ -190,6 +204,7 @@ class Forwarder(Agent):
         """
         if Agent.loss_penalty_type == "fixed":
             return Agent.loss_penalty
+
 
 
     def take_action(self, obs):
@@ -215,101 +230,126 @@ class Forwarder(Agent):
             action = self.neighbors.index(Agent.agents[self.index](Agent.G, self.index, obs[0])[1])
         elif self.agent_type == "opt":
             track =  Agent.pkt_tracking_dict[int(self.pkt_id)]
+            if  track["src"]== 2 and track["dst"]==1 and self.pkt_id == 12425:
+                print("callling action " ,self.index, self.pkt_id)
             action, track["tag"] = optimal_routing_decision(Agent.G, Agent.optimal_routing_mat, Agent.optimal_rejected_mat, self.index, track["src"], track["dst"], track["tag"])
         return action
     
-    def treat_info(self, info):
+    def treat_info(self, info, only_stats=False):
         """ Treat the info received from the ns3 simulator
         Args:
             info (dict): info received from the ns3 simulator
+            only_stats (bool): if True, only update the stats, if False, update the stats and check if it is a control packet
         Returns:
             bool: True if it is a control packet, False otherwise
         """
         tokens = info.split(",")
-        self.delay_time = float(tokens[0].split('=')[-1])
-        ## retrieve packet info
-        self.pkt_size = float(tokens[1].split('=')[-1])
         Agent.curr_time = float(tokens[2].split('=')[-1])
-        self.pkt_id = int(tokens[3].split('=')[-1])
-        pkt_type = int(tokens[4].split('=')[-1]) 
-        self.signaling = pkt_type != 0 
-        if(pkt_type==0): # data packet
-            # treat lost packets
-            lost_packets_id = tokens[18].split('=')[-1].split(';')[:-1] 
-            for lost_packet_id in lost_packets_id: 
-                lost_packet_info = Agent.temp_obs.get(int(lost_packet_id)) 
-                if(lost_packet_info==None): 
-                    print("error") 
-                    continue 
-                #if(int(lost_packet_time)!= int(lost_packet_info["time"]*1000)): 
-                #    continue 
-                next_hop_degree = len(list(Agent.G.neighbors(self.neighbors[lost_packet_info["action"]])))
-                rew = self._get_reward_lost_pkt()
-                obs_shape = next_hop_degree
-                ## Add the lost packet to the replay buffer
-                if Agent.loss_penalty_type == "fixed":
-                    if(Agent.prioritizedReplayBuffer):
-                        Agent.replay_buffer[self.index].add(np.array(lost_packet_info["obs"], dtype=float).squeeze(),
-                                    lost_packet_info["action"], 
-                                    rew,
-                                    np.array([lost_packet_info["obs"][0]] + [0]*(obs_shape), dtype=float).squeeze(), 
-                                    True,
-                                    Agent.replay_buffer[self.index].latest_gradient_step[lost_packet_info["action"]])
-                    else:
-                        if(self.train):
+        if not only_stats:
+            ## retrieve packet info
+            self.delay_time = float(tokens[0].split('=')[-1])
+            self.pkt_size = float(tokens[1].split('=')[-1])
+            self.pkt_id = int(tokens[3].split('=')[-1])
+            pkt_type = int(tokens[4].split('=')[-1]) 
+            self.signaling = pkt_type != 0 
+            if(pkt_type==0): # data packet
+                # treat lost packets
+                lost_packets_id = tokens[20].split('=')[-1].split(';')[:-1] 
+                for lost_packet_id in lost_packets_id: 
+                    lost_packet_info = Agent.temp_obs.get(int(lost_packet_id)) 
+                    if(lost_packet_info==None): 
+                        print("error") 
+                        continue 
+                    #if(int(lost_packet_time)!= int(lost_packet_info["time"]*1000)): 
+                    #    continue 
+                    next_hop_degree = len(list(Agent.G.neighbors(self.neighbors[lost_packet_info["action"]])))
+                    rew = self._get_reward_lost_pkt()
+                    obs_shape = next_hop_degree
+                    Agent.lost_pkts_per_seconds_per_interface[self.index][lost_packet_info["action"]].add(1, 1, lost_packet_info["time"])
+                    ## Add the lost packet to the replay buffer
+                    if Agent.loss_penalty_type == "fixed":
+                        if(Agent.prioritizedReplayBuffer):
                             Agent.replay_buffer[self.index].add(np.array(lost_packet_info["obs"], dtype=float).squeeze(),
                                         lost_packet_info["action"], 
                                         rew,
                                         np.array([lost_packet_info["obs"][0]] + [0]*(obs_shape), dtype=float).squeeze(), 
-                                        True)
-                ## Increment the loss counter
-                Agent.node_lost_pkts += 1
-                ## Remove the lost packet from the pkt tracking dict
-                Agent.pkt_tracking_dict.pop(int(lost_packet_id))
-        else: 
-            if(pkt_type==2): # small signaling packet
-                id_signaled = int(tokens[18].split('=')[-1]) 
-                self._get_upcoming_events_real(id_signaled) 
-                Agent.small_signaling_overhead_counter += self.pkt_size 
-                Agent.small_signaling_pkt_counter += 1 
-            if(pkt_type==1): # big signaling packet
-                NNIndex = int(tokens[18].split('=')[-1]) 
-                segIndex= int(tokens[19].split('=')[-1]) 
-                NodeIdSignaled = int(tokens[20].split('=')[-1]) 
-                if segIndex > Agent.nn_max_seg_index:
-                    raise("segIndex > {}".format(Agent.nn_max_seg_index))
-                if segIndex == Agent.nn_max_seg_index: ## NN signaling complete
-                    # print(f"sync {self.index} with neighbor {self.neighbors.index(NodeIdSignaled)} at time {Agent.curr_time} {self.sync_counter} {NNIndex}")
-                    if NNIndex ==Agent.sync_counters[self.index] - 1:
-                        self._sync_current(self.neighbors.index(NodeIdSignaled), with_temp=True)
-                    else:
-                        #print(self.index, NodeIdSignaled)
-                        self._sync_current(self.neighbors.index(NodeIdSignaled))
-                #print("here") 
-                Agent.big_signaling_overhead_counter += self.pkt_size 
-                Agent.big_signaling_pkt_counter += 1
+                                        True,
+                                        Agent.replay_buffer[self.index].latest_gradient_step[lost_packet_info["action"]])
+                        else:
+                            if(self.train):
+                                Agent.replay_buffer[self.index].add(np.array(lost_packet_info["obs"], dtype=float).squeeze(),
+                                            lost_packet_info["action"], 
+                                            rew,
+                                            np.array([lost_packet_info["obs"][0]] + [0]*(obs_shape), dtype=float).squeeze(), 
+                                            True)
+                            
+                    elif Agent.loss_penalty_type == "constrained":
+                        if self.train and Agent.rcpo_consider_loss:
+                            if Agent.rcpo_use_loss_pkts:
+                                rew  = -1 # put -1 to replace it later by the penalty
+                                f = True
+                            else:
+                                rew = Agent.max_observed_values[self.index][lost_packet_info["action"]]
+                                f = False
+                            Agent.replay_buffer[self.index].add(np.array(lost_packet_info["obs"], dtype=float).squeeze(),
+                                                                lost_packet_info["action"], 
+                                                                rew,
+                                                                np.array([lost_packet_info["obs"][0]] + [0]*(obs_shape), dtype=float).squeeze(), 
+                                                                f)
+                            Agent.constrained_loss_database[self.index][self.action].add(rew,
+                                                                                        Agent.lamda_coefs[self.index][self.action],
+                                                                                        lost_packet_info["time"])
+                    
+                    ## Increment the loss counter
+                    Agent.node_lost_pkts += 1
+                    ## Remove the lost packet from the pkt tracking dict
+                    Agent.pkt_tracking_dict.pop(int(lost_packet_id))
+            else: 
+                if(pkt_type==2): # small signaling packet
+                    id_signaled = int(tokens[20].split('=')[-1]) 
+                    self._get_upcoming_events_real(id_signaled) 
+                    Agent.small_signaling_overhead_counter += self.pkt_size 
+                    Agent.small_signaling_pkt_counter += 1 
+                if(pkt_type==1): # big signaling packet
+                    NNIndex = int(tokens[20].split('=')[-1]) 
+                    segIndex= int(tokens[21].split('=')[-1]) 
+                    NodeIdSignaled = int(tokens[22].split('=')[-1]) 
+                    if segIndex > Agent.nn_max_seg_index:
+                        raise("segIndex > {}".format(Agent.nn_max_seg_index))
+                    if segIndex == Agent.nn_max_seg_index: ## NN signaling complete
+                        # print(f"sync {self.index} with neighbor {self.neighbors.index(NodeIdSignaled)} at time {Agent.curr_time} {self.sync_counter} {NNIndex}")
+                        if NNIndex ==Agent.sync_counters[self.index] - 1:
+                            self._sync_current(self.neighbors.index(NodeIdSignaled), with_temp=True)
+                        else:
+                            #print(self.index, NodeIdSignaled)
+                            self._sync_current(self.neighbors.index(NodeIdSignaled))
+                    #print("here") 
+                    Agent.big_signaling_overhead_counter += self.pkt_size 
+                    Agent.big_signaling_pkt_counter += 1
 
-            return True
+                return True
             #continue             
-        
         ## update stats in static variables
         Agent.sim_avg_e2e_delay =  float(tokens[5].split('=')[-1])  
         Agent.sim_cost = float(tokens[6].split('=')[-1]) 
         Agent.sim_global_avg_e2e_delay = float(tokens[7].split('=')[-1])  
         Agent.sim_global_cost = float(tokens[8].split('=')[-1])  
         Agent.sim_dropped_packets = float(tokens[9].split('=')[-1]) 
-        Agent.sim_delivered_packets = float(tokens[10].split('=')[-1]) 
-        Agent.sim_injected_packets = float(tokens[11].split('=')[-1]) 
-        Agent.sim_buffered_packets = float(tokens[12].split('=')[-1]) 
-        Agent.sim_global_dropped_packets = float(tokens[13].split("=")[-1]) + Agent.sim_dropped_packets 
-        Agent.sim_global_delivered_packets = float(tokens[14].split("=")[-1]) + Agent.sim_delivered_packets 
-        Agent.sim_global_injected_packets = float(tokens[15].split("=")[-1]) + Agent.sim_injected_packets 
-        Agent.sim_global_buffered_packets = float(tokens[16].split('=')[-1]) + Agent.sim_buffered_packets 
-        Agent.sim_signaling_overhead = float(tokens[17].split('=')[-1])
+        Agent.sim_rejected_packets = float(tokens[10].split('=')[-1]) 
+        Agent.sim_delivered_packets = float(tokens[11].split('=')[-1]) 
+        Agent.sim_injected_packets = float(tokens[12].split('=')[-1]) 
+        Agent.sim_buffered_packets = float(tokens[13].split('=')[-1]) 
+        Agent.sim_global_dropped_packets = float(tokens[14].split("=")[-1]) + Agent.sim_dropped_packets 
+        Agent.sim_global_rejected_packets = float(tokens[15].split("=")[-1]) 
+        Agent.sim_global_delivered_packets = float(tokens[16].split("=")[-1]) + Agent.sim_delivered_packets 
+        Agent.sim_global_injected_packets = float(tokens[17].split("=")[-1]) + Agent.sim_injected_packets 
+        Agent.sim_global_buffered_packets = float(tokens[18].split('=')[-1]) + Agent.sim_buffered_packets 
+        Agent.sim_signaling_overhead = float(tokens[19].split('=')[-1])
         if Agent.sim_global_delivered_packets > 0:
-            Agent.sim_global_avg_e2e_delay = ((Agent.sim_global_avg_e2e_delay * float(tokens[13].split("=")[-1])) + (Agent.sim_avg_e2e_delay * Agent.sim_delivered_packets))/(Agent.sim_global_delivered_packets)
+            Agent.sim_global_avg_e2e_delay = ((Agent.sim_global_avg_e2e_delay * float(tokens[16].split("=")[-1])) + (Agent.sim_avg_e2e_delay * Agent.sim_delivered_packets))/(Agent.sim_global_delivered_packets)
+            # print("delays :", float(tokens[7].split('=')[-1]), Agent.sim_avg_e2e_delay, float(tokens[16].split("=")[-1]), Agent.sim_global_delivered_packets)
         if Agent.sim_global_delivered_packets + Agent.sim_global_dropped_packets > 0:
-            Agent.sim_global_cost = ((Agent.sim_global_cost * (float(tokens[13].split("=")[-1]) + float(tokens[13].split("=")[-1]))) + (Agent.sim_cost * (Agent.sim_dropped_packets + Agent.sim_delivered_packets)))/(Agent.sim_global_dropped_packets + Agent.sim_global_delivered_packets)
+            Agent.sim_global_cost = ((Agent.sim_global_cost * (float(tokens[16].split("=")[-1]) + float(tokens[14].split("=")[-1]))) + (Agent.sim_cost * (Agent.sim_dropped_packets + Agent.sim_delivered_packets)))/(Agent.sim_global_dropped_packets + Agent.sim_global_delivered_packets)
         return False
 
     def run(self):
@@ -324,9 +364,13 @@ class Forwarder(Agent):
                 if(not self.env.connected):
                     break
                 obs, _, done_flag, info = self.step(obs)
-                ## check if episode is done_flag
-                if done_flag and obs[0] == -1:
-                    break
+                ## check if episode is done
+                if obs[0] == -1:
+                    if done_flag: # if the msg is to kill the agent and the episode is done
+                        break
+                    else: # if the msg is the last notify before killing the agent
+                        self.treat_info(info, only_stats=True)
+                        continue
 
                 ## Treat the info from the env
                 if self.treat_info(info):

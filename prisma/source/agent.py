@@ -83,7 +83,9 @@ class Agent():
         cl.sim_injected_packets=0
         cl.sim_global_injected_packets=0
         cl.sim_dropped_packets = 0
+        cl.sim_rejected_packets = 0
         cl.sim_global_dropped_packets=0
+        cl.sim_global_rejected_packets=0
         cl.sim_delivered_packets = 0
         cl.sim_global_delivered_packets = 0
         cl.sim_buffered_packets = 0
@@ -127,23 +129,32 @@ class Agent():
         cl.nodes_target_q_network_lock = [threading.Lock() for _ in range(cl.numNodes)]
         cl.smart_exploration = params_dict["smart_exploration"]
         cl.sessionName=params_dict["session_name"]
+        cl.reset_exploration=params_dict["reset_exploration"]
+        cl.rcpo_consider_loss=params_dict["rcpo_consider_loss"]
         cl.logs_parent_folder = params_dict["logs_parent_folder"]
         cl.total_rewards_with_loss=0
         cl.lambda_train_step = params_dict["lambda_train_step"]
         cl.buffer_soft_limit = params_dict["buffer_soft_limit"]
         cl.lamda_training_start_time = params_dict["lamda_training_start_time"]
         cl.lambda_lr=params_dict["lambda_lr"]
+        cl.lambda_lr=0.001
         cl.d_t_max_time = params_dict["d_t_max_time"]
         cl.d_t_send_all_destinations = params_dict["d_t_send_all_destinations"]
+        cl.lost_pkts_per_seconds_per_interface = [[DigitalTwinDB(1)  for _ in range(len(list(cl.G.neighbors(n))))] for n in range(cl.numNodes)]
 
         cl.constrained_loss_database =  [[DigitalTwinDB(Agent.lambda_train_step) for _ in range(len(list(cl.G.neighbors(n))))] for n in range(cl.numNodes)]
         cl.lamda_coefs = [[0 for _ in range(len(list(cl.G.neighbors(n))))] for n in range(cl.numNodes)]
-        cl.max_observed_values = [[0 for _ in range(len(list(cl.G.neighbors(n))))] for n in range(cl.numNodes)]
-        cl.max_observed_values = [[0.52052, 0.26026, 0.78078, 0.52052],
-                                  [0.52052, 1.04104, 1.04104, 1.56156],
-                                  [0.26026, 0.78078, 0.52052, 0.26026],
-                                  [0.78078, 1.04104, 0.78078, 0.52052],
-                                  [0.52052, 1.3013, 0.52052, 0.52052]]
+        cl.rcpo_use_loss_pkts = params_dict["rcpo_use_loss_pkts"]
+        # cl.max_observed_values = [[0 for _ in range(len(list(cl.G.neighbors(n))))] for n in range(cl.numNodes)]
+        # cl.max_observed_values = [[0.52052, 0.26026, 0.78078, 0.52052],
+        #                           [0.52052, 1.04104, 1.04104, 1.56156],
+        #                           [0.26026, 0.78078, 0.52052, 0.26026],
+        #                           [0.78078, 1.04104, 0.78078, 0.52052],
+        #                           [0.52052, 1.3013, 0.52052, 0.52052]]
+        # # save max observed values in a file for later use
+        # np.savetxt(f"{params_dict['traffic_matrix_root_path']}/max_observed_values.txt", cl.max_observed_values, delimiter=' ', newline='\n', header='', footer='', fmt='%1.5f', comments='# ')
+        # load max observed values from file
+        cl.max_observed_values = np.loadtxt(f"{params_dict['tunnels_max_delays_file_name']}", delimiter=' ', dtype=float)
         cl.model_version = params_dict["model_version"]
         cl.sync_counters = [0 for _ in range(cl.numNodes)]
         cl.max_nb_arrived_pkts = params_dict["max_nb_arrived_pkts"]

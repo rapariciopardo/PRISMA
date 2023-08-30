@@ -189,13 +189,15 @@ def optimal_routing_decision(graph, routing_mat, rejected_mat, actual_node, src_
         
     if tag:
         if tag in prob_to_neighbors and tag < 1:
+            # print("action found tag ", src, dst, actual, neighbors, routing_mat.shape, rejected_mat.shape, prob_to_neighbors, loss_prob, list(prob_to_neighbors).index(tag))
             return list(prob_to_neighbors).index(tag), tag
     
-    # print(src, dst, actual, neighbors,list(graph.edges), routing_mat.shape, rejected_mat.shape)
     # print(prob_to_neighbors)
     prob_general = list(prob_to_neighbors/sum(prob_to_neighbors))  
     choice = np.random.choice(neighbors, p=prob_general)
     tag = prob_to_neighbors[neighbors.index(choice)]
+    # if src == 2 and dst == 1:
+    #     print(" action " , src, dst, actual, neighbors, routing_mat.shape, rejected_mat.shape, prob_to_neighbors, loss_prob, choice, tag, neighbors.index(choice))
     return neighbors.index(choice), tag
 
 def allocate_on_gpu(gpu_memory_margin=1500):

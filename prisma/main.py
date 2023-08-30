@@ -50,10 +50,10 @@ def main():
     
     ## check if the session already exists and the model is already trained
     if params["train"] == 1:
-        pathlib.Path(params["logs_parent_folder"] + "/saved_models/").mkdir(parents=True, exist_ok=True)
-        if os.path.exists(params["logs_parent_folder"] + "/saved_models/" + params["session_name"] + "/final"):
-            if len(os.listdir(params["logs_parent_folder"] + "/saved_models/" + params["session_name"] + "/final")) > 0:
-                print(f'The couple {params["seed"]} {params["traffic_matrix_index"]} already exists in : {params["logs_parent_folder"] + "/saved_models/" + params["session_name"]}')
+        pathlib.Path(params["saved_models_path"]).mkdir(parents=True, exist_ok=True)
+        if os.path.exists(params["saved_models_path"] + params["session_name"] + "/final"):
+            if len(os.listdir(params["saved_models_path"] + params["session_name"] + "/final")) > 0:
+                print(f'The couple {params["seed"]} {params["traffic_matrix_index"]} already exists in : {params["saved_models_path"] + params["session_name"]}')
                 return None, None
     
     ## check if the test is already done   
@@ -147,7 +147,7 @@ def main():
                 ## check if it is time to save a snapshot of the models
                 if ((Agent.base_curr_time + Agent.curr_time) > (snapshot_index * params["snapshot_interval"])) and params["snapshot_interval"] > 0:
                     print(f"Saving model at time {Agent.curr_time} with index {snapshot_index}")
-                    save_all_models(Agent.agents, params["G"].nodes(), params["session_name"], snapshot_index, episode, root=params["logs_parent_folder"] + "/saved_models/", snapshot=True)
+                    save_all_models(Agent.agents, params["G"].nodes(), params["session_name"], snapshot_index, episode, root=params["saved_models_path"], snapshot=True)
                     snapshot_index += 1
                         
         print(f""" Summary of the Episode {episode}:
@@ -159,11 +159,16 @@ def main():
                 Overlay arrived packets = {Agent.sim_delivered_packets},
                 Global arrived packets = {Agent.sim_global_delivered_packets},
                 Overlay lost packets = {Agent.sim_dropped_packets},
+                Overlay rejected packets = {Agent.sim_rejected_packets},
                 Global lost packets = {Agent.sim_global_dropped_packets},
+                Global lost packets python = {Agent.node_lost_pkts},
+                Global rejected packets = {Agent.sim_global_rejected_packets},
                 Overlay buffered packets = {Agent.sim_buffered_packets},
                 Global buffered packets = {Agent.sim_global_buffered_packets},
                 Overlay lost ratio = {Agent.sim_dropped_packets/max(Agent.sim_injected_packets, 1.0)},
                 Global lost ratio = {Agent.sim_global_dropped_packets/max(Agent.sim_global_injected_packets,1.0)},
+                Overlay delivered ratio = {Agent.sim_delivered_packets/max(Agent.sim_injected_packets, 1.0)},
+                Global delivered ratio = {Agent.sim_global_delivered_packets/max(Agent.sim_global_injected_packets,1.0)},
                 Overlay e2e delay = {Agent.sim_avg_e2e_delay},
                 Global e2e delay = {Agent.sim_global_avg_e2e_delay},
                 Overlay Cost = {Agent.sim_cost},
@@ -175,8 +180,9 @@ def main():
                 """) 
         for forwarder in forwarders:       
             forwarder.env.close()
-        for trainer in trainers:
-            trainer._update_lambda_coefs()
+        if params["loss_penalty_type"] == "constrained":
+            for trainer in trainers:
+                trainer._update_lambda_coefs()
         Agent.base_curr_time += Agent.curr_time
     
     ## write the results for the test session
@@ -184,8 +190,8 @@ def main():
        stats_writer_test(params["logs_folder"] + "/test_results", Agent)
 
     ## save models        
-    if params["save_models"] and Agent.curr_time >= params["simTime"]-5:
-        save_all_models(Agent.agents, params["G"].nodes(), params["session_name"], 1, 1, root=params["logs_parent_folder"] + "/saved_models/", snapshot=False)
+    if params["save_models"] and Agent.curr_time >= params["simTime"]-1:
+        save_all_models(Agent.agents, params["G"].nodes(), params["session_name"], 1, 1, root=params["saved_models_path"], snapshot=False)
 
 
     ## save the replay buffers

@@ -90,6 +90,11 @@ PacketRoutingEnv::setNetDevicesContainer(NetDeviceContainer* nd){
 }
 
 void
+PacketRoutingEnv::setTunnelsMaxDelays(vector<vector<double>> tunnelMaxDelays){
+  m_pingBackPacketmanager->setTunnelsMaxDelays(tunnelMaxDelays);
+}
+
+void
 PacketRoutingEnv::setTrainConfig(bool train){
   m_train = train;
 }
@@ -172,7 +177,14 @@ std::string
 PacketRoutingEnv::GetExtraInfo()
 {
   std::string myInfo;
-  myInfo="-2";
+  if (is_trainStep_flag==1){
+    // notify the end of the episode to collect stats
+    return m_dataPacketManager->getInfo();
+  }
+  else{
+    myInfo="-2";
+
+  }
   
   if(m_packetType==BIG_SIGN_PACKET){
     myInfo = m_bigSignalingPacketManager->getInfo();
@@ -241,6 +253,9 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
   //Define Tag
   MyTag tagCopy;
   p->PeekPacketTag(tagCopy);
+
+  if(tagCopy.GetSimpleValue()==0 && tagCopy.GetSource()==4 && tagCopy.GetFinalDestination()==3 && packet->GetUid()==12425)
+  NS_LOG_UNCOND("PacketRoutingEnv::NotifyPktRcv: packet->GetUid()="<<packet->GetUid()<<", tagCopy.GetSimpleValue()="<<tagCopy.GetSimpleValue()<<", tagCopy.GetSource()="<<tagCopy.GetSource()<<", tagCopy.GetFinalDestination()="<<tagCopy.GetFinalDestination()<<", tagCopy.GetStartTime()="<<tagCopy.GetStartTime()<<", tagCopy.GetLastHop()="<<tagCopy.GetLastHop()<<", tagCopy.GetNextHop()="<<tagCopy.GetNextHop() << ", node id="<<entity->m_dataPacketManager->m_node->GetId()<<", packet size="<<packet->GetSize()<<", packet type="<<PacketType(tagCopy.GetSimpleValue())<<", p");
 
   //Get packet type
   entity->m_packetType = PacketType(tagCopy.GetSimpleValue());

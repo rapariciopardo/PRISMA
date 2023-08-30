@@ -81,7 +81,6 @@ bool PacketManager::receivePacket(Ptr<Packet> packet){
     MyTag tagCopy;
     p->PeekPacketTag(tagCopy);
     
-  // NS_LOG_UNCOND("PacketManager::receivePacket - Packet received at node " << m_node->GetId() << " from node " << tagCopy.GetLastHop() << " to node " << tagCopy.GetNextHop() << " with source " << tagCopy.GetSource() << " and destination " << tagCopy.GetFinalDestination() << " at time " << Simulator::Now().GetSeconds() << "s" << " with packet type " << int(tagCopy.GetSimpleValue()) << " and traffic variable " << int(tagCopy.GetTrafficValable()) <<" and packet size " << packet->GetSize() << " bytes");
     //Packet's Header
     p->RemoveHeader(m_packetPppHeader);  
     p->RemoveHeader(m_packetIpHeader);
@@ -149,29 +148,36 @@ string PacketManager::getInfo(){
     myInfo += ", Packets dropped ="; //9
     myInfo += std::to_string(m_computeStats->getGlobalOverlayPacketsLost());
 
-    myInfo += ", Packets delivered ="; //10
+    myInfo += ", Packets rejected ="; //10
+    myInfo += std::to_string(m_computeStats->getGlobalOverlayPacketsRejected());
+
+    myInfo += ", Packets delivered ="; //11
     myInfo += std::to_string(m_computeStats->getGlobalOverlayPacketsArrived());
 
-    myInfo += ", Packets injected ="; //11
+    myInfo += ", Packets injected ="; //12
     myInfo += std::to_string(m_computeStats->getGlobalOverlayPacketsInjected());
 
-    myInfo += ",Packets Buffered ="; //12
+    myInfo += ",Packets Buffered ="; //13
     myInfo += std::to_string(m_computeStats->getGlobalOverlayPacketsBuffered());
 
-    myInfo += ", Packets dropped Underlay ="; //13
+    myInfo += ", Packets dropped Underlay ="; //14
     myInfo += std::to_string(m_computeStats->getGlobalUnderlayPacketsLost());
 
-    myInfo += ", Packets delivered Underlay="; //14
+    myInfo += ", Packets rejected Underlay ="; //15
+    myInfo += std::to_string(m_computeStats->getGlobalUnderlayPacketsRejected());
+
+    myInfo += ", Packets delivered Underlay="; //16
     myInfo += std::to_string(m_computeStats->getGlobalUnderlayPacketsArrived());
 
-    myInfo += ", Packets injected Underlay="; //15
+    myInfo += ", Packets injected Underlay="; //17
     myInfo += std::to_string(m_computeStats->getGlobalUnderlayPacketsInjected());
 
-    myInfo += ",Packets Buffered Underlay="; //16
+    myInfo += ",Packets Buffered Underlay="; //18
     myInfo += std::to_string(m_computeStats->getGlobalUnderlayPacketsBuffered());
     
-    myInfo += ",Signaling overhead ="; //17
+    myInfo += ",Signaling overhead ="; //19
     myInfo += std::to_string(m_computeStats->getSignalingOverhead());
+    // NS_LOG_UNCOND("PacketManager::getInfo - "<< m_node->GetId()<< " " << myInfo << " source "<< m_source << " destination " << m_destination);
     return myInfo;
    
 }

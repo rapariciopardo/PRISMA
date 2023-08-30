@@ -71,8 +71,9 @@ def parse_arguments():
     group4 = parser.add_argument_group('Network parameters')
     group4.add_argument('--load_factor', type=float, help='scale of the traffic matrix', default=1)
     group4.add_argument('--topology_name', type=str, choices=["abilene", "geant"] ,help='Name of the network topology', default="abilene")
-    group4.add_argument('--physical_adjacency_matrix_path', type=str, help='Path to the adjacency matrix', default="examples/abilene/adjacency_matrix.txt")
-    group4.add_argument('--overlay_adjacency_matrix_path', type=str, help='Path to the adjacency matrix', default="examples/abilene/adjacency_matrix_2_5n.txt")
+    group4.add_argument('--physical_adjacency_matrix_path', type=str, help='Path to the adjacency matrix', default="examples/abilene/physical_adjacency_matrix.txt")
+    group4.add_argument('--overlay_adjacency_matrix_path', type=str, help='Path to the adjacency matrix', default="examples/abilene/overlay_adjacency_matrix.txt")
+    group4.add_argument('--tunnels_max_delays_file_name', type=str, help='Path to max observed delay per tunnel', default="examples/abilene/max_observed_values.txt")
     group4.add_argument('--traffic_matrix_root_path', type=str, help='Path to the traffic matrix folder', default="examples/abilene/traffic_matrices/")
     group4.add_argument('--traffic_matrix_index', type=int, help='Index of the traffic matrix', default=0)
     group4.add_argument('--node_coordinates_path', type=str, help='Path to the nodes coordinates', default="examples/abilene/node_coordinates.txt")
@@ -101,8 +102,11 @@ def parse_arguments():
     group3.add_argument('--iterationNum', type=int, help='Max iteration number for exploration (used when training)', default=3000)
     group3.add_argument('--exploration_initial_eps', type=float, help='Exploration intial value (used when training)', default=1.0)
     group3.add_argument('--exploration_final_eps', type=float, help='Exploration final value (used when training)', default=0.1)
+    group3.add_argument('--reset_exploration', type=int, help='Reset the exploration after each episode (used when training)', default=0)
     group3.add_argument('--load_path', type=str, help='Path to DQN models, if not None, loads the models from the given files', default=None)
     group3.add_argument('--save_models', type=int, help='if True, store the models at the end of the training', default=0)
+    group3.add_argument('--saved_models_path', type=str, help='Path to saved models (NNs)', default=None)
+    
     group3.add_argument('--snapshot_interval', type=int, help='Number of seconds between each snapshot of the models. If 0, desactivate snapshot', default=0)
     group3.add_argument('--training_step', type=float, help='Number of steps or seconds to train (used when training)', default=0.05)
     group3.add_argument('--sync_step', type=float, help='Number of seconds to sync NN if signaling_type is "NN". if -1, then compute it to have control/data of 10% (used when training)', default=1.0)
@@ -114,6 +118,8 @@ def parse_arguments():
     group3.add_argument('--lamda_training_start_time', type=float, help='Number of seconds to wait before starting the training (used when training and loss_penalty_type is constrained)', default=60)
     group3.add_argument('--lambda_lr', type=float, help='Learning rate for the lambda parameter (used when training and loss_penalty_type is constrained)', default=1e-7)
     group3.add_argument('--lambda_train_step', type=float, help='Number of seconds to train (used when training)', default=1)
+    group3.add_argument('--rcpo_consider_loss', type=int, help='Whether to consider lost packets as a constraint violation (used when training)', default=1)
+    group3.add_argument('--rcpo_use_loss_pkts', type=int, help='Whether to use the number of lost packets as a constraint (used when training)', default=0)
     group3.add_argument('--buffer_soft_limit', type=float, help='Buffer soft limit ratio (used when training and loss_penalty_type is constrained)', default=0.6)
     group5 = parser.add_argument_group('Other parameters')
     group5.add_argument('--start_tensorboard', type=int, help='if True, starts a tensorboard server to keep track of simulation progress', default=0)
@@ -131,10 +137,15 @@ def parse_arguments():
     params["debug"]=0
     ## replace relative paths by absolute ones
     params["logs_parent_folder"] = os.path.abspath(params["logs_parent_folder"])
+    if params["saved_models_path"]:
+        params["saved_models_path"] = os.path.abspath(params["saved_models_path"])
+    else:
+        params["saved_models_path"] = params["logs_parent_folder"] + "/saved_models/"
     if params["load_path"]:
         params["load_path"] = os.path.abspath(params["load_path"])
     params["physical_adjacency_matrix_path"] = os.path.abspath(params["physical_adjacency_matrix_path"])
     params["overlay_adjacency_matrix_path"] = os.path.abspath(params["overlay_adjacency_matrix_path"])
+    params["tunnels_max_delays_file_name"] = os.path.abspath(params["tunnels_max_delays_file_name"])
     params["map_overlay_path"] = os.path.abspath(params["map_overlay_path"])
     params["traffic_matrix_path"] = os.path.abspath(f'{params["traffic_matrix_root_path"].rstrip("/")}/node_intensity_normalized_{params["traffic_matrix_index"]}.txt')
     # params["traffic_matrix_path"] = os.path.abspath(f'{params["traffic_matrix_root_path"].rstrip("/")}/traffic_mat_{params["traffic_matrix_index"]}_adjusted_bps.txt')
@@ -159,6 +170,7 @@ def parse_arguments():
 
     ## Add session name
     if params["session_name"] == None:
+        import datetime
         params["session_name"] = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     params["logs_folder"] = params["logs_parent_folder"] + "/" + params["session_name"]
 
@@ -171,19 +183,19 @@ def parse_arguments():
     ## Add optimal solution path
     topology_name = params["physical_adjacency_matrix_path"].split("/")[-3]
     # params["optimal_soltion_path"] = f"examples/{topology_name}/optimal_solution/11Nodes/{params['traffic_matrix_index']}_norm_matrix_uniform/{int(params['load_factor']*100)}_ut_minCostMCF.json"
-    params["optimal_soltion_path"] = f"examples/{topology_name}/optimal_solution/{params['traffic_matrix_index']}_norm_matrix_uniform/{int(params['load_factor']*100)}_ut_minCostMCF.json"
+    params["optimal_soltion_path"] = f"examples/{topology_name}/optimal_solution/{params['traffic_matrix_index']}_original_uniform/{int(params['load_factor']*100)}_ut_minCostMCF.json"
     params["opt_rejected_path"] = os.path.abspath(f"examples/{topology_name}/optimal_solution/rejected_flows.txt")
     print(params["optimal_soltion_path"])
+    K_size = np.loadtxt(open(params["physical_adjacency_matrix_path"])).shape
     if os.path.exists(params["optimal_soltion_path"]):
         np.savetxt(params["opt_rejected_path"], json.load(open(params["optimal_soltion_path"], "r"))["rejected_flows"], fmt='%.6f')
     else:
         print(f"WARNING: optimal solution file {params['optimal_soltion_path']} does not exist")
-        K_size = np.loadtxt(open(params["physical_adjacency_matrix_path"])).shape
         np.savetxt(params["opt_rejected_path"], np.zeros(K_size), fmt='%.6f')
     # params["optimal_soltion_path"] = f"examples/{topology_name}/optimal_solution/{params['traffic_matrix_index']}_adjusted_5_nodes_mesh_norm_matrix_uniform/{int(params['load_factor']*100)}_ut_minCostMCF.json"
     
     ## compute the loss penalty
     # params["loss_penalty"] = ((((params["max_out_buffer_size"] + 1)*params["packet_size"]*8)/params["link_cap"])) *params["numNodes"]
-    params["loss_penalty"] = ((((params["max_out_buffer_size"] + 512+30)*8)/params["link_cap"])+0.001)* params["numNodes"]
+    params["loss_penalty"] = ((((params["max_out_buffer_size"] + 512+30)*8)/params["link_cap"])+0.001)* params["numNodes"] * K_size[0]
     
     return params
