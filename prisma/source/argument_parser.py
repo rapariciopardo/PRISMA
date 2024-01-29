@@ -106,6 +106,7 @@ def parse_arguments():
     group3.add_argument('--load_path', type=str, help='Path to DQN models, if not None, loads the models from the given files', default=None)
     group3.add_argument('--save_models', type=int, help='if True, store the models at the end of the training', default=0)
     group3.add_argument('--saved_models_path', type=str, help='Path to saved models (NNs)', default=None)
+    group3.add_argument('--gap_threshold', type=float, help='Error threshold between the node and the neighors estimations in order to trigger a small signalling (used when training for model sharing)', default=0)
     
     group3.add_argument('--snapshot_interval', type=int, help='Number of seconds between each snapshot of the models. If 0, desactivate snapshot', default=0)
     group3.add_argument('--training_step', type=float, help='Number of steps or seconds to train (used when training)', default=0.05)
@@ -172,7 +173,12 @@ def parse_arguments():
     if params["session_name"] == None:
         import datetime
         params["session_name"] = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    params["logs_folder"] = params["logs_parent_folder"] + "/" + params["session_name"]
+        
+    if params["train"] == 1:
+        pathlib.Path("/tmp/logs").mkdir(parents=True, exist_ok=True)
+        params["logs_folder"] = "/tmp/logs/" + params["session_name"]
+    else:
+        params["logs_folder"] = params["logs_parent_folder"] + "/" + params["session_name"]
 
     ## add some params for tensorboard writer
     params["global_stats_path"] = f'{params["logs_folder"]}/stats'
@@ -183,14 +189,14 @@ def parse_arguments():
     ## Add optimal solution path
     topology_name = params["physical_adjacency_matrix_path"].split("/")[-3]
     # params["optimal_soltion_path"] = f"examples/{topology_name}/optimal_solution/11Nodes/{params['traffic_matrix_index']}_norm_matrix_uniform/{int(params['load_factor']*100)}_ut_minCostMCF.json"
-    params["optimal_soltion_path"] = f"examples/{topology_name}/optimal_solution/{params['traffic_matrix_index']}_original_uniform/{int(params['load_factor']*100)}_ut_minCostMCF.json"
+    params["optimal_soltion_path"] = f"examples/{topology_name}/optimal_solution/{params['traffic_matrix_index']}_norm_matrix_uniform/{int(params['load_factor']*100)}_ut_minCostMCF.json"
     params["opt_rejected_path"] = os.path.abspath(f"examples/{topology_name}/optimal_solution/rejected_flows.txt")
     print(params["optimal_soltion_path"])
     K_size = np.loadtxt(open(params["physical_adjacency_matrix_path"])).shape
-    if os.path.exists(params["optimal_soltion_path"]):
+    if os.path.exists(params["optimal_soltion_path"]) and params["agent_type"] == "opt":
         np.savetxt(params["opt_rejected_path"], json.load(open(params["optimal_soltion_path"], "r"))["rejected_flows"], fmt='%.6f')
     else:
-        print(f"WARNING: optimal solution file {params['optimal_soltion_path']} does not exist")
+        print(f"WARNING: optimal solution file {params['optimal_soltion_path']} does not exist or not opt agent")
         np.savetxt(params["opt_rejected_path"], np.zeros(K_size), fmt='%.6f')
     # params["optimal_soltion_path"] = f"examples/{topology_name}/optimal_solution/{params['traffic_matrix_index']}_adjusted_5_nodes_mesh_norm_matrix_uniform/{int(params['load_factor']*100)}_ut_minCostMCF.json"
     

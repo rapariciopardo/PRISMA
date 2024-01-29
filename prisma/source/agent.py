@@ -138,6 +138,7 @@ class Agent():
         cl.lamda_training_start_time = params_dict["lamda_training_start_time"]
         cl.lambda_lr=params_dict["lambda_lr"]
         cl.lambda_lr=0.001
+        cl.gap_threshold = params_dict["gap_threshold"]
         cl.d_t_max_time = params_dict["d_t_max_time"]
         cl.d_t_send_all_destinations = params_dict["d_t_send_all_destinations"]
         cl.lost_pkts_per_seconds_per_interface = [[DigitalTwinDB(1)  for _ in range(len(list(cl.G.neighbors(n))))] for n in range(cl.numNodes)]

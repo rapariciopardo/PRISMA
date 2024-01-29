@@ -37,8 +37,10 @@ def save_model(actor, node_index, path, t, num_episodes, root="saved_models/", s
     None.
 
     """
-    if not(path in os.listdir(root)):
+    if not(path.rstrip("/") in os.listdir(root)):
+        path = path + '/'
         os.mkdir(root + path)
+    root = root.rstrip('/') + '/'
     path = path.rstrip('/') + '/'
     if snapshot: 
         folder_name = root + path + f"episode_{num_episodes}_step_{t}"

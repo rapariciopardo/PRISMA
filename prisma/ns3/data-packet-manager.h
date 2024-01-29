@@ -68,7 +68,7 @@ public:
   Ptr<OpenGymSpace> getObservationSpace();
   vector<uint32_t> getObsShape();
   Ptr<OpenGymSpace> getActionSpace();
-  bool sendPacket(Ptr<OpenGymDataContainer> action);
+  bool sendPacket(uint32_t action);
   void sendSmallSignalingPacket();
   void sendPingForwardPacket(uint32_t overlayIndex);
   void sendPingPackets();

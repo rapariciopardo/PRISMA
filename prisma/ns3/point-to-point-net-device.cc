@@ -289,9 +289,9 @@ PointToPointNetDevice::TransmitStart (Ptr<Packet> p)
   // p->PeekHeader(h);
   // if (p->Get)
   // NS_LOG_UNCOND("Packet " << int(h.GetProtocol()));
-  if (tagcopy.GetSimpleValue()==0 && tagcopy.GetSource()== 4 && tagcopy.GetFinalDestination()==3 ){
-    NS_LOG_UNCOND("Transmit started "<< p->GetUid()<< " from node: "<<m_node->GetId()<<"   at time "<<Simulator::Now().GetSeconds()<<" to " <<  m_channel->GetDevice(0)->GetNode()->GetId() <<" , "<<  m_channel->GetDevice(1)->GetNode()->GetId());
-  }
+  // if (tagcopy.GetSimpleValue()==0 && tagcopy.GetSource()== 4 && tagcopy.GetFinalDestination()==3 ){
+  //   NS_LOG_UNCOND("Transmit started "<< p->GetUid()<< " from node: "<<m_node->GetId()<<"   at time "<<Simulator::Now().GetSeconds()<<" to " <<  m_channel->GetDevice(0)->GetNode()->GetId() <<" , "<<  m_channel->GetDevice(1)->GetNode()->GetId());
+  // }
 
   //NS_LOG_UNCOND("BPS: "<<m_bps);
 
@@ -384,8 +384,8 @@ PointToPointNetDevice::Receive (Ptr<Packet> packet)
   NS_LOG_FUNCTION (this << packet);
   //if(m_node->GetId()!=0) NS_LOG_UNCOND("RECEIVE "<<m_node->GetId()<<"   "<<packet->ToString());
   //
-  if((t.GetSimpleValue()==0 && t.GetSource()== 4 && t.GetFinalDestination()==3 )){
-   NS_LOG_UNCOND("Recv: Node: "<<m_node->GetId()<<"   "<<m_ifIndex);}
+  // if((t.GetSimpleValue()==0 && t.GetSource()== 4 && t.GetFinalDestination()==3 )){
+  //  NS_LOG_UNCOND("Recv: Node: "<<m_node->GetId()<<"   "<<m_ifIndex);}
   //  NS_LOG_UNCOND(m_queue->GetNBytes()<<"   "<<Simulator::Now().GetSeconds());
   //}
   
@@ -636,16 +636,16 @@ PointToPointNetDevice::Send (
     }
   //Get if the packet was rejected by the Optimal Algorithm
   if(tagcopy.GetSimpleValue()==0 && tagcopy.GetRejectedPacket()==1 && m_node->GetId()<50){
-    NS_LOG_UNCOND("Packet rejected " << packet->GetUid() << " at node: "<<m_node->GetId()<<"   "<<Simulator::Now().GetSeconds() << "   "<<tagcopy.GetFinalDestination() << "   "<<tagcopy.GetNextHop() << "   "<<int(tagcopy.GetTrafficValable()) << "   "<<int(tagcopy.GetSimpleValue()) << " " << packet->GetSize() << "   "<<tagcopy.GetStartTime() << "  source " << tagcopy.GetSource() << "   "<<tagcopy.GetLastHop() );
+    // NS_LOG_UNCOND("Packet rejected " << packet->GetUid() << " at node: "<<m_node->GetId()<<"   "<<Simulator::Now().GetSeconds() << "   "<<tagcopy.GetFinalDestination() << "   "<<tagcopy.GetNextHop() << "   "<<int(tagcopy.GetTrafficValable()) << "   "<<int(tagcopy.GetSimpleValue()) << " " << packet->GetSize() << "   "<<tagcopy.GetStartTime() << "  source " << tagcopy.GetSource() << "   "<<tagcopy.GetLastHop() );
     if(tagcopy.GetTrafficValable()){
-      NS_LOG_UNCOND("rejected overlay packet");
+      // NS_LOG_UNCOND("rejected overlay packet");
       m_computeStats->incrementOverlayPacketsLost();
       m_computeStats->addLossPenaltyToCost();
       m_computeStats->incrementOverlayPacketsRejected();
       m_computeStats->incrementOverlayPacketsInjected();
       m_computeStats->addGlobalBytesData(packet->GetSize());
     } else {
-      NS_LOG_UNCOND("rejected underlay packet");
+      // NS_LOG_UNCOND("rejected underlay packet");
 
       m_computeStats->addLossPenaltyToUnderlayCost();
       m_computeStats->incrementUnderlayPacketsLost();
@@ -669,8 +669,8 @@ PointToPointNetDevice::Send (
   
   if (enq)
   {
-      if (tagcopy.GetSimpleValue()==0 && packet->GetUid() == 49825)
-          NS_LOG_UNCOND("entering 1 if " <<"   "<<Simulator::Now().GetSeconds()  );
+      // if (tagcopy.GetSimpleValue()==0 && packet->GetUid() == 49825)
+          // NS_LOG_UNCOND("entering 1 if " <<"   "<<Simulator::Now().GetSeconds()  );
     // If the channel is ready for transition we send the packet right now 
     if (m_txMachineState == READY)
       {
@@ -692,9 +692,9 @@ PointToPointNetDevice::Send (
 
   // Enqueue may fail (overflow)
   if(tagcopy.GetSimpleValue()==0){
-    if(tagcopy.GetSource()== 4 && tagcopy.GetFinalDestination()==3 ){
-    NS_LOG_UNCOND("Packet dropped" << packet->GetUid() << "at node: "<<m_node->GetId()<<"   "<<Simulator::Now().GetSeconds() << " if index " << m_ifIndex);
-    }
+    // if(tagcopy.GetSource()== 4 && tagcopy.GetFinalDestination()==3 ){
+    // NS_LOG_UNCOND("Packet dropped" << packet->GetUid() << "at node: "<<m_node->GetId()<<"   "<<Simulator::Now().GetSeconds() << " if index " << m_ifIndex);
+    // }
     if(tagcopy.GetTrafficValable() && tagcopy.GetFinalDestination()!=m_node->GetId()){
       m_computeStats->incrementOverlayPacketsLost();
       m_computeStats->addLossPenaltyToCost();

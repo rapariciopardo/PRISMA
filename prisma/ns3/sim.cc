@@ -470,20 +470,20 @@ int main (int argc, char *argv[])
   TrafficControlHelper tch;
   tch.Uninstall (switch_nd);
   
-  NS_LOG_UNCOND("*** traffic "<< interfaces_traffic.GetN() << " switch "<< interfaces_switch.GetN());
-  for (uint32_t i = 0; i < interfaces_traffic.GetN(); i++)
-  {
-    NS_LOG_UNCOND("traffic "<< interfaces_traffic.GetAddress(i));
-  }
-  for (uint32_t i = 0; i < interfaces_switch.GetN(); i++)
-  {
-    NS_LOG_UNCOND("switch "<< interfaces_switch.GetAddress(i));
-  }
+  // NS_LOG_UNCOND("*** traffic "<< interfaces_traffic.GetN() << " switch "<< interfaces_switch.GetN());
+  // for (uint32_t i = 0; i < interfaces_traffic.GetN(); i++)
+  // {
+  //   NS_LOG_UNCOND("traffic "<< interfaces_traffic.GetAddress(i));
+  // }
+  // for (uint32_t i = 0; i < interfaces_switch.GetN(); i++)
+  // {
+  //   NS_LOG_UNCOND("switch "<< interfaces_switch.GetAddress(i));
+  // }
 
-  for (u_int32_t i=0; i<switch_nd.GetN(); i++){
-    Ptr<NetDevice> nd = switch_nd.Get(i);
-    NS_LOG_UNCOND("switch "<< i << " "<< nd->GetAddress() << " "<< nd->GetChannel()->GetId() << " " << nd->GetNode()->GetId());
-  }
+  // for (u_int32_t i=0; i<switch_nd.GetN(); i++){
+  //   Ptr<NetDevice> nd = switch_nd.Get(i);
+  //   NS_LOG_UNCOND("switch "<< i << " "<< nd->GetAddress() << " "<< nd->GetChannel()->GetId() << " " << nd->GetNode()->GetId());
+  // }
     
   // Create the overlay network map
   //Specifies the UnderlayIndex of overlay Nodes
@@ -557,18 +557,18 @@ int main (int argc, char *argv[])
   std::vector<Ptr<PacketRoutingEnv> > packetRoutingEnvs;
   
   uint64_t linkRateValue= DataRate(LinkRate).GetBitRate();
-  for (int i = 0; i < n_nodes; i++)
-  {
-    NS_LOG_UNCOND("Physical Node: "<<i);
-    NS_LOG_UNCOND("nb Neighbors: " << nodes_degree[i]);
-  }
+  // for (int i = 0; i < n_nodes; i++)
+  // {
+  //   NS_LOG_UNCOND("Physical Node: "<<i);
+  //   NS_LOG_UNCOND("nb Neighbors: " << nodes_degree[i]);
+  // }
   for (int i = 0; i < overlay_n_nodes; i++)
   {
-    NS_LOG_UNCOND("Node: "<<overlay_to_underlay_map[i]<<"   Port: "<<openGymPort + i);
-    NS_LOG_UNCOND("Neighbors: ");
-    for(int neighbor : overlayNeighbors[i]){
-      NS_LOG_UNCOND(neighbor);
-    }
+    // NS_LOG_UNCOND("Node: "<<overlay_to_underlay_map[i]<<"   Port: "<<openGymPort + i);
+    // NS_LOG_UNCOND("Neighbors: ");
+    // for(int neighbor : overlayNeighbors[i]){
+    //   NS_LOG_UNCOND(neighbor);
+    // }
     
     Ptr<Node> n = nodes_switch.Get (overlay_to_underlay_map[i]); // ref node
     //nodeOpenGymPort = openGymPort + i;

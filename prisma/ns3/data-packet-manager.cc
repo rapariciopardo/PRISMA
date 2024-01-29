@@ -268,11 +268,12 @@ DataPacketManager::getInfo()
 }
 
 bool 
-DataPacketManager::sendPacket(Ptr<OpenGymDataContainer> action){
+DataPacketManager::sendPacket(uint32_t action){
   
   //Get discrete action
-  Ptr<OpenGymDiscreteContainer> discrete = DynamicCast<OpenGymDiscreteContainer>(action);
-  uint32_t fwdDev_idx = discrete->GetValue();
+  // Ptr<OpenGymDiscreteContainer> discrete = DynamicCast<OpenGymDiscreteContainer>(action);
+  // uint32_t fwdDev_idx = discrete->GetValue();
+  uint32_t fwdDev_idx = action;
   if(m_arrivedAtFinalDest){
     // string string_ip = "0.0.0.0";
     // Ipv4Address ip_dest(string_ip.c_str());

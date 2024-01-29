@@ -49,24 +49,26 @@ def main():
         params["model_version"] = params["load_path"].split("/")[-1]
     
     ## check if the session already exists and the model is already trained
+    print("Checking if the session already exists", params["saved_models_path"] +"/"+ params["session_name"] + "/final", os.path.exists(params["saved_models_path"] + "/"+ params["session_name"] + "/final"))
     if params["train"] == 1:
         pathlib.Path(params["saved_models_path"]).mkdir(parents=True, exist_ok=True)
-        if os.path.exists(params["saved_models_path"] + params["session_name"] + "/final"):
-            if len(os.listdir(params["saved_models_path"] + params["session_name"] + "/final")) > 0:
-                print(f'The couple {params["seed"]} {params["traffic_matrix_index"]} already exists in : {params["saved_models_path"] + params["session_name"]}')
+        if os.path.exists(params["saved_models_path"] + "/" + params["session_name"] + "/final"):
+            if len(os.listdir(params["saved_models_path"] + "/" + params["session_name"] + "/final")) > 0:
+                print(f'The couple {params["seed"]} {params["traffic_matrix_index"]} already exists in : {params["saved_models_path"] + "/" + params["session_name"]}')
                 return None, None
     
     ## check if the test is already done   
     else:
-        if os.path.exists(f"{params['logs_parent_folder']}/{params['session_name']}/test_results/{params['model_version']}"):
-            if len(os.listdir(f"{params['logs_parent_folder']}/{params['session_name']}/test_results/{params['model_version']}")) > 0:
-                ## check if the test load factor is already in the tensorboard file
-                try: 
-                    if int(100 * params["load_factor"]) in convert_tb_data(f"{params['logs_parent_folder']}/{params['session_name']}/test_results/{params['model_version']}")["step"].values:
-                        print(f'The test session with load factor {params["load_factor"]} already exists in the {params["session_name"]}/test_results/{params["model_version"]} folder')
-                        return None, None
-                except:
-                    pass
+        if "dqn" in params["agent_type"]:
+            if os.path.exists(f"{params['logs_parent_folder']}/{params['session_name']}/test_results/{params['model_version']}"):
+                if len(os.listdir(f"{params['logs_parent_folder']}/{params['session_name']}/test_results/{params['model_version']}")) > 0:
+                    ## check if the test load factor is already in the tensorboard file
+                    try: 
+                        if int(100 * params["load_factor"]) in convert_tb_data(f"{params['logs_parent_folder']}/{params['session_name']}/test_results/{params['model_version']}")["step"].values:
+                            print(f'The test session with load factor {params["load_factor"]} already exists in the {params["session_name"]}/test_results/{params["model_version"]} folder')
+                            return None, None
+                    except:
+                        pass
                             
     ## Setup writer for the global stats
     if params["train"] == 1:
@@ -177,29 +179,38 @@ def main():
                 # nbBytesOverlaySignalingForward = {Agent.sim_bytes_overlay_signaling_forward},
                 # nbBytesOverlaySignalingBack = {Agent.sim_bytes_overlay_signaling_back},
                 OverheadRatio = {Agent.sim_signaling_overhead}
-                """) 
-        for forwarder in forwarders:       
-            forwarder.env.close()
-        if params["loss_penalty_type"] == "constrained":
-            for trainer in trainers:
-                trainer._update_lambda_coefs()
-        Agent.base_curr_time += Agent.curr_time
+                """)
+        print("Closing ns-3")
+        if params["train"] == 1:
+            for forwarder in forwarders:       
+                forwarder.env.close()
+            if params["loss_penalty_type"] == "constrained":
+                for trainer in trainers:
+                    trainer._update_lambda_coefs()
+            Agent.base_curr_time += Agent.curr_time
     
     ## write the results for the test session
     if params["train"] == 0:
-       stats_writer_test(params["logs_folder"] + "/test_results", Agent)
+        print("Writing test results in ", params["logs_folder"] + "/test_results")
+        stats_writer_test(params["logs_folder"] + "/test_results", Agent)
 
     ## save models        
-    if params["save_models"] and Agent.curr_time >= params["simTime"]-1:
-        save_all_models(Agent.agents, params["G"].nodes(), params["session_name"], 1, 1, root=params["saved_models_path"], snapshot=False)
-
+    if params["train"] == 1:
+        if params["save_models"] and Agent.curr_time >= params["simTime"]-1:
+            save_all_models(Agent.agents, params["G"].nodes(), params["session_name"], 1, 1, root=params["saved_models_path"], snapshot=False)
+        # move the logs folder to the session folder and delete the old one if it exists
+        if os.path.exists(f"{params['logs_parent_folder']}/{params['session_name']}"):
+            os.system(f"rm -rf {params['logs_parent_folder']}/{params['session_name']}")
+        os.system(f"mv {params['logs_folder']} {params['logs_parent_folder']}/{params['session_name']}/")
+        print(f"Logs folder moved to {params['logs_parent_folder']}/{params['session_name']}/")
+        
 
     ## save the replay buffers
-    if params["train"] == 1:
-        for idxx, rb in enumerate(Agent.replay_buffer):
-            if not os.path.exists(params["logs_folder"] + "/replay_buffers"):
-                os.mkdir(path=params["logs_folder"] + "/replay_buffers")
-            rb.save(params["logs_folder"] + "/replay_buffers/" + str(idxx) + ".pkl")
+    # if params["train"] == 1:
+    #     for idxx, rb in enumerate(Agent.replay_buffer):
+    #         if not os.path.exists(params["logs_folder"] + "/replay_buffers"):
+    #             os.mkdir(path=params["logs_folder"] + "/replay_buffers")
+    #         rb.save(params["logs_folder"] + "/replay_buffers/" + str(idxx) + ".pkl")
             
     ## save the profiler results
     if params["profile_session"]:
@@ -225,9 +236,9 @@ if __name__ == '__main__':
             traceback.print_exc(file=f)
     finally:
         print("kill process group")
-        if ns3_pid:
-            os.system(command=f"kill -9 {ns3_pid}")
-        if tb_process:
-            os.system(command=f"kill -9 {tb_process}")
-        SystemExit(0)
+        # if ns3_pid:
+        #     os.system(command=f"kill -9 {ns3_pid}")
+        # if tb_process:
+        #     os.system(command=f"kill -9 {tb_process}")
+        # SystemExit(0)
         # os.killpg(0, signal.SIGKILL)

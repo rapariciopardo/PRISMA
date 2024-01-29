@@ -171,7 +171,7 @@ class DQN_AGENT(tf.Module):
 
         if update_eps >= 0:
             self.eps.assign(update_eps)
-        return output_actions
+        return output_actions, q_values
       
     #@tf.function()
     def train(self, obs, actions, q_t_selected_targets, importance_weights):

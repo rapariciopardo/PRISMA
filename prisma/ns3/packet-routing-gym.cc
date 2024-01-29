@@ -209,16 +209,24 @@ bool
 PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
 {
   bool sent = true;
+  u_int32_t action_int = DynamicCast<OpenGymDiscreteContainer>(action)->GetValue();;
   if(m_packetType==DATA_PACKET){
     if (is_trainStep_flag==1){
       return true;
     } else{
       if(m_train){
         //send small signaling
-        m_dataPacketManager->sendSmallSignalingPacket();
+
+        // # add if here
+        // NS_LOG_UNCOND("PacketRoutingEnv::ExecuteActions: action_int="<<action_int << ", time="<<Simulator::Now().GetSeconds());
+        if (action_int>= 1000){
+          m_dataPacketManager->sendSmallSignalingPacket();
+          action_int = action_int - 1000;
+          // NS_LOG_UNCOND("PacketRoutingEnv::ExecuteActions: action_int="<<action_int);
+        }
      }
      //Send data packet
-      return m_dataPacketManager->sendPacket(action);
+      return m_dataPacketManager->sendPacket(action_int);
     }
   }
   return sent;
