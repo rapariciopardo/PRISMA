@@ -1,6 +1,0 @@
-0bps 6.11Kbps 24.06Kbps 46.83Kbps 60.77Kbps 46.27Kbps
-58.41Kbps 0bps 38.07Kbps 499.89bps 19.67Kbps 46.27Kbps
-38.5Kbps 52.56Kbps 0bps 775.71bps 5.35Kbps 46.27Kbps
-32.33Kbps 35.49Kbps 32.82Kbps 0bps 35.32Kbps 46.27Kbps
-21.15Kbps 32.77Kbps 83.85bps 46.27Kbps 0bps 46.27Kbps
-21.15Kbps 32.77Kbps 83.85bps 46.27Kbps 46.27Kbps 0bps

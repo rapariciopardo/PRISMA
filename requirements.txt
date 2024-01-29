@@ -8,7 +8,7 @@ paramiko==2.6.0
 protobuf==3.19.6
 pyzmq==24.0.1
 requests==2.22.0
-# tensorflow==2.8.3
-# tensorboard==2.8.3
+tensorflow==2.8.3
+tensorboard==2.8.3
 zmq
 viztracer
