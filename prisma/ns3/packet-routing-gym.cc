@@ -90,11 +90,14 @@ PacketRoutingEnv::setNetDevicesContainer(NetDeviceContainer* nd){
 }
 
 void
+<<<<<<< HEAD
 PacketRoutingEnv::setTunnelsMaxDelays(vector<vector<double>> tunnelMaxDelays){
   m_pingBackPacketmanager->setTunnelsMaxDelays(tunnelMaxDelays);
 }
 
 void
+=======
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
 PacketRoutingEnv::setTrainConfig(bool train){
   m_train = train;
 }
@@ -177,6 +180,7 @@ std::string
 PacketRoutingEnv::GetExtraInfo()
 {
   std::string myInfo;
+<<<<<<< HEAD
   if (is_trainStep_flag==1){
     // notify the end of the episode to collect stats
     return m_dataPacketManager->getInfo();
@@ -229,6 +233,45 @@ PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
       return m_dataPacketManager->sendPacket(action_int);
     }
   }
+=======
+  myInfo="-2";
+  
+  if(m_packetType==BIG_SIGN_PACKET){
+    myInfo = m_bigSignalingPacketManager->getInfo();
+  }
+  
+  if(m_packetType==DATA_PACKET){
+    if(is_trainStep_flag==0) myInfo = m_dataPacketManager->getInfo();
+    else{
+      std::string invalidRet("-1,");
+      myInfo = invalidRet;
+    }
+  }
+
+  if(m_packetType==SMALL_SIGN_PACKET){
+    myInfo = m_smallSignalingPacketManager->getInfo();
+  }
+
+  return myInfo;
+}
+
+bool
+PacketRoutingEnv::ExecuteActions(Ptr<OpenGymDataContainer> action)
+{
+  bool sent = true;
+  if(m_packetType==DATA_PACKET){
+    if (is_trainStep_flag==1){
+      return true;
+    } else{
+      if(m_train){
+        //send small signaling
+        m_dataPacketManager->sendSmallSignalingPacket();
+     }
+     //Send data packet
+      return m_dataPacketManager->sendPacket(action);
+    }
+  }
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
   return sent;
 }
  
@@ -245,7 +288,10 @@ PacketRoutingEnv::mapOverlayNodes(std::vector <int> map_overlay_array)
 {
   m_dataPacketManager->m_map_overlay_array = map_overlay_array;
   m_bigSignalingPacketManager->m_map_overlay_array = map_overlay_array;
+<<<<<<< HEAD
   m_pingBackPacketmanager->m_map_overlay_array = map_overlay_array;
+=======
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
 }
 
 void
@@ -262,9 +308,12 @@ PacketRoutingEnv::NotifyPktRcv(Ptr<PacketRoutingEnv> entity, Ptr<NetDevice> netD
   MyTag tagCopy;
   p->PeekPacketTag(tagCopy);
 
+<<<<<<< HEAD
   if(tagCopy.GetSimpleValue()==0 && tagCopy.GetSource()==4 && tagCopy.GetFinalDestination()==3 && packet->GetUid()==12425)
   NS_LOG_UNCOND("PacketRoutingEnv::NotifyPktRcv: packet->GetUid()="<<packet->GetUid()<<", tagCopy.GetSimpleValue()="<<tagCopy.GetSimpleValue()<<", tagCopy.GetSource()="<<tagCopy.GetSource()<<", tagCopy.GetFinalDestination()="<<tagCopy.GetFinalDestination()<<", tagCopy.GetStartTime()="<<tagCopy.GetStartTime()<<", tagCopy.GetLastHop()="<<tagCopy.GetLastHop()<<", tagCopy.GetNextHop()="<<tagCopy.GetNextHop() << ", node id="<<entity->m_dataPacketManager->m_node->GetId()<<", packet size="<<packet->GetSize()<<", packet type="<<PacketType(tagCopy.GetSimpleValue())<<", p");
 
+=======
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
   //Get packet type
   entity->m_packetType = PacketType(tagCopy.GetSimpleValue());
   

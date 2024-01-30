@@ -95,11 +95,14 @@ PingBackPacketManager::setMovingAverageSize(uint32_t value){
 }
 
 void 
+<<<<<<< HEAD
 PingBackPacketManager::setTunnelsMaxDelays(vector<vector<double>> tunnelsMaxDelays){
   m_tunnelsMaxDelays = tunnelsMaxDelays;
 }
 
 void 
+=======
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
 PingBackPacketManager::addSentPingForwardPacket(uint64_t id, uint64_t start_time){
   SentPacket sentPacket;
   sentPacket.start_time = start_time;
@@ -114,7 +117,11 @@ PingBackPacketManager::addSentPingForwardPacket(uint64_t id, uint64_t start_time
 float
 PingBackPacketManager::getMaxTimePingForwardPacketSent(uint32_t index){
   if(m_sentPingForwardPackets[index].size()>0){
+<<<<<<< HEAD
     return std::min((Simulator::Now().GetSeconds() - m_sentPingForwardPackets[index][0].start_time*0.001)/2.0, m_tunnelsMaxDelays[m_map_overlay_array[m_node->GetId()]][index]);
+=======
+    return std::min(Simulator::Now().GetSeconds() - m_sentPingForwardPackets[index][0].start_time*0.001, 2.60);
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
   } else{
     return 0.0;
   }
@@ -126,13 +133,17 @@ PingBackPacketManager::receivePacket(Ptr<Packet> packet, Ptr<NetDevice> receivin
   //Get extra info from packet
   MyTag tagCopy;
   packet->PeekPacketTag(tagCopy); 
+<<<<<<< HEAD
   if (tagCopy.GetFinalDestination() != m_node->GetId()) {
     return false;
   }
+=======
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
 
   float delay = tagCopy.GetOneHopDelay();
   m_overlayTunnelIndex = tagCopy.GetTunnelOverlaySendingIndex();
   m_pingPacketIndex = tagCopy.GetOverlayIndex();
+<<<<<<< HEAD
   if (m_pingPacketIndex == 0){
     NS_LOG_UNCOND( m_map_overlay_array[m_node->GetId()] << " " << m_overlayTunnelIndex << " " << delay);
   }
@@ -151,6 +162,16 @@ PingBackPacketManager::receivePacket(Ptr<Packet> packet, Ptr<NetDevice> receivin
   
 
 
+=======
+  
+  //Erasing sent packets which were acked
+  for (auto it = m_sentPingForwardPackets[m_overlayTunnelIndex].begin(); it != m_sentPingForwardPackets[m_overlayTunnelIndex].end(); ++it){
+    if (it->uid == m_pingPacketIndex){
+      m_sentPingForwardPackets[m_overlayTunnelIndex].erase(it);
+      break;
+    }
+  }
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
   //Adding tunnel delay in a circular array
   if(m_tunnelsDelay[m_overlayTunnelIndex].size()>=m_movingAverageSize){
     assert(!m_tunnelsDelay[m_overlayTunnelIndex].empty());

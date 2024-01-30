@@ -37,8 +37,12 @@ def save_model(actor, node_index, path, t, num_episodes, root="saved_models/", s
     None.
 
     """
+<<<<<<< HEAD
     if not(path.rstrip("/") in os.listdir(root)):
         path = path + '/'
+=======
+    if not(path in os.listdir(root)):
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
         os.mkdir(root + path)
     root = root.rstrip('/') + '/'
     path = path.rstrip('/') + '/'
@@ -191,15 +195,24 @@ def optimal_routing_decision(graph, routing_mat, rejected_mat, actual_node, src_
         
     if tag:
         if tag in prob_to_neighbors and tag < 1:
+<<<<<<< HEAD
             # print("action found tag ", src, dst, actual, neighbors, routing_mat.shape, rejected_mat.shape, prob_to_neighbors, loss_prob, list(prob_to_neighbors).index(tag))
             return list(prob_to_neighbors).index(tag), tag
     
+=======
+            return list(prob_to_neighbors).index(tag), tag
+    
+    # print(src, dst, actual, neighbors,list(graph.edges), routing_mat.shape, rejected_mat.shape)
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
     # print(prob_to_neighbors)
     prob_general = list(prob_to_neighbors/sum(prob_to_neighbors))  
     choice = np.random.choice(neighbors, p=prob_general)
     tag = prob_to_neighbors[neighbors.index(choice)]
+<<<<<<< HEAD
     # if src == 2 and dst == 1:
     #     print(" action " , src, dst, actual, neighbors, routing_mat.shape, rejected_mat.shape, prob_to_neighbors, loss_prob, choice, tag, neighbors.index(choice))
+=======
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
     return neighbors.index(choice), tag
 
 def allocate_on_gpu(gpu_memory_margin=1500):
@@ -224,6 +237,7 @@ def allocate_on_gpu(gpu_memory_margin=1500):
         gpu_memory_margin = 1500 # required memory but a train instance in MB
         COMMAND = "nvidia-smi --query-gpu=utilization.gpu,memory.free --format=csv"
         output = sp.check_output(COMMAND, shell=True).decode('utf-8').split('\n')[1:-1]
+<<<<<<< HEAD
     except:
         print("Not able to get the gpu usage")
         return
@@ -240,6 +254,24 @@ def allocate_on_gpu(gpu_memory_margin=1500):
         else:
             print("One gpu available :")
             gpu_index = np.argmax(available_memory)
+=======
+        gpu_usage = [int(x.split(' ')[0]) for x in output]
+        available_memory = [int(x.split(' ')[2]) for x in output]
+        # get the gpu with the most available memory
+        if np.max(available_memory) < gpu_memory_margin:
+            print("No gpu available")
+            gpu_index = -1
+        else:
+            if np.diff(available_memory).item() < gpu_memory_margin:
+                print("More than one gpu available")
+                gpu_index = np.argmin(gpu_usage)
+            else:
+                print("One gpu available :")
+                gpu_index = np.argmax(available_memory)
+    except:
+        print("Not able to get the gpu usage")
+        return
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
     # allocate the gpu
     os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu_index)
     print("GPU index : ", gpu_index)

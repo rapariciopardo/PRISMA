@@ -148,6 +148,7 @@ string PacketManager::getInfo(){
     myInfo += ", Packets dropped ="; //9
     myInfo += std::to_string(m_computeStats->getGlobalOverlayPacketsLost());
 
+<<<<<<< HEAD
     myInfo += ", Packets rejected ="; //10
     myInfo += std::to_string(m_computeStats->getGlobalOverlayPacketsRejected());
 
@@ -178,6 +179,31 @@ string PacketManager::getInfo(){
     myInfo += ",Signaling overhead ="; //19
     myInfo += std::to_string(m_computeStats->getSignalingOverhead());
     // NS_LOG_UNCOND("PacketManager::getInfo - "<< m_node->GetId()<< " " << myInfo << " source "<< m_source << " destination " << m_destination);
+=======
+    myInfo += ", Packets delivered ="; //10
+    myInfo += std::to_string(m_computeStats->getGlobalOverlayPacketsArrived());
+
+    myInfo += ", Packets injected ="; //11
+    myInfo += std::to_string(m_computeStats->getGlobalOverlayPacketsInjected());
+
+    myInfo += ",Packets Buffered ="; //12
+    myInfo += std::to_string(m_computeStats->getGlobalOverlayPacketsBuffered());
+
+    myInfo += ", Packets dropped Underlay ="; //13
+    myInfo += std::to_string(m_computeStats->getGlobalUnderlayPacketsLost());
+
+    myInfo += ", Packets delivered Underlay="; //14
+    myInfo += std::to_string(m_computeStats->getGlobalUnderlayPacketsArrived());
+
+    myInfo += ", Packets injected Underlay="; //15
+    myInfo += std::to_string(m_computeStats->getGlobalUnderlayPacketsInjected());
+
+    myInfo += ",Packets Buffered Underlay="; //16
+    myInfo += std::to_string(m_computeStats->getGlobalUnderlayPacketsBuffered());
+    
+    myInfo += ",Signaling overhead ="; //17
+    myInfo += std::to_string(m_computeStats->getSignalingOverhead());
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
     return myInfo;
    
 }

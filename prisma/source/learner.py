@@ -68,7 +68,10 @@ The functions in this model:
 """
 import tensorflow as tf
 import numpy as np
+<<<<<<< HEAD
 from source.replay_buffer import DigitalTwinDB
+=======
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
 
 __author__ = "Redha A. Alliche, Tiago Da Silva Barros, Ramon Aparicio-Pardo, Lucile Sassatelli"
 __copyright__ = "Copyright (c) 2022 Redha A. Alliche, Tiago Da Silva Barros, Ramon Aparicio-Pardo, Lucile Sassatelli"
@@ -91,7 +94,11 @@ class DQN_AGENT(tf.Module):
 
     def __init__(self, q_func, observation_shape, num_actions, num_nodes, lr,
                  input_size_splits, neighbors_degrees,
+<<<<<<< HEAD
                  grad_norm_clipping=None, gamma=1.0, double_q=False, d_t_max_time=10, d_q_func=None):
+=======
+                 grad_norm_clipping=None, gamma=1.0, double_q=False):
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
 
       self.num_actions = num_actions
       self.q_func = q_func
@@ -113,19 +120,26 @@ class DQN_AGENT(tf.Module):
       self.eps = tf.Variable(0., name="eps")
       
       self.loss = tf.keras.losses.MeanSquaredError()
+<<<<<<< HEAD
       ### define digital twin max time in seconds for the database
       self.d_t_max_time = d_t_max_time
+=======
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
       
       ### define the neighbors target q networks
       self.neighbors_target_q_networks = []
       self.neighbors_target_upcoming_q_networks = []
       self.neighbors_target_temp_upcoming_q_networks = []
+<<<<<<< HEAD
     
       ### define the digital twin q networks
       self.neighbors_d_t_network = []
       
       ### define the digital twin database
       self.neighbors_d_t_database = []
+=======
+      
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
       for neighbor in range(num_actions):
         with tf.name_scope(f'neighbor_target_q_network_{neighbor}'):
                 self.neighbors_target_q_networks.append(q_func((neighbors_degrees[neighbor]+observation_shape[0]-num_actions,), 
@@ -145,6 +159,7 @@ class DQN_AGENT(tf.Module):
                                                                             num_nodes, 
                                                                             [1, neighbors_degrees[neighbor],
                                                                              observation_shape[0]-num_actions -1]))
+<<<<<<< HEAD
         if d_q_func is not None:       
             with tf.name_scope(f'neighbor_d_t_network_{neighbor}'):
                     self.neighbors_d_t_network.append(d_q_func((neighbors_degrees[neighbor]+observation_shape[0]-num_actions,), neighbors_degrees[neighbor], num_nodes, 
@@ -153,6 +168,9 @@ class DQN_AGENT(tf.Module):
                         metrics=[tf.keras.metrics.MeanSquaredError()]
                         )
             self.neighbors_d_t_database.append(DigitalTwinDB(self.d_t_max_time))
+=======
+
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
     #@tf.function
     def step(self, obs, stochastic=True, update_eps=-1, actions_probs=None):
         q_values = self.q_network(obs)
@@ -171,7 +189,11 @@ class DQN_AGENT(tf.Module):
 
         if update_eps >= 0:
             self.eps.assign(update_eps)
+<<<<<<< HEAD
         return output_actions, q_values
+=======
+        return output_actions
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
       
     #@tf.function()
     def train(self, obs, actions, q_t_selected_targets, importance_weights):
@@ -268,6 +290,7 @@ class DQN_AGENT(tf.Module):
         q_t_selected_targets = rewards + self.gamma * q_tp1_best_masked
 
         return q_t_selected_targets
+<<<<<<< HEAD
     
     def sync_neighbor_target_q_network(self, neighbor_idx, with_temp=False):
         """Copy upcoming target nn into neighbor target q network attribute
@@ -310,6 +333,27 @@ class DQN_AGENT(tf.Module):
 
         return q_t_selected_targets
 
+=======
+    
+    def sync_neighbor_target_q_network(self, neighbor_idx, with_temp=False):
+        """Copy upcoming target nn into neighbor target q network attribute
+
+        Args:
+            agent_nn (DQN agent): agent containing the neural network to copy
+            neighbor_idx (int): neighbor index
+        """
+        if with_temp:
+            q_vars = self.neighbors_target_temp_upcoming_q_networks[neighbor_idx].trainable_variables
+            target_q_vars = self.neighbors_target_q_networks[neighbor_idx].trainable_variables
+            for var, var_target in zip(q_vars, target_q_vars):
+                var_target.assign(var)
+        else:
+            q_vars = self.neighbors_target_upcoming_q_networks[neighbor_idx].trainable_variables
+            target_q_vars = self.neighbors_target_q_networks[neighbor_idx].trainable_variables
+            for var, var_target in zip(q_vars, target_q_vars):
+                var_target.assign(var)
+    
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
     def sync_neighbor_upcoming_target_q_network(self, agent_nn, neighbor_idx):
         """Copy nn network into neighbor upcoming target q network attribute
 

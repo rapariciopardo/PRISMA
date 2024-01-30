@@ -111,11 +111,19 @@ string
 BigSignalingPacketManager::getInfo()
 {
   string myInfo = PacketManager::getInfo();
+<<<<<<< HEAD
   myInfo += ", NN Index="; //20
   myInfo += std::to_string(m_NNIndex);
   myInfo += ", segment Index="; //21
   myInfo += std::to_string(m_segIndex);
   myInfo += ", NodeId Signaled="; //22
+=======
+  myInfo += ", NN Index="; //18
+  myInfo += std::to_string(m_NNIndex);
+  myInfo += ", segment Index="; //19
+  myInfo += std::to_string(m_segIndex);
+  myInfo += ", NodeId Signaled="; //20
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
   myInfo += std::to_string(m_map_overlay_array[m_source]); 
   
   return myInfo;

@@ -47,7 +47,10 @@ class Node;
 
 class PingBackPacketManager : public PacketManager
 {
+<<<<<<< HEAD
 
+=======
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
 public:
   PingBackPacketManager();
   PingBackPacketManager(Ptr<Node> node, vector<int> neighbors);
@@ -61,6 +64,7 @@ public:
   void losePacket();
   string getLostPackets();
   void setMovingAverageSize(uint32_t value);
+<<<<<<< HEAD
   vector<vector<double>> m_tunnelsMaxDelays;
   //   {0.52052, 0.26026, 0.78078, 0.52052},
   //   {0.52052, 1.04104, 1.04104, 1.56156}, 
@@ -69,13 +73,18 @@ public:
   //   {0.52052, 1.3013, 0.52052, 0.52052}};
   void setTunnelsMaxDelays(vector<vector<double>> values);
 
+=======
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
 
 private:
   uint32_t m_overlayTunnelIndex;
   uint32_t m_pingPacketIndex;
   uint32_t m_movingAverageSize=20;
   Ptr<NetDevice> m_receivingNetDev;
+<<<<<<< HEAD
 
+=======
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
 };
 
 }

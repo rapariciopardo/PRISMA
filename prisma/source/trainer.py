@@ -17,6 +17,7 @@ class Trainer(Agent):
     
     def __init__(self, index, agent_type="dqn", train=True):
         Agent.__init__(self, index, agent_type, train)
+<<<<<<< HEAD
         self.nn_size = np.sum([np.prod(x.shape) for x in Agent.agents[self.index].q_network.trainable_weights])*32
         self.reset()
         ## define the log file for trainer 
@@ -25,12 +26,21 @@ class Trainer(Agent):
                                "summary_writer_lambdas" : [tf.summary.create_file_writer(logdir=f'{Agent.logs_folder}/lambdas/node_{self.index}_{idx}') for idx in range(len(self.neighbors))]
                                }
 
+=======
+        self.reset()
+        ## define the log file for td error 
+        self.tb_writer_dict = {"td_error": tf.summary.create_file_writer(logdir=f'{Agent.logs_folder}/td_error/node_{self.index}'),
+                               "replay_buffer_length": tf.summary.create_file_writer(logdir=f'{Agent.logs_folder}/replay_buffer_length/node_{self.index}')}
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
     def reset(self):
         self.last_training_time = 0
         self.last_sync_time = 0
         self.gradient_step_idx = 1
+<<<<<<< HEAD
         self.last_d_t_training_time = 0
         
+=======
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
     def run(self):
         """
             Start the trainer deamon
@@ -43,6 +53,7 @@ class Trainer(Agent):
                 self._get_upcoming_events()
             ## check if it is time to syncronize nn
             self._check_sync()
+<<<<<<< HEAD
             
             if Agent.signaling_type == "digital_twin" and Agent.curr_time > (self.last_d_t_training_time + Agent.d_t_max_time):
                 self.train_d_ts_()
@@ -53,6 +64,11 @@ class Trainer(Agent):
                 # if Agent.loss_penalty_type == "constrained":
                 #     if Agent.curr_time > Agent.lamda_training_start_time:
                 #         self._update_lambda_coefs()
+=======
+                
+            ## check if it is time to train
+            if Agent.curr_time > (self.last_training_time + Agent.training_step) and Agent.replay_buffer[self.index].total_samples>= Agent.batch_size:
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
                 self.step()
 
     def step(self):
@@ -76,6 +92,7 @@ class Trainer(Agent):
                 action_indices = np.where(actions_t == indx)[0]
                 action_indices_all.append(action_indices)
                 if len(action_indices):
+<<<<<<< HEAD
                     penalty = 0
                     if Agent.loss_penalty_type == "constrained":
                         if Agent.rcpo_use_loss_pkts:
@@ -85,10 +102,16 @@ class Trainer(Agent):
                     if Agent.signaling_type in ("NN", "ideal"):
                         targets_t.append(Agent.agents[self.index].get_neighbor_target_value(indx, 
                                                                                             rewards_t[action_indices] + penalty, 
+=======
+                    if Agent.signaling_type in ("NN", "ideal"):
+                        targets_t.append(Agent.agents[self.index].get_neighbor_target_value(indx, 
+                                                                                            rewards_t[action_indices], 
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
                                                                                             tf.constant(np.array(np.vstack(next_obses_t[action_indices]),
                                                                                                                 dtype=float)), 
                                                                                             dones_t[action_indices],
                                                                                             filtered_indices))
+<<<<<<< HEAD
                     elif Agent.signaling_type == "digital_twin":
                         targets_t.append(Agent.agents[self.index].get_neighbor_d_t_value(indx,
                                                                                          rewards_t[action_indices] + penalty, 
@@ -97,6 +120,8 @@ class Trainer(Agent):
                                                                                          filtered_indices))
                     else:
                         raise NotImplementedError
+=======
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
             action_indices_all = np.concatenate(action_indices_all)
             ### prepare tf variables
             try:
@@ -134,7 +159,11 @@ class Trainer(Agent):
                 self._sync_all(update_upcoming=True)
                 Agent.sync_counters[self.index] += 1
                 # print("sync all at %s" % Agent.curr_time, "for node:", self.index, "sync counter:", self.sync_counter)
+<<<<<<< HEAD
                 if Agent.signaling_type in ("ideal", "NN"):
+=======
+                if Agent.signaling_type in ("ideal"):
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
                     self._sync_all(update_upcoming=False)
                 self.last_sync_time = Agent.curr_time
 
@@ -195,6 +224,7 @@ class Trainer(Agent):
                         
             else:
                 for indx, neighbor in enumerate(self.neighbors): 
+<<<<<<< HEAD
                     self._sync_current(indx)
                     Agent.big_signaling_overhead_counter += self.nn_size
                     Agent.big_signaling_pkt_counter += 1
@@ -238,3 +268,6 @@ class Trainer(Agent):
         loss = Agent.agents[self.index].neighbors_d_t_network[neighbor_idx].fit(x[:size], y[:size], batch_size=Agent.batch_size, epochs=int(10*Agent.d_t_max_time), verbose=0)
         print("supervised training; node = ", self.index, " neighbor = ", neighbor_idx, " loss = ", loss.history["loss"][-1] , " time = ", Agent.curr_time, " len = ", len(y), len(x))
     
+=======
+                    self._sync_current(indx)
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00

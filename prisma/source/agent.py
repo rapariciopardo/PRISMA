@@ -6,10 +6,17 @@ import tensorflow as tf
 import networkx as nx
 import numpy as np
 import os
+<<<<<<< HEAD
 from ns3gym import ns3env
 from source.learner import DQN_AGENT
 from source.utils import save_model, load_model, LinearSchedule, convert_bps_to_data_rate, optimal_routing_decision
 from source.replay_buffer import PrioritizedReplayBuffer, ReplayBuffer, DigitalTwinDB
+=======
+from ns3_model import ns3env
+from source.learner import DQN_AGENT
+from source.utils import save_model, load_model, LinearSchedule, convert_bps_to_data_rate, optimal_routing_decision
+from source.replay_buffer import PrioritizedReplayBuffer, ReplayBuffer
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
 from source.models import *
 import threading
 import operator
@@ -83,9 +90,13 @@ class Agent():
         cl.sim_injected_packets=0
         cl.sim_global_injected_packets=0
         cl.sim_dropped_packets = 0
+<<<<<<< HEAD
         cl.sim_rejected_packets = 0
         cl.sim_global_dropped_packets=0
         cl.sim_global_rejected_packets=0
+=======
+        cl.sim_global_dropped_packets=0
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
         cl.sim_delivered_packets = 0
         cl.sim_global_delivered_packets = 0
         cl.sim_buffered_packets = 0
@@ -129,6 +140,7 @@ class Agent():
         cl.nodes_target_q_network_lock = [threading.Lock() for _ in range(cl.numNodes)]
         cl.smart_exploration = params_dict["smart_exploration"]
         cl.sessionName=params_dict["session_name"]
+<<<<<<< HEAD
         cl.reset_exploration=params_dict["reset_exploration"]
         cl.rcpo_consider_loss=params_dict["rcpo_consider_loss"]
         cl.logs_parent_folder = params_dict["logs_parent_folder"]
@@ -156,6 +168,10 @@ class Agent():
         # np.savetxt(f"{params_dict['traffic_matrix_root_path']}/max_observed_values.txt", cl.max_observed_values, delimiter=' ', newline='\n', header='', footer='', fmt='%1.5f', comments='# ')
         # load max observed values from file
         cl.max_observed_values = np.loadtxt(f"{params_dict['tunnels_max_delays_file_name']}", delimiter=' ', dtype=float)
+=======
+        cl.logs_parent_folder = params_dict["logs_parent_folder"]
+        cl.total_rewards_with_loss=0
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
         cl.model_version = params_dict["model_version"]
         cl.sync_counters = [0 for _ in range(cl.numNodes)]
         cl.max_nb_arrived_pkts = params_dict["max_nb_arrived_pkts"]
@@ -169,7 +185,10 @@ class Agent():
         cl.pkt_tracking_dict = {}
         cl.temp_obs = {}
         cl.upcoming_events = [[] for n in range(cl.numNodes)]
+<<<<<<< HEAD
         cl.constrained_loss_database =  [[DigitalTwinDB(cl.lambda_train_step) for _ in range(len(list(cl.G.neighbors(n))))] for n in range(cl.numNodes)]
+=======
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
         cl.sync_counters = [0 for _ in range(cl.numNodes)]
 
     def __init__(self, index, agent_type="dqn", train=True):

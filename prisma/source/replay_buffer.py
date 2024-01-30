@@ -52,7 +52,10 @@ class ReplayBuffer(object):
             print("ERROR")
             print(obses_t)
             raise(1)
+<<<<<<< HEAD
         
+=======
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
     def sample(self, batch_size):
         """Sample a batch of experiences.
         Parameters
@@ -533,6 +536,7 @@ class PrioritizedReplayBuffer(ReplayBuffer_):
         self._it_sum[idxes] = values
         self._it_min[idxes] = values
         self._max_priority = max(self._max_priority, np.max(values))
+<<<<<<< HEAD
         
 class DigitalTwinDB(object):
     
@@ -584,3 +588,6 @@ class DigitalTwinDB(object):
     
     def __len__(self):
         return self.length
+=======
+        
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00

@@ -64,11 +64,17 @@ float ComputeStats::m_globalLossRatio;
 int ComputeStats::m_globalOverlayPacketsInjected;
 int ComputeStats::m_globalOverlayPacketsArrived;
 int ComputeStats::m_globalOverlayPacketsLost;
+<<<<<<< HEAD
 int ComputeStats::m_globalOverlayPacketsRejected;
 int ComputeStats::m_globalUnderlayPacketsInjected;
 int ComputeStats::m_globalUnderlayPacketsArrived;
 int ComputeStats::m_globalUnderlayPacketsLost;
 int ComputeStats::m_globalUnderlayPacketsRejected;
+=======
+int ComputeStats::m_globalUnderlayPacketsInjected;
+int ComputeStats::m_globalUnderlayPacketsArrived;
+int ComputeStats::m_globalUnderlayPacketsLost;
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
 int ComputeStats::m_globalBytesData;
 int ComputeStats::m_globalBytesSignaling;
 double ComputeStats::m_lossPenalty;
@@ -158,10 +164,13 @@ void ComputeStats::incrementOverlayPacketsLost(){
     m_globalOverlayPacketsLost += 1;
 }
 
+<<<<<<< HEAD
 void ComputeStats::incrementOverlayPacketsRejected(){
     m_globalOverlayPacketsRejected += 1;
 }
 
+=======
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
 void ComputeStats::incrementUnderlayPacketsInjected(){
     m_globalUnderlayPacketsInjected += 1;
 }
@@ -174,10 +183,13 @@ void ComputeStats::incrementUnderlayPacketsLost(){
     m_globalUnderlayPacketsLost += 1;
 }
 
+<<<<<<< HEAD
 void ComputeStats::incrementUnderlayPacketsRejected(){
     m_globalUnderlayPacketsRejected += 1;
 }
 
+=======
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
 void ComputeStats::addGlobalBytesData(int value){
     m_globalBytesData += value;
 }
@@ -222,10 +234,13 @@ int ComputeStats::getGlobalOverlayPacketsLost(){
     return m_globalOverlayPacketsLost;
 }
 
+<<<<<<< HEAD
 int ComputeStats::getGlobalOverlayPacketsRejected(){
     return m_globalOverlayPacketsRejected;
 }
 
+=======
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
 int ComputeStats::getGlobalOverlayPacketsBuffered(){
     return m_globalOverlayPacketsInjected - (m_globalOverlayPacketsArrived + m_globalOverlayPacketsLost);
 }
@@ -242,10 +257,13 @@ int ComputeStats::getGlobalUnderlayPacketsLost(){
     return m_globalUnderlayPacketsLost;
 }
 
+<<<<<<< HEAD
 int ComputeStats::getGlobalUnderlayPacketsRejected(){
     return m_globalUnderlayPacketsRejected;
 }
 
+=======
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
 int ComputeStats::getGlobalUnderlayPacketsBuffered(){
     return m_globalUnderlayPacketsInjected - (m_globalUnderlayPacketsArrived + m_globalUnderlayPacketsLost);
 }

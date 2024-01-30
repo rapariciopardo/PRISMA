@@ -95,10 +95,14 @@ PingForwardPacketManager::receivePacket(Ptr<Packet> packet, Ptr<NetDevice> recei
   //Get extra info from packet
     MyTag tagCopy;
   packet->PeekPacketTag(tagCopy);
+<<<<<<< HEAD
   // skip transition packets
   if (tagCopy.GetFinalDestination() != m_node->GetId()){
     return false;
   }
+=======
+
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
   m_lastHop = tagCopy.GetLastHop();
   m_receivingNetDev = receivingNetDev;
   float delay = Simulator::Now().GetSeconds()-(tagCopy.GetStartTime()*0.001);

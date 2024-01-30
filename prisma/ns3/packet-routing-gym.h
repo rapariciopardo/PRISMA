@@ -66,7 +66,10 @@ public:
   void setNetDevicesContainer(NetDeviceContainer* nd);
   void setTrainConfig(bool train);
   void setPingPacketIntervalTime(float pingPacketIntervalTime);
+<<<<<<< HEAD
   void setTunnelsMaxDelays(vector<vector<double>> tunnelMaxDelays);
+=======
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
   void configDataPacketManager(bool obs_bufferLength);
   void configPingBackPacketManager(uint32_t movingAverageSize);
   void mapOverlayNodes(std::vector <int> map_overlay_array);

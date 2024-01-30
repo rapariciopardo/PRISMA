@@ -1,0 +1,20 @@
+cff-version: 1.1.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: A. Alliche 
+    given-names: Redha    
+    orcid: https://orcid.org/0000-0000-0000-0000
+  - family-names: da Silva Barros
+    given-names: Tiago
+    orcid: https://orcid.org/0000-0000-0000-0000
+  - family-names: Aparicio-Pardo
+    given-names: Ramon
+    orcid: https://orcid.org/0000-0002-6069-2841
+  - family-names: Sassatelli
+    given-names: Lucile
+    orcid: https://orcid.org/0000-0003-1232-17871
+title: "Packet Routing Simulator for Multi-Agent Reinforcement Learning (PRISMA)"
+version: v0.1
+doi: 10.5281/zenodo.7660362 
+date-released: 2023-02-21
+url: "https://github.com/rapariciopardo/PRISMA"    

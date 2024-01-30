@@ -183,7 +183,10 @@ DataPacketManager::getObservation()
 
   
   //Get Neighbors for acessing their respective queues
+<<<<<<< HEAD
   uint32_t value;
+=======
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
   for (size_t i=0 ; i<m_neighbors.size(); i++){
     string string_ip= "10.2.2."+std::to_string(m_neighbors[i]+1);
     Ipv4Address ip_test(string_ip.c_str());
@@ -191,11 +194,18 @@ DataPacketManager::getObservation()
     packet_test->AddHeader(m_packetIpHeader);
     Ptr<Ipv4Route> route = routing->RouteOutput (packet_test, m_packetIpHeader, 0, sockerr);
     Ptr<PointToPointNetDevice> dev = DynamicCast<PointToPointNetDevice>(route->GetOutputDevice());
+<<<<<<< HEAD
       
+=======
+    
+    uint32_t value;
+    
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
     if(m_obs_bufferLength){
       value = this->getQueueLengthInBytes (m_node, dev->GetIfIndex());
     } else{
       value =uint32_t(1000*std::max(getAverage(m_pingBackPacketManager->m_tunnelsDelay[i]), double(m_pingBackPacketManager->getMaxTimePingForwardPacketSent(i))));
+<<<<<<< HEAD
     }  
     box->AddValue(value);
   }
@@ -222,6 +232,13 @@ DataPacketManager::getObservation()
   // }
   // NS_LOG_UNCOND("Total Packets in the network: " << totalPackets << " packets and " << totalBytes << " bytes at time " << Simulator::Now().GetSeconds() << "s");
 
+=======
+    }
+    
+    box->AddValue(value);
+  }
+
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
   return box;
 }
 
@@ -250,30 +267,50 @@ string
 DataPacketManager::getInfo()
 {
   string myInfo = PacketManager::getInfo();
+<<<<<<< HEAD
   myInfo += ", Packet Lost="; //20
+=======
+  myInfo += ", Packet Lost="; //16
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
   while (!m_lostPackets.empty())
   {
     SentPacket lostPacket = m_lostPackets.back();
     myInfo += std::to_string(lostPacket.uid) + ";";
     m_lostPackets.pop_back();
   }
+<<<<<<< HEAD
   myInfo += ", Source="; //21
   myInfo += std::to_string(m_map_overlay_array[m_source]);
   myInfo += ", Destination="; //22
   myInfo += std::to_string(m_map_overlay_array[m_destination]);
   myInfo += ", node="; //23
+=======
+  myInfo += ", Source="; //17
+  myInfo += std::to_string(m_map_overlay_array[m_source]);
+  myInfo += ", Destination="; //18
+  myInfo += std::to_string(m_map_overlay_array[m_destination]);
+  myInfo += ", node="; //19
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
   myInfo += std::to_string(m_map_overlay_array[m_node->GetId()]);
   // NS_LOG_UNCOND(myInfo);
   return myInfo;
 }
 
 bool 
+<<<<<<< HEAD
 DataPacketManager::sendPacket(uint32_t action){
   
   //Get discrete action
   // Ptr<OpenGymDiscreteContainer> discrete = DynamicCast<OpenGymDiscreteContainer>(action);
   // uint32_t fwdDev_idx = discrete->GetValue();
   uint32_t fwdDev_idx = action;
+=======
+DataPacketManager::sendPacket(Ptr<OpenGymDataContainer> action){
+  
+  //Get discrete action
+  Ptr<OpenGymDiscreteContainer> discrete = DynamicCast<OpenGymDiscreteContainer>(action);
+  uint32_t fwdDev_idx = discrete->GetValue();
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
   if(m_arrivedAtFinalDest){
     // string string_ip = "0.0.0.0";
     // Ipv4Address ip_dest(string_ip.c_str());
@@ -292,7 +329,11 @@ DataPacketManager::sendPacket(uint32_t action){
     string string_ip= "10.2.2."+std::to_string(m_neighbors[fwdDev_idx]+1);
     Ipv4Address ip_dest(string_ip.c_str());
     m_packetIpHeader.SetDestination(ip_dest);
+<<<<<<< HEAD
     m_packetIpHeader.SetSource(string("10.1.1."+std::to_string(m_node->GetId()+1)).c_str());
+=======
+    m_packetIpHeader.SetSource(string("10.1.1."+std::to_string(m_nodes_starting_address[m_node->GetId()]+1)).c_str());
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
     m_packet->AddHeader(m_packetIpHeader);
     
     //Discovering the output buffer based on the routing table
@@ -301,11 +342,16 @@ DataPacketManager::sendPacket(uint32_t action){
     ns3::Socket::SocketErrno sockerr;
     Ptr<Ipv4RoutingProtocol> routing = ipv4->GetRoutingProtocol( );
     Ptr<Ipv4Route> route = routing->RouteOutput (m_packet, m_packetIpHeader, 0, sockerr); 
+<<<<<<< HEAD
     route->SetSource(string("10.1.1."+std::to_string(m_node->GetId()+1)).c_str());
     Ptr<PointToPointNetDevice> dev = DynamicCast<PointToPointNetDevice>(route->GetOutputDevice());
     if (sendingTag.GetSimpleValue()==0 && sendingTag.GetSource()==4 && sendingTag.GetFinalDestination()==3 && m_packetUid == 12425)
 
       NS_LOG_UNCOND("Node " << m_node->GetId() << " is sending packet"<<  m_packet->GetUid()<< " to " << m_neighbors[fwdDev_idx] << " at time " << Simulator::Now().GetSeconds() << "s. The output device is " << dev->GetIfIndex() << " and " << dev->GetNode()->GetId()<< " "<<dev->GetChannel()->GetDevice(0)->GetNode()->GetId() << " " << dev->GetChannel()->GetDevice(1)->GetNode()->GetId() << " " << dev->GetChannel()->GetNDevices());
+=======
+    route->SetSource(string("10.1.1."+std::to_string(m_nodes_starting_address[m_node->GetId()]+1)).c_str());
+    Ptr<PointToPointNetDevice> dev = DynamicCast<PointToPointNetDevice>(route->GetOutputDevice());
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
     //Send and verify if the Packet was dropped
     m_counterSentPackets += 1;
     SentPacket sent;
@@ -313,7 +359,11 @@ DataPacketManager::sendPacket(uint32_t action){
     sent.type = DATA_PACKET;
     sent.start_time= Simulator::Now().GetMilliSeconds();
     m_sentPackets.push_back(sent);
+<<<<<<< HEAD
     dev->Send(m_packet, dev->GetBroadcast(), 0x0800);
+=======
+    dev->Send(m_packet, m_destAddr, 0x0800);
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
 
   } else{
     //TODO: Implement DropPacket Function

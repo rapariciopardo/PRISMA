@@ -65,12 +65,18 @@ public:
   //Increment packets Info
   void incrementOverlayPacketsInjected();
   void incrementOverlayPacketsLost();
+<<<<<<< HEAD
   void incrementOverlayPacketsRejected();
+=======
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
   void incrementOverlayPacketsArrived();
 
   void incrementUnderlayPacketsInjected();
   void incrementUnderlayPacketsLost();
+<<<<<<< HEAD
   void incrementUnderlayPacketsRejected();
+=======
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
   void incrementUnderlayPacketsArrived();
 
   //Increment global Bytes Info
@@ -91,12 +97,18 @@ public:
   int getGlobalOverlayPacketsInjected();
   int getGlobalOverlayPacketsArrived();
   int getGlobalOverlayPacketsLost();
+<<<<<<< HEAD
   int getGlobalOverlayPacketsRejected();
+=======
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
   int getGlobalOverlayPacketsBuffered();
   int getGlobalUnderlayPacketsInjected();
   int getGlobalUnderlayPacketsArrived();
   int getGlobalUnderlayPacketsLost();
+<<<<<<< HEAD
   int getGlobalUnderlayPacketsRejected();
+=======
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
   int getGlobalUnderlayPacketsBuffered();
   vector<float> getLocalE2eDelay();
   vector<float> getLocalCost();
@@ -116,13 +128,19 @@ public:
   static int m_globalOverlayPacketsInjected;
   static int m_globalOverlayPacketsArrived;
   static int m_globalOverlayPacketsLost;
+<<<<<<< HEAD
   static int m_globalOverlayPacketsRejected;
+=======
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
 
   //Information about underlay Packets
   static int m_globalUnderlayPacketsInjected;
   static int m_globalUnderlayPacketsArrived;
   static int m_globalUnderlayPacketsLost;
+<<<<<<< HEAD
   static int m_globalUnderlayPacketsRejected;
+=======
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
 
   static int m_globalBytesData;
   static int m_globalBytesSignaling;

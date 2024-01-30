@@ -40,6 +40,7 @@ def run_ns3(params, configure=True):
     ## run NS3 simulator
     ns3_params_format = ('prisma --simSeed={} --openGymPort={} --simTime={} --AvgPacketSize={} '
                         '--LinkDelay={} --LinkRate={} --MaxBufferLength={} --load_factor={} '
+<<<<<<< HEAD
                         '--adj_mat_file_name={} --overlay_mat_file_name={} --node_coordinates_file_name={} '
                         '--node_intensity_file_name={} --signaling={} --AgentType={} --signalingType={} '
                         '--syncStep={} --lossPenalty={} --activateOverlaySignaling={} '
@@ -49,12 +50,27 @@ def run_ns3(params, configure=True):
                                              str(params["simTime"]),
                                              params["packet_size"],
                                              str(params["link_delay"]) + "ms",
+=======
+                        '--adj_mat_file_name={} --overlay_mat_file_name={} '
+                        '--node_intensity_file_name={} --signaling={} --AgentType={} --signalingType={} '
+                        '--syncStep={} --lossPenalty={} --activateOverlaySignaling={} '
+                        '--train={} --movingAverageObsSize={} --activateUnderlayTraffic={} --opt_rejected_file_name={} '
+                        '--map_overlay_file_name={} --pingAsObs={} --bigSignalingSize={} --pingPacketIntervalTime={}'.format( params["seed"],
+                                             params["basePort"],
+                                             str(params["simTime"]),
+                                             params["packet_size"],
+                                             str(params["link_delay"])+"ms",
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
                                              str(params["link_cap"]) + "bps",
                                              str(params["max_out_buffer_size"]) + "B",
                                              params["load_factor"],
                                              params["physical_adjacency_matrix_path"],
                                              params["overlay_adjacency_matrix_path"],
+<<<<<<< HEAD
                                              params["node_coordinates_path"],
+=======
+                                            #  params["node_coordinates_path"],
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
                                              params["traffic_matrix_path"],
                                              bool(params["signalingSim"]),
                                              params["agent_type"],
@@ -68,11 +84,16 @@ def run_ns3(params, configure=True):
                                              params["opt_rejected_path"],
                                              params["map_overlay_path"],
                                              bool(params["pingAsObs"]),
+<<<<<<< HEAD
                                              params["groundTruthFrequence"],
                                              params["bigSignalingSize"],
                                              params["pingPacketIntervalTime"],
                                              params["d_t_send_all_destinations"],
                                              params["tunnels_max_delays_file_name"]
+=======
+                                             params["bigSignalingSize"],
+                                             params["pingPacketIntervalTime"]
+>>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
                                              ))
     run_ns3_command = shlex.split(f'./waf --run "{ns3_params_format}"')
     proc = subprocess.Popen(run_ns3_command)
