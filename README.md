@@ -1,8 +1,5 @@
 PRISMA-v2: A Packet Routing Simulator for Multi-Agent Reinforcement Learning - Extension to CLoud Overlay Networks
-<<<<<<< HEAD
 This branch gathers the code and the results of the paper "O-DQR: a Multi-Agent Deep Reinforcement Learning for Multihop Routing in Overlay Networks" (submitted to IEEE Transactions on Network and Service Management).
-=======
->>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
 ============
 
 PRISMA-v2 is a network simulation playground for developing and testing Multi-Agent Reinforcement Learning (MARL) solutions for dynamic packet routing (DPR). This framework is based on the OpenAI Gym toolkit and the Ns3 simulator.
@@ -61,11 +58,7 @@ docker build -t prisma .
 ```
 c) run the docker image and bind only the examples folder to the container
 ```
-<<<<<<< HEAD
 sudo docker run --rm --gpus all -v ./prisma/examples:/app/prisma/examples -w /app/prisma prisma /bin/bash -c "python3 main.py $PARAMS"
-=======
-sudo docker run --rm --gpus all -v $(pwd)/prisma/examples:/app/prisma/examples -w /app/prisma prisma /bin/bash -c "python3 main.py $PARAMS"
->>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
 ```
 ## 2. Use an existing environment from DockerHub
 a) Pull the docker image from dockerhub
@@ -74,11 +67,7 @@ docker pull allicheredha/prisma_env
 ```
 b) run the docker image and bind the complete folder to the container
 ```
-<<<<<<< HEAD
 sudo docker run --rm --gpus all -v ./prisma/:/prisma -w /prisma allicheredha/prisma_env /bin/bash -c "python3 main.py $PARAMS"
-=======
-sudo docker run --rm --gpus all -v $(pwd)/prisma:/app/prisma -w /app/prisma allicheredha/prisma_env /bin/bash -c "python3 main.py $PARAMS"
->>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
 ```
 
 Usage guide
@@ -100,10 +89,7 @@ train: 1, if training; 0, Otherwise.
 load_factor: Defines a factor multiplied by traffic rate matrix 
 physical_adjacency_matrix_path: Path for adjacency matrix
 traffic_matrix_path: Path for traffic rate matrix
-<<<<<<< HEAD
 node_coordinates_path: Path for nodes coordinates matrix
-=======
->>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
 max_out_buffer_size: maximum size of the output buffers (in bytes)
 link_delay: Defines the delay of the link
 packet_size: Defines the packet size.
@@ -161,7 +147,6 @@ For using the Shortest Path algorithm.
 ## OPT
 For using the oracle policy.
 
-<<<<<<< HEAD
 Experiments
 ===========
 Those experiments are based on the paper untitled : "O-DQR: a Multi-Agent Deep Reinforcement Learning for Multihop Routing in Overlay Networks" (submitted to IEEE Transactions on Network and Service Management).
@@ -228,26 +213,3 @@ TODO :
 - add the results logs and models
 - add the extracted results
 - push docker to dockerhub
-=======
-We are going to illustrate Prisma usage with a pratical example. We will train a and develop a model for Q-Routing in two different topologies: Abilene and Geant. The Markov Decision Process (MDP) have the following formulation:
-
-**Observation Space**: Packet's destination and interfaces buffer lenth (or tunnels delay - for overlay networks)
-
-**Action Space**: Output's interface
-
-**Reward**: Delay to the next hop
-
-**Done**: If a packet arrives its final destination
-
-In the above example, the agent's policy aims to minimize the reward (delay). The agent's model is described in the figure below. We expect the agents learn to efficiently route the packets and its performance might be proximal to a Shortest Path algorithm.
-
-![My Image](images/q_routing_model.png)
-
-The training curves are described below. The cost represents the average delay per packet which arrived to its final destination. The TD Error represents the model loss. We can observe that the model is capable of learning decreasing the loss over the training.
-
-![My Image](images/training_curves.png)
-
-In the figure below, we can evaluate the model performance. We can observe that the DQN-Routing agent is capable of learning a ploicy proximal to a Shortest Path algorithm. In some of the scenarios evaluated, it can performs better than the shortest path algorithm.
-
-![My Image](images/testing_curves.png)
->>>>>>> 7ba840121a9f88c99c702aa70bc103e7c4769b00
