@@ -64,3 +64,4 @@ prisma/profiling results
 prisma/examples/4n_overlay_full_mesh_abilene/results/*
 prisma/examples/overlay_full_mesh_10n_geant/optimal_solution/rejected_flows.txt
 prisma/examples/5n_overlay_full_mesh_abilene/debug/*
+prisma/scripts/*
